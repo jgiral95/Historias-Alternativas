@@ -243,20 +243,20 @@ async function draw2fa(step, data) {
 
 /* ----- Mis formatos: único lugar para estructuras, plantillas, modelos y frases ----- */
 /* Mismo orden que las pestañas de la ficha del consultante; luego lo que se usa en varias partes. */
-const HUB = [['pestanas', 'Pestañas'], ['datos', 'Datos del consultante'], ['consent', 'Consentimientos'], ['intake', 'Primera vez'], ['evol', 'Sesión'], ['escalas', 'Chequeos'], ['informes', 'Informes'], ['frases', 'Frases']];
+const HUB = [['pestanas', 'Pestañas'], ['datos', 'Datos del consultante'], ['consent', 'Consentimientos'], ['intake', 'Primera vez'], ['evol', 'Sesión'], ['escalas', 'Chequeos'], ['informes', 'Informes']];
 /* Barra de Mis formatos: sin las pestañas ocultas, con los nombres propios y con las pestañas nuevas. */
 const hubList = () => { const c = tabsConf(), oc = c.ocultas || [], nm = c.nombres || {};
   return HUB.filter(([k]) => !oc.includes(k)).map(([k, l]) => [k, nm[k] || l]).concat((c.extra || []).map(x => [x.id, x.nombre])); };
 const hubTabs = active => `<div class="tabs hubtabs" role="tablist" aria-label="Secciones de Mis formatos">${hubList().map(([k, l]) => `<button type="button" class="tab ${active === k ? 'on' : ''}" role="tab" aria-selected="${active === k}" data-hub="${k}">${l}</button>`).join('')}</div>`;
+const isFmt = k => ['intake', 'evol', 'datos'].includes(k) || String(k).startsWith('x_');
 function openHub(k) {
-  if (ED && ['intake', 'evol', 'datos'].includes(k)) { ED.which = k; return drawFormats(); }  // conserva lo no guardado
+  if (ED && isFmt(k)) { ED.which = k; return drawFormats(); }  // conserva lo no guardado
   const root = $('#modal-root'); root.onclick = root.oninput = root.onchange = null; ED = null;
-  if (['intake', 'evol', 'datos'].includes(k)) return ACT.formats({ dataset: { hub: k } });
-  if (k === 'pestanas' || k.startsWith('x_')) return tabsManage();
+  if (isFmt(k)) return ACT.formats({ dataset: { hub: k } });
+  if (k === 'pestanas') return tabsManage();
   if (k === 'consent') return ACT.consentManage();
   if (k === 'informes') return ACT.tplManage();
   if (k === 'escalas') return ACT.scaleManage();
-  if (k === 'frases') return ACT.phrases();
 }
 /* Al cerrar Mis formatos, lo que esté abierto debajo se actualiza (selectores de plantilla, modelos, frases). */
 function hubClosed() {
@@ -271,7 +271,7 @@ const secFrom = ([t, fs, g]) => { const solo = fs.length === 1 && !fs[0][1]; ret
 const edFrom = (intake, evol, datos) => ({ intake: intake.map(secFrom), evol: evol.map(([k, l, r, d]) => ({ k, l, r, d: d || '' })), datos: (datos || []).map(secFrom) });
 const newKey = () => 'c' + Math.random().toString(36).slice(2, 8);
 const ROWS = [[2, 'Corto'], [3, 'Medio'], [5, 'Largo']];
-const secList = () => ED[ED.which === 'datos' ? 'datos' : 'intake'];
+const secList = () => ED[ED.which === 'datos' ? 'datos' : String(ED.which).startsWith('x_') ? ED.which : 'intake'];
 /* Texto inicial: lo que el campo trae escrito en cada nota nueva (se puede borrar o cambiar al escribir). */
 const edInit = (val, attr, label) => `<details class="edinit" ${val ? 'open' : ''}><summary>Texto inicial${val ? '' : ' (opcional)'}</summary><textarea ${attr} rows="2" aria-label="Texto inicial de ${esc(label)}" placeholder="Lo que este campo trae escrito en cada nota nueva">${esc(val || '')}</textarea></details>`;
 function edField(f, path, noSize) {
@@ -288,7 +288,7 @@ function secCard(sc, si, isDatos) {
 function drawFormats() {
   const root = $('#modal-root'), prev = root.querySelector('.modal'), top = prev ? prev.scrollTop : 0, w = ED.which;
   const hasGeno = ED.intake.some(sc => sc.g);
-  const intro = { intake: 'Los cambios solo se aplican a las <b>nuevas</b> consultas de primera vez. Las ya firmadas conservan el formato con el que se firmaron.', evol: 'Los cambios solo se aplican a las <b>nuevas</b> sesiones. Las ya firmadas conservan el formato con el que se firmaron.', datos: 'Agregue los datos sociodemográficos que usted toma y que no vienen en la pestaña Datos. Aparecen al final de esa pestaña para todos sus consultantes.' }[w];
+  const intro = {  intake: 'Los cambios solo se aplican a las <b>nuevas</b> consultas de primera vez. Las ya firmadas conservan el formato con el que se firmaron.', evol: 'Los cambios solo se aplican a las <b>nuevas</b> sesiones. Las ya firmadas conservan el formato con el que se firmaron.', datos: 'Agregue los datos sociodemográficos que usted toma y que no vienen en la pestaña Datos. Aparecen al final de esa pestaña para todos sus consultantes.' }[w] || 'Arme los apartados y campos de esta pestaña. Los cambios se aplican a todas las fichas; lo ya escrito se conserva.';
   const body = w === 'evol'
     ? `<p class="stnote" style="margin:0">La fecha y hora, la modalidad, las personas presentes, el riesgo y las impresiones van siempre en la sesión: aquí arma el resto.</p><div class="card">${ED.evol.map((f, fi) => edField(f, String(fi))).join('') || '<p style="margin:0;color:var(--muted)">Aún no tiene campos. Agréguelos uno por uno o use el formato sugerido.</p>'}<div class="row"><button class="btn sm" data-fm="fadd:">+ Campo</button>${ED.evol.length ? '' : '<button class="btn sm" data-fm="reset">Usar el formato sugerido</button>'}</div></div>`
     : (w === 'datos' ? `<div class="card"><b>Apartados de la ficha</b><p class="stnote" style="margin:4px 0">Identificación siempre se muestra. Oculte los que no use; los datos ya escritos no se borran.</p>${BASE_SECS.map(([id, n]) => `<div class="row"><span style="flex:1">${n}</span><button class="btn sm ${ED.ocultos.includes(id) ? '' : 'pri'}" data-fm="oc:${id}">${ED.ocultos.includes(id) ? 'Oculto · mostrar' : 'Visible · ocultar'}</button></div>`).join('')}</div>` : '') + secList().map((sc, si) => secCard(sc, si, w === 'datos')).join('') + `<div class="row"><button class="btn" data-fm="sadd">+ Apartado</button>${w === 'intake' && !hasGeno ? '<button class="btn" data-fm="gadd">+ Genograma</button>' : ''}</div>`;
@@ -305,9 +305,9 @@ const edMove = (arr, i, d) => { const j = i + d; if (j < 0 || j >= arr.length) r
 ACT.formats = b => {
   stepDone('formatos');
   const hub = b && b.dataset && b.dataset.hub;
-  if (hub && !['intake', 'evol', 'datos'].includes(hub)) return openHub(hub);
+  if (hub && !isFmt(hub)) return openHub(hub);
   const pf = S.profile.formatos || {};
-  ED = Object.assign({ which: hub || 'datos', ocultos: [...(pf.ocultos || [])] }, edFrom(clone(pf.intake || INTAKE), clone(pf.evol || []), clone(pf.datos || [])));
+  ED = Object.assign({ which: hub || 'datos', ocultos: [...(pf.ocultos || [])] }, Object.fromEntries(((pf.pestanas || {}).extra || []).map(x => [x.id, (x.secs || []).map(secFrom)])), edFrom(clone(pf.intake || INTAKE), clone(pf.evol || []), clone(pf.datos || [])));
   drawFormats();
   const root = $('#modal-root');
   root.oninput = e => {
@@ -337,7 +337,7 @@ ACT.formats = b => {
     else if (op === 'fup') edMove(edList(arg), edIdx(arg), -1);
     else if (op === 'fdn') edMove(edList(arg), edIdx(arg), 1);
     else if (op === 'fdel') { const l = edList(arg); if (l.length < 2 && arg !== '' && arg.includes('.') === false) return toast('Debe quedar al menos un campo.'); l.splice(edIdx(arg), 1); }
-    else if (op === 'reset') { const d = edFrom(clone(INTAKE), clone(NOTE_FIELDS), []); ED[ED.which] = d[ED.which]; }
+    else if (op === 'reset') { const d = edFrom(clone(INTAKE), clone(NOTE_FIELDS), []); ED[ED.which] = d[ED.which] || []; }
     else if (op === 'save') return saveFormats();
     drawFormats();
   };
@@ -361,8 +361,10 @@ function saveFormats() {
   if (intake.concat(datos).some(sc => sc[1].length > 1 && sc[1].some(f => !f[1]))) return bad('Cada campo necesita un nombre.');
   if (evol.some(f => !f[1])) return bad('Cada campo de la sesión necesita un nombre.');
   if (intake.filter(sc => sc[2] === 'genograma').length > 1) return bad('Solo puede haber un genograma.');
+  const pc = (S.profile.formatos || {}).pestanas || {}, extra = (pc.extra || []).map(x => ({ ...x, secs: (ED[x.id] || x.secs || []).map(sc => secTo(sc, false)) }));
+  if (extra.some(x => x.secs.some(sc => !sc[0]))) return bad('Cada apartado necesita un título.');
   const snap = clone(S.profile);
-  S.profile.formatos = Object.assign({}, S.profile.formatos, { intake, evol, datos, ocultos: ED.ocultos || [] });
+  S.profile.formatos = Object.assign({}, S.profile.formatos, { intake, evol, datos, ocultos: ED.ocultos || [], pestanas: Object.assign({}, pc, { extra }) });
   persist([S.profile], $('[data-fm="save"]')).then(ok => { if (!ok) { restore(S.profile, snap); return; } finishFormats(); });
 }
 /* Pestañas de la ficha: renombrar, ocultar y crear propias (texto libre por consultante). */
@@ -386,11 +388,11 @@ function tabsManage() {
     if (op === 'close') { TM = null; root.innerHTML = ''; root.onclick = root.oninput = null; return; }
     if (op === 'hid') { const i = TM.ocultas.indexOf(arg); if (i < 0) TM.ocultas.push(arg); else TM.ocultas.splice(i, 1); }
     else if (op === 'del') TM.extra = TM.extra.filter(x => x.id !== arg);
-    else if (op === 'add') { if (TM.extra.length >= 10) return toast('Máximo 10 pestañas nuevas.'); TM.extra.push({ id: 'x_' + newKey(), nombre: 'Nueva pestaña' }); }
+    else if (op === 'add') { if (TM.extra.length >= 10) return toast('Máximo 10 pestañas nuevas.'); TM.extra.push({ id: 'x_' + newKey(), nombre: 'Nueva pestaña', secs: [] }); }
     else if (op === 'save') {
       const nombres = Object.fromEntries(Object.entries(TM.nombres).map(([k, v]) => [k, v.trim()]).filter(([, v]) => v));
       if (TM.extra.some(x => !x.nombre.trim())) return toast('Cada pestaña necesita un nombre.');
-      const snap = clone(S.profile); S.profile.formatos = Object.assign({}, S.profile.formatos, { pestanas: { nombres, ocultas: TM.ocultas, extra: TM.extra.map(x => ({ id: x.id, nombre: x.nombre.trim() })) } });
+      const snap = clone(S.profile); S.profile.formatos = Object.assign({}, S.profile.formatos, { pestanas: { nombres, ocultas: TM.ocultas, extra: TM.extra.map(x => ({ id: x.id, nombre: x.nombre.trim(), secs: x.secs || [] })) } });
       const t = tabsList().map(x => x[0]); if (!t.includes(S.tab)) S.tab = 'datos';
       return persist([S.profile], b).then(ok => { if (!ok) { restore(S.profile, snap); return; } TM = null; root.innerHTML = ''; root.onclick = root.oninput = null; toast('Pestañas guardadas.'); render(); });
     }
@@ -400,10 +402,15 @@ function tabsManage() {
 /* Pestaña propia: texto libre guardado en la ficha. */
 function tabExtra(p) {
   const x = (tabsConf().extra || []).find(y => y.id === S.tab); if (!x) return '';
-  return `<div class="sec"><h3>${esc(x.nombre)}</h3><div class="fld"><textarea id="f_extra" data-f="extra" rows="12" aria-label="${esc(x.nombre)}">${esc((p.extras || {})[x.id] || '')}</textarea></div><div class="row end"><button class="btn pri" data-act="saveExtra">Guardar</button></div></div>`;
+  const v = (p.extras || {})[x.id], vo = v && typeof v === 'object' ? v : {};
+  const body = (x.secs || []).length
+    ? x.secs.map(([t, fs]) => `<div class="sec"><h3>${esc(t)}</h3><div class="grid">${fs.map(f => F(f[1], f[0], vo[f[0]] || f[3] || '', { type: 'area', rows: f[2] || 3, wide: true, aria: t })).join('')}</div></div>`).join('')
+    : `<div class="sec"><h3>${esc(x.nombre)}</h3><div class="fld"><textarea id="f_extra" data-f="extra" rows="12" aria-label="${esc(x.nombre)}">${esc(typeof v === 'string' ? v : '')}</textarea></div><p class="stnote">Para dividirla en apartados y campos, use Mis formatos.</p></div>`;
+  return `${body}<div class="row end"><button class="btn pri" data-act="saveExtra">Guardar</button></div>`;
 }
 ACT.saveExtra = async b => {
-  const p = curPatient(), snap = clone(p); p.extras = Object.assign({}, p.extras, { [S.tab]: $('#f_extra').value });
+  const p = curPatient(), snap = clone(p), o = readForm($('#tabbody'), {}), x = (tabsConf().extra || []).find(y => y.id === S.tab);
+  p.extras = Object.assign({}, p.extras, { [S.tab]: x && (x.secs || []).length ? o : (o.extra || '') });
   if (!(await persist([p], b))) { restore(p, snap); return; } toast('Guardado.');
 };
 function finishFormats() {
