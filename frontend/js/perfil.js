@@ -416,11 +416,11 @@ function tabExtra(p) {
   const ed = S.extraEd && S.extraEd.tab === x.id ? S.extraEd.id : null;
   if (ed) {
     const cur = ed === 'new' ? { at: nowISO().slice(0, 10), v: {} } : (list.find(e => e.id === ed) || { at: nowISO().slice(0, 10), v: {} });
-    return `<div class="sec"><h3>${ed === 'new' ? 'Nueva entrada' : 'Editar entrada'} · ${esc(x.nombre)}</h3>${F('Fecha', 'extraAt', (cur.at || '').slice(0, 10), { type: 'date' })}</div>${extraFields(x, cur.v || {})}<div class="row end"><button class="btn" data-act="extraCancel">Cancelar</button><button class="btn pri" data-act="extraSave">Guardar entrada</button></div>`;
+    return `<div class="sec"><h3>${ed === 'new' ? 'Nueva entrada' : 'Editar entrada'} · ${esc(x.nombre)}</h3><div class="grid">${F('Fecha', 'extraAt', (cur.at || '').slice(0, 10), { type: 'date' })}${F('Hora', 'extraHora', cur.hora || '', { type: 'time' })}${F('Lugar', 'extraLugar', cur.lugar || '', { ph: 'Ej.: consultorio, domicilio, en línea' })}</div></div>${extraFields(x, cur.v || {})}<div class="row end"><button class="btn" data-act="extraCancel">Cancelar</button><button class="btn pri" data-act="extraSave">Guardar entrada</button></div>`;
   }
   const show = e => (x.secs || []).length ? x.secs.map(([t, fs]) => fs.map(f => (e.v || {})[f[0]] ? `<p style="margin:4px 0"><b>${esc(f[1] || t)}:</b> ${esc(e.v[f[0]])}</p>` : '').join('')).join('') : `<p style="margin:4px 0">${esc((e.v || {}).extra || '')}</p>`;
   return `<div class="sec"><div class="row" style="justify-content:space-between"><h3 style="flex:1">${esc(x.nombre)} (${list.length})</h3><button class="btn pri" data-act="extraNew">Nueva entrada</button></div>
-  ${list.length ? list.map(e => `<div class="card"><div class="row" style="justify-content:space-between"><b>${esc((e.at || '').slice(0, 10))}</b><span><button class="btn sm" data-act="extraEdit" data-id="${e.id}">Editar</button> <button class="btn sm warn" data-act="extraDel" data-id="${e.id}">Borrar</button></span></div>${show(e)}</div>`).join('') : '<p class="stnote" style="text-align:center">Aún no hay entradas. Cada sesión se agrega aquí.</p>'}</div>`;
+  ${list.length ? list.map(e => `<div class="card"><div class="row" style="justify-content:space-between"><b>${esc((e.at || '').slice(0, 10))}${e.hora ? ' · ' + esc(e.hora) : ''}${e.lugar ? ' · ' + esc(e.lugar) : ''}</b><span><button class="btn sm" data-act="extraEdit" data-id="${e.id}">Editar</button> <button class="btn sm warn" data-act="extraDel" data-id="${e.id}">Borrar</button></span></div>${show(e)}</div>`).join('') : '<p class="stnote" style="text-align:center">Aún no hay entradas. Cada sesión se agrega aquí.</p>'}</div>`;
 }
 const extraCur = () => (tabsConf().extra || []).find(y => y.id === S.tab);
 ACT.saveExtra = async b => {
@@ -433,9 +433,9 @@ ACT.extraEdit = b => { S.extraEd = { tab: S.tab, id: b.dataset.id }; render(); }
 ACT.extraCancel = () => { S.extraEd = null; render(); };
 ACT.extraSave = async b => {
   const p = curPatient(), snap = clone(p), x = extraCur(), o = readForm($('#tabbody'), {}), id = S.extraEd && S.extraEd.id;
-  const at = o.extraAt || nowISO().slice(0, 10); delete o.extraAt;
+  const at = o.extraAt || nowISO().slice(0, 10), hora = o.extraHora || '', lugar = (o.extraLugar || '').trim(); delete o.extraAt; delete o.extraHora; delete o.extraLugar;
   const list = Array.isArray((p.extras || {})[S.tab]) ? clone(p.extras[S.tab]) : [], v = extraOf(x)(o);
-  if (id && id !== 'new' && list.some(e => e.id === id)) Object.assign(list.find(e => e.id === id), { at, v }); else list.push({ id: newId('e'), at, v });
+  if (id && id !== 'new' && list.some(e => e.id === id)) Object.assign(list.find(e => e.id === id), { at, hora, lugar, v }); else list.push({ id: newId('e'), at, hora, lugar, v });
   p.extras = Object.assign({}, p.extras, { [S.tab]: list });
   if (!(await persist([p], b))) { restore(p, snap); return; } S.extraEd = null; toast('Entrada guardada.'); render();
 };
