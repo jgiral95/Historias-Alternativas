@@ -88,7 +88,7 @@ ACT.apptEdit = b => {
     const pid = $('#f_patientId').value, mod = $('#f_modalidad').value, est = a ? $('#f_estado').value : 'Programada';
     if (!pid || est !== 'Programada') return '';
     if (a && (a.estado || 'Programada') === 'Programada' && a.patientId === pid && a.modalidad === mod) return '';
-    return apptConsentMissing(S.patients.find(p => p.id === pid), mod);
+    return '';  // el consentimiento es opcional
   };
   const warn = () => {
     const m = missing(), pid = $('#f_patientId').value;

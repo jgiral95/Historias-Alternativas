@@ -287,7 +287,7 @@ function drawFormats() {
   const intro = { intake: 'Los cambios solo se aplican a las <b>nuevas</b> consultas de primera vez. Las ya firmadas conservan el formato con el que se firmaron.', evol: 'Los cambios solo se aplican a las <b>nuevas</b> sesiones. Las ya firmadas conservan el formato con el que se firmaron.', datos: 'Agregue los datos sociodemográficos que usted toma y que no vienen en la pestaña Datos. Aparecen al final de esa pestaña para todos sus consultantes.' }[w];
   const body = w === 'evol'
     ? `<p class="stnote" style="margin:0">La fecha y hora, la modalidad, las personas presentes, el riesgo y las impresiones van siempre en la sesión: aquí arma el resto.</p><div class="card">${ED.evol.map((f, fi) => edField(f, String(fi))).join('') || '<p style="margin:0;color:var(--muted)">Aún no tiene campos. Agréguelos uno por uno o use el formato sugerido.</p>'}<div class="row"><button class="btn sm" data-fm="fadd:">+ Campo</button>${ED.evol.length ? '' : '<button class="btn sm" data-fm="reset">Usar el formato sugerido</button>'}</div></div>`
-    : secList().map((sc, si) => secCard(sc, si, w === 'datos')).join('') + `<div class="row"><button class="btn" data-fm="sadd">+ Apartado</button>${w === 'intake' && !hasGeno ? '<button class="btn" data-fm="gadd">+ Genograma</button>' : ''}</div>`;
+    : (w === 'datos' ? `<div class="card"><b>Apartados de la ficha</b><p class="stnote" style="margin:4px 0">Identificación siempre se muestra. Oculte los que no use; los datos ya escritos no se borran.</p>${BASE_SECS.map(([id, n]) => `<div class="row"><span style="flex:1">${n}</span><button class="btn sm ${ED.ocultos.includes(id) ? '' : 'pri'}" data-fm="oc:${id}">${ED.ocultos.includes(id) ? 'Oculto · mostrar' : 'Visible · ocultar'}</button></div>`).join('')}</div>` : '') + secList().map((sc, si) => secCard(sc, si, w === 'datos')).join('') + `<div class="row"><button class="btn" data-fm="sadd">+ Apartado</button>${w === 'intake' && !hasGeno ? '<button class="btn" data-fm="gadd">+ Genograma</button>' : ''}</div>`;
   root.innerHTML = `<div class="modal" role="dialog" aria-modal="true" aria-label="Mis formatos"><div class="box" id="fmform"><div class="row" style="justify-content:space-between"><h3>Mis formatos</h3><button class="btn sm" data-fm="close">Cerrar</button></div>
   ${hubTabs(w)}
   <p style="margin:0;font-size:13px;color:var(--muted)">${intro}</p>
@@ -303,7 +303,7 @@ ACT.formats = b => {
   const hub = b && b.dataset && b.dataset.hub;
   if (hub && !['intake', 'evol', 'datos'].includes(hub)) return openHub(hub);
   const pf = S.profile.formatos || {};
-  ED = Object.assign({ which: hub || 'datos' }, edFrom(clone(pf.intake || INTAKE), clone(pf.evol || []), clone(pf.datos || [])));
+  ED = Object.assign({ which: hub || 'datos', ocultos: [...(pf.ocultos || [])] }, edFrom(clone(pf.intake || INTAKE), clone(pf.evol || []), clone(pf.datos || [])));
   drawFormats();
   const root = $('#modal-root');
   root.oninput = e => {
@@ -322,12 +322,13 @@ ACT.formats = b => {
     const L = secList();
     if (op === 'close') { ED = null; root.innerHTML = ''; root.onclick = root.oninput = root.onchange = null; return; }
     if (op === 'tab') ED.which = arg;
+    else if (op === 'oc') { const i = ED.ocultos.indexOf(arg); if (i < 0) ED.ocultos.push(arg); else ED.ocultos.splice(i, 1); }
     else if (op === 'sadd') { if (L.length >= 15) return toast('Máximo 15 apartados.'); L.push({ t: 'Nuevo apartado', g: false, fs: [], soloKey: null, soloR: 4 }); }
     else if (op === 'gadd') ED.intake.push({ t: 'Genograma', g: true, fs: [] });
     else if (op === 'gdel') { const sc = L[+arg]; sc.g = false; }
     else if (op === 'sup') edMove(L, +arg, -1);
     else if (op === 'sdn') edMove(L, +arg, 1);
-    else if (op === 'sdel') { if (ED.which === 'intake' && L.length < 2) return toast('Debe quedar al menos un apartado.'); L.splice(+arg, 1); }
+    else if (op === 'sdel') { L.splice(+arg, 1); }
     else if (op === 'fadd') { const l = arg === '' ? ED.evol : L[+arg].fs; if (l.length >= 25) return toast('Máximo 25 campos.'); l.push({ k: newKey(), l: 'Nuevo campo', r: 3 }); }
     else if (op === 'fup') edMove(edList(arg), edIdx(arg), -1);
     else if (op === 'fdn') edMove(edList(arg), edIdx(arg), 1);
@@ -352,12 +353,12 @@ function saveFormats() {
   const bad = m => { toast(m); return false; };
   const intake = ED.intake.map(sc => secTo(sc, false)), datos = ED.datos.map(sc => secTo(sc, true));
   const evol = ED.evol.map(f => { const x = [f.k, f.l.trim(), +f.r || 3]; if ((f.d || '').trim()) x.push(f.d.slice(0, 20000)); return x; });
-  if (!intake.length || intake.concat(datos).some(sc => !sc[0])) return bad('Cada apartado necesita un título.');
+  if (intake.concat(datos).some(sc => !sc[0])) return bad('Cada apartado necesita un título.');
   if (intake.concat(datos).some(sc => sc[1].length > 1 && sc[1].some(f => !f[1]))) return bad('Cada campo necesita un nombre.');
   if (evol.some(f => !f[1])) return bad('Cada campo de la sesión necesita un nombre.');
   if (intake.filter(sc => sc[2] === 'genograma').length > 1) return bad('Solo puede haber un genograma.');
   const snap = clone(S.profile);
-  S.profile.formatos = { intake, evol, datos };
+  S.profile.formatos = { intake, evol, datos, ocultos: ED.ocultos || [] };
   persist([S.profile], $('[data-fm="save"]')).then(ok => { if (!ok) { restore(S.profile, snap); return; } finishFormats(); });
 }
 function finishFormats() {

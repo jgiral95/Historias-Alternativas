@@ -33,17 +33,7 @@ ACT.addAdd = async b => {
 };
 const toISO = v => v ? new Date(v).toISOString() : nowISO();
 /* Marca los obligatorios vacíos, lleva al primero y avisa. */
-function reqCheck(root, o, keys, labels) {
-  $$('.fld.miss', root).forEach(x => x.classList.remove('miss'));
-  const miss = keys.filter(k => !String(o[k] === undefined || o[k] === null ? '' : o[k]).trim());
-  if (!miss.length) return true;
-  miss.forEach(k => { const el = $('#f_' + k, root); if (el && el.closest('.fld')) el.closest('.fld').classList.add('miss'); });
-  const first = $('#f_' + miss[0], root); if (first) { first.scrollIntoView({ block: 'center' }); first.focus({ preventScroll: true }); }
-  const names = miss.map(k => (labels && labels[k]) || (($('label[for="f_' + k + '"]', root) || {}).textContent || k).replace(/\s*\*\s*$/, '').trim());
-  const opts = root && root.id === 'tabbody' ? '«No aplica» o «No responde»' : '«No refiere», «No aplica» o «No se indagó»';
-  toast(`Faltan ${miss.length === 1 ? 'un campo obligatorio' : miss.length + ' campos obligatorios'}: ${names.slice(0, 3).join('; ')}${miss.length > 3 ? ' y ' + (miss.length - 3) + ' más' : ''}. Llénelos o use ${opts}.`);
-  return false;
-}
+function reqCheck() { $$('.fld.miss').forEach(x => x.classList.remove('miss')); return true; }  // ningún campo es obligatorio
 document.addEventListener('click', e => {
   const b = e.target.closest('[data-nr]'); if (!b) return;
   const ta = document.getElementById('f_' + b.dataset.nr); if (!ta) return;
@@ -66,11 +56,9 @@ function atencionBlock(r, kind, p) {
 }
 const riesgoSel = r => F('Nivel de alerta (si la persona podría hacerse daño, hacerle daño a otros o está en una situación vulnerable)', 'riesgoNivel', (r || {}).riesgoNivel || '', { type: 'select', opts: [''].concat(RIESGO), req: true });
 function atencionChecks(o) {
-  if (!o.riesgoNivel) { toast('Elija el nivel de alerta (o «Sin señales de alerta»).'); const f = $('#f_riesgoNivel'); if (f) { f.closest('.fld').classList.add('miss'); f.focus(); } return false; }
   const nadie = !String(o.presentes || '').trim() || /^(ninguna|nadie|no aplica|no refiere|no se indagó)/i.test(String(o.presentes).trim());
-  if (!nadie && !o.presentesConsent) { toast('Confirme que las personas presentes aceptaron estar en la sesión.'); return false; }
   if (nadie) delete o.presentesConsent;
-  if (!/^\d{2}:\d{2}$/.test(o.horaFin || '')) { toast('Indique la hora de fin de la sesión.'); const f = $('#f_horaFin'); if (f) { f.closest('.fld').classList.add('miss'); f.focus(); } return false; }
+  if (!/^\d{2}:\d{2}$/.test(o.horaFin || '')) { delete o.duracion; return true; }
   const ini = new Date(o.sessionAt), min = (+o.horaFin.slice(0, 2)) * 60 + (+o.horaFin.slice(3)) - (ini.getHours() * 60 + ini.getMinutes());
   if (!(min > 0)) { toast('La hora de fin debe ser posterior a la de inicio.'); const f = $('#f_horaFin'); if (f) { f.closest('.fld').classList.add('miss'); f.focus(); } return false; }
   o.duracion = min;
@@ -162,7 +150,7 @@ function tabIntake(p) {
   return `<div id="intakeform" class="sec">${consentWarn}${sigNeeded()}<div class="row" style="justify-content:space-between"><h3 style="flex:1">Primera vez</h3><button class="btn" data-act="saveIntake" data-sign="0">Guardar borrador</button><button class="btn pri" data-act="saveIntake" data-sign="1">Firmar y guardar</button></div>${phraseHint()}
   ${atencionBlock(i, 'intake', p)}
   <div id="teleslot">${isRemote(i.modalidad) ? teleBlock(i) : ''}</div>
-  <p class="stnote">Los campos con <span class="req">*</span> son obligatorios: si no aplica, use «No refiere», «No aplica» o «No se indagó».</p>
+  <p class="stnote">Todos los campos son opcionales: llene lo que le sirva.</p>
   ${intakeSchema(i).map(([t, fs, g]) => `<div class="sec"><h3>${esc(t)}</h3><div class="grid">${fs.map(f => F(f[1], f[0], i[f[0]] !== undefined ? i[f[0]] : (f[3] || ''), { type: 'area', rows: f[2], wide: true, aria: t, req: true })).join('')}</div>${g === 'genograma' ? genoBlock() : ''}</div>`).join('')}
   <div class="sec" id="riskblock"><h3>Señales de alerta</h3><div class="grid">${riesgoSel(i)}</div>${F('Qué se observó y qué se hizo', 'riesgoAcciones', i.riesgoAcciones || '', { type: 'area', rows: 2, wide: true, req: true })}</div>
   ${dxBlock(i)}
@@ -240,7 +228,7 @@ function noteForm(p, n) {
   return `<div class="card" id="noteform"><div class="row" style="justify-content:space-between"><h3 style="flex:1">${n.id ? 'Editar borrador' : 'Nueva nota de sesión'}</h3><button class="btn" data-act="cancelNote">Cancelar</button><button class="btn" data-act="saveNote" data-sign="0">Guardar borrador</button><button class="btn pri" data-act="saveNote" data-sign="1">Firmar y guardar</button></div>${sigNeeded()}${prevNoteHTML(p, n)}
   ${atencionBlock(n, 'note', p)}
   <div id="teleslot">${isRemote(n.modalidad) ? teleBlock(n) : ''}</div>
-  ${evolSchema(n).length ? `${phraseHint()}<p class="stnote">Los campos con <span class="req">*</span> son obligatorios: si no aplica, use «No refiere», «No aplica» o «No se indagó».</p><div class="grid">${evolSchema(n).map(f => F(f[1], f[0], n[f[0]] !== undefined ? n[f[0]] : (f[3] || ''), { type: 'area', rows: f[2], wide: true, req: true })).join('')}</div>`
+  ${evolSchema(n).length ? `${phraseHint()}<p class="stnote">Todos los campos son opcionales: llene lo que le sirva.</p><div class="grid">${evolSchema(n).map(f => F(f[1], f[0], n[f[0]] !== undefined ? n[f[0]] : (f[3] || ''), { type: 'area', rows: f[2], wide: true, req: true })).join('')}</div>`
     : `<div class="banner" id="noformat">Aún no ha creado su formato de sesión. Créelo en «Mis formatos» con los campos que usted usa (puede partir del formato sugerido). <div class="row" style="margin-top:6px"><button class="btn sm pri" data-act="formats" data-hub="evol">Crear mi formato</button></div></div>`}
   <div class="grid">${riesgoSel(n)}</div>
   ${(() => { const cur = currentDx(p, n.id); return dxBlock(n, { note: true, ctx: 'note:' + p.id + ':' + (S.newNote || 'new'), seed: cur.items, from: cur.items.length ? cur.from : '' }); })()}

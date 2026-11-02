@@ -737,7 +737,7 @@ def list_records(request: Request, user: User = Depends(current_user), db: Sessi
         elif r.kind == "profile":
             pr = decrypt(r.payload)
             out.append({"id": "profile", "kind": "profile", "nombre": pr.get("nombre"), "consultorio": pr.get("consultorio"),
-                        "formatos": {"datos": (pr.get("formatos") or {}).get("datos") or []}})
+                        "formatos": {"datos": (pr.get("formatos") or {}).get("datos") or [], "ocultos": (pr.get("formatos") or {}).get("ocultos") or []}})
     return out
 
 
@@ -786,22 +786,6 @@ def put_record(rid: str, request: Request, bg: BackgroundTasks, payload: dict = 
     numbered = not restoring and _assign_folios(db, oid, kind, rid, old, payload)
     if not restoring:
         _check_clock(_new_signatures(kind, old, payload))
-        if kind == "patient":
-            for c in (payload.get("consents") or [])[len((old or {}).get("consents") or []):]:
-                if c.get("sinFirma2") and not c.get("signer2Name"):
-                    sid = (c.get("soporte") or {}).get("id")
-                    if not (isinstance(sid, str) and ID_RE.match(sid) and db.get(Blob, (oid, sid))):
-                        raise HTTPException(400, "Con un solo representante legal se debe adjuntar el documento de soporte")
-    if kind == "appt" and not restoring:
-        _check_appt_consent(db, oid, old, payload)
-    if kind == "report" and not restoring and payload.get("signedAt") and not (old or {}).get("signedAt"):
-        prow = db.get(Record, (oid, patient_id or ""))
-        pat = decrypt(prow.payload) if prow else {}
-        care = any(c.get("tipo") != "Autorización de uso de datos personales"
-                   and (c.get("revocacion") or {}).get("alcance") != "Total" for c in pat.get("consents") or [])
-        first = (pat.get("intake") or {}).get("signedAt") or pat.get("incorporaciones")
-        if not (care and first):
-            raise HTTPException(400, "Para emitir un informe el consultante debe tener consentimiento informado vigente y primera vez firmada")
     if kind == "report" and payload.get("signedAt") and not (old or {}).get("signedAt") and payload.get("verificacion"):
         code = str(payload["verificacion"])
         if not VERIF_RE.match(code):

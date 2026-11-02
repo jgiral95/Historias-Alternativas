@@ -339,19 +339,6 @@ def test_paper_record_incorporation_is_signed_and_append_only():
     assert c.delete("/api/records/p_4").status_code == 409
 
 
-def test_single_guardian_consent_requires_support_document():
-    make_user("sg@x.co")
-    c = client_for("sg@x.co")
-    c.put("/api/records/p_8", json=patient("p_8"))
-    con = {"text": "t", "signerName": "Laura", "sinFirma2": "Padre fallecido", "signedAt": NOW}
-    assert c.put("/api/records/p_8", json=patient("p_8", consents=[con])).status_code == 400
-    assert c.put("/api/records/p_8", json=patient("p_8", consents=[{**con, "soporte": {"id": "f_77"}}])).status_code == 400  # no existe
-    c.put("/api/blobs/f_77", content=PDF, headers={"Content-Type": "application/pdf"})
-    assert c.put("/api/records/p_8", json=patient("p_8", consents=[{**con, "soporte": {"id": "f_77"}}])).status_code == 200
-    both = {"text": "t", "signerName": "Laura", "signer2Name": "Pedro", "signedAt": NOW}
-    assert c.put("/api/records/p_9", json=patient("p_9", consents=[both])).status_code == 200  # con los dos no se exige
-
-
 class FakeGoogle:
     """Simula los servicios de Google que usa la sincronización."""
     def __init__(self):
@@ -427,29 +414,6 @@ def test_google_calendar_one_way_sync(monkeypatch):
     assert client_for("otro2@x.co").get("/api/google/status").json()["connected"] is False
     assert c.delete("/api/google").status_code == 204 and g.revoked == ["rt-secreto"]
     assert c.get("/api/google/status").json()["connected"] is False
-
-
-def test_report_requires_consent_and_first_session():
-    make_user("rq@x.co")
-    c = client_for("rq@x.co")
-    rep = {"id": "r_1", "kind": "report", "patientId": "p_1", "tipo": "Constancia", "contenido": "x", "signedAt": NOW, "addenda": []}
-    c.put("/api/records/p_1", json=patient("p_1"))
-    r = c.put("/api/records/r_1", json=rep)
-    assert r.status_code == 400 and "consentimiento" in r.json()["detail"]
-    data = {"text": "t", "tipo": "Autorización de uso de datos personales", "signedAt": NOW}
-    c.put("/api/records/p_1", json=patient("p_1", consents=[data]))
-    assert c.put("/api/records/r_1", json=rep).status_code == 400  # la autorización de datos no basta
-    con = {"text": "t", "tipo": "Atención presencial", "signedAt": NOW}
-    c.put("/api/records/p_1", json=patient("p_1", consents=[data, con]))
-    assert c.put("/api/records/r_1", json=rep).status_code == 400  # falta la primera vez
-    c.put("/api/records/p_1", json=patient("p_1", consents=[data, con], intake={"motivo": "m", "signedAt": NOW, "addenda": []}))
-    assert c.put("/api/records/r_1", json=rep).status_code in (200, 204)
-    # historia en papel incorporada cuenta como primera vez; un consentimiento revocado del todo no cuenta
-    c.put("/api/records/p_2", json=patient("p_2", consents=[con], incorporaciones=[{"id": "i1", "archivos": [], "signedAt": NOW}]))
-    assert c.put("/api/records/r_2", json={**rep, "id": "r_2", "patientId": "p_2"}).status_code in (200, 204)
-    rev = {**con, "revocacion": {"alcance": "Total", "signedAt": NOW}}
-    c.put("/api/records/p_3", json=patient("p_3", consents=[rev], intake={"motivo": "m", "signedAt": NOW, "addenda": []}))
-    assert c.put("/api/records/r_3", json={**rep, "id": "r_3", "patientId": "p_3"}).status_code == 400
 
 
 def test_two_factor_authentication():
@@ -594,31 +558,13 @@ def test_process_notes_are_private_and_editable():
     assert c.delete("/api/records/pn_1").status_code == 204
 
 
-def test_appointment_needs_the_matching_consent():
-    make_user("cons@x.co")
-    c = client_for("cons@x.co")
+def test_consents_are_optional():
+    make_user("opt@x.co")
+    c = client_for("opt@x.co")
     c.put("/api/records/p_1", json=patient("p_1"))
-    appt = {"id": "a_1", "kind": "appt", "patientId": "p_1", "startAt": "2099-03-04T15:00:00.000Z", "duracion": 50, "modalidad": "Presencial", "estado": "Programada"}
-    r = c.put("/api/records/a_1", json=appt)
-    assert r.status_code == 400 and "presencial" in r.json()["detail"]
-    assert c.put("/api/records/a_1", json={**appt, "estado": "Cancelada"}).status_code in (200, 204)  # no programada: se permite
-    p = next(x for x in c.get("/api/records").json() if x["id"] == "p_1")
-    # solo la autorización de datos no basta
-    c.put("/api/records/p_1", json={**p, "consents": consent("Autorización de uso de datos personales")})
-    assert c.put("/api/records/a_2", json={**appt, "id": "a_2"}).status_code == 400
-    p = next(x for x in c.get("/api/records").json() if x["id"] == "p_1")
-    c.put("/api/records/p_1", json={**p, "consents": p["consents"] + consent("Atención presencial")})
-    assert c.put("/api/records/a_2", json={**appt, "id": "a_2"}).status_code in (200, 204)
-    r = c.put("/api/records/a_3", json={**appt, "id": "a_3", "modalidad": "Virtual"})
-    assert r.status_code == 400 and "teleterapia" in r.json()["detail"]
-    assert c.put("/api/records/a_2", json={**appt, "id": "a_2", "modalidad": "Telefónica"}).status_code == 400  # cambiar la modalidad también
-    assert c.put("/api/records/a_2", json={**appt, "id": "a_2", "startAt": "2099-03-05T15:00:00.000Z"}).status_code in (200, 204)  # moverla sí
-    p = next(x for x in c.get("/api/records").json() if x["id"] == "p_1")
-    c.put("/api/records/p_1", json={**p, "consents": p["consents"] + consent("Teleterapia (atención a distancia)")})
-    assert c.put("/api/records/a_3", json={**appt, "id": "a_3", "modalidad": "Virtual"}).status_code in (200, 204)
-    # revocado del todo: ya no cubre
-    p = next(x for x in c.get("/api/records").json() if x["id"] == "p_1")
-    cs = p["consents"]; cs[2] = {**cs[2], "revocacion": {"fecha": "2026-10-01", "alcance": "Total", "signedAt": cs[0]["signedAt"]}}
-    assert c.put("/api/records/p_1", json={**p, "consents": cs}).status_code == 200
-    assert c.put("/api/records/a_4", json={**appt, "id": "a_4", "modalidad": "Virtual"}).status_code == 400
-
+    appt = {"id": "a_1", "kind": "appt", "patientId": "p_1", "startAt": "2099-03-04T15:00:00.000Z", "duracion": 50, "modalidad": "Virtual", "estado": "Programada"}
+    assert c.put("/api/records/a_1", json=appt).status_code in (200, 204)
+    rep = {"id": "r_1", "kind": "report", "patientId": "p_1", "tipo": "Constancia", "contenido": "x", "signedAt": NOW, "addenda": []}
+    assert c.put("/api/records/r_1", json=rep).status_code in (200, 204)
+    con = {"text": "t", "signerName": "Laura", "sinFirma2": "Padre fallecido", "signedAt": NOW}
+    assert c.put("/api/records/p_1", json=patient("p_1", consents=[con])).status_code == 200

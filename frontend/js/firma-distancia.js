@@ -91,7 +91,6 @@ ACT.signConsent = async b => {
     if (second && !o.r2Name) { toast('Escriba el nombre del representante legal 2.'); return; }
     if (!second && !o.sinFirma2) { toast('Falta la firma del representante legal 2, o explique por qué no firma.'); return; }
     const sop = $('#f_soporte') && $('#f_soporte').files[0];
-    if (!second && $('#f_soporte') && !sop) { toast('Con un solo representante debe adjuntar el documento notarial o de soporte.'); return; }
     if (!second && sop && (!FILE_TYPES[sop.type] || upTooBig(sop))) { toast('El soporte debe ser PDF (máximo 8 MB) o imagen (máximo 40 MB).'); return; }
     if (o.as_firma && pads.assentSig.isEmpty()) { toast('Falta la firma del menor, o desmarque la casilla del asentimiento.'); return; }
     Object.assign(rec, { signerType: 'Acudiente', signerName: o.r1Name, signerDoc: o.r1Doc, signerParentesco: o.r1Par, signerSig: pads.consentSig.data(),

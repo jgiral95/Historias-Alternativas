@@ -23,12 +23,7 @@ function reportCard(r) {
 }
 /* Para emitir informes el consultante debe tener consentimiento de atención vigente y primera vez firmada
    (o una constancia de historia en papel incorporada). */
-function reportBlockers(p) {
-  const out = [];
-  if (!(p.consents || []).some(c => c.tipo !== DATA_TIPO && !(c.revocacion && c.revocacion.alcance === 'Total'))) out.push(['consent', 'un consentimiento informado de atención vigente']);
-  if (!(p.intake && p.intake.signedAt) && !(p.incorporaciones || []).length) out.push(['intake', 'la consulta de primera vez firmada']);
-  return out;
-}
+function reportBlockers(p) { return []; }  // el consentimiento y la primera vez son opcionales
 function tabInformes(p) {
   const rs = S.reports.filter(r => r.patientId === p.id).sort((a, b) => (b.signedAt || b.updatedAt || '').localeCompare(a.signedAt || a.updatedAt || ''));
   const editing = S.newReport === 'new' ? {} : (S.newReport ? S.reports.find(r => r.id === S.newReport) : null);

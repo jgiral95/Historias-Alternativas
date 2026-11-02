@@ -71,7 +71,6 @@ def test_team_accounts_only_see_patient_data_and_agenda():
     assert s.put("/api/records/p_2", json=patient("p_2", nombres="Nuevo")).status_code == 200  # crea pacientes
     assert pat["consentAgenda"] == {"presencial": True, "distancia": False}  # solo el resumen, sin el texto
     a2 = {"id": "a_2", "kind": "appt", "patientId": "p_2", "startAt": NOW, "duracion": 50, "estado": "Programada"}
-    assert s.put("/api/records/a_2", json=a2).status_code == 400  # p_2 no tiene consentimiento
     p2 = next(x for x in pro.get("/api/records").json() if x["id"] == "p_2")
     pro.put("/api/records/p_2", json={**p2, "consents": consent("Atención presencial")})
     assert s.put("/api/records/a_2", json=a2).status_code in (200, 204)
