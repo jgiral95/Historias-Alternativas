@@ -41,7 +41,7 @@ ACT.team = async () => {
   const root = $('#modal-root');
   const draw = (list, msg) => {
     root.innerHTML = `<div class="modal" role="dialog" aria-modal="true" aria-label="Mi equipo"><div class="box" id="teamform"><div class="row" style="justify-content:space-between"><h3>Mi equipo</h3><button class="btn sm" data-tm2="close">Cerrar</button></div>
-    <p style="margin:0;font-size:13px;color:var(--muted)">Cuentas para su secretaría o asistentes. Cada persona entra con su propio correo y contraseña y trabaja sobre sus consultantes, pero <b>solo ve y edita los datos de los consultantes y la agenda</b>. No ve consentimientos, primera vez, evoluciones, impresiones, escalas, informes ni adjuntos. Sus cambios a los datos quedan en el historial con su nombre.</p>
+    <p style="margin:0;font-size:13px;color:var(--muted)">Cuentas para su secretaría o asistentes. Cada persona entra con su propio correo y contraseña y trabaja sobre sus consultantes, pero <b>solo ve y edita los datos de los consultantes y la agenda</b>. No ve consentimientos, primera vez, sesiones, impresiones, escalas, informes ni adjuntos. Sus cambios a los datos quedan en el historial con su nombre.</p>
     ${msg ? `<div class="banner">${msg}</div>` : ''}
     ${list.length ? list.map(u => `<div class="card"><div class="row" style="justify-content:space-between"><span><b>${esc(u.name)}</b> <span class="chip ${u.active ? 'ok' : 'warn'}">${u.active ? 'Activa' : 'Inactiva'}</span>${u.totp ? ' <span class="chip">2 pasos</span>' : ''}<br><small style="color:var(--muted)">${esc(u.email)}</small></span>
       <span class="row"><button class="btn sm" data-tm2="pw" data-id="${u.id}">Nueva contraseña</button><button class="btn sm ${u.active ? 'warn' : ''}" data-tm2="${u.active ? 'off' : 'on'}" data-id="${u.id}">${u.active ? 'Desactivar' : 'Activar'}</button></span></div>
@@ -71,7 +71,7 @@ ACT.profile = () => {
   if (TEAM()) return accountModal();
   const pr = S.profile, root = $('#modal-root');
   root.innerHTML = `<div class="modal" role="dialog" aria-modal="true" aria-label="Mi perfil"><div class="box" id="profform"><div class="row" style="justify-content:space-between"><h3>Mi perfil y firma</h3><button class="btn sm" id="pcl">Cerrar</button></div>
-  <div class="grid">${F('Nombre completo', 'nombre', pr.nombre)}${F('Cédula (documento de identidad)', 'cedula', pr.cedula || '')}${F('Título', 'titulo', pr.titulo)}${F('Registro (si lo tiene)', 'registro', pr.registro)}${F('Nombre del consultorio', 'consultorio', pr.consultorio)}${F('Plataforma habitual de telepsicología', 'plataforma', pr.plataforma || '', { ph: 'Ej.: Google Meet' })}${F('Ciudad', 'ciudad', pr.ciudad)}${F('Teléfono', 'telefono', pr.telefono, { type: 'tel' })}${F('Correo', 'correo', pr.correo, { type: 'email' })}</div>
+  <div class="grid">${F('Nombre completo', 'nombre', pr.nombre)}${F('Cédula (documento de identidad)', 'cedula', pr.cedula || '')}${F('Título', 'titulo', pr.titulo)}${F('Registro (si lo tiene)', 'registro', pr.registro)}${F('Nombre del consultorio', 'consultorio', pr.consultorio)}${F('Plataforma habitual de teleterapia', 'plataforma', pr.plataforma || '', { ph: 'Ej.: Google Meet' })}${F('Ciudad', 'ciudad', pr.ciudad)}${F('Teléfono', 'telefono', pr.telefono, { type: 'tel' })}${F('Correo', 'correo', pr.correo, { type: 'email' })}</div>
   <div class="fld"><span class="lbl">Logo para sus informes (opcional)</span>
   <div class="row" style="align-items:center"><span id="plogo">${pr.logo ? `<img class="logoprev" src="${pr.logo}" alt="Logo guardado">` : '<span style="font-size:13px;color:var(--muted)">Sin logo</span>'}</span>
   <input type="file" id="plogofile" accept="image/png,image/jpeg,image/webp,image/svg+xml" aria-label="Subir logo">${pr.logo ? '<button class="btn sm warn" id="plogodel" type="button">Quitar logo</button>' : ''}</div>
@@ -243,7 +243,7 @@ async function draw2fa(step, data) {
 
 /* ----- Mis formatos: único lugar para estructuras, plantillas, modelos y frases ----- */
 /* Mismo orden que las pestañas de la ficha del consultante; luego lo que se usa en varias partes. */
-const HUB = [['datos', 'Datos del consultante'], ['consent', 'Consentimientos'], ['intake', 'Primera vez'], ['evol', 'Evolución'], ['escalas', 'Escalas'], ['informes', 'Informes'], ['frases', 'Frases']];
+const HUB = [['datos', 'Datos del consultante'], ['consent', 'Consentimientos'], ['intake', 'Primera vez'], ['evol', 'Sesión'], ['escalas', 'Chequeos'], ['informes', 'Informes'], ['frases', 'Frases']];
 const hubTabs = active => `<div class="tabs hubtabs" role="tablist" aria-label="Secciones de Mis formatos">${HUB.map(([k, l]) => `<button type="button" class="tab ${active === k ? 'on' : ''}" role="tab" aria-selected="${active === k}" data-hub="${k}">${l}</button>`).join('')}</div>`;
 function openHub(k) {
   if (ED && ['intake', 'evol', 'datos'].includes(k)) { ED.which = k; return drawFormats(); }  // conserva lo no guardado
@@ -260,7 +260,7 @@ function hubClosed() {
   $$('.phint').forEach(x => { x.outerHTML = phraseHint(); });
 }
 
-/* ----- Mis formatos de primera vez y evolución ----- */
+/* ----- Mis formatos de primera vez y sesión ----- */
 let ED = null;
 /* Un apartado sin campos es «solo título»: se guarda como un único campo sin nombre (no repite subtítulo). */
 const secFrom = ([t, fs, g]) => { const solo = fs.length === 1 && !fs[0][1]; return { t, g: g === 'genograma', soloKey: solo ? fs[0][0] : null, soloR: solo ? fs[0][2] : 4, soloD: solo ? fs[0][3] || '' : '', fs: solo ? [] : fs.map(([k, l, r, d]) => ({ k, l, r, d: d || '' })) }; };
@@ -284,9 +284,9 @@ function secCard(sc, si, isDatos) {
 function drawFormats() {
   const root = $('#modal-root'), prev = root.querySelector('.modal'), top = prev ? prev.scrollTop : 0, w = ED.which;
   const hasGeno = ED.intake.some(sc => sc.g);
-  const intro = { intake: 'Los cambios solo se aplican a las <b>nuevas</b> consultas de primera vez. Las ya firmadas conservan el formato con el que se firmaron.', evol: 'Los cambios solo se aplican a las <b>nuevas</b> evoluciones. Las ya firmadas conservan el formato con el que se firmaron.', datos: 'Agregue los datos sociodemográficos que usted toma y que no vienen en la pestaña Datos. Aparecen al final de esa pestaña para todos sus consultantes.' }[w];
+  const intro = { intake: 'Los cambios solo se aplican a las <b>nuevas</b> consultas de primera vez. Las ya firmadas conservan el formato con el que se firmaron.', evol: 'Los cambios solo se aplican a las <b>nuevas</b> sesiones. Las ya firmadas conservan el formato con el que se firmaron.', datos: 'Agregue los datos sociodemográficos que usted toma y que no vienen en la pestaña Datos. Aparecen al final de esa pestaña para todos sus consultantes.' }[w];
   const body = w === 'evol'
-    ? `<p class="stnote" style="margin:0">La fecha y hora, la modalidad, las personas presentes, el riesgo y las impresiones van siempre en la evolución: aquí arma el resto.</p><div class="card">${ED.evol.map((f, fi) => edField(f, String(fi))).join('') || '<p style="margin:0;color:var(--muted)">Aún no tiene campos. Agréguelos uno por uno o use el formato sugerido.</p>'}<div class="row"><button class="btn sm" data-fm="fadd:">+ Campo</button>${ED.evol.length ? '' : '<button class="btn sm" data-fm="reset">Usar el formato sugerido</button>'}</div></div>`
+    ? `<p class="stnote" style="margin:0">La fecha y hora, la modalidad, las personas presentes, el riesgo y las impresiones van siempre en la sesión: aquí arma el resto.</p><div class="card">${ED.evol.map((f, fi) => edField(f, String(fi))).join('') || '<p style="margin:0;color:var(--muted)">Aún no tiene campos. Agréguelos uno por uno o use el formato sugerido.</p>'}<div class="row"><button class="btn sm" data-fm="fadd:">+ Campo</button>${ED.evol.length ? '' : '<button class="btn sm" data-fm="reset">Usar el formato sugerido</button>'}</div></div>`
     : secList().map((sc, si) => secCard(sc, si, w === 'datos')).join('') + `<div class="row"><button class="btn" data-fm="sadd">+ Apartado</button>${w === 'intake' && !hasGeno ? '<button class="btn" data-fm="gadd">+ Genograma</button>' : ''}</div>`;
   root.innerHTML = `<div class="modal" role="dialog" aria-modal="true" aria-label="Mis formatos"><div class="box" id="fmform"><div class="row" style="justify-content:space-between"><h3>Mis formatos</h3><button class="btn sm" data-fm="close">Cerrar</button></div>
   ${hubTabs(w)}
@@ -354,7 +354,7 @@ function saveFormats() {
   const evol = ED.evol.map(f => { const x = [f.k, f.l.trim(), +f.r || 3]; if ((f.d || '').trim()) x.push(f.d.slice(0, 20000)); return x; });
   if (!intake.length || intake.concat(datos).some(sc => !sc[0])) return bad('Cada apartado necesita un título.');
   if (intake.concat(datos).some(sc => sc[1].length > 1 && sc[1].some(f => !f[1]))) return bad('Cada campo necesita un nombre.');
-  if (evol.some(f => !f[1])) return bad('Cada campo de la evolución necesita un nombre.');
+  if (evol.some(f => !f[1])) return bad('Cada campo de la sesión necesita un nombre.');
   if (intake.filter(sc => sc[2] === 'genograma').length > 1) return bad('Solo puede haber un genograma.');
   const snap = clone(S.profile);
   S.profile.formatos = { intake, evol, datos };

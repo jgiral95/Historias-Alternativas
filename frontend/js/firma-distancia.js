@@ -133,7 +133,7 @@ ACT.consentManage = () => {
       <div class="fld"><label for="f_texto">Texto</label>${richBar('f_texto')}<textarea id="f_texto" data-f="texto" rows="16" style="font-family:var(--f-doc);font-size:15px">${esc(edit.texto || '')}</textarea></div>
       <div class="fld"><span class="lbl">Insertar dato en el cursor (se llena solo con los datos de cada consultante)</span><div class="row">${CONSENT_VARS.map(([k, l]) => `<button type="button" class="btn sm" data-var="${k}" title="{${k}}">${esc(l)}</button>`).join('')}</div></div>
       <details class="sec"><summary>Vista previa con un consultante</summary><div class="row" style="margin-top:6px"><select id="cm_pv" aria-label="Consultante para la vista previa">${S.patients.map(x => `<option value="${x.id}" ${x.id === S.pid ? 'selected' : ''}>${esc(fullName(x))}</option>`).join('') || '<option value="">(sin consultantes)</option>'}</select><button type="button" class="btn sm" data-cm="pv">Ver</button></div><div id="cm_pvout" class="doc-prev" style="white-space:pre-wrap;font-family:var(--f-doc);margin-top:8px"></div></details>
-      <div class="row"><button class="btn sm" data-cm="base">Cargar el texto base</button><button class="btn sm" data-cm="tele">Agregar cláusulas de telepsicología</button></div>
+      <div class="row"><button class="btn sm" data-cm="base">Cargar el texto base</button><button class="btn sm" data-cm="tele">Agregar cláusulas de teleterapia</button></div>
       <div class="row end"><button class="btn" data-cm="list">Volver</button><button class="btn pri" data-cm="save" data-id="${esc(edit.id || '')}">Guardar modelo</button></div>`
     : `${list.map(c => `<div class="card"><div class="row" style="justify-content:space-between"><b>${esc(c.nombre)}</b><span class="row"><button class="btn sm" data-cm="edit" data-id="${esc(c.id)}">Editar</button><button class="btn sm warn" data-cm="del" data-id="${esc(c.id)}">Quitar</button></span></div></div>`).join('') || '<p style="margin:0;color:var(--muted)">Aún no tiene modelos propios. Puede crear uno por tipo de atención: adultos, familia, niños, pareja…</p>'}
       <p style="margin:0;font-size:13px;color:var(--muted)">Editar o quitar un modelo no cambia los consentimientos ya firmados.</p><div class="row end"><button class="btn pri" data-cm="new">Nuevo modelo</button></div>`}</div></div>`;
@@ -150,7 +150,7 @@ ACT.consentManage = () => {
     if (a === 'new') return draw({});
     if (a === 'edit') return draw(list.find(c => c.id === b.dataset.id));
     if (a === 'base') { $('#f_texto').value = DEFAULT_CONSENT; return; }
-    if (a === 'tele') { const t = $('#f_texto'); if (!t.value.includes('TELEPSICOLOGÍA')) t.value = t.value.trimEnd() + TELE_CLAUSE; return; }
+    if (a === 'tele') { const t = $('#f_texto'); if (!t.value.includes('TELETERAPIA')) t.value = t.value.trimEnd() + TELE_CLAUSE; return; }
     const snap = clone(S.profile);
     if (a === 'del') {
       if (!b.dataset.sure) { b.dataset.sure = 1; b.textContent = 'Confirmar'; return; }

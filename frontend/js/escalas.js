@@ -1,15 +1,12 @@
-/* Escalas y pruebas, y frases frecuentes. Parte de app.html (scripts clásicos que comparten el ámbito global; el orden de carga importa). */
-/* ===== Escalas y pruebas ===== */
-const FREQ4 = [[0, 'Ningún día'], [1, 'Varios días'], [2, 'Más de la mitad de los días'], [3, 'Casi todos los días']];
-const PFIZER = 'Elaborado por los doctores Robert L. Spitzer, Janet B. W. Williams, Kurt Kroenke y colegas, mediante una subvención educativa otorgada por Pfizer Inc. No se requiere permiso para reproducir, traducir, presentar o distribuir.';
-const FUNC_Q = ['Si marcó cualquiera de los problemas, ¿qué tanta dificultad le han dado estos problemas para hacer su trabajo, encargarse de las tareas del hogar o llevarse bien con otras personas?', ['No ha sido difícil', 'Un poco difícil', 'Muy difícil', 'Extremadamente difícil']];
+/* Chequeos de bienestar, y frases frecuentes. Parte de app.html (scripts clásicos que comparten el ámbito global; el orden de carga importa). */
+/* ===== Chequeos de bienestar (no son pruebas médicas ni psicológicas) ===== */
 const SCALES_BASE = [
-  { id: 'phq9', nombre: 'PHQ-9 · Depresión', instruccion: 'Durante las últimas 2 semanas, ¿qué tan seguido ha tenido molestias debido a los siguientes problemas?', opciones: FREQ4,
-    items: ['Poco interés o placer en hacer cosas', 'Se ha sentido decaído(a), deprimido(a) o sin esperanzas', 'Ha tenido dificultad para quedarse o permanecer dormido(a), o ha dormido demasiado', 'Se ha sentido cansado(a) o con poca energía', 'Sin apetito o ha comido en exceso', 'Se ha sentido mal con usted mismo(a) – o que es un fracaso o que ha quedado mal con usted mismo(a) o con su familia', 'Ha tenido dificultad para concentrarse en ciertas actividades, tales como leer el periódico o ver la televisión', '¿Se ha movido o hablado tan lento que otras personas podrían haberlo notado? o lo contrario – muy inquieto(a) o agitado(a) que ha estado moviéndose mucho más de lo normal', 'Pensamientos de que estaría mejor muerto(a) o de lastimarse de alguna manera'],
-    rangos: [[0, 4, 'Mínima'], [5, 9, 'Leve'], [10, 14, 'Moderada'], [15, 19, 'Moderadamente severa'], [20, 27, 'Severa']], alertas: [8], funcional: FUNC_Q, fuente: PFIZER },
-  { id: 'gad7', nombre: 'GAD-7 · Ansiedad', instruccion: 'Durante las últimas 2 semanas, ¿qué tan seguido ha tenido molestias debido a los siguientes problemas?', opciones: FREQ4,
-    items: ['Se ha sentido nervioso(a), ansioso(a) o con los nervios de punta', 'No ha sido capaz de parar o controlar su preocupación', 'Se ha preocupado demasiado por motivos diferentes', 'Ha tenido dificultad para relajarse', 'Se ha sentido tan inquieto(a) que no ha podido quedarse quieto(a)', 'Se ha molestado o irritado fácilmente', 'Ha tenido miedo de que algo terrible fuera a pasar'],
-    rangos: [[0, 4, 'Mínima'], [5, 9, 'Leve'], [10, 14, 'Moderada'], [15, 21, 'Severa']], alertas: [], funcional: FUNC_Q, fuente: PFIZER }
+  { id: 'bienestar', nombre: 'Chequeo de bienestar', instruccion: 'Pensando en las últimas 2 semanas, ¿con qué frecuencia le pasó lo siguiente?', opciones: [[0, 'Nunca'], [1, 'A veces'], [2, 'Casi siempre'], [3, 'Siempre']],
+    items: ['Me sentí con energía', 'Dormí y descansé bien', 'Me sentí en calma', 'Disfruté de mis actividades', 'Me sentí acompañado(a)', 'Pude hacer pausas para cuidarme'],
+    rangos: [[0, 6, 'Por cuidar'], [7, 12, 'En camino'], [13, 18, 'Bien']], alertas: [] },
+  { id: 'equilibrio', nombre: 'Rueda del equilibrio', instruccion: 'Del 1 (muy bajo) al 5 (muy alto), ¿cómo siente hoy cada área de su vida?', opciones: [[1, 'Muy bajo'], [2, 'Bajo'], [3, 'Medio'], [4, 'Alto'], [5, 'Muy alto']],
+    items: ['Cuerpo y movimiento', 'Descanso', 'Alimentación', 'Emociones', 'Relaciones', 'Trabajo o estudio', 'Tiempo para sí mismo(a) y espiritualidad'],
+    rangos: [[7, 17, 'Por cuidar'], [18, 27, 'En camino'], [28, 35, 'Bien']], alertas: [] }
 ];
 const myScales = () => S.profile.escalas || [];
 const allScales = () => SCALES_BASE.concat(myScales());
@@ -18,7 +15,7 @@ const scaleMin = sc => sc.items.length * Math.min(...sc.opciones.map(o => o[0]))
 const levelOf = (sc, t) => { const r = (sc.rangos || []).find(x => t >= x[0] && t <= x[1]); return r ? r[2] : ''; };
 function scaleForm(p) {
   const sc = allScales().find(x => x.id === S.newScale) || SCALES_BASE[0];
-  return `<div class="card" id="scaleform"><h3>Aplicar escala</h3>${sigNeeded()}
+  return `<div class="card" id="scaleform"><h3>Aplicar chequeo</h3>${sigNeeded()}
   <div class="grid"><div class="fld"><label for="f_escala">Escala</label><select id="f_escala">${allScales().map(x => `<option value="${esc(x.id)}" ${x.id === sc.id ? 'selected' : ''}>${esc(x.nombre)}</option>`).join('')}</select></div>
   ${F('Fecha y hora de aplicación', 'aplicadaAt', localInput(), { type: 'datetime-local' })}${F('Forma de aplicación', 'modo', 'Autoaplicada', { type: 'select', opts: ['Autoaplicada', 'Heteroaplicada (la diligencia el terapeuta)', 'Aplicada a un informante'] })}</div>
   ${sc.instruccion ? `<p style="margin:0;font-weight:500">${esc(sc.instruccion)}</p>` : ''}
@@ -64,12 +61,12 @@ function scaleChart(sc, list) {
 function tabEscalas(p) {
   const apps = S.scales.filter(e => e.patientId === p.id && e.signedAt).sort((a, b) => a.aplicadaAt.localeCompare(b.aplicadaAt));
   const groups = [...new Set(apps.map(e => e.escala.id))].map(id => apps.filter(e => e.escala.id === id));
-  return `<div class="sec"><div class="row" style="justify-content:space-between"><h3 style="flex:1">Escalas y pruebas</h3>${S.newScale ? '' : '<button class="btn" data-act="formats" data-hub="escalas">Editar escalas</button><button class="btn pri" data-act="newScale">Aplicar escala</button>'}</div>
+  return `<div class="sec"><div class="row" style="justify-content:space-between"><h3 style="flex:1">Chequeos de bienestar</h3>${S.newScale ? '' : '<button class="btn" data-act="formats" data-hub="escalas">Editar escalas</button><button class="btn pri" data-act="newScale">Aplicar chequeo</button>'}</div>
   ${S.newScale ? scaleForm(p) : ''}
   ${groups.map(g => { const sc = g[g.length - 1].escala, last = g[g.length - 1];
     return `<div class="card"><div class="row" style="justify-content:space-between"><b>${esc(sc.nombre)}</b><span>Último: <b style="font-family:var(--f-mono)">${last.total}</b>${last.nivel ? ` <span class="chip">${esc(last.nivel)}</span>` : ''}</span></div>
     ${scaleChart(sc, g)}
-    <dl class="kv">${g.slice().reverse().map(e => `<dt>${esc(fmtShort(e.aplicadaAt))}</dt><dd>${e.total} puntos${e.nivel ? ' · ' + esc(e.nivel) : ''}${(e.alertas || []).length ? ` <span class="chip danger">Ítem ${e.alertas.map(i => i + 1).join(', ')} positivo</span>` : ''} · <button class="btn sm" data-act="viewScale" data-id="${e.id}">Ver</button></dd>`).join('')}</dl></div>`; }).join('') || (S.newScale ? '' : '<div class="empty">Aún no hay escalas aplicadas. Incluye PHQ-9 (depresión) y GAD-7 (ansiedad); puede agregar las suyas en «Mis escalas».</div>')}</div>`;
+    <dl class="kv">${g.slice().reverse().map(e => `<dt>${esc(fmtShort(e.aplicadaAt))}</dt><dd>${e.total} puntos${e.nivel ? ' · ' + esc(e.nivel) : ''}${(e.alertas || []).length ? ` <span class="chip danger">Ítem ${e.alertas.map(i => i + 1).join(', ')} positivo</span>` : ''} · <button class="btn sm" data-act="viewScale" data-id="${e.id}">Ver</button></dd>`).join('')}</dl></div>`; }).join('') || (S.newScale ? '' : '<div class="empty">Aún no hay escalas aplicadas. Incluye PHQ-9 (depresión) y GAD-7 (ansiedad); puede agregar las suyas en «Mis chequeos».</div>')}</div>`;
 }
 ACT.newScale = () => { S.newScale = SCALES_BASE[0].id; render(); updateScaleTotal(); };
 ACT.cancelScale = () => { S.newScale = null; render(); };
@@ -83,7 +80,7 @@ ACT.saveScale = async b => {
     version: o.version || '', motivo: o.motivo, interpretacion: o.interpretacion, protocolo: fileRef ? { id: fileRef.id, nombre: fileRef.nombre, sha256: fileRef.sha256 } : undefined, entregaA: o.entregaA || '', entregaFecha: o.entregaFecha || '', ...therSnap(), signedAt: nowISO(), addenda: [] };
   if (!(await persist([e], b))) return;
   S.scales.push(e); S.newScale = null;
-  toast(r.alertas.length ? 'Escala guardada. Hay un ítem de riesgo positivo: evalúelo y regístrelo.' : 'Escala guardada.'); render();
+  toast(r.alertas.length ? 'Escala guardada. Hay una respuesta que conviene conversar con el consultante.' : 'Escala guardada.'); render();
 };
 function docScale(e, p) {
   const sc = e.escala, pr = { nombre: e.therapistName, registro: e.therapistReg, consultorio: e.consultorio };
@@ -91,21 +88,21 @@ function docScale(e, p) {
   return `<div class="docpage">${letterhead(pr)}<h2>${esc(sc.nombre)}</h2>${patientTable(p)}<p>${e.folio ? `<b>Folio n.º ${e.folio}</b><br>` : ''}<b>Aplicada:</b> ${esc(fmtDT(e.aplicadaAt))} · ${esc(e.modo || '')}${e.version ? '<br><b>Versión y baremo:</b> ' + esc(e.version) : ''}${e.motivo ? '<br><b>Motivo de la aplicación:</b> ' + esc(e.motivo) : ''}</p>
   ${sc.instruccion ? `<p><i>${esc(sc.instruccion)}</i></p>` : ''}<table>${sc.items.map((it, i) => `<tr><td>${i + 1}. ${esc(it)}</td><td>${esc(lab(e.respuestas[i]))} (${e.respuestas[i]})</td></tr>`).join('')}</table>
   <p><b>Puntaje total:</b> ${e.total} de ${scaleMax(sc)}${e.nivel ? ' · <b>Severidad:</b> ' + esc(e.nivel) : ''}</p>
-  ${(e.alertas || []).length ? `<p><b>Atención:</b> respuesta positiva en el ítem ${e.alertas.map(i => i + 1).join(', ')}.</p>` : ''}${e.funcional ? `<p><b>Dificultad funcional:</b> ${esc(e.funcional)}</p>` : ''}${e.observaciones ? `<p><b>${e.motivo ? 'Condiciones de aplicación y observaciones de conducta' : 'Observaciones'}.</b> ${esc(e.observaciones)}</p>` : ''}${e.interpretacion ? `<p><b>Resultados e interpretación.</b> ${esc(e.interpretacion)}</p>` : ''}${e.protocolo ? `<p><b>Protocolo adjunto:</b> ${esc(e.protocolo.nombre)}${e.protocolo.sha256 ? ` <span style="font-family:monospace;font-size:11px;word-break:break-all">(SHA-256: ${esc(e.protocolo.sha256)})</span>` : ''}</p>` : ''}${e.entregaA ? `<p><b>Informe entregado a:</b> ${esc(e.entregaA)}${e.entregaFecha ? ', el ' + esc(fmtD(e.entregaFecha)) : ''}</p>` : ''}
+  ${(e.alertas || []).length ? `<p><b>Para conversar:</b> respuesta destacada en el ítem ${e.alertas.map(i => i + 1).join(', ')}.</p>` : ''}${e.funcional ? `<p><b>Dificultad funcional:</b> ${esc(e.funcional)}</p>` : ''}${e.observaciones ? `<p><b>${e.motivo ? 'Condiciones de aplicación y observaciones de conducta' : 'Observaciones'}.</b> ${esc(e.observaciones)}</p>` : ''}${e.interpretacion ? `<p><b>Resultados e interpretación.</b> ${esc(e.interpretacion)}</p>` : ''}${e.protocolo ? `<p><b>Protocolo adjunto:</b> ${esc(e.protocolo.nombre)}${e.protocolo.sha256 ? ` <span style="font-family:monospace;font-size:11px;word-break:break-all">(SHA-256: ${esc(e.protocolo.sha256)})</span>` : ''}</p>` : ''}${e.entregaA ? `<p><b>Informe entregado a:</b> ${esc(e.entregaA)}${e.entregaFecha ? ', el ' + esc(fmtD(e.entregaFecha)) : ''}</p>` : ''}
   ${sc.fuente ? `<p style="font-size:12px">${esc(sc.fuente)}</p>` : ''}${adendas(e.addenda)}${sigBlock([therSig(e, e.signedAt)])}</div>`;
 }
 ACT.viewScale = b => { const p = curPatient(), e = S.scales.find(x => x.id === b.dataset.id); showDoc(e.escala.nombre + ' · ' + fullName(p), docScale(e, p), 'escala-' + slug(e.escala.nombre) + '-' + dayKey(new Date(e.aplicadaAt)) + '.html'); };
-/* Mis escalas: el terapeuta escribe las suyas (bajo su licencia si el instrumento tiene derechos de autor). */
+/* Mis chequeos: el terapeuta escribe las suyas (bajo su licencia si el instrumento tiene derechos de autor). */
 ACT.scaleManage = () => {
   const root = $('#modal-root');
   const draw = (edit) => {
     const list = myScales();
-    root.innerHTML = `<div class="modal" role="dialog" aria-modal="true" aria-label="Mis escalas"><div class="box" id="smform"><div class="row" style="justify-content:space-between"><h3>Mis formatos</h3><button class="btn sm" data-sm="close">Cerrar</button></div>${hubTabs('escalas')}<b>Escalas propias</b>
+    root.innerHTML = `<div class="modal" role="dialog" aria-modal="true" aria-label="Mis chequeos"><div class="box" id="smform"><div class="row" style="justify-content:space-between"><h3>Mis formatos</h3><button class="btn sm" data-sm="close">Cerrar</button></div>${hubTabs('escalas')}<b>Escalas propias</b>
     ${edit ? `<div class="grid">${F('Nombre', 'nombre', edit.nombre || '')}${F('Instrucción para el consultante', 'instruccion', edit.instruccion || '', { wide: true })}
       ${F('Opciones de respuesta (una por línea: puntaje = texto)', 'opciones', (edit.opciones || FREQ4).map(o => o[0] + ' = ' + o[1]).join('\n'), { type: 'area', rows: 4 })}
       ${F('Rangos de interpretación (una por línea: mínimo-máximo = nivel)', 'rangos', (edit.rangos || []).map(r => r[0] + '-' + r[1] + ' = ' + r[2]).join('\n'), { type: 'area', rows: 4 })}
       ${F('Ítems (uno por línea)', 'items', (edit.items || []).join('\n'), { type: 'area', rows: 8, wide: true })}
-      ${F('Ítems de alerta (números separados por coma; se marcan si la respuesta es mayor que 0)', 'alertas', (edit.alertas || []).map(i => i + 1).join(', '), { wide: true })}</div>
+      ${F('Ítems para destacar (números separados por coma; se marcan si la respuesta es mayor que 0)', 'alertas', (edit.alertas || []).map(i => i + 1).join(', '), { wide: true })}</div>
       <p style="margin:0;font-size:13px;color:var(--muted)">Si la escala tiene derechos de autor (por ejemplo BDI-II o BAI), úsela solo si tiene la licencia. Cada aplicación guarda una copia de la escala tal como estaba, así que editarla después no cambia lo ya aplicado.</p>
       <div class="row end"><button class="btn" data-sm="list">Volver</button><button class="btn pri" data-sm="save" data-id="${esc(edit.id || '')}">Guardar escala</button></div>`
     : `${list.map(x => `<div class="card"><div class="row" style="justify-content:space-between"><b>${esc(x.nombre)}</b><span class="row"><button class="btn sm" data-sm="edit" data-id="${x.id}">Editar</button><button class="btn sm warn" data-sm="del" data-id="${x.id}">Quitar</button></span></div><span class="ts">${x.items.length} ítems · puntaje ${scaleMin(x)} a ${scaleMax(x)}</span></div>`).join('') || '<p style="margin:0;color:var(--muted)">Aún no tiene escalas propias. PHQ-9 y GAD-7 ya vienen incluidas.</p>'}

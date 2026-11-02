@@ -516,10 +516,10 @@ REMOTE_MODS = {"Virtual", "Telefónica"}
 
 def consent_agenda(pat: dict) -> dict:
     """Qué modalidades de cita cubren los consentimientos vigentes del consultante.
-    Telepsicología: el tipo o el texto la mencionan. Presencial: cualquier consentimiento de atención que no sea solo de telepsicología."""
+    Teleterapia: el tipo o el texto la mencionan. Presencial: cualquier consentimiento de atención que no sea solo de teleterapia."""
     ok = [c for c in pat.get("consents") or [] if c.get("tipo") != DATA_TIPO and (c.get("revocacion") or {}).get("alcance") != "Total"]
-    tele = any("tele" in str(c.get("tipo") or "").lower() or "TELEPSICOLOG" in str(c.get("text") or "").upper() for c in ok)
-    pres = any(not str(c.get("tipo") or "").startswith("Telepsicología") for c in ok)
+    tele = any("tele" in str(c.get("tipo") or "").lower() or "TELETERAPIA" in str(c.get("text") or "").upper() for c in ok)
+    pres = any(not str(c.get("tipo") or "").startswith("Teleterapia") for c in ok)
     return {"presencial": pres, "distancia": tele}
 
 
@@ -534,7 +534,7 @@ def _check_appt_consent(db: Session, oid: int, old: dict | None, new: dict) -> N
     ca = consent_agenda(decrypt(prow.payload))
     remote = new.get("modalidad") in REMOTE_MODS
     if not ca["distancia" if remote else "presencial"]:
-        raise HTTPException(400, "El consultante tiene pendiente el consentimiento informado de telepsicología: fírmelo antes de agendar una cita virtual o telefónica"
+        raise HTTPException(400, "El consultante tiene pendiente el consentimiento informado de teleterapia: fírmelo antes de agendar una cita virtual o telefónica"
                             if remote else "El consultante tiene pendiente el consentimiento informado de atención presencial: fírmelo antes de agendar la cita")
 IDENTITY_KEYS = {"nombres": "Nombres", "apellidos": "Apellidos", "tipoDoc": "Tipo de documento", "documento": "Número de documento",
                  "nacimiento": "Fecha de nacimiento", "paisNac": "País de nacimiento"}
@@ -650,7 +650,7 @@ def _signed_count(db: Session, oid: int, patient_id: str, kind: str, exclude: st
 
 def _assign_folios(db: Session, oid: int, kind: str, rid: str, old: dict | None, new: dict) -> bool:
     """Numera cada documento al firmarlo: consecutivo por tipo de registro dentro de la historia del consultante.
-    Las evoluciones llevan además el número de sesión (la primera vez es la sesión 1). Devuelve si asignó alguno."""
+    Las sesiones llevan además el número de sesión (la primera vez es la sesión 1). Devuelve si asignó alguno."""
     old = old or {}
     done = False
     if kind in ("note", "report", "scale") and new.get("signedAt") and not old.get("signedAt"):
@@ -1869,7 +1869,7 @@ def public_appt_answer(token: str, body: ApptAnswer, request: Request, bg: Backg
 
 
 # ---------- Comentarios de la versión beta ----------
-FB_TEMAS = ("Datos del consultante", "Consentimiento", "Firma a distancia", "Primera vez", "Evolución", "Impresión / motivo", "Escalas",
+FB_TEMAS = ("Datos del consultante", "Consentimiento", "Firma a distancia", "Primera vez", "Sesión", "Impresión / motivo", "Escalas",
             "Informes", "Cierre", "Archivo y adjuntos", "Agenda y calendario", "Recordatorios", "Mis formatos", "Resumen y pendientes",
             "Estadísticas", "Encuesta de satisfacción", "Mi perfil y firma", "Cuenta, equipo y acceso", "Celular", "Otro")
 FB_TIPOS = ("Error", "Sugerencia", "Duda")
@@ -2133,7 +2133,7 @@ AUDIT_TXT = {"history.view": "Abrió la historia", "record.put": "Guardó", "rec
              "login.ok": "Ingresó", "login.fail": "Intento de ingreso fallido", "login.2fa_fail": "Código de verificación equivocado",
              "access.denied": "Intento de acceso sin permiso", "password.change": "Cambió su contraseña", "record.import": "Importó",
              }
-KIND_TXT = {"patient": "datos o documentos de la historia", "note": "una evolución", "report": "un informe", "scale": "una escala", "appt": "una cita", "file": "un adjunto"}
+KIND_TXT = {"patient": "datos o documentos de la historia", "note": "una sesión", "report": "un informe", "scale": "una escala", "appt": "una cita", "file": "un adjunto"}
 
 
 @app.get("/api/bitacora")

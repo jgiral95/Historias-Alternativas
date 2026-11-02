@@ -298,7 +298,7 @@ def test_signature_time_must_match_server_clock():
 def test_scale_applications_are_signed_and_immutable():
     make_user("es@x.co")
     c = client_for("es@x.co")
-    e = {"id": "e_1", "kind": "scale", "patientId": "p_1", "escala": {"id": "phq9"}, "respuestas": [1, 2], "total": 3}
+    e = {"id": "e_1", "kind": "scale", "patientId": "p_1", "escala": {"id": "bienestar"}, "respuestas": [1, 2], "total": 3}
     assert c.put("/api/records/e_1", json=e).status_code == 400  # sin firmar
     e = {**e, "signedAt": NOW, "addenda": []}
     assert c.put("/api/records/e_1", json=e).status_code in (200, 204)
@@ -610,11 +610,11 @@ def test_appointment_needs_the_matching_consent():
     c.put("/api/records/p_1", json={**p, "consents": p["consents"] + consent("Atención presencial")})
     assert c.put("/api/records/a_2", json={**appt, "id": "a_2"}).status_code in (200, 204)
     r = c.put("/api/records/a_3", json={**appt, "id": "a_3", "modalidad": "Virtual"})
-    assert r.status_code == 400 and "telepsicología" in r.json()["detail"]
+    assert r.status_code == 400 and "teleterapia" in r.json()["detail"]
     assert c.put("/api/records/a_2", json={**appt, "id": "a_2", "modalidad": "Telefónica"}).status_code == 400  # cambiar la modalidad también
     assert c.put("/api/records/a_2", json={**appt, "id": "a_2", "startAt": "2099-03-05T15:00:00.000Z"}).status_code in (200, 204)  # moverla sí
     p = next(x for x in c.get("/api/records").json() if x["id"] == "p_1")
-    c.put("/api/records/p_1", json={**p, "consents": p["consents"] + consent("Telepsicología (atención a distancia)")})
+    c.put("/api/records/p_1", json={**p, "consents": p["consents"] + consent("Teleterapia (atención a distancia)")})
     assert c.put("/api/records/a_3", json={**appt, "id": "a_3", "modalidad": "Virtual"}).status_code in (200, 204)
     # revocado del todo: ya no cubre
     p = next(x for x in c.get("/api/records").json() if x["id"] == "p_1")

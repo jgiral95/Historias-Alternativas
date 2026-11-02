@@ -1,4 +1,4 @@
-"""Firma de consentimientos a distancia (telepsicología).
+"""Firma de consentimientos a distancia (teleterapia).
 
 El terapeuta prepara el consentimiento y envía al consultante un enlace personal. Para abrirlo, el consultante
 escribe su número de documento; lee el texto completo, marca que lo acepta y firma con el dedo. La hora de

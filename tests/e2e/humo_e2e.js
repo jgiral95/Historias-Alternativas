@@ -16,7 +16,7 @@ let bad = 0; const ok = (c, m) => { console.log((c ? 'OK   ' : 'FALLA') + ' ' + 
   await page.click('.prow:has-text("Laura")');
   await page.click('[data-act="tab"][data-tab="intake"]'); await page.waitForTimeout(200);
   const t = await page.locator('#tabbody').textContent();
-  ok(/Impresión o motivo de seguimiento/.test(t) && /ansiedad generalizada/i.test(t), 'la primera vez muestra la impresión en texto libre');
+  ok(/Impresión o motivo de seguimiento/.test(t) && /estrés por carga laboral/i.test(t), 'la primera vez muestra la impresión en texto libre');
   ok(!/CIE|CUPS|RIPS/.test(t), 'sin CIE/CUPS/RIPS en la primera vez');
   await page.click('[data-act="tab"][data-tab="evol"]'); await page.click('[data-act="newNote"]'); await page.waitForSelector('#noteform');
   ok(await page.locator('#noteform #dxblock').count() === 1 && await page.locator('#f_ripsCups').count() === 0, 'la evolución trae impresiones y no CUPS');

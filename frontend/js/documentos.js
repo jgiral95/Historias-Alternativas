@@ -1,30 +1,30 @@
 /* Definiciones, documentos (HTML para ver y descargar) y guardado confirmado. Parte de app.html (scripts clásicos que comparten el ámbito global; el orden de carga importa). */
 /* ===== Definiciones y generación de documentos ===== */
 const INTAKE = [
-  ['Motivo y demanda', [['motivo', 'Motivo de consulta', 3], ['remitido', 'Remitido', 1], ['historiaProblema', 'Historia de la problemática actual', 4]]],
-  ['Antecedentes', [['antMedicos', 'Médicos y medicación', 3], ['antPsi', 'Psicológicos, psiquiátricos y tratamientos previos', 3], ['antFam', 'Familiares', 3], ['sustancias', 'Consumo de sustancias', 2]]],
-  ['Historia personal y contexto', [['desarrollo', 'Desarrollo e historia personal', 4], ['familia', 'Dinámica y red familiar', 3], ['social', 'Área social y de pareja', 3], ['academicoLaboral', 'Área académica o laboral', 3]], 'genograma'],
-  ['Examen mental', [['examenMental', 'Apariencia, conducta y estado mental', 4]]],
-  ['Formulación, objetivos y plan', [['formulacion', 'Formulación del caso (del motivo y la evaluación al impresión y al plan)', 4], ['objetivos', 'Objetivos terapéuticos', 3], ['plan', 'Plan de intervención: enfoque, frecuencia, participación de la familia y criterios de seguimiento', 3], ['expectativas', 'Expectativas frente a la terapia', 2], ['impresion', 'Impresión inicial', 3]]]
+  ['Motivo y expectativas', [['motivo', '¿Qué le trae a consulta?', 3], ['remitido', '¿Quién se lo recomendó?', 1], ['historiaProblema', 'Cómo empezó lo que le preocupa', 4]]],
+  ['Salud y bienestar', [['antMedicos', 'Salud física y lo que toma (opcional)', 3], ['antPsi', 'Otros procesos, terapias o prácticas que ha probado', 3], ['antFam', 'Familia', 3], ['sustancias', 'Hábitos (alimentación, sueño, consumo de sustancias)', 2]]],
+  ['Su historia y entorno', [['desarrollo', 'Su historia personal', 4], ['familia', 'Familia y red de apoyo', 3], ['social', 'Relaciones y vida social', 3], ['academicoLaboral', 'Estudio o trabajo', 3]], 'genograma'],
+  ['Cómo llega hoy', [['examenMental', 'Estado de ánimo, energía y presencia en la sesión', 4]]],
+  ['Metas y plan de acompañamiento', [['formulacion', 'Lo que usted observa (de lo que cuenta a lo que se propone)', 4], ['objetivos', 'Metas del proceso', 3], ['plan', 'Plan de acompañamiento: prácticas, frecuencia y cómo se hará el seguimiento', 3], ['expectativas', 'Lo que espera el consultante', 2], ['impresion', 'Impresión inicial', 3]]]
 ];
 /* Campos que tenían las primeras citas de versiones anteriores: se muestran si traen datos, para no perder nada. */
-const INTAKE_LEGACY = [['mentalApariencia', 'Apariencia y conducta'], ['mentalAfecto', 'Ánimo y afecto'], ['mentalPensamiento', 'Pensamiento y lenguaje'], ['mentalPercepcion', 'Sensopercepción, orientación y memoria'], ['mentalJuicio', 'Juicio y conciencia del problema'], ['riesgo', 'Evaluación de riesgo'], ['nivelRiesgo', 'Nivel de riesgo']];
+const INTAKE_LEGACY = [['mentalApariencia', 'Apariencia y conducta'], ['mentalAfecto', 'Ánimo y afecto'], ['mentalPensamiento', 'Pensamiento y lenguaje'], ['mentalPercepcion', 'Sensopercepción, orientación y memoria'], ['mentalJuicio', 'Juicio y conciencia del problema'], ['riesgo', 'Señales de alerta'], ['nivelRiesgo', 'Nivel de alerta']];
 const legacyOf = i => INTAKE_LEGACY.filter(([k]) => i[k] && !(k === 'nivelRiesgo' && i[k] === RIESGO[0]));
-const NOTE_FIELDS = [['objetivoSesion', 'Objetivo de la sesión, según el plan', 2], ['tema', 'Desarrollo y contenido relevante de la sesión', 4], ['intervenciones', 'Intervenciones realizadas y su sustento', 3], ['respuesta', 'Respuesta del consultante', 3], ['evolucionObj', 'Evolución frente a los objetivos', 2], ['riesgoNota', 'Riesgo y acciones tomadas', 2], ['tareas', 'Tareas y acuerdos', 2], ['cambiosPlan', 'Cambios al plan de manejo (si los hay)', 2], ['proxima', 'Plan para la próxima sesión', 2]];
+const NOTE_FIELDS = [['objetivoSesion', 'Objetivo de la sesión', 2], ['tema', 'Qué se trabajó en la sesión', 4], ['intervenciones', 'Prácticas o técnicas usadas', 3], ['respuesta', 'Cómo respondió el consultante', 3], ['evolucionObj', 'Avance frente a las metas', 2], ['riesgoNota', 'Señales de alerta y qué se hizo', 2], ['tareas', 'Tareas y acuerdos', 2], ['cambiosPlan', 'Cambios al plan (si los hay)', 2], ['proxima', 'Plan para la próxima sesión', 2]];
 /* Formato propio de cada terapeuta (perfil.formatos). Cada documento firmado guarda una copia (schema) del formato con el que se firmó,
    así los cambios posteriores solo afectan a documentos nuevos. */
 const intakeSchema = i => (i && i.signedAt) ? (i.schema || INTAKE) : intakeNew((S.profile.formatos && S.profile.formatos.intake) || INTAKE);
 /* Formatos propios hechos antes de los campos nuevos: se agregan los que faltan, sin tocar el resto. */
 function intakeNew(sc) {
   if (sc.some(x => x[1].some(f => f[0] === 'formulacion'))) return sc;
-  const c = clone(sc); c[c.length - 1][1].unshift(['formulacion', 'Formulación del caso (del motivo y la evaluación al impresión y al plan)', 4]); return c;
+  const c = clone(sc); c[c.length - 1][1].unshift(['formulacion', 'Lo que usted observa (de lo que cuenta a lo que se propone)', 4]); return c;
 }
-/* Evolución: sin formato propio no trae campos; cada terapeuta arma el suyo en «Mis formatos» (puede partir de NOTE_FIELDS, el sugerido).
+/* Sesión: sin formato propio no trae campos; cada terapeuta arma el suyo en «Mis formatos» (puede partir de NOTE_FIELDS, el sugerido).
    Las notas firmadas sin copia del formato (versiones anteriores) se muestran con NOTE_FIELDS. */
 const evolSchema = n => (n && n.signedAt) ? (n.schema || NOTE_FIELDS) : ((S.profile.formatos && S.profile.formatos.evol) || []);
 const intakeKeys = sc => sc.flatMap(x => x[1].map(f => f[0]));
 const anyFilled = (o, keys) => keys.some(k => String(o[k] || '').trim());
-const RIESGO = ['Sin riesgo evidente', 'Bajo', 'Moderado', 'Alto'];
+const RIESGO = ['Sin señales de alerta', 'Bajo', 'Moderado', 'Alto'];
 /* Campos obligatorios: se llenan o se escribe «No refiere», «No aplica» o «No se indagó». */
 const NR = ['No refiere', 'No aplica', 'No se indagó'];
 const REQ = new Set(['motivo', 'historiaProblema', 'antMedicos', 'antPsi', 'antFam', 'desarrollo', 'familia', 'academicoLaboral', 'examenMental', 'formulacion', 'objetivos', 'plan',
@@ -33,34 +33,34 @@ const REQ = new Set(['motivo', 'historiaProblema', 'antMedicos', 'antPsi', 'antF
 const ENTORNOS = ['Institucional (consultorio)', 'Hogar', 'Escolar', 'Laboral', 'Comunitario'];
 const VIAS = ['Demanda espontánea', 'Remitido por otro terapeuta o institución', 'Orden de autoridad judicial o administrativa', 'Otra'];
 const CAUSAS = ['Enfermedad general', 'Evento relacionado con violencia o maltrato', 'Accidente', 'Enfermedad o accidente laboral', 'Otra'];
-const DESTINOS = ['Continúa en proceso', 'Alta del proceso', 'Remitido a otro terapeuta o servicio', 'Remitido a urgencias', 'No continúa (abandono o retiro voluntario)'];
+const DESTINOS = ['Continúa en proceso', 'Alta del proceso', 'Remitido a otro terapeuta o servicio', 'Se sugirió buscar ayuda de urgencias', 'No continúa (abandono o retiro voluntario)'];
 const COPIA = ['Sí, en papel', 'Sí, por correo o medio digital', 'Se le ofreció y no la quiso'];
 const folioTxt = r => r && r.folio ? 'Folio n.º ' + r.folio : '';
-const REPORT_TYPES = ['Colegio o institución educativa', 'Empleador o trabajo', 'Adopción de mascota', 'Remisión a otro terapeuta', 'Constancia de asistencia', 'Otro'];
+const REPORT_TYPES = ['Colegio o institución educativa', 'Empleador o trabajo', 'Remisión a otro terapeuta', 'Constancia de asistencia', 'Otro'];
 
-const DEFAULT_CONSENT = `CONSENTIMIENTO INFORMADO PARA ATENCIÓN PSICOLÓGICA
+const DEFAULT_CONSENT = `ACUERDO DE ACOMPAÑAMIENTO
 
-Yo, {paciente}, identificado/a con documento {documento}, declaro que {terapeuta} ({registro}) me ha explicado lo siguiente y que he podido hacer preguntas:
+Yo, {paciente}, identificado/a con documento {documento}, declaro que {terapeuta} me ha explicado lo siguiente y que he podido hacer preguntas:
 
-1. Naturaleza del servicio. La atención psicológica consiste en sesiones de evaluación y psicoterapia. Me explicaron los objetivos generales, la duración aproximada de las sesiones y su frecuencia.
+1. Qué es este servicio. Son sesiones de acompañamiento y bienestar con prácticas de terapias alternativas o complementarias. No es atención médica ni psicológica, no la presta un profesional de la salud, no hace diagnósticos, no trata enfermedades y no reemplaza la consulta, el tratamiento ni los medicamentos que me indique un médico u otro profesional de la salud.
 
-2. Beneficios y límites. La psicoterapia puede ayudar a disminuir el malestar y a desarrollar recursos personales, pero no se me garantizan resultados específicos. En ocasiones hablar de temas difíciles puede generar malestar temporal.
+2. Beneficios y límites. Estas prácticas pueden ayudarme a relajarme y a cuidar mi bienestar, pero no se me garantizan resultados específicos. Si tengo una condición de salud o cambia mi estado, debo consultar a un profesional de la salud.
 
-3. Confidencialidad. Lo que converse en sesión es confidencial. Entiendo que el reserva tiene límites: riesgo grave para mi vida o la de otras personas, sospecha de maltrato o abuso hacia menores de edad o personas en situación de vulnerabilidad, y requerimiento de autoridad competente conforme a la ley.
+3. Confidencialidad. Lo que converse en sesión es reservado. Entiendo que esa reserva tiene límites: peligro grave para mi vida o la de otras personas, sospecha de maltrato o abuso hacia menores de edad o personas vulnerables, y requerimiento de una autoridad competente.
 
-4. Ficha y datos personales. Autorizo el registro de mi atención en una ficha, que se conserva de forma reservada. El uso de mis datos personales se rige por la autorización que firmo por separado. Puedo solicitar información sobre mi ficha, y no se entregarán informes a terceros sin mi autorización escrita.
+4. Mi ficha y mis datos. Autorizo que se anoten mis sesiones en una ficha, que se guarda de forma reservada. El uso de mis datos personales se rige por la autorización que firmo por separado. Puedo pedir información sobre mi ficha, y no se entregará nada a terceros sin mi autorización escrita.
 
 5. Libertad de retiro. Mi participación es voluntaria. Puedo suspender el proceso en cualquier momento, e idealmente conversarlo con el terapeuta.
 
-6. Citas y honorarios. Me informaron las condiciones de agenda, cancelación y pago acordadas.
+6. Citas y valores. Me informaron las condiciones de agenda, cancelación y pago acordadas.
 
-Declaro que leí y comprendí este documento y acepto de manera libre y voluntaria la atención psicológica.`;
+Declaro que leí y comprendí este documento y acepto de manera libre y voluntaria participar en las sesiones.`;
 
 const DATA_TIPO = 'Autorización de uso de datos personales';
-const CONSENT_TIPOS = ['Atención presencial', 'Telepsicología (atención a distancia)', 'Presencial y telepsicología', DATA_TIPO];
+const CONSENT_TIPOS = ['Atención presencial', 'Teleterapia (atención a distancia)', 'Presencial y teleterapia', DATA_TIPO];
 const TELE_CLAUSE = `
 
-ATENCIÓN A DISTANCIA (TELEPSICOLOGÍA)
+ATENCIÓN A DISTANCIA (TELETERAPIA)
 
 7. Cómo funciona. La atención se realiza, total o parcialmente, por videollamada o llamada telefónica en la plataforma que me indicó el terapeuta. Tiene el mismo alcance que la atención presencial, salvo los límites propios de la distancia: el terapeuta puede recomendarme atención presencial cuando lo considere necesario, y yo puedo pedirla.
 
@@ -72,18 +72,18 @@ ATENCIÓN A DISTANCIA (TELEPSICOLOGÍA)
 
 11. Contacto. Las citas, cambios y documentos se coordinan por los canales que me indicó el terapeuta, en los horarios acordados. Estos canales no son para urgencias.
 
-12. Fallas y emergencias. Si la comunicación se interrumpe, el terapeuta intentará restablecerla y, si no es posible, me llamará por teléfono o reprogramaremos. Informé el lugar desde el que me conecto y un contacto de emergencia; ante una situación de riesgo, el terapeuta podrá activar las rutas de urgencias de mi localidad. En una emergencia debo acudir al servicio de urgencias o a la línea 123.
+12. Fallas y emergencias. Si la comunicación se interrumpe, el terapeuta intentará restablecerla y, si no es posible, me llamará por teléfono o reprogramaremos. Informé el lugar desde el que me conecto y un contacto de emergencia; ante una situación de peligro, el terapeuta podrá avisar a mi contacto de emergencia o a los servicios de ayuda de mi localidad. Este servicio no atiende urgencias: en una emergencia debo acudir a un servicio de urgencias o llamar a la línea 123.
 
 13. Revocación. Puedo revocar este consentimiento en cualquier momento, sin que eso afecte lo ya registrado.
 
 Este consentimiento es independiente de la autorización para el uso de mis datos personales, que firmo por separado.`;
 const DATA_AUTH = `AUTORIZACIÓN PARA EL TRATAMIENTO DE DATOS PERSONALES
 
-Yo, {paciente}, identificado/a con documento {documento}, autorizo de manera previa, expresa e informada a {terapeuta} ({registro}), como responsable, para tratar mis datos personales, incluidos datos sensibles relativos a mi salud, con las finalidades que se describen a continuación.
+Yo, {paciente}, identificado/a con documento {documento}, autorizo de manera previa, expresa e informada a {terapeuta} ({registro}), como responsable, para tratar mis datos personales, incluidos datos sensibles sobre mi bienestar y mi estado de ánimo, con las finalidades que se describen a continuación.
 
-1. Finalidades. Prestarme atención psicológica; elaborar, custodiar y conservar mi ficha durante el tiempo que sea necesario; agendar y recordar citas; emitir los informes y certificados que yo solicite o autorice; enviarme ocasionalmente, por correo o mensaje, encuestas de satisfacción sobre el servicio, que puedo no responder.
+1. Finalidades. Prestarme acompañamiento de bienestar; elaborar, custodiar y conservar mi ficha durante el tiempo que sea necesario; agendar y recordar citas; emitir los informes y certificados que yo solicite o autorice; enviarme ocasionalmente, por correo o mensaje, encuestas de satisfacción sobre el servicio, que puedo no responder.
 
-2. Datos sensibles. Me informaron que los datos de salud son sensibles y que no estoy obligado/a a responder preguntas sobre ellos. Sin embargo, sin esa información el terapeuta no puede prestarme una atención adecuada.
+2. Datos sensibles. Me informaron que algunos datos (por ejemplo sobre mi bienestar o mi salud) son sensibles y que no estoy obligado/a a responder preguntas sobre ellos. Sin esa información el terapeuta puede acompañarme con menos precisión.
 
 3. Seguridad y encargados. Mis datos se guardan cifrados, con acceso restringido al terapeuta. Pueden alojarse en servidores de terceros que actúan como encargados y están obligados a protegerlos. No se venden ni se ceden a terceros.
 
@@ -104,9 +104,9 @@ function consentAgenda(p) {
   if (!p) return { presencial: false, distancia: false };
   if (!p.consents && p.consentAgenda) return p.consentAgenda;
   const ok = (p.consents || []).filter(c => c.tipo !== DATA_TIPO && !(c.revocacion && c.revocacion.alcance === 'Total'));
-  return { presencial: ok.some(c => !String(c.tipo || '').startsWith('Telepsicología')), distancia: ok.some(c => /tele/i.test(c.tipo || '') || /TELEPSICOLOG/i.test(c.text || '')) };
+  return { presencial: ok.some(c => !String(c.tipo || '').startsWith('Teleterapia')), distancia: ok.some(c => /tele/i.test(c.tipo || '') || /TELETERAPIA/i.test(c.text || '')) };
 }
-const apptConsentMissing = (p, modalidad) => { const r = REMOTE_MODS.includes(modalidad); return consentAgenda(p)[r ? 'distancia' : 'presencial'] ? '' : r ? 'telepsicología' : 'atención presencial'; };
+const apptConsentMissing = (p, modalidad) => { const r = REMOTE_MODS.includes(modalidad); return consentAgenda(p)[r ? 'distancia' : 'presencial'] ? '' : r ? 'teleterapia' : 'atención presencial'; };
 /* Variables de los consentimientos: datos del consultante, de sus acudientes y del terapeuta. */
 const CONSENT_VARS = [['paciente', 'Nombre del consultante'], ['documento', 'Documento'], ['edad', 'Edad'], ['nacimiento', 'Fecha de nacimiento'], ['paciente_direccion', 'Dirección del consultante'], ['paciente_telefono', 'Teléfono del consultante'], ['paciente_correo', 'Correo del consultante'],
   ['acudiente', 'Acudiente 1'], ['acudiente_documento', 'Documento acudiente 1'], ['acudiente_parentesco', 'Parentesco acudiente 1'], ['acudiente2', 'Acudiente 2'], ['acudiente2_documento', 'Documento acudiente 2'], ['acudiente2_parentesco', 'Parentesco acudiente 2'],
@@ -138,15 +138,14 @@ function tplValues(p, pr) {
   };
 }
 const fillVars = (text, p, pr) => { const v = tplValues(p, pr); return text.replace(/\{([a-z_]+)\}/g, (m, k) => (k in v ? v[k] : m)); };
-const ATT = 'Por medio de la presente certifico que {paciente}, identificado/a con {documento}, ha asistido a atención psicológica conmigo, con {resumen_asistencia}.';
-const CLOSE = '\n\nSe expide a solicitud del interesado/a y con su autorización, para ser presentado ante la entidad indicada. La información se limita a lo estrictamente necesario; el contenido de las sesiones es confidencial.';
+const ATT = 'Por medio de la presente certifico que {paciente}, identificado/a con {documento}, ha asistido a sesiones de acompañamiento conmigo, con {resumen_asistencia}.';
+const CLOSE = '\n\nSe expide a solicitud del interesado/a y con su autorización. Este documento no es un certificado médico ni de salud; el contenido de las sesiones es reservado.';
 const BASE_TPL = {
-  'Colegio o institución educativa': ATT + '\n\nAspectos que el consultante o su acudiente autorizan compartir:\n[Describa solo lo necesario: asistencia, proceso en curso, estado general.]\n\nRecomendaciones para la institución:\n[Ajustes razonables, acompañamiento en el aula, comunicación con la familia.]' + CLOSE,
-  'Empleador o trabajo': ATT + '\n\nAspectos autorizados para compartir con el empleador:\n[Asistencia, recomendaciones laborales generales. Evite impresiones o contenido de sesión salvo autorización expresa.]\n\nRecomendaciones:\n[Horarios, pausas, ajustes del puesto, seguimiento.]' + CLOSE,
-  'Adopción de mascota': ATT + '\n\nCon base en el proceso realizado, y desde el ámbito psicológico:\n[Complete según su criterio: estabilidad emocional actual, disponibilidad de tiempo y rutina, motivación para la adopción, red de apoyo.]\n\nEste documento refleja una opinión terapeuta sobre el momento actual de la persona. No es un impresión y no certifica a un animal como de soporte emocional.' + CLOSE,
-  'Remisión a otro terapeuta': 'Remito a {paciente}, identificado/a con {documento}, para valoración por [especialidad].\n\nMotivo de la remisión:\n[Describa el motivo.]\n\nResumen pertinente (autorizado por el consultante):\n[Síntomas relevantes, tiempo de evolución, intervenciones realizadas.]\n\nQuedo atento/a a la contrarreferencia.' + CLOSE,
-  'Constancia de asistencia': ATT + '\n\nLa asistencia a las sesiones se registra en mi ficha.' + CLOSE,
-  'Otro': ATT + '\n\n[Escriba el contenido del informe.]' + CLOSE
+  'Colegio o institución educativa': ATT + '\n\nLo que el consultante o su acudiente autorizan compartir:\n[Describa solo lo necesario: asistencia y que el proceso sigue en curso.]' + CLOSE,
+  'Empleador o trabajo': ATT + '\n\nLo autorizado para compartir con el empleador:\n[Asistencia y horarios. Evite contar el contenido de las sesiones salvo autorización expresa.]' + CLOSE,
+  'Remisión a otro terapeuta': 'Recomiendo a {paciente}, identificado/a con {documento}, continuar su proceso con [terapeuta o servicio].\n\nMotivo:\n[Describa el motivo.]\n\nResumen de lo trabajado (autorizado por el consultante):\n[Prácticas realizadas y tiempo de acompañamiento.]\n\nQuedo atento/a a cualquier consulta.' + CLOSE,
+  'Constancia de asistencia': ATT + '\n\nLa asistencia a las sesiones se anota en mi ficha.' + CLOSE,
+  'Otro': ATT + '\n\n[Escriba el contenido del documento.]' + CLOSE
 };
 const myTemplates = () => (S.profile && S.profile.plantillas) || [];
 function tplRaw(key) {
@@ -214,7 +213,7 @@ function letterhead(pr) {
   const l3 = [pr.ciudad, pr.telefono, pr.correo].filter(Boolean).join(' · ');
   // los informes usan el logo guardado al firmarlos; los demás documentos, el logo actual del perfil
   const logo = pr.logo !== undefined ? pr.logo : (S.profile && S.profile.logo);
-  return `${logo ? `<div style="text-align:center;margin-bottom:6px"><img src="${logo}" alt="Logo" style="max-height:80px;max-width:260px"></div>` : ''}<h1>${esc(pr.consultorio || 'Consulta psicológica')}</h1><div class="lh">${esc(l2)}${l3 ? '<br>' + esc(l3) : ''}</div>`;
+  return `${logo ? `<div style="text-align:center;margin-bottom:6px"><img src="${logo}" alt="Logo" style="max-height:80px;max-width:260px"></div>` : ''}<h1>${esc(pr.consultorio || 'Espacio de bienestar')}</h1><div class="lh">${esc(l2)}${l3 ? '<br>' + esc(l3) : ''}</div>`;
 }
 function patientTable(p) {
   const a = ageOf(p.nacimiento), r = [
@@ -258,14 +257,14 @@ function docIntake(p) {
     if (rows.length) h += `<h2>${esc(t)}</h2>` + rows.map(f => f[1] ? `<p><b>${esc(f[1])}.</b> ${esc(i[f[0]])}</p>` : `<p>${esc(i[f[0]])}</p>`).join('');
     if (g === 'genograma' && i.genograma) h += `<h2>Genograma</h2><img class="geno" src="${i.genograma}" alt="Genograma">`;
   });
-  if (i.riesgoAcciones) h += `<h2>Evaluación de riesgo</h2><p>${i.riesgoNivel ? '<b>Nivel:</b> ' + esc(i.riesgoNivel) + '. ' : ''}${esc(i.riesgoAcciones)}</p>`;
+  if (i.riesgoAcciones) h += `<h2>Señales de alerta</h2><p>${i.riesgoNivel ? '<b>Nivel:</b> ' + esc(i.riesgoNivel) + '. ' : ''}${esc(i.riesgoAcciones)}</p>`;
   if (hasDx(i)) h += `<h2>Impresión</h2>` + dxTable(i);
   const lg = legacyOf(i); if (lg.length) h += `<h2>Registros de la versión anterior</h2>` + lg.map(([k, l]) => `<p><b>${esc(l)}.</b> ${esc(i[k])}</p>`).join('');
   return h + adendas(i.addenda) + sigBlock([therSig(i, i.signedAt)]) + '</div>';
 }
 function docNote(n, p) {
   const pr = { nombre: n.therapistName, registro: n.therapistReg, consultorio: n.consultorio };
-  let h = `<div class="docpage">${letterhead(pr)}<h2>Nota de evolución</h2><table><tr><td><b>Consultante</b></td><td>${esc(fullName(p))}</td></tr><tr><td><b>Sesión</b></td><td>${esc(fmtDT(n.sessionAt))}${n.sesion ? ' · sesión n.º ' + n.sesion : ''}</td></tr>${n.modalidad ? `<tr><td><b>Modalidad</b></td><td>${esc(n.modalidad)}</td></tr>` : ''}${n.duracion ? `<tr><td><b>Duración</b></td><td>${esc(n.duracion)} min</td></tr>` : ''}${n.nivelRiesgo && !n.riesgoNivel ? `<tr><td><b>Riesgo</b></td><td>${esc(n.nivelRiesgo)}</td></tr>` : ''}</table>${atencionDoc(Object.assign({}, n, { sesion: '' }))}`;
+  let h = `<div class="docpage">${letterhead(pr)}<h2>Nota de sesión</h2><table><tr><td><b>Consultante</b></td><td>${esc(fullName(p))}</td></tr><tr><td><b>Sesión</b></td><td>${esc(fmtDT(n.sessionAt))}${n.sesion ? ' · sesión n.º ' + n.sesion : ''}</td></tr>${n.modalidad ? `<tr><td><b>Modalidad</b></td><td>${esc(n.modalidad)}</td></tr>` : ''}${n.duracion ? `<tr><td><b>Duración</b></td><td>${esc(n.duracion)} min</td></tr>` : ''}${n.nivelRiesgo && !n.riesgoNivel ? `<tr><td><b>Riesgo</b></td><td>${esc(n.nivelRiesgo)}</td></tr>` : ''}</table>${atencionDoc(Object.assign({}, n, { sesion: '' }))}`;
   h += teleDoc(n);
   evolSchema(n).forEach(f => { if (n[f[0]]) h += `<p><b>${esc(f[1])}.</b> ${esc(n[f[0]])}</p>`; });
   if (hasDx(n)) h += `<h2>Impresión</h2>` + dxTable(n);
@@ -278,7 +277,7 @@ function docReport(r, p) {
   <p>${fmtRich(r.contenido)}</p><p style="font-size:13px"><i>Divulgación autorizada por: ${esc(r.autorizaPor || '')}.</i></p>${adendas(r.addenda)}${sigBlock([therSig(r, r.signedAt)])}${verifBox(r)}</div>`;
 }
 /* Partes de la historia completa; el terapeuta puede excluir algunas al generarla. */
-const FULL_PARTS = [['consents', 'Consentimientos y autorizaciones'], ['intake', 'Primera vez'], ['notes', 'Evoluciones'], ['scales', 'Escalas'], ['reports', 'Informes'], ['cierres', 'Notas de cierre'], ['incorp', 'Constancias de historia en papel'], ['anexos', 'Anexos (lista y archivos)']];
+const FULL_PARTS = [['consents', 'Consentimientos y autorizaciones'], ['intake', 'Primera vez'], ['notes', 'Sesiones'], ['scales', 'Chequeos'], ['reports', 'Informes'], ['cierres', 'Notas de cierre'], ['incorp', 'Constancias de historia en papel'], ['anexos', 'Anexos (lista y archivos)']];
 function partCount(p, k) {
   return { consents: (p.consents || []).length, intake: p.intake && p.intake.signedAt ? 1 : 0, notes: S.notes.filter(n => n.patientId === p.id && n.signedAt).length, scales: S.scales.filter(e => e.patientId === p.id && e.signedAt).length,
     reports: S.reports.filter(r => r.patientId === p.id && r.signedAt).length, cierres: (p.cierres || []).length, incorp: (p.incorporaciones || []).length, anexos: S.files.filter(f => f.patientId === p.id).length }[k];
@@ -305,7 +304,7 @@ h1{font-size:20px;text-align:center;margin:0 0 4px}h2{font-size:15px;text-transf
 .lh{text-align:center;font-size:13px;color:#4a5a5e;margin-bottom:14px}p{margin:6px 0;white-space:pre-wrap}table{border-collapse:collapse;width:100%;font-size:14px}td{padding:3px 8px 3px 0;vertical-align:top}
 .sigs{display:flex;gap:30px;flex-wrap:wrap;margin-top:22px}.sg{min-width:200px;flex:1}.sg img{height:64px;display:block}.sg .ln{border-top:1px solid #1B2326;margin-top:2px;padding-top:3px;font-size:13px}
 img.geno{max-width:100%;height:auto;border:1px solid #c9d2d4}.stats{display:flex;gap:10px;flex-wrap:wrap}.stat{border:1px solid #c9d2d4;padding:6px 10px;min-width:130px}.stat b{display:block;font-size:20px}.stat span{font-size:12px}.sec h3{font-size:15px;text-transform:uppercase;letter-spacing:.06em;margin:18px 0 4px;border-bottom:1px solid #c9d2d4}.stnote{font-size:13px;color:#4a5a5e}.stgrid{display:block}table.sttab th,table.sttab td{text-align:left;padding:4px 8px 4px 0;border-bottom:1px solid #c9d2d4;vertical-align:top}table.sttab th{font-size:12px;color:#4a5a5e}tr.tot td{font-weight:bold}.bars{margin:8px 0}.bar{display:grid;grid-template-columns:38% 1fr auto;gap:8px;align-items:center;font-size:13px;margin:3px 0}.bar .bt{height:10px;background:#eef0f1}.bar .bt i{display:block;height:100%;background:#4E6B58;-webkit-print-color-adjust:exact;print-color-adjust:exact}.btn{display:none}table.dxt th,table.dxt td{text-align:left;padding:4px 8px 4px 0;border-bottom:1px solid #c9d2d4}table.dxt th{font-size:12px;color:#4a5a5e}.pb{page-break-after:always;height:1px}@media print{body{margin:0}}`;
-function standalone(title, body) { return `<!doctype html><html lang="es"><head><meta charset="utf-8"><title>${esc(title)}</title><meta name="viewport" content="width=device-width,initial-scale=1"><style>${DOC_CSS}</style></head><body>${body}</body></html>`; }
+function standalone(title, body) { return `<!doctype html><html lang="es"><head><meta charset="utf-8"><title>${esc(title)}</title><meta name="viewport" content="width=device-width,initial-scale=1"><style>${DOC_CSS}</style></head><body>${body}<p style="margin-top:28px;border-top:1px solid #ccc;padding-top:8px;font-size:11px;color:#777;text-align:center">Acompañamiento de bienestar con terapias alternativas o complementarias. No es atención médica, psicológica ni de salud, ni la presta un profesional de la salud.</p></body></html>`; }
 const slug = s => String(s).normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-zA-Z0-9]+/g, '-').replace(/^-|-$/g, '').toLowerCase() || 'documento';
 
 async function downloadFile(filename, data) {

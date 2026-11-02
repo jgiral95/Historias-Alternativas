@@ -64,7 +64,7 @@ def patient(pid="p_1", **extra):
     return {"id": pid, "kind": "patient", "nombres": "María", "apellidos": "Pérez", **extra}
 
 
-def consent(tipo="Presencial y telepsicología"):
+def consent(tipo="Presencial y teleterapia"):
     """Consentimiento de atención vigente (sin él no se pueden agendar citas)."""
     from datetime import datetime, timezone
     return [{"tipo": tipo, "text": "Consiento la atención.", "signedAt": datetime.now(timezone.utc).isoformat()}]

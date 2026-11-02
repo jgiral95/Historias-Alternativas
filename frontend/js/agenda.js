@@ -80,7 +80,7 @@ ACT.apptEdit = b => {
   ${F('Duración (min)', 'duracion', a ? a.duracion : 50, { type: 'number' })}${F('Modalidad', 'modalidad', a ? a.modalidad : 'Presencial', { type: 'select', opts: MODS })}
   ${a ? F('Estado', 'estado', a.estado || 'Programada', { type: 'select', opts: APPT_EST }) : F('Repetir cada semana', 'repetir', '0', { type: 'select', opts: ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'] })}</div>
   ${a ? '' : '<p style="margin:-4px 0 0;font-size:12px;color:var(--muted)">«Repetir» crea esa cantidad de citas adicionales, una por semana.</p>'}
-  <div id="apwarn"></div>${a ? remApptHTML(a) : ''}<div class="row" style="justify-content:space-between">${a ? `<span class="row">${TEAM() ? '' : a.noteId ? `<button class="btn sm" data-ap="note">Ver evolución</button>` : `<button class="btn sm pri" data-ap="evol">Registrar evolución</button>`}${a.estado === 'Programada' || !a.estado ? `<button class="btn sm" data-ap="rem">Enviar recordatorio</button>` : ''}<button class="btn sm" data-ap="open">Abrir consultante</button><button class="btn sm warn" data-ap="del">Eliminar cita</button></span>` : '<span></span>'}<button class="btn pri" data-ap="save">Guardar cita</button></div></div></div>`;
+  <div id="apwarn"></div>${a ? remApptHTML(a) : ''}<div class="row" style="justify-content:space-between">${a ? `<span class="row">${TEAM() ? '' : a.noteId ? `<button class="btn sm" data-ap="note">Ver sesión</button>` : `<button class="btn sm pri" data-ap="evol">Registrar sesión</button>`}${a.estado === 'Programada' || !a.estado ? `<button class="btn sm" data-ap="rem">Enviar recordatorio</button>` : ''}<button class="btn sm" data-ap="open">Abrir consultante</button><button class="btn sm warn" data-ap="del">Eliminar cita</button></span>` : '<span></span>'}<button class="btn pri" data-ap="save">Guardar cita</button></div></div></div>`;
   const close = () => { root.innerHTML = ''; };
   $('#apcl').onclick = close;
   /* Sin el consentimiento que corresponde a la modalidad no se puede programar la cita (el servidor también lo exige). */
@@ -100,7 +100,7 @@ ACT.apptEdit = b => {
   root.querySelector('#apform').onclick = async e => {
     const k = e.target.closest('[data-ap]'); if (!k) return;
     const go = (tab, seed) => { close(); S.view = 'patients'; S.draft = false; S.pid = a.patientId; S.tab = tab; S.newReport = false; S.noteSeed = seed || null; S.newNote = seed ? 'new' : false; render(); scrollTo(0, 0); };
-    if (k.dataset.ap === 'consent') { close(); S.view = 'patients'; S.draft = false; S.pid = k.dataset.pid; S.tab = 'consent'; S.newNote = false; S.newReport = false; S.reconsent = true; S.consentPreset = k.dataset.need === 'telepsicología' ? 'Telepsicología (atención a distancia)' : null; render(); scrollTo(0, 0); return; }
+    if (k.dataset.ap === 'consent') { close(); S.view = 'patients'; S.draft = false; S.pid = k.dataset.pid; S.tab = 'consent'; S.newNote = false; S.newReport = false; S.reconsent = true; S.consentPreset = k.dataset.need === 'teleterapia' ? 'Teleterapia (atención a distancia)' : null; render(); scrollTo(0, 0); return; }
     if (k.dataset.ap === 'open') return go('datos');
     if (k.dataset.ap === 'rem') return remSend(a.id);
     if (k.dataset.ap === 'note') return go('evol');

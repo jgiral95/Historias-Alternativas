@@ -31,7 +31,7 @@ def test_folios_and_session_numbers():
     stale["intake"] = {"motivo": "x", "signedAt": now(), "addenda": []}
     r = c.put("/api/records/p_1", json=stale)
     assert r.status_code == 200 and [x["folio"] for x in r.json()["consents"]] == [1, 2] and r.json()["intake"]["sesion"] == 1
-    # evoluciones: folio 1, 2… y sesión 2, 3… (la primera vez fue la sesión 1); un borrador no cuenta
+    # sesiones: folio 1, 2… y sesión 2, 3… (la primera vez fue la sesión 1); un borrador no cuenta
     c.put("/api/records/n_0", json=note(0, signed=False))
     assert c.put("/api/records/n_1", json=note(1)).json() == {"folio": 1, "sesion": 2}
     assert c.put("/api/records/n_2", json=note(2)).json() == {"folio": 2, "sesion": 3}

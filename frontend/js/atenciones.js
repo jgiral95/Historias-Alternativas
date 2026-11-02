@@ -1,5 +1,5 @@
-/* Primera vez y evolución: cabecera de la atención, impresiones y atención a distancia. Parte de app.html (scripts clásicos que comparten el ámbito global; el orden de carga importa). */
-/* ===== Primera vez y evolución ===== */
+/* Primera vez y sesión: cabecera de la atención, impresiones y atención a distancia. Parte de app.html (scripts clásicos que comparten el ámbito global; el orden de carga importa). */
+/* ===== Primera vez y sesión ===== */
 function kvHTML(rec, fields) { const rows = fields.filter(f => rec[f[0]]); return rows.length ? `<dl class="kv">${rows.map(f => f[1] ? `<dt>${esc(f[1])}</dt><dd>${esc(rec[f[0]])}</dd>` : `<dd style="grid-column:1/-1">${esc(rec[f[0]])}</dd>`).join('')}</dl>` : ''; }
 const addAuthor = a => [a.by, a.cc ? 'C.C. ' + a.cc : '', a.tp ? 'T.P. ' + a.tp : ''].filter(Boolean).join(' · ');
 function addendumBody(a) {
@@ -64,9 +64,9 @@ function atencionBlock(r, kind, p) {
   ${F('Otras personas presentes', 'presentes', r.presentes || '', { ph: 'Ej.: la madre; practicante Ana López', req: true, nr: ['Ninguna'] })}</div>
   ${chk('presentesConsent', 'Las personas presentes (acompañantes, practicantes u observadores) aceptaron estar en la sesión y conocen la reserva de la información.', r.presentesConsent)}</div>`;
 }
-const riesgoSel = r => F('Nivel de riesgo (suicida, autolesión, para terceros o vulneración de derechos)', 'riesgoNivel', (r || {}).riesgoNivel || '', { type: 'select', opts: [''].concat(RIESGO), req: true });
+const riesgoSel = r => F('Nivel de alerta (si la persona podría hacerse daño, hacerle daño a otros o está en una situación vulnerable)', 'riesgoNivel', (r || {}).riesgoNivel || '', { type: 'select', opts: [''].concat(RIESGO), req: true });
 function atencionChecks(o) {
-  if (!o.riesgoNivel) { toast('Elija el nivel de riesgo (o «Sin riesgo evidente»).'); const f = $('#f_riesgoNivel'); if (f) { f.closest('.fld').classList.add('miss'); f.focus(); } return false; }
+  if (!o.riesgoNivel) { toast('Elija el nivel de alerta (o «Sin señales de alerta»).'); const f = $('#f_riesgoNivel'); if (f) { f.closest('.fld').classList.add('miss'); f.focus(); } return false; }
   const nadie = !String(o.presentes || '').trim() || /^(ninguna|nadie|no aplica|no refiere|no se indagó)/i.test(String(o.presentes).trim());
   if (!nadie && !o.presentesConsent) { toast('Confirme que las personas presentes aceptaron estar en la sesión.'); return false; }
   if (nadie) delete o.presentesConsent;
@@ -90,14 +90,14 @@ function dxNorm(d, doc) {
 }
 const dxActive = l => (l || []).filter(d => (d.estado || 'Activo') === 'Activo');
 const Dx = { ctx: null, items: [], base: [] };
-/* El cuadro se llena una vez por documento (primera vez o evolución) y sobrevive a los redibujados. */
+/* El cuadro se llena una vez por documento (primera vez o sesión) y sobrevive a los redibujados. */
 function dxReset(ctx, seed) { if (Dx.ctx !== ctx) { Dx.ctx = ctx; Dx.base = clone(seed || []); Dx.items = clone(seed || []); } }
 const dxSig = l => JSON.stringify((l || []).map(d => [d.nombre, d.estado || 'Activo']));
 const dxChanged = () => dxSig(Dx.items) !== dxSig(Dx.base);
-/* Impresión vigente: la de la evolución firmada más reciente que la registre; si no hay, la de la primera vez. */
+/* Impresión vigente: la de la sesión firmada más reciente que la registre; si no hay, la de la primera vez. */
 function currentDx(p, exceptId) {
   const n = S.notes.filter(x => x.patientId === p.id && x.signedAt && x.id !== exceptId && Array.isArray(x.diagnosticos)).sort((a, b) => b.sessionAt.localeCompare(a.sessionAt) || String(b.signedAt).localeCompare(String(a.signedAt)))[0];
-  if (n) return { items: n.diagnosticos.map(d => dxNorm(d, n)), from: 'la evolución del ' + fmtD(n.sessionAt) };
+  if (n) return { items: n.diagnosticos.map(d => dxNorm(d, n)), from: 'la sesión del ' + fmtD(n.sessionAt) };
   const i = p.intake && p.intake.signedAt ? p.intake : null;
   if (i && Array.isArray(i.diagnosticos)) return { items: i.diagnosticos.map(d => dxNorm(d, i)), from: 'la primera vez del ' + fmtD(i.sessionAt) };
   return { items: [], from: '' };
@@ -164,7 +164,7 @@ function tabIntake(p) {
   <div id="teleslot">${isRemote(i.modalidad) ? teleBlock(i) : ''}</div>
   <p class="stnote">Los campos con <span class="req">*</span> son obligatorios: si no aplica, use «No refiere», «No aplica» o «No se indagó».</p>
   ${intakeSchema(i).map(([t, fs, g]) => `<div class="sec"><h3>${esc(t)}</h3><div class="grid">${fs.map(f => F(f[1], f[0], i[f[0]] !== undefined ? i[f[0]] : (f[3] || ''), { type: 'area', rows: f[2], wide: true, aria: t, req: true })).join('')}</div>${g === 'genograma' ? genoBlock() : ''}</div>`).join('')}
-  <div class="sec" id="riskblock"><h3>Evaluación de riesgo</h3><div class="grid">${riesgoSel(i)}</div>${F('Hallazgos y acciones tomadas', 'riesgoAcciones', i.riesgoAcciones || '', { type: 'area', rows: 2, wide: true, req: true })}</div>
+  <div class="sec" id="riskblock"><h3>Señales de alerta</h3><div class="grid">${riesgoSel(i)}</div>${F('Qué se observó y qué se hizo', 'riesgoAcciones', i.riesgoAcciones || '', { type: 'area', rows: 2, wide: true, req: true })}</div>
   ${dxBlock(i)}
   ${legacyOf(i).length ? `<div class="sec"><h3>Datos de la versión anterior</h3><p style="margin:0;font-size:13px;color:var(--muted)">Estos campos ya no están en el formulario. Pase lo que necesite a los apartados nuevos y vacíe el campo, o déjelo como está.</p><div class="grid">${legacyOf(i).map(([k, l]) => F(l, k, i[k], { type: 'area', rows: 2, wide: true })).join('')}</div></div>` : ''}
   <div class="fld"><span class="lbl">Firma del terapeuta (de su perfil)</span>${therPreview()}</div>
@@ -234,14 +234,14 @@ function verifBox(r) {
   return `<div style="display:flex;gap:14px;align-items:center;margin-top:22px;padding-top:10px;border-top:1px solid #c9d2d4;font-size:12px;line-height:1.5"><div style="flex:none;width:96px">${qr.replace('<svg ', '<svg style="width:96px;height:96px" ')}</div><div>Código de verificación: <b style="font-family:monospace;font-size:14px;letter-spacing:.05em">${esc(r.verificacion)}</b><br>Compruebe que este documento es auténtico y que su contenido no fue alterado en<br>${esc(base)}/verificar</div></div>`;
 }
 
-/* ----- Evolución ----- */
+/* ----- Sesión ----- */
 function noteForm(p, n) {
   n = n || {};
-  return `<div class="card" id="noteform"><div class="row" style="justify-content:space-between"><h3 style="flex:1">${n.id ? 'Editar borrador' : 'Nueva nota de evolución'}</h3><button class="btn" data-act="cancelNote">Cancelar</button><button class="btn" data-act="saveNote" data-sign="0">Guardar borrador</button><button class="btn pri" data-act="saveNote" data-sign="1">Firmar y guardar</button></div>${sigNeeded()}${prevNoteHTML(p, n)}
+  return `<div class="card" id="noteform"><div class="row" style="justify-content:space-between"><h3 style="flex:1">${n.id ? 'Editar borrador' : 'Nueva nota de sesión'}</h3><button class="btn" data-act="cancelNote">Cancelar</button><button class="btn" data-act="saveNote" data-sign="0">Guardar borrador</button><button class="btn pri" data-act="saveNote" data-sign="1">Firmar y guardar</button></div>${sigNeeded()}${prevNoteHTML(p, n)}
   ${atencionBlock(n, 'note', p)}
   <div id="teleslot">${isRemote(n.modalidad) ? teleBlock(n) : ''}</div>
   ${evolSchema(n).length ? `${phraseHint()}<p class="stnote">Los campos con <span class="req">*</span> son obligatorios: si no aplica, use «No refiere», «No aplica» o «No se indagó».</p><div class="grid">${evolSchema(n).map(f => F(f[1], f[0], n[f[0]] !== undefined ? n[f[0]] : (f[3] || ''), { type: 'area', rows: f[2], wide: true, req: true })).join('')}</div>`
-    : `<div class="banner" id="noformat">Aún no ha creado su formato de evolución. Créelo en «Mis formatos» con los campos que usted usa (puede partir del formato sugerido). <div class="row" style="margin-top:6px"><button class="btn sm pri" data-act="formats" data-hub="evol">Crear mi formato</button></div></div>`}
+    : `<div class="banner" id="noformat">Aún no ha creado su formato de sesión. Créelo en «Mis formatos» con los campos que usted usa (puede partir del formato sugerido). <div class="row" style="margin-top:6px"><button class="btn sm pri" data-act="formats" data-hub="evol">Crear mi formato</button></div></div>`}
   <div class="grid">${riesgoSel(n)}</div>
   ${(() => { const cur = currentDx(p, n.id); return dxBlock(n, { note: true, ctx: 'note:' + p.id + ':' + (S.newNote || 'new'), seed: cur.items, from: cur.items.length ? cur.from : '' }); })()}
   <div class="fld"><span class="lbl">Firma del terapeuta (de su perfil)</span>${therPreview()}</div>
@@ -265,14 +265,14 @@ function noteCard(n) {
 function tabEvol(p) {
   const ns = S.notes.filter(n => n.patientId === p.id).sort((a, b) => b.sessionAt.localeCompare(a.sessionAt));
   const editing = S.newNote === 'new' ? Object.assign({}, S.noteSeed || {}) : (S.newNote ? S.notes.find(n => n.id === S.newNote) : null);
-  return `<div class="sec"><div class="row" style="justify-content:space-between"><h3 style="flex:1">Notas de evolución (${ns.filter(n => n.signedAt).length})</h3>${S.newNote ? '' : '<button class="btn pri" data-act="newNote">Nueva nota</button>'}</div>
+  return `<div class="sec"><div class="row" style="justify-content:space-between"><h3 style="flex:1">Notas de sesión (${ns.filter(n => n.signedAt).length})</h3>${S.newNote ? '' : '<button class="btn pri" data-act="newNote">Nueva nota</button>'}</div>
   ${S.newNote ? noteForm(p, editing) : ''}${ns.filter(n => n.id !== S.newNote).map(noteCard).join('') || (S.newNote ? '' : '<div class="empty">Aún no hay notas. Cada sesión posterior a la primera se registra aquí.</div>')}</div>`;
 }
 ACT.newNote = () => { S.noteSeed = null; S.newNote = 'new'; Dx.ctx = null; render(); };
 ACT.cancelNote = () => { S.newNote = false; S.noteSeed = null; Dx.ctx = null; render(); };
 ACT.editNote = b => { S.newNote = b.dataset.id; render(); };
 ACT.delNote = b => { S.notes = S.notes.filter(n => n.id !== b.dataset.id); Store.remove(b.dataset.id); toast('Borrador descartado.'); render(); };
-ACT.viewNote = b => { const p = curPatient(), n = S.notes.find(x => x.id === b.dataset.id); showDoc('Nota de evolución · ' + fullName(p), docNote(n, p), 'evolucion-' + slug(fullName(p)) + '-' + n.sessionAt.slice(0, 10) + '.html'); };
+ACT.viewNote = b => { const p = curPatient(), n = S.notes.find(x => x.id === b.dataset.id); showDoc('Nota de sesión · ' + fullName(p), docNote(n, p), 'evolucion-' + slug(fullName(p)) + '-' + n.sessionAt.slice(0, 10) + '.html'); };
 ACT.saveNote = async b => {
   const p = curPatient(), sign = b.dataset.sign === '1', o = readForm($('#noteform'), {});
   o.sessionAt = toISO(o.sessionAt);

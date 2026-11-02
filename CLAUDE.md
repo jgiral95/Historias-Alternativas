@@ -45,5 +45,5 @@ FastAPI + SQLAlchemy. `main.py` (endpoints; registros cifrados por tipo: profile
 Nada de exportaciones masivas; documentos firmados inmutables (solo adendas); el equipo nunca recibe datos clínicos; commits a `main` con las líneas Co-Authored-By y Claude-Session.
 
 ## Pendientes
-- Los e2e `app_e2e.js`, `formularios_e2e.js` y otros aún asumen CIE/RIPS/EPS: hay que actualizarlos. `inicio_e2e.js` ya fallaba antes («Entendido»: el perfil incompleto bloquea clics).
-- Textos aún dirigidos a «psicólogo/paciente»; adaptar al lenguaje de terapias alternativas.
+- Los e2e `app_e2e.js`, `formularios_e2e.js` y otros aún asumen CIE/RIPS/EPS: hay que actualizarlos. `test_migrations.py` (2 pruebas) falla desde el origen.
+- Lenguaje: la app no es clínica ni de salud ni la usan profesionales de la salud; mantener ese aviso (inicio, privacidad, ingreso, pie de la app, documentos) y evitar términos clínicos.

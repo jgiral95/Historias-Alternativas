@@ -1,6 +1,6 @@
 /* Notas de proceso y escritura a mano. Parte de app.html (scripts clásicos que comparten el ámbito global; el orden de carga importa). */
 /* ===== Notas de proceso: cuaderno del terapeuta, fuera de la ficha ===== */
-const PN_TIPOS = ['Hipótesis', 'Formulación del caso', 'Notas de supervisión', 'Pendiente', 'Idea', 'Otra'];
+const PN_TIPOS = ['Idea', 'Mirada del caso', 'Consejos de colegas', 'Pendiente', 'Recordatorio', 'Otra'];
 const PN_ESTADOS = ['Abierta', 'En seguimiento', 'Cerrada'];
 const fold = t => String(t || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
 const plainRich = t => String(t || '').replace(/^#\s+/gm, '').replace(/^[-•]\s+/gm, '• ').replace(/\*\*|__|\*/g, '');
@@ -59,7 +59,7 @@ function pnListHTML() {
 }
 function pnEditorHTML(n) {
   if (!n) return `<div class="pned"><h3 style="margin:0">Notas de proceso</h3><div class="banner" style="margin:0"><b>Son sus notas de trabajo, no la ficha.</b> Aquí van hipótesis, formulaciones, lo que habló en supervisión e ideas para el caso. No se firman, no salen en la historia completa ni en copias o informes, y su equipo no las ve. Puede editarlas y borrarlas cuando quiera.</div>
-    <p class="stnote" style="margin:0">Lo que haga parte de la atención (lo ocurrido en la sesión, el impresión, las decisiones del proceso) debe quedar en la evolución de la historia.</p>
+    <p class="stnote" style="margin:0">Lo que haga parte de la atención (lo ocurrido en la sesión, el impresión, las decisiones del proceso) debe quedar en la sesión de la historia.</p>
     <div class="row"><button class="btn pri" data-act="pnNew">+ Nueva nota</button></div></div>`;
   const pts = S.patients.slice().sort((a, b) => fullName(a).localeCompare(fullName(b), 'es'));
   const pp = pnPat(n), segs = (n.seguimiento || []).map((x, i) => [x, i]).reverse();

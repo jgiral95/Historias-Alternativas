@@ -16,7 +16,7 @@ def setup(c):
 
 
 def body(**k):
-    return {"patientId": "p_1", "tipo": "Telepsicología (atención a distancia)", "text": "Texto del **consentimiento** para María.",
+    return {"patientId": "p_1", "tipo": "Teleterapia (atención a distancia)", "text": "Texto del **consentimiento** para María.",
             "signerType": "Paciente", "signerName": "María Pérez", "signerDoc": "1.020.304", **k}
 
 

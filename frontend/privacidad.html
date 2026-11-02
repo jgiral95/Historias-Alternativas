@@ -34,6 +34,7 @@ nav{font:14px "IBM Plex Sans",system-ui,sans-serif;margin:0 0 10px}
 <p class="meta">Alter-Karute · Vigente desde el 1 de noviembre de 2026 · Reemplaza la versión del 27 de octubre de 2026</p>
 <nav><a href="#english">English summary (Google API data)</a></nav>
 
+<div class="aviso" style="background:#F1EADB;border-left:4px solid #C47A56;padding:12px 16px;border-radius:8px;margin:0 0 20px"><b>Alcance de la plataforma.</b> Alter-Karute es una herramienta de seguimiento para terapeutas de prácticas alternativas y complementarias. No realiza procesos clínicos ni de salud, no diagnostica ni trata, y quienes la usan no son profesionales de la salud. Si un consultante tiene una condición de salud, debe acudir a un profesional de la salud.</div>
 <h2>1. Quién es responsable</h2>
 <p>Alter-Karute es una plataforma para que terapeutas lleven las fichas de sus consultantes. La opera <b>Juan Pablo Giraldo</b>, en Colombia. Contacto para asuntos de privacidad: <a href="mailto:jgiral95@gmail.com">jgiral95@gmail.com</a>.</p>
 <p>Datos del tratamiento:</p>
@@ -45,7 +46,7 @@ nav{font:14px "IBM Plex Sans",system-ui,sans-serif;margin:0 0 10px}
 <h2>2. Qué datos se tratan</h2>
 <ul>
 <li><b>Profesionales:</b> nombre, correo, contraseña (guardada solo como resumen criptográfico Argon2, nunca en texto), cédula, registro, datos del consultorio, firma manuscrita y preferencias de uso. También los datos de las cuentas de su equipo (nombre y correo); la configuración de su correo de envío, incluida una contraseña de aplicación, guardada cifrada; y, si activan la verificación en dos pasos, su clave secreta, sus códigos de recuperación y los dispositivos que eligieron recordar (navegador, sistema y fecha del último uso).</li>
-<li><b>Consultantes</b> (los registra el terapeuta): datos de identificación y contacto, datos sociodemográficos, cuidadores o representantes, consentimientos y firmas, ficha (primera vez, evoluciones, escalas, impresiones, informes, cierres y hojas escritas a mano), citas y documentos adjuntos. Incluye datos sensibles relativos a la salud.</li>
+<li><b>Consultantes</b> (los registra el terapeuta): datos de identificación y contacto, datos sociodemográficos, cuidadores o representantes, consentimientos y firmas, ficha (primera vez, sesiones, escalas, impresiones, informes, cierres y hojas escritas a mano), citas y documentos adjuntos. Incluye datos sensibles relativos a la salud.</li>
 <li><b>Notas de proceso:</b> el cuaderno de trabajo del terapeuta (hipótesis, formulación de caso, notas de supervisión). No forman parte de la ficha, no salen en copias ni informes y las cuentas del equipo no las ven.</li>
 <li><b>Datos técnicos:</b> una bitácora de accesos y acciones, sin contenido de las sesiones: fecha y hora, usuario, tipo de acción, historia a la que se refiere y dirección IP. Cada terapeuta puede consultar la de su cuenta y su equipo. Además, la dirección IP se usa de forma temporal para limitar intentos de ingreso y consultas.</li>
 <li><b>Cookies:</b> solo dos, ambas necesarias: la de sesión, para mantener la sesión iniciada, y, si la persona elige «Recordar este dispositivo» al verificar el código, una que evita pedirlo de nuevo en ese navegador. No se usan cookies de publicidad ni de analítica. Algunas preferencias (modo claro u oscuro, vista de la agenda) se guardan en el propio navegador.</li>
@@ -119,11 +120,11 @@ nav{font:14px "IBM Plex Sans",system-ui,sans-serif;margin:0 0 10px}
 <p>Si esta política cambia, la nueva versión se publicará en esta misma página con su fecha de vigencia y se informará a los terapeutas dentro de la plataforma.</p>
 
 <h2 id="english">English summary (Google API data)</h2>
-<p>Alter-Karute is a clinical-records platform for psychologists, operated by Juan Pablo Giraldo (Colombia). Contact: <a href="mailto:jgiral95@gmail.com">jgiral95@gmail.com</a>.</p>
+<p>Alter-Karute is a follow-up tool for alternative and complementary therapists. It performs no clinical or health-care processes and its users are not health professionals. It is operated by Juan Pablo Giraldo (Colombia). Contact: <a href="mailto:jgiral95@gmail.com">jgiral95@gmail.com</a>.</p>
 <ul>
-<li><b>Google Calendar integration is optional.</b> Each psychologist connects their own Google account.</li>
+<li><b>Google Calendar integration is optional.</b> Each therapist connects their own Google account.</li>
 <li><b>Scope requested:</b> only <code>https://www.googleapis.com/auth/calendar.app.created</code>. It is used to create one secondary calendar named «Alter-Karute» and to create, update and delete appointment events in that calendar only. The app cannot read or change any other calendar or event.</li>
-<li><b>Data sent to Google:</b> appointment date, time, duration and modality, plus a label chosen by the psychologist (the patient's initials, full name, or nothing). No clinical notes or health information are ever sent.</li>
+<li><b>Data sent to Google:</b> appointment date, time, duration and modality, plus a label chosen by the therapist (the client's initials, full name, or nothing). No session notes or personal records are ever sent.</li>
 <li><b>Data received from Google:</b> an OAuth token and the ID of the calendar the app created. The token is stored encrypted and used only to keep that calendar in sync. It is deleted and revoked when the user disconnects.</li>
 <li><b>No sale, no ads, no AI training:</b> Google user data is not sold, not used for advertising, not transferred to third parties except as needed to provide the feature, and not used to train AI or machine-learning models.</li>
 <li><b>How to revoke access:</b> in the app (Agenda → Google Calendar → Desconectar) or at <a href="https://myaccount.google.com/permissions">myaccount.google.com/permissions</a>.</li>

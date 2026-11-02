@@ -14,15 +14,15 @@ def test_feedback_flow():
     a, adm, o = client_for("ana@x.co"), client_for("admin@x.co"), client_for("otro@x.co")
     assert a.get("/api/auth/me").json()["comentarios"] is True
     assert a.post("/api/comentarios", json={"tema": "Inventado", "texto": "x"}).status_code == 400
-    assert a.post("/api/comentarios", json={"tema": "Evolución", "tipo": "Error", "texto": "  "}).status_code == 400
-    assert a.post("/api/comentarios", json={"tema": "Evolución", "tipo": "Error", "texto": "x", "imagen": "data:text/html;base64,AAAA"}).status_code == 400
-    r = a.post("/api/comentarios", json={"tema": "Evolución", "tipo": "Error", "texto": "No guarda la nota\nsi cierro rápido",
-                                         "contexto": {"vista": "Pacientes", "pestaña": "Evolución", "pantalla": "390x844"}, "imagen": PNG})
+    assert a.post("/api/comentarios", json={"tema": "Sesión", "tipo": "Error", "texto": "  "}).status_code == 400
+    assert a.post("/api/comentarios", json={"tema": "Sesión", "tipo": "Error", "texto": "x", "imagen": "data:text/html;base64,AAAA"}).status_code == 400
+    r = a.post("/api/comentarios", json={"tema": "Sesión", "tipo": "Error", "texto": "No guarda la nota\nsi cierro rápido",
+                                         "contexto": {"vista": "Pacientes", "pestaña": "Sesión", "pantalla": "390x844"}, "imagen": PNG})
     assert r.status_code == 201
     fid = r.json()["id"]
     a.post("/api/comentarios", json={"tema": "Agenda y calendario", "tipo": "Sugerencia", "texto": "Vista de día más grande"})
     mine = a.get("/api/comentarios").json()
-    assert len(mine["items"]) == 2 and "Evolución" in mine["temas"] and "contexto" not in mine["items"][0]
+    assert len(mine["items"]) == 2 and "Sesión" in mine["temas"] and "contexto" not in mine["items"][0]
     assert o.get("/api/comentarios").json()["items"] == []
     assert o.get(f"/api/comentarios/{fid}/captura").status_code == 404  # no es suyo
     assert a.get(f"/api/comentarios/{fid}/captura").headers["content-type"] == "image/png"
@@ -30,7 +30,7 @@ def test_feedback_flow():
     assert a.get("/api/admin/comentarios").status_code == 403
     allc = adm.get("/api/admin/comentarios").json()["items"]
     ev = next(x for x in allc if x["id"] == fid)
-    assert ev["autor"] == "Ana Ruiz" and ev["contexto"]["pestaña"] == "Evolución" and ev["captura"]
+    assert ev["autor"] == "Ana Ruiz" and ev["contexto"]["pestaña"] == "Sesión" and ev["captura"]
     assert adm.patch(f"/api/admin/comentarios/{fid}", json={"estado": "Raro"}).status_code == 400
     assert adm.patch(f"/api/admin/comentarios/{fid}", json={"estado": "En revisión", "respuesta": "Gracias, lo reviso"}).json()["estado"] == "En revisión"
     assert a.get("/api/comentarios").json()["items"][1]["respuesta"] == "Gracias, lo reviso"
@@ -38,7 +38,7 @@ def test_feedback_flow():
     z = zipfile.ZipFile(io.BytesIO(adm.get("/api/admin/comentarios/exportar").content))
     md = z.read("comentarios.md").decode()
     assert f"capturas/comentario-{fid}.png" in z.namelist()
-    assert "## Evolución (1)" in md and "> No guarda la nota\n> si cierro rápido" in md and "pestaña: Evolución" in md and "Para Claude" in md
+    assert "## Sesión (1)" in md and "> No guarda la nota\n> si cierro rápido" in md and "pestaña: Sesión" in md and "Para Claude" in md
     txt = adm.get("/api/admin/comentarios/texto").json()
     assert txt["cantidad"] == 2 and "Vista de día más grande" in txt["texto"]
     adm.patch(f"/api/admin/comentarios/{fid}", json={"estado": "Resuelto"})

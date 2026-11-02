@@ -10,7 +10,7 @@ const closeMenu = () => { const m = $('#acmenu'), b = $('[data-act="menu"]'); if
 const curPatient = () => S.draft ? S.draftObj : S.patients.find(x => x.id === S.pid);
 const therSnap = () => ({ therapistName: S.profile.nombre, therapistDocId: S.profile.cedula || undefined, therapistReg: S.profile.registro, therapistSig: S.profile.firma, consultorio: S.profile.consultorio });
 const canSign = () => S.profile.nombre && S.profile.firma;
-const TABS = [['datos', 'Datos'], ['consent', 'Consentimiento'], ['intake', 'Primera vez'], ['evol', 'Evolución'], ['escalas', 'Escalas'], ['informes', 'Informes'], ['cierre', 'Cierre'], ['archivo', 'Archivo']];
+const TABS = [['datos', 'Datos'], ['consent', 'Consentimiento'], ['intake', 'Primera vez'], ['evol', 'Sesión'], ['escalas', 'Chequeos'], ['informes', 'Informes'], ['cierre', 'Cierre'], ['archivo', 'Archivo']];
 const OPT = {
   tipoDoc: ['CC', 'TI', 'CE', 'Registro civil', 'Pasaporte', 'Permiso por protección temporal (PPT)', 'Permiso especial de permanencia (PEP)', 'Menor sin documento', 'Otro'],
   zona: ['', 'Urbana', 'Rural', 'No responde'],
@@ -82,14 +82,14 @@ async function navRestore(st) {
   if (p) logView();
 }
 window.addEventListener('popstate', e => { navRestore(e.state); });
-function render() { renderMain(); navSync(); }
+function render() { renderMain(); navSync(); const sh = $('#app'); if (sh && !$('#aviso-alcance')) sh.insertAdjacentHTML('beforeend', '<div id="aviso-alcance" style="text-align:center;font-size:12px;color:var(--muted);padding:10px 0">Alter-Karute es una herramienta de seguimiento de bienestar: no realiza procesos clínicos ni de salud, ni sus usuarios son profesionales de la salud.</div>'); }
 function renderMain() {
   S.dirty = false;
   const p = curPatient(), pr = S.profile;
   const incomplete = !pr.nombre || !pr.firma;
   $('#app').innerHTML = `
   <header class="top"><button class="brand" data-act="home" title="Ir al resumen">${logoSVG(34)}<b>Alter-Karute</b></button>
-    <nav class="nav" aria-label="Secciones"><button class="${S.view === 'agenda' || S.view === 'cuaderno' ? '' : 'on'}" data-act="view" data-v="patients">Consultantes</button><button class="${S.view === 'agenda' ? 'on' : ''}" data-act="view" data-v="agenda">Agenda</button>${TEAM() ? '' : `<button class="${S.view === 'cuaderno' ? 'on' : ''}" data-act="view" data-v="cuaderno" title="Notas de proceso: hipótesis y supervisiones, fuera de la ficha">Notas<span class="lbl-long"> de proceso</span></button>`}</nav>
+    <nav class="nav" aria-label="Secciones"><button class="${S.view === 'agenda' || S.view === 'cuaderno' ? '' : 'on'}" data-act="view" data-v="patients">Consultantes</button><button class="${S.view === 'agenda' ? 'on' : ''}" data-act="view" data-v="agenda">Agenda</button>${TEAM() ? '' : `<button class="${S.view === 'cuaderno' ? 'on' : ''}" data-act="view" data-v="cuaderno" title="Notas de proceso: ideas y consejos de colegas, fuera de la ficha">Notas<span class="lbl-long"> de proceso</span></button>`}</nav>
     <div class="top-search"><input type="text" id="q" placeholder="Buscar consultante o texto en notas" value="${esc(S.q)}" aria-label="Buscar consultante"></div>
     <div class="top-actions">${S.view === 'cuaderno' ? '<button class="btn pri" data-act="pnNew">+ <span class="lbl-long">Nueva nota</span></button>' : '<button class="btn pri" data-act="newPatient">+ <span class="lbl-long">Nuevo consultante</span></button>'}
     <div class="avwrap"><button class="avatar" data-act="menu" aria-haspopup="true" aria-expanded="false" aria-label="Menú de cuenta"><i>${esc(initials(pr.nombre || (S.user && S.user.name) || (S.user && S.user.email) || 'P'))}</i><svg viewBox="0 0 12 12"><path d="M2 4l4 4 4-4"/></svg></button>
@@ -120,7 +120,7 @@ function searchNotes(q) {
     const i = p.intake; if (i && i.signedAt) { intakeSchema(i).forEach(([t, fs]) => fs.forEach(f => add(p, 'intake', '', 'Primera vez', i[f[0]]))); (i.diagnosticos || []).forEach(d => add(p, 'intake', '', 'Impresión', d.codigo + ' ' + d.nombre)); }
     (p.cierres || []).forEach(c => CIERRE_FIELDS.forEach(f => add(p, 'cierre', '', 'Cierre ' + fmtD(c.fecha), c[f[0]])));
   });
-  S.notes.forEach(n => { const p = S.patients.find(x => x.id === n.patientId); if (p && n.signedAt) { evolSchema(n).forEach(f => add(p, 'evol', n.id, 'Evolución ' + fmtD(n.sessionAt), n[f[0]])); if (n.dxCambio) (n.diagnosticos || []).forEach(d => add(p, 'evol', n.id, 'Impresión ' + fmtD(n.sessionAt), d.codigo + ' ' + d.nombre)); } });
+  S.notes.forEach(n => { const p = S.patients.find(x => x.id === n.patientId); if (p && n.signedAt) { evolSchema(n).forEach(f => add(p, 'evol', n.id, 'Sesión ' + fmtD(n.sessionAt), n[f[0]])); if (n.dxCambio) (n.diagnosticos || []).forEach(d => add(p, 'evol', n.id, 'Impresión ' + fmtD(n.sessionAt), d.codigo + ' ' + d.nombre)); } });
   S.reports.forEach(r => { const p = S.patients.find(x => x.id === r.patientId); if (p && r.signedAt) add(p, 'informes', r.id, r.tipo, r.contenido); });
   S.scales.forEach(e => { const p = S.patients.find(x => x.id === e.patientId); if (p) add(p, 'escalas', '', e.escala.nombre, e.observaciones); });
   const seen = new Set();
@@ -160,9 +160,9 @@ function todoHTML() {
   const now = Date.now(), nowI = nowISO(), items = [];
   const noted = new Set(S.notes.filter(n => n.signedAt && n.apptId).map(n => n.apptId));
   const pat = id => S.patients.find(x => x.id === id);
-  // citas ya pasadas sin evolución
+  // citas ya pasadas sin sesión
   S.appts.filter(a => (a.estado === 'Programada' || a.estado === 'Atendida') && new Date(a.startAt).getTime() + (a.duracion || 50) * 60000 < now && !a.noteId && !noted.has(a.id) && now - new Date(a.startAt).getTime() < 30 * 864e5)
-    .sort((a, b) => b.startAt.localeCompare(a.startAt)).forEach(a => { const p = pat(a.patientId); if (p) items.push({ k: 'Evolución pendiente', t: fullName(p), d: fmtShort(a.startAt), act: `data-act="apptEvol" data-id="${a.id}"`, btn: 'Registrar evolución', w: 0 }); });
+    .sort((a, b) => b.startAt.localeCompare(a.startAt)).forEach(a => { const p = pat(a.patientId); if (p) items.push({ k: 'Sesión pendiente', t: fullName(p), d: fmtShort(a.startAt), act: `data-act="apptEvol" data-id="${a.id}"`, btn: 'Registrar sesión', w: 0 }); });
   const active = S.patients.filter(p => !p.estado || p.estado === 'Activo');
   active.forEach(p => {
     const cs = p.consents || [];
@@ -193,7 +193,7 @@ function sessionRows() {
   S.patients.forEach(p => {
     const docs = [];
     if (p.intake && p.intake.signedAt) docs.push({ tipo: 'Primera vez', at: p.intake.sessionAt, signedAt: p.intake.signedAt, rec: '', tab: 'intake', remoto: isRemote(p.intake.modalidad), dx: false, text: intakeSchema(p.intake).map(([, fs]) => fs.map(f => p.intake[f[0]] || '').join(' ')).join(' ') });
-    S.notes.filter(n => n.patientId === p.id && n.signedAt).forEach(n => docs.push({ tipo: 'Evolución', at: n.sessionAt, signedAt: n.signedAt, rec: n.id, tab: 'evol', remoto: isRemote(n.modalidad), dx: !!n.dxCambio, text: evolSchema(n).map(f => n[f[0]] || '').join(' ') }));
+    S.notes.filter(n => n.patientId === p.id && n.signedAt).forEach(n => docs.push({ tipo: 'Sesión', at: n.sessionAt, signedAt: n.signedAt, rec: n.id, tab: 'evol', remoto: isRemote(n.modalidad), dx: !!n.dxCambio, text: evolSchema(n).map(f => n[f[0]] || '').join(' ') }));
     (p.cierres || []).forEach(c => docs.push({ tipo: 'Cierre', at: c.fecha || c.signedAt, signedAt: c.signedAt, rec: '', tab: 'cierre', text: CIERRE_FIELDS.map(f => c[f[0]] || '').join(' ') }));
     docs.sort((a, b) => String(a.at).localeCompare(String(b.at)) || String(a.signedAt).localeCompare(String(b.signedAt)));
     let k = 0; docs.forEach(d => { if (d.tipo !== 'Cierre') d.num = ++k; rows.push(Object.assign(d, { p, name: fullName(p) })); });
@@ -216,7 +216,7 @@ function notesTableHTML() {
   all.sort((a, b) => { const x = f(a), y = f(b); return (x < y ? -1 : x > y ? 1 : 0) * NL.dir || String(b.at).localeCompare(String(a.at)); });
   const rows = all.slice(0, NL.n);
   const th = (k, l) => `<th aria-sort="${NL.sort === k ? (NL.dir > 0 ? 'ascending' : 'descending') : 'none'}"><button class="thsort" data-act="nlSort" data-k="${k}">${l}<svg viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3" class="${NL.sort === k && NL.dir > 0 ? 'on' : ''}"/><path d="M2 9l3 3 3-3" class="${NL.sort === k && NL.dir < 0 ? 'on' : ''}"/></svg></button></th>`;
-  if (!all.length) return `<div class="empty">${S.notes.length || S.patients.some(p => p.intake && p.intake.signedAt) ? 'No hay notas con esos filtros.' : 'Aún no hay notas firmadas. Aparecerán aquí al firmar la primera vez o una evolución.'}</div>`;
+  if (!all.length) return `<div class="empty">${S.notes.length || S.patients.some(p => p.intake && p.intake.signedAt) ? 'No hay notas con esos filtros.' : 'Aún no hay notas firmadas. Aparecerán aquí al firmar la primera vez o una sesión.'}</div>`;
   return `<div class="ntwrap"><table class="ntable"><thead><tr>${th('paciente', 'Consultante')}${th('num', 'Sesión #')}${th('fecha', 'Fecha')}<th>Tipo</th><th class="hide-sm">Firmada</th></tr></thead><tbody>
   ${rows.map(r => `<tr data-act="openHit" data-id="${r.p.id}" data-tab="${r.tab}" data-rec="${esc(r.rec)}"><td><button class="ntname" data-act="openHit" data-id="${r.p.id}" data-tab="${r.tab}" data-rec="${esc(r.rec)}"><span class="av">${esc(initials(r.name))}</span>${esc(r.name)}</button></td><td class="mono">${r.num ? '#' + r.num : '—'}</td><td class="mono">${esc(fmtNum(r.at))}</td><td><span class="chip ${r.tipo === 'Primera vez' ? 'ok' : r.tipo === 'Cierre' ? 'warn' : ''}">${r.tipo}</span>${r.remoto ? ' <span class="chip">A distancia</span>' : ''}${r.dx ? ' <span class="chip warn">Impresión actualizada</span>' : ''}</td><td class="mono hide-sm">${esc(fmtNum(r.signedAt))}</td></tr>`).join('')}</tbody></table></div>
   <div class="row" style="justify-content:space-between"><span class="ts">${rows.length < all.length ? `Mostrando ${rows.length} de ${all.length}` : NL.all ? `${all.length} nota${all.length === 1 ? '' : 's'}` : `${all.length} consultante${all.length === 1 ? '' : 's'} · última nota de cada uno`}</span>${rows.length < all.length ? '<button class="btn sm" data-act="nlMore">Ver más</button>' : ''}</div>`;
@@ -226,7 +226,7 @@ function notesListHTML() {
   const per = [['7', 'Últimos 7 días'], ['30', 'Últimos 30 días'], ['mes', 'Este mes'], ['mesant', 'Mes anterior'], ['anio', 'Este año'], ['', 'Todo']];
   return `<details class="sec fold" data-fold="notas" ${foldOpen('notas')}><summary><h3>Notas de sesión</h3></summary><div class="nlbar"><input type="search" id="nl_q" placeholder="Buscar notas por consultante o contenido" value="${esc(NL.q)}" aria-label="Buscar notas">
   <select id="nl_per" aria-label="Periodo">${per.map(([v, l]) => `<option value="${v}" ${NL.per === v ? 'selected' : ''}>${l}</option>`).join('')}</select>
-  <select id="nl_tipo" aria-label="Tipo o plantilla"><option value="">Todos los tipos</option>${['Primera vez', 'Evolución', 'Cierre'].map(t => `<option ${NL.tipo === t ? 'selected' : ''}>${t}</option>`).join('')}</select></div>
+  <select id="nl_tipo" aria-label="Tipo o plantilla"><option value="">Todos los tipos</option>${['Primera vez', 'Sesión', 'Cierre'].map(t => `<option ${NL.tipo === t ? 'selected' : ''}>${t}</option>`).join('')}</select></div>
   <label class="check" style="font-size:13px"><input type="checkbox" id="nl_all" ${NL.all ? 'checked' : ''}> <span>Ver todas las notas (no solo la última de cada consultante)</span></label>
   <div id="ntbody">${notesTableHTML()}</div></details>`;
 }
@@ -257,14 +257,14 @@ function homeHTML() {
   ${todoHTML()}
   ${todayHTML()}
   ${notesListHTML()}
-  <p style="color:var(--muted);margin:0">Seleccione un consultante de la lista o cree uno nuevo. Cada consentimiento, primera vez, nota de evolución e informe queda firmado con su firma, la fecha y la hora, y no se puede modificar después; solo se pueden agregar adendas.</p></div></div>`;
+  <p style="color:var(--muted);margin:0">Seleccione un consultante de la lista o cree uno nuevo. Cada consentimiento, primera vez, nota de sesión e informe queda firmado con su firma, la fecha y la hora, y no se puede modificar después; solo se pueden agregar adendas.</p></div></div>`;
 }
 
 function fileHTML(p) {
   const a = ageOf(p.nacimiento);
   return `<div class="panel file"><div class="file-head"><div><button class="btn sm back" data-act="back">← Consultantes</button><h2>${esc(S.draft ? 'Nuevo consultante' : fullName(p))}</h2>
   <div class="meta"><span class="mono">${esc([p.tipoDoc, p.documento].filter(Boolean).join(' ') || 'sin documento')}</span>${!S.draft && openedAt(p) ? `<span>Historia abierta el ${esc(fmtD(openedAt(p)))}</span>` : ''}${a !== null ? `<span>${a} años</span>` : ''}${p.estado ? `<span class="chip ${p.estado === 'Activo' ? 'ok' : 'warn'}">${esc(p.estado)}</span>` : ''}${p.servicio && p.servicio !== 'Individual' ? `<span class="chip">${esc(p.servicio)}${linked(p).length ? ' · con ' + esc(linked(p).map(x => x.nombres || fullName(x)).join(', ')) : ''}</span>` : ''}${S.draft ? '' : nextApptHTML(p)}</div></div>
-  ${S.draft || TEAM() ? '' : `<span class="row" style="gap:6px"><button class="btn sm" data-act="pnFor" data-id="${p.id}" title="Hipótesis, supervisiones y seguimiento: no forman parte de la ficha">Notas de proceso${S.pnotes.filter(n => n.patientId === p.id).length ? ' (' + S.pnotes.filter(n => n.patientId === p.id).length + ')' : ''}</button><button class="btn sm" data-act="accessLog" title="Quién abrió esta historia y qué hizo">Accesos</button><button class="btn sm" data-act="fullDoc">Historia completa</button></span>`}</div>
+  ${S.draft || TEAM() ? '' : `<span class="row" style="gap:6px"><button class="btn sm" data-act="pnFor" data-id="${p.id}" title="Ideas, consejos de colegas y seguimiento: no forman parte de la ficha">Notas de proceso${S.pnotes.filter(n => n.patientId === p.id).length ? ' (' + S.pnotes.filter(n => n.patientId === p.id).length + ')' : ''}</button><button class="btn sm" data-act="accessLog" title="Quién abrió esta historia y qué hizo">Accesos</button><button class="btn sm" data-act="fullDoc">Historia completa</button></span>`}</div>
   <div class="tabs" role="tablist">${(TEAM() ? TABS.slice(0, 1) : TABS).map(([k, l]) => `<button class="tab ${S.tab === k ? 'on' : ''}" role="tab" data-act="tab" data-tab="${k}" ${S.draft && k !== 'datos' ? 'disabled style="opacity:.4;cursor:not-allowed"' : ''}>${l}</button>`).join('')}</div>
   <div class="body" id="tabbody">${tabHTML(p)}</div></div>`;
 }
@@ -479,17 +479,17 @@ function repBlock(n, name, doc, par) {
 function tabConsent(p) {
   const cs = p.consents || [];
   const hasData = cs.some(c => c.tipo === DATA_TIPO && !c.revocacion);
-  const dataBanner = hasData ? '' : `<div class="banner"><b>Falta la autorización de datos personales.</b> Es un documento corto, distinto del consentimiento, en el que el consultante (o su representante) autoriza que usted guarde y use sus datos de salud para atenderlo. Se firma una sola vez. <div class="row" style="margin-top:6px"><button class="btn sm pri" data-act="newDataAuth">Firmar autorización de datos</button></div></div>`;
+  const dataBanner = hasData ? '' : `<div class="banner"><b>Falta la autorización de datos personales.</b> Es un documento corto, distinto del consentimiento, en el que el consultante (o su representante) autoriza que usted guarde y use sus datos para acompañarlo. Se firma una sola vez. <div class="row" style="margin-top:6px"><button class="btn sm pri" data-act="newDataAuth">Firmar autorización de datos</button></div></div>`;
   if (cs.length && !S.reconsent) {
     const hasCare = cs.some(c => c.tipo !== DATA_TIPO && !(c.revocacion && c.revocacion.alcance === 'Total'));
-    const remote = /Virtual|Mixta/.test(p.modalidadAt || ''), hasTele = cs.some(c => (/tele/i.test(c.tipo || '') || /TELEPSICOLOG/i.test(c.text || '')) && !(c.revocacion && c.revocacion.alcance === 'Total'));
-    const teleWarn = remote && !hasTele ? `<div class="banner">En los datos, la modalidad de atención es «${esc(p.modalidadAt)}», pero ningún consentimiento vigente incluye telepsicología. Registre uno de tipo «${p.modalidadAt === 'Virtual' ? 'Telepsicología' : 'Presencial y telepsicología'}».</div>` : '';
+    const remote = /Virtual|Mixta/.test(p.modalidadAt || ''), hasTele = cs.some(c => (/tele/i.test(c.tipo || '') || /TELETERAPIA/i.test(c.text || '')) && !(c.revocacion && c.revocacion.alcance === 'Total'));
+    const teleWarn = remote && !hasTele ? `<div class="banner">En los datos, la modalidad de atención es «${esc(p.modalidadAt)}», pero ningún consentimiento vigente incluye teleterapia. Registre uno de tipo «${p.modalidadAt === 'Virtual' ? 'Teleterapia' : 'Presencial y teleterapia'}».</div>` : '';
     return `<div class="sec">${remotePending(p)}${dataBanner}${p.consentDraft ? '<div class="banner">Tiene un consentimiento en borrador (sin firmar). <button class="btn sm pri" data-act="reConsent">Continuar</button></div>' : ''}${hasCare ? '' : '<div class="banner">No hay un consentimiento de atención vigente.</div>'}${teleWarn}<div class="row" style="justify-content:space-between"><h3 style="flex:1">Consentimientos y autorizaciones (${cs.length})</h3><button class="btn" data-act="formats" data-hub="consent">Editar modelos</button><button class="btn pri" data-act="reConsent">Nuevo consentimiento</button></div>
     ${cs.map((c, i) => [c, i]).reverse().map(([c, i]) => consentCard(p, c, i)).join('')}
-    <p style="margin:0;font-size:13px;color:var(--muted)">Si el consultante empieza a atenderse por videollamada, registre un consentimiento nuevo de tipo «Telepsicología».</p></div>`;
+    <p style="margin:0;font-size:13px;color:var(--muted)">Si el consultante empieza a atenderse por videollamada, registre un consentimiento nuevo de tipo «Teleterapia».</p></div>`;
   }
   const mine = myConsents();
-  const byMod = { Virtual: 'Telepsicología (atención a distancia)', 'Mixta (presencial y virtual)': 'Presencial y telepsicología' }[p.modalidadAt] || 'Atención presencial';
+  const byMod = { Virtual: 'Teleterapia (atención a distancia)', 'Mixta (presencial y virtual)': 'Presencial y teleterapia' }[p.modalidadAt] || 'Atención presencial';
   const dr = p.consentDraft || {}, tipo = S.consentPreset || dr.tipo || (mine.length ? 'mio:' + mine[0].id : byMod), tpl = dr.tipo === tipo && dr.consentText ? dr.consentText : consentText(p, tipo);
   const age = ageOf(p.nacimiento), minor = age !== null && age < 18;
   const btns = `${S.reconsent ? '<button class="btn" data-act="cancelRe">Cancelar</button>' : ''}<button class="btn" data-act="saveConsentDraft" title="Guarda lo escrito de forma temporal, sin firmar">Guardar borrador</button>${S.mode === 'server' && !minor ? '<button class="btn" data-act="remoteConsent" title="El consultante lo lee y lo firma desde su celular">Enviar para firmar a distancia</button>' : ''}<button class="btn pri" data-act="signConsent">Firmar aquí</button>`;
@@ -511,5 +511,5 @@ function tabConsent(p) {
   <div class="grid">${F('Copia para el usuario', 'copia', dr.copia || '', { type: 'select', opts: [''].concat(COPIA), req: true })}</div>
   <label class="check"><input type="checkbox" id="c_ok"> <span><b>Quien firma leyó el documento, recibió respuestas a sus preguntas y acepta de forma libre y voluntaria.</b></span></label>
   <div class="row end">${btns}</div>
-  ${S.mode === 'server' ? `<p class="stnote">${minor ? 'Para menores de edad, el consentimiento se firma en consulta (firman ambos representantes).' : '«Enviar para firmar a distancia» (telepsicología): el consultante recibe un enlace, escribe su número de documento, lee el texto y firma con el dedo. Queda con la hora del servidor, igual de inmutable.'}</p>` : ''}</div>`;
+  ${S.mode === 'server' ? `<p class="stnote">${minor ? 'Para menores de edad, el consentimiento se firma en consulta (firman ambos representantes).' : '«Enviar para firmar a distancia» (teleterapia): el consultante recibe un enlace, escribe su número de documento, lee el texto y firma con el dedo. Queda con la hora del servidor, igual de inmutable.'}</p>` : ''}</div>`;
 }

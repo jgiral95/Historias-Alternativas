@@ -11,7 +11,7 @@ function fbGuess() {
   if (/perfil|cuenta|equipo|usuarios|dos pasos/i.test(lab)) return /perfil/i.test(lab) ? 'Mi perfil y firma' : 'Cuenta, equipo y acceso';
   if (/firmar a distancia|enviar consentimiento/i.test(lab)) return 'Firma a distancia';
   if (S.view === 'agenda' || /cita/i.test(lab)) return 'Agenda y calendario';
-  if (S.pid) return { datos: 'Datos del consultante', consent: 'Consentimiento', intake: 'Primera vez', evol: 'Evolución', escalas: 'Escalas', informes: 'Informes', cierre: 'Cierre', archivo: 'Archivo y adjuntos' }[S.tab] || '';
+  if (S.pid) return { datos: 'Datos del consultante', consent: 'Consentimiento', intake: 'Primera vez', evol: 'Sesión', escalas: 'Chequeos', informes: 'Informes', cierre: 'Cierre', archivo: 'Archivo y adjuntos' }[S.tab] || '';
   return S.homeTab === 'stats' ? 'Estadísticas' : S.homeTab === 'enc' ? 'Encuesta de satisfacción' : 'Resumen y pendientes';
 }
 /* Dónde estaba la persona: sin nombres ni datos de consultantes. */
