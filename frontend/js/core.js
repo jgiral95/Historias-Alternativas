@@ -103,7 +103,7 @@ const Store = {
       if (l) { D.profile = l.profile || null; ['patients', 'notes', 'reports', 'appts', 'scales', 'pnotes'].forEach(k => (l[k] || []).forEach(put)); }
     }
     Object.assign(S, D);
-    if (!S.profile) S.profile = { id: 'profile', kind: 'profile', nombre: (S.user && S.user.name) || '', titulo: 'Psicólogo/a', registro: '', consultorio: '', ciudad: '', telefono: '', correo: (S.user && S.user.email) || '', firma: '', consentimiento: '' };
+    if (!S.profile) S.profile = { id: 'profile', kind: 'profile', nombre: (S.user && S.user.name) || '', titulo: 'Terapeuta', registro: '', consultorio: '', ciudad: '', telefono: '', correo: (S.user && S.user.email) || '', firma: '', consentimiento: '' };
   },
   save(obj, opt = {}) {
     if (S.mode !== 'server' && obj.kind === 'patient' && !obj.abiertaEl) obj.abiertaEl = nowISO();  // en el servidor la pone el servidor

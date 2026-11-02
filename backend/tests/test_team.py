@@ -19,7 +19,7 @@ def test_identity_is_immutable_and_changes_are_logged():
     # los demás datos cambian y queda el registro: quién, cuándo, antes y después
     r = c.put("/api/records/p_1", json={**p, "paisNac": "Colombia", "telefono": "301", "ciudad": "Bogotá"}).json()
     last = r["cambios"][-1]
-    assert last["por"] == "Ana Profesional" and last["rol"] == "Profesional" and last["at"]
+    assert last["por"] == "Ana Profesional" and last["rol"] == "Terapeuta" and last["at"]
     assert {(x["campo"], x["antes"], x["despues"]) for x in last["campos"]} == {("telefono", "300", "301"), ("ciudad", None, "Bogotá")}
     # el navegador no puede reescribir el registro ni la fecha de apertura
     fake = c.put("/api/records/p_1", json={**p, "paisNac": "Colombia", "telefono": "301", "ciudad": "Bogotá", "cambios": [], "abiertaEl": "2000-01-01"}).json()

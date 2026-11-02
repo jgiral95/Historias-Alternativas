@@ -549,7 +549,7 @@ def _signer(db: Session, user: User) -> dict:
         return {"por": user.name, "rol": "Equipo", "tp": "", "cc": str(prof.get("documento") or ""), "firma": prof.get("firma") or ""}
     row = db.get(Record, (owner_id(user), "profile"))
     prof = decrypt(row.payload) if row else {}
-    return {"por": prof.get("nombre") or user.name, "rol": "Profesional", "tp": str(prof.get("registro") or ""),
+    return {"por": prof.get("nombre") or user.name, "rol": "Terapeuta", "tp": str(prof.get("registro") or ""),
             "cc": str(prof.get("cedula") or ""), "firma": prof.get("firma") or ""}
 
 
@@ -572,7 +572,7 @@ def _patient_rules(old: dict | None, new: dict, user: User, restoring: bool, sig
     new = {k: v for k, v in new.items() if k not in SERVER_KEYS}
     new["abiertaEl"] = (old or {}).get("abiertaEl") or (_opened_from(old) if old else None) or now
     log = list((old or {}).get("cambios") or [])
-    signer = signer or {"por": user.name, "rol": "Equipo" if user.role == "asistente" else "Profesional"}
+    signer = signer or {"por": user.name, "rol": "Equipo" if user.role == "asistente" else "Terapeuta"}
     who = {"por": signer["por"], "rol": signer["rol"], "at": now}
     if signer.get("tp"):
         who["tp"] = signer["tp"][:40]
@@ -1993,7 +1993,7 @@ def feedback_markdown(items: list[dict], imgs: dict[int, str]) -> str:
         for it in sorted(by[tema], key=lambda x: (FB_TIPOS.index(x["tipo"]) if x["tipo"] in FB_TIPOS else 9, x["creado"] or "")):
             when = reminders.parse(it["creado"]).astimezone(reminders.TZ).strftime("%Y-%m-%d %H:%M") if it["creado"] else ""
             lines.append(f"### #{it['id']} · {it['tipo']} · {it['estado']}")
-            lines.append(f"- Fecha: {when} · De: {it['autor']} ({'equipo' if it['rol'] == 'asistente' else 'profesional' if it['rol'] == 'user' else it['rol']})")
+            lines.append(f"- Fecha: {when} · De: {it['autor']} ({'equipo' if it['rol'] == 'asistente' else 'terapeuta' if it['rol'] == 'user' else it['rol']})")
             ctx = it.get("contexto") or {}
             if ctx:
                 lines.append("- Dónde: " + " · ".join(f"{k}: {v}" for k, v in ctx.items() if v))
@@ -2157,7 +2157,7 @@ def access_list(patientId: str = "", limit: int = 300, user: User = Depends(pro_
         elif a.action == "history.view" and a.detail:
             txt += " · " + a.detail
         p = pats.get(a.patient_id or "") or {}
-        out.append({"at": _iso(a.at), "quien": u.name if u else "", "rol": "Equipo" if u and u.role == "asistente" else "Profesional",
+        out.append({"at": _iso(a.at), "quien": u.name if u else "", "rol": "Equipo" if u and u.role == "asistente" else "Terapeuta",
                     "accion": txt, "tipo": a.action, "paciente": " ".join(x for x in (p.get("nombres"), p.get("apellidos")) if x) if a.patient_id else "",
                     "patientId": a.patient_id, "ip": a.ip or ""})
     return out

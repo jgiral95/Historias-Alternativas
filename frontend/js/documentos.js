@@ -231,7 +231,7 @@ function patientTable(p) {
 function sigBlock(items) {
   return `<div class="sigs">${items.map(i => `<div class="sg">${i.img ? `<img src="${i.img}" alt="Firma de ${esc(i.name)}">` : '<div style="height:64px"></div>'}<div class="ln"><b>${esc(i.name)}</b><br>${esc(i.role)}${i.extra ? '<br>' + esc(i.extra) : ''}${i.extra2 ? '<br>' + esc(i.extra2) : ''}<br>${esc(i.when)}</div></div>`).join('')}</div>`;
 }
-function therSig(rec, when) { return { img: rec.therapistSig, name: rec.therapistName || '', role: 'Psicólogo/a tratante', extra: [rec.therapistDocId ? 'C.C. ' + rec.therapistDocId : '', rec.therapistReg ? 'T.P. ' + rec.therapistReg : ''].filter(Boolean).join(' · '), when: 'Firmado: ' + fmtDT(when) }; }
+function therSig(rec, when) { return { img: rec.therapistSig, name: rec.therapistName || '', role: 'Terapeuta tratante', extra: [rec.therapistDocId ? 'C.C. ' + rec.therapistDocId : '', rec.therapistReg ? 'T.P. ' + rec.therapistReg : ''].filter(Boolean).join(' · '), when: 'Firmado: ' + fmtDT(when) }; }
 
 function docConsent(p, c) {
   c = c || (p.consents || []).slice(-1)[0]; if (!c) return '<p>Sin consentimiento registrado.</p>';

@@ -20,7 +20,7 @@ function fbContext() {
   const nav = (/Edg\//.test(ua) ? 'Edge' : /Chrome\//.test(ua) ? 'Chrome' : /Firefox\//.test(ua) ? 'Firefox' : /Safari\//.test(ua) ? 'Safari' : 'Otro') + ' · ' + (/iPhone|iPad/.test(ua) ? 'iOS' : /Android/.test(ua) ? 'Android' : /Mac OS/.test(ua) ? 'Mac' : /Windows/.test(ua) ? 'Windows' : /Linux/.test(ua) ? 'Linux' : 'otro');
   const tabs = Object.fromEntries(TABS);
   return { vista: S.view === 'agenda' ? 'Agenda' : S.pid ? (S.draft ? 'Paciente nuevo' : 'Ficha del paciente') : 'Inicio', 'pestaña': S.view === 'agenda' ? '' : S.pid ? tabs[S.tab] || S.tab : ({ stats: 'Estadísticas', enc: 'Encuesta de satisfacción' }[S.homeTab] || 'Resumen'),
-    ventana: m ? m.getAttribute('aria-label') || '' : '', pantalla: innerWidth + '×' + innerHeight, navegador: nav, rol: TEAM() ? 'Equipo' : 'Profesional', modo: document.documentElement.getAttribute('data-theme') === 'dark' || (!document.documentElement.getAttribute('data-theme') && matchMedia('(prefers-color-scheme: dark)').matches) ? 'oscuro' : 'claro' };
+    ventana: m ? m.getAttribute('aria-label') || '' : '', pantalla: innerWidth + '×' + innerHeight, navegador: nav, rol: TEAM() ? 'Equipo' : 'Terapeuta', modo: document.documentElement.getAttribute('data-theme') === 'dark' || (!document.documentElement.getAttribute('data-theme') && matchMedia('(prefers-color-scheme: dark)').matches) ? 'oscuro' : 'claro' };
 }
 function fbMount() {
   const root = $('#fb-root'); if (!root) return;

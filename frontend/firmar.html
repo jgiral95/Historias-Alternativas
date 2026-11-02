@@ -62,7 +62,7 @@ function rich(t) {
 let d, doc = '', pad;
 function therBlock() {
   const t = d.terapeuta || {};
-  return `<div class="sg">${t.firma ? `<img src="${t.firma}" alt="Firma de ${esc(t.nombre)}">` : '<div class="ph">Sin firma</div>'}<div class="ln"><b>${esc(t.nombre)}</b><br>Psicólogo/a tratante${t.cedula || t.registro ? '<br>' + [t.cedula ? 'C.C. ' + esc(t.cedula) : '', t.registro ? 'T.P. ' + esc(t.registro) : ''].filter(Boolean).join(' · ') : ''}${t.enviado ? '<br><span class="muted">Firmado: ' + esc(fmt(t.enviado)) + '</span>' : ''}</div></div>`;
+  return `<div class="sg">${t.firma ? `<img src="${t.firma}" alt="Firma de ${esc(t.nombre)}">` : '<div class="ph">Sin firma</div>'}<div class="ln"><b>${esc(t.nombre)}</b><br>Terapeuta tratante${t.cedula || t.registro ? '<br>' + [t.cedula ? 'C.C. ' + esc(t.cedula) : '', t.registro ? 'T.P. ' + esc(t.registro) : ''].filter(Boolean).join(' · ') : ''}${t.enviado ? '<br><span class="muted">Firmado: ' + esc(fmt(t.enviado)) + '</span>' : ''}</div></div>`;
 }
 const head = () => `<h1>${logo}${esc(d.tipo || 'Consentimiento informado')}</h1><p>Enviado por <b>${esc(d.profesional || 'su psicólogo(a)')}</b>${d.consultorio ? ' · ' + esc(d.consultorio) : ''}</p>`;
 const STATES = { firmado: ['ok', 'Este documento ya fue firmado. Gracias.'], vencido: ['bad', 'El enlace venció. Pida uno nuevo al consultorio.'], anulado: ['bad', 'Este enlace fue anulado por el consultorio.'], bloqueado: ['bad', 'Se superó el número de intentos. Pida un enlace nuevo al consultorio.'] };
