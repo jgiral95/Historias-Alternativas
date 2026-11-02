@@ -1,5 +1,5 @@
 """Sincronización de una vía con Google Calendar: las citas de la app se copian a un calendario
-propio «Karute» en la cuenta de Google del terapeuta. Se usa el permiso más limitado
+propio «Alter-Karute» en la cuenta de Google del terapeuta. Se usa el permiso más limitado
 (calendar.app.created): la app solo ve y cambia el calendario que ella misma creó."""
 import hashlib
 import json
@@ -23,7 +23,7 @@ REVOKE_URL = "https://oauth2.googleapis.com/revoke"
 API = "https://www.googleapis.com/calendar/v3"
 SCOPE = "https://www.googleapis.com/auth/calendar.app.created"
 TZ = "America/Bogota"
-CAL_NAME = "Karute"
+CAL_NAME = "Alter-Karute"
 
 _tokens: dict[int, tuple[str, float]] = {}
 _lock = threading.Lock()
@@ -102,7 +102,7 @@ def access_token(link: GoogleLink) -> str:
 
 def create_calendar(token: str) -> str:
     st, j = http("POST", API + "/calendars", {"summary": CAL_NAME, "timeZone": TZ,
-                                              "description": "Citas creadas desde Karute. No contiene información clínica."}, token=token)
+                                              "description": "Citas creadas desde Alter-Karute. No contiene información clínica."}, token=token)
     if st not in (200, 201) or not j.get("id"):
         raise GoogleError(st, (j.get("error") or {}).get("message", "No se pudo crear el calendario"))
     return j["id"]
@@ -131,7 +131,7 @@ def event_body(eid: str, a: dict, p: dict | None, detail: str) -> dict | None:
         start = start.replace(tzinfo=timezone.utc)
     end = start + timedelta(minutes=int(a.get("duracion") or 50))
     return {"id": eid, "summary": label(p, detail), "location": a.get("modalidad") or "",
-            "description": "Cita registrada en Karute.",
+            "description": "Cita registrada en Alter-Karute.",
             "start": {"dateTime": start.isoformat(), "timeZone": TZ}, "end": {"dateTime": end.isoformat(), "timeZone": TZ},
             "status": "confirmed", "transparency": "opaque"}
 

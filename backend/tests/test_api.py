@@ -389,7 +389,7 @@ def test_google_calendar_one_way_sync(monkeypatch):
     gcal._tokens.clear()
     make_user("gc@x.co"); make_user("otro2@x.co")
     c = client_for("gc@x.co")
-    assert c.get("/api/google/status").json() == {"enabled": True, "connected": False, "detail": "iniciales", "last_sync": None, "last_error": "", "calendar": "Karute"}
+    assert c.get("/api/google/status").json() == {"enabled": True, "connected": False, "detail": "iniciales", "last_sync": None, "last_error": "", "calendar": "Alter-Karute"}
     c.put("/api/records/p_1", json=patient("p_1", consents=consent()))
     appt = {"id": "a_1", "kind": "appt", "patientId": "p_1", "startAt": "2099-03-04T15:00:00.000Z", "duracion": 50, "modalidad": "Virtual", "estado": "Programada"}
     c.put("/api/records/a_1", json=appt)  # antes de conectar no pasa nada
@@ -463,7 +463,7 @@ def test_two_factor_authentication():
     assert st0["enabled"] is False and st0["recovery_left"] == 0 and st0["devices"] == []
     st = c.post("/api/auth/2fa/setup").json()
     q = parse_qs(urlparse(st["uri"]).query)
-    assert st["uri"].startswith("otpauth://totp/") and q["secret"] == [st["secret"]] and q["issuer"] == ["Karute"]
+    assert st["uri"].startswith("otpauth://totp/") and q["secret"] == [st["secret"]] and q["issuer"] == ["Alter-Karute"]
     sec = st["secret"]
     assert c.post("/api/auth/2fa/enable", json={"code": "000000" if totp_at(sec) != "000000" else "111111"}).status_code == 400
     codes = c.post("/api/auth/2fa/enable", json={"code": totp_at(sec)}).json()["recovery_codes"]

@@ -12,7 +12,7 @@ async function startApp() {
 function renderDown() {
   $('#modal-root').innerHTML = '';
   $('#app').innerHTML = `<div class="panel" style="max-width:440px;margin:8vh auto 0"><div class="body">
-    <div class="brand">${logoSVG(60)}<b>Karute</b></div>
+    <div class="brand">${logoSVG(60)}<b>Alter-Karute</b></div>
     <div class="banner" role="alert"><b>El servidor no responde.</b> La página cargó, pero el servicio de la aplicación no está disponible en este momento. Puede estar reiniciándose después de una actualización.</div>
     <p style="margin:0;color:var(--muted);font-size:14px">Espere un minuto y pulse «Reintentar». Si sigue igual, avise al administrador.</p>
     <button class="btn pri" id="dn_retry">Reintentar</button></div></div>`;
@@ -22,7 +22,7 @@ function renderDown() {
 function renderLogin(msg, email) {
   $('#modal-root').innerHTML = ''; $('#fb-root').innerHTML = '';
   $('#app').innerHTML = `<div class="panel" style="max-width:400px;margin:8vh auto 0"><form class="body" id="loginform" autocomplete="on">
-    <div class="brand">${logoSVG(60)}<b>Karute</b></div><p style="margin:0;color:var(--muted)">Ingrese con su cuenta para ver sus historias clínicas.</p>
+    <div class="brand">${logoSVG(60)}<b>Alter-Karute</b></div><p style="margin:0;color:var(--muted)">Ingrese con su cuenta para ver sus historias clínicas.</p>
     ${msg ? `<div class="banner" role="alert">${esc(msg)}</div>` : ''}
     <div class="fld"><label for="lg_email">Correo</label><input id="lg_email" type="email" autocomplete="username" value="${esc(email || '')}" required></div>
     <div class="fld"><label for="lg_pass">Contraseña</label><input id="lg_pass" type="password" autocomplete="current-password" required></div>
@@ -42,7 +42,7 @@ function renderLogin(msg, email) {
 const CODE_INPUT = id => `<input id="${id}" type="text" inputmode="text" autocomplete="one-time-code" maxlength="12" placeholder="123456" required style="font-family:var(--f-mono);font-size:20px;letter-spacing:.15em;text-align:center">`;
 function renderCode(ticket, email, msg, days, keep) {
   $('#app').innerHTML = `<div class="panel" style="max-width:400px;margin:8vh auto 0"><form class="body" id="codeform" autocomplete="off">
-    <div class="brand">${logoSVG(60)}<b>Karute</b></div>
+    <div class="brand">${logoSVG(60)}<b>Alter-Karute</b></div>
     <p style="margin:0"><b>Verificación en dos pasos.</b> Escriba el código de 6 dígitos que muestra su app autenticadora para ${esc(email)}.</p>
     ${msg ? `<div class="banner" role="alert">${esc(msg)}</div>` : ''}
     <div class="fld"><label for="lg_code">Código</label>${CODE_INPUT('lg_code')}</div>

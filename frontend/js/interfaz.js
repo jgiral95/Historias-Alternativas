@@ -91,7 +91,7 @@ function renderMain() {
   const p = curPatient(), pr = S.profile;
   const incomplete = !pr.nombre || !pr.firma;
   $('#app').innerHTML = `
-  <header class="top"><button class="brand" data-act="home" title="Ir al resumen">${logoSVG(34)}<b>Karute</b></button>
+  <header class="top"><button class="brand" data-act="home" title="Ir al resumen">${logoSVG(34)}<b>Alter-Karute</b></button>
     <nav class="nav" aria-label="Secciones"><button class="${S.view === 'agenda' || S.view === 'cuaderno' ? '' : 'on'}" data-act="view" data-v="patients">Pacientes</button><button class="${S.view === 'agenda' ? 'on' : ''}" data-act="view" data-v="agenda">Agenda</button>${TEAM() ? '' : `<button class="${S.view === 'cuaderno' ? 'on' : ''}" data-act="view" data-v="cuaderno" title="Notas de proceso: hipótesis y supervisiones, fuera de la historia clínica">Notas<span class="lbl-long"> de proceso</span></button>`}</nav>
     <div class="top-search"><input type="text" id="q" placeholder="Buscar paciente o texto en notas" value="${esc(S.q)}" aria-label="Buscar paciente"></div>
     <div class="top-actions">${S.view === 'cuaderno' ? '<button class="btn pri" data-act="pnNew">+ <span class="lbl-long">Nueva nota</span></button>' : '<button class="btn pri" data-act="newPatient">+ <span class="lbl-long">Nuevo paciente</span></button>'}

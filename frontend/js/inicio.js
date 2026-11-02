@@ -3,7 +3,7 @@
 function renderFirstPassword(msg) {
   $('#modal-root').innerHTML = ''; $('#fb-root').innerHTML = '';
   $('#app').innerHTML = `<div class="panel" style="max-width:440px;margin:8vh auto 0"><form class="body" id="firstpw" autocomplete="on">
-    <div class="brand">${logoSVG(60)}<b>Karute</b></div>
+    <div class="brand">${logoSVG(60)}<b>Alter-Karute</b></div>
     <h2 style="margin:0;font-size:20px">Elija su contraseña</h2>
     <p style="margin:0;color:var(--muted)">Hola${S.user.name ? ', ' + esc(S.user.name.split(' ')[0]) : ''}. Su cuenta se creó con una contraseña temporal. Antes de empezar, elija una que solo usted conozca (mínimo 10 caracteres).</p>
     ${msg ? `<div class="banner" role="alert">${esc(msg)}</div>` : ''}
@@ -43,7 +43,7 @@ function stepsHTML() {
   if (TEAM() || S.mode !== 'server' || !S.profile || (S.profile.pasos && S.profile.pasos.oculto)) return '';
   const L = stepsList(), done = L.filter(x => x[1]).length;
   if (done === L.length) return '';
-  const hello = (S.profile.pasos || {}).bienvenida ? '' : `<div class="card" style="background:var(--surface)"><b style="font-size:16px">Bienvenido(a) a Karute · versión de prueba</b>
+  const hello = (S.profile.pasos || {}).bienvenida ? '' : `<div class="card" style="background:var(--surface)"><b style="font-size:16px">Bienvenido(a) a Alter-Karute · versión de prueba</b>
     <p style="margin:0;font-size:15px"><b>¡Gracias por hacer parte de nuestro equipo de prueba!</b> Su colaboración es muy valiosa: como agradecimiento, contará con <b>tres meses gratis</b> cuando el software se lance oficialmente. Le pedimos que haga todos los comentarios que necesite, para que juntos lleguemos a un software completo, intuitivo e integral para sus historias clínicas.</p>
     <ul style="margin:0;padding-left:20px;display:flex;flex-direction:column;gap:4px;font-size:14px"><li><b>Use solo datos inventados</b> mientras dure la prueba: puede cargar pacientes de ejemplo para ver la app «llena».</li>
     <li>Lo que firma (consentimientos, primera vez, evoluciones, informes) <b>no se puede modificar</b>, como en papel: solo se agregan adendas.</li>

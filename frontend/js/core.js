@@ -31,10 +31,8 @@ function toast(msg) {
   setTimeout(() => t.remove(), 3200);
 }
 
-/* Logotipo «Encuentro»: dos círculos que se solapan. Usa los colores del tema. */
-const logoSVG = (px = 32) => px >= 44
-  ? `<svg class="logo" width="${px}" height="${px}" viewBox="0 0 120 120" role="img" aria-label="Karute"><rect x="10" y="10" width="100" height="100" rx="14" fill="#4A3F9E"/><rect x="40" y="26" width="40" height="42" rx="5" fill="#FFFFFF"/><rect x="50" y="20" width="20" height="12" rx="3" fill="#FFFFFF" stroke="#4A3F9E" stroke-width="3"/><rect x="47" y="42" width="26" height="4" rx="2" fill="#4A3F9E"/><rect x="47" y="50" width="26" height="4" rx="2" fill="#4A3F9E"/><rect x="47" y="58" width="16" height="4" rx="2" fill="#4A3F9E"/><text x="60" y="97" text-anchor="middle" font-size="24" font-weight="700" fill="#FFFFFF" font-family="sans-serif">カルテ</text></svg>`
-  : `<svg class="logo" width="${px}" height="${px}" viewBox="0 0 120 120" role="img" aria-label="Karute"><rect x="6" y="6" width="108" height="108" rx="16" fill="#4A3F9E"/><rect x="34" y="22" width="52" height="64" rx="6" fill="#FFFFFF"/><rect x="46" y="14" width="28" height="16" rx="4" fill="#FFFFFF" stroke="#4A3F9E" stroke-width="4"/><rect x="42" y="46" width="36" height="6" rx="3" fill="#4A3F9E"/><rect x="42" y="58" width="36" height="6" rx="3" fill="#4A3F9E"/><rect x="42" y="70" width="22" height="6" rx="3" fill="#4A3F9E"/></svg>`;
+/* Logotipo: una hoja dentro de un círculo. */
+const logoSVG = (px = 32) => `<svg class="logo" width="${px}" height="${px}" viewBox="0 0 120 120" role="img" aria-label="Alter-Karute"><circle cx="60" cy="60" r="56" fill="#E4EBE2"/><path d="M60 94C37 85 27 66 30 40c23 0 39 9 45 28 4 11 0 21-15 26z" fill="#7C9A83"/><path d="M60 94c0-22 3-35 19-48" stroke="#2F4A3A" stroke-width="4.5" fill="none" stroke-linecap="round"/><circle cx="60" cy="60" r="56" fill="none" stroke="#2F4A3A" stroke-width="3"/></svg>`;
 
 /* ===== Estado ===== */
 const S = { user: null, profile: null, patients: [], notes: [], reports: [], pnotes: [], pn: { q: '', pid: '', tipo: '', estado: 'abiertas', sel: null, draft: null, open: new Set() }, appts: [], files: [], scales: [], view: 'patients', newSol: false, newIncorp: false, newScale: null, week: null, noteSeed: null, pid: null, draft: false, tab: 'datos', q: '', mode: 'local', loading: true, newNote: false, newReport: false };

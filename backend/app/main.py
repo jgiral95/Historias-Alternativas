@@ -59,7 +59,7 @@ def csrf_check(request: Request) -> None:
             raise HTTPException(403, "Solicitud no permitida")
 
 
-app = FastAPI(title="Karute API", docs_url=None, redoc_url=None, openapi_url=None,
+app = FastAPI(title="Alter-Karute API", docs_url=None, redoc_url=None, openapi_url=None,
               lifespan=lifespan, dependencies=[Depends(csrf_check)])
 
 
@@ -948,8 +948,8 @@ def feed_ics(token: str, db: Session = Depends(get_db)):
     pats = {r.id: decrypt(r.payload) for r in rows if r.kind == "patient"}
     since = datetime.now(timezone.utc) - timedelta(days=90)
     stamp = _ics_time(datetime.now(timezone.utc))
-    lines = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Karute//Agenda//ES", "CALSCALE:GREGORIAN",
-             "METHOD:PUBLISH", "X-WR-CALNAME:Karute · Agenda", "REFRESH-INTERVAL;VALUE=DURATION:PT1H"]
+    lines = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Alter-Karute//Agenda//ES", "CALSCALE:GREGORIAN",
+             "METHOD:PUBLISH", "X-WR-CALNAME:Alter-Karute · Agenda", "REFRESH-INTERVAL;VALUE=DURATION:PT1H"]
     for r in rows:
         if r.kind != "appt":
             continue
@@ -1172,8 +1172,8 @@ def twofa_setup(user: User = Depends(current_user), db: Session = Depends(get_db
     secret = totp_new_secret()
     user.totp_secret, user.totp_last = encrypt({"s": secret}), None
     db.commit()
-    label = urllib.parse.quote(f"Karute:{user.email}")
-    uri = f"otpauth://totp/{label}?secret={secret}&issuer={urllib.parse.quote('Karute')}&algorithm=SHA1&digits=6&period=30"
+    label = urllib.parse.quote(f"Alter-Karute:{user.email}")
+    uri = f"otpauth://totp/{label}?secret={secret}&issuer={urllib.parse.quote('Alter-Karute')}&algorithm=SHA1&digits=6&period=30"
     return {"secret": secret, "uri": uri}
 
 
@@ -1980,7 +1980,7 @@ def feedback_image(fid: int, user: User = Depends(current_user), db: Session = D
 def feedback_markdown(items: list[dict], imgs: dict[int, str]) -> str:
     """Texto listo para pasárselo a Claude: instrucciones arriba y los comentarios agrupados por tema."""
     now = datetime.now(reminders.TZ)
-    lines = ["# Comentarios de la beta — Karute", "",
+    lines = ["# Comentarios de la beta — Alter-Karute", "",
              f"Exportado el {now.strftime('%Y-%m-%d %H:%M')} (hora de Colombia). {len(items)} comentario(s).", "",
              "> Para Claude: estos son comentarios de personas que probaron la versión beta de la app (repositorio jgiral95/Historias_clinicas).",
              "> Revísalos, agrupa los que hablan de lo mismo, propone las correcciones y prioriza primero los de tipo «Error».",

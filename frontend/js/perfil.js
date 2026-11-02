@@ -194,7 +194,7 @@ async function draw2fa(step, data) {
   if (step === 'codes') {
     box.innerHTML = codesHTML(data) + '<div class="row end"><button class="btn pri" type="button" id="tfdone">Ya los guardé</button></div>';
     $('#tfcopy').onclick = async () => { try { await navigator.clipboard.writeText(data.join('\n')); toast('Códigos copiados.'); } catch (e) { toast('No se pudo copiar; selecciónelos y cópielos.'); } };
-    $('#tfdl').onclick = () => downloadFile('codigos-recuperacion-karute.txt', 'Códigos de recuperación de Karute (' + (S.user && S.user.email) + ')\nCada código sirve una sola vez.\n\n' + data.join('\n') + '\n');
+    $('#tfdl').onclick = () => downloadFile('codigos-recuperacion-alter-karute.txt', 'Códigos de recuperación de Alter-Karute (' + (S.user && S.user.email) + ')\nCada código sirve una sola vez.\n\n' + data.join('\n') + '\n');
     $('#tfdone').onclick = () => draw2fa();
     return;
   }
