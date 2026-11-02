@@ -10,9 +10,6 @@ const closeMenu = () => { const m = $('#acmenu'), b = $('[data-act="menu"]'); if
 const curPatient = () => S.draft ? S.draftObj : S.patients.find(x => x.id === S.pid);
 const therSnap = () => ({ therapistName: S.profile.nombre, therapistDocId: S.profile.cedula || undefined, therapistReg: S.profile.registro, therapistSig: S.profile.firma, consultorio: S.profile.consultorio });
 const canSign = () => S.profile.nombre && S.profile.firma;
-/* Perfil completo (datos del profesional y firma): se exige antes de usar cualquier función. */
-const PERFIL_REQ = [['nombre', 'nombre'], ['cedula', 'cédula'], ['titulo', 'título'], ['registro', 'tarjeta profesional'], ['ciudad', 'ciudad'], ['telefono', 'teléfono'], ['correo', 'correo'], ['firma', 'firma']];
-const perfilFalta = () => { const p = S.profile || {}; return PERFIL_REQ.filter(([k]) => !String(p[k] || '').trim()).map(x => x[1]); };
 const TABS = [['datos', 'Datos'], ['consent', 'Consentimiento'], ['intake', 'Primera vez'], ['evol', 'Evolución'], ['escalas', 'Escalas'], ['informes', 'Informes'], ['cierre', 'Cierre'], ['archivo', 'Archivo']];
 const OPT = {
   tipoDoc: ['CC', 'TI', 'CE', 'Registro civil', 'Pasaporte', 'Permiso por protección temporal (PPT)', 'Permiso especial de permanencia (PEP)', 'Menor sin documento', 'Otro'],

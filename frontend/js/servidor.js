@@ -158,7 +158,6 @@ new MutationObserver(ms => ms.forEach(m => m.addedNodes.forEach(n => { if (n.nod
   const app = $('#app');
   const NAV = ['open', 'openHit', 'tab', 'home', 'view', 'newPatient', 'back', 'cancelNote', 'cancelReport', 'cancelScale', 'cancelRe', 'cancelSol', 'cancelIncorp', 'cancelDraft', 'newNote', 'newReport', 'newScale', 'reConsent', 'newDataAuth', 'newSol', 'newIncorp', 'apptEvol', 'editNote', 'editReport', 'logout', 'profile', 'scaleManage'];
   app.addEventListener('click', e => { const t = e.target.closest('[data-act]'); if (t && S.dirty && NAV.includes(t.dataset.act) && !t.dataset.hub) { e.stopImmediatePropagation(); askDiscard(() => { S.dirty = false; t.click(); }); } }, true);
-  app.addEventListener('click', e => { const t = e.target.closest('[data-act]'); if (!t || !S.user || TEAM() || ['profile', 'menu', 'theme', 'logout'].includes(t.dataset.act)) return; const f = perfilFalta(); if (f.length) { e.stopImmediatePropagation(); e.preventDefault(); toast('Antes de usar la aplicación complete sus datos y su firma en «Mi perfil y firma». Falta: ' + f.join(', ') + '.'); ACT.profile(); } }, true);
   app.addEventListener('input', e => { if (e.target.closest(DIRTY_SEL)) S.dirty = true; }, true);
   app.addEventListener('pointerdown', e => { if (e.target.closest('.sigbox') && e.target.closest(DIRTY_SEL)) S.dirty = true; }, true);
   window.addEventListener('beforeunload', e => { if (S.dirty) { e.preventDefault(); e.returnValue = ''; } });
