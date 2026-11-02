@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Encuesta de satisfacción</title>
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<meta name="robots" content="noindex">
+<style>
+/* Página pública: el paciente responde la encuesta de satisfacción con el enlace que recibió. */
+:root{--bg:#F3F1F7;--surface:#FFFFFF;--surface2:#F8F7FB;--ink:#2A2735;--muted:#625E73;--line:#DDD9E8;--accent:#4A3F9E;--accent-ink:#FFFFFF;--accent-soft:#ECE9F5;
+  --ok:#2B7A4B;--ok-soft:#DDF0E4;--danger:#B3261E;--danger-soft:#F8DEDC;color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#17161B;--surface:#1F1E24;--surface2:#26252C;--ink:#E9E8EE;--muted:#A3A1AE;--line:#353440;
+  --accent:#8A7FE0;--accent-ink:#17161B;--accent-soft:#2A2838;--ok:#6CCB92;--ok-soft:#183324;--danger:#F08A82;--danger-soft:#3B1E1C;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#17161B;--surface:#1F1E24;--surface2:#26252C;--ink:#E9E8EE;--muted:#A3A1AE;--line:#353440;
+  --accent:#8A7FE0;--accent-ink:#17161B;--accent-soft:#2A2838;--ok:#6CCB92;--ok-soft:#183324;--danger:#F08A82;--danger-soft:#3B1E1C;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif;padding:24px 16px}
+main{max-width:680px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:18px 20px;display:flex;flex-direction:column;gap:10px}
+h1{margin:0;font-size:22px;display:flex;gap:10px;align-items:center;line-height:1.25}
+h2{margin:6px 0 0;font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+p{margin:0}.muted{color:var(--muted);font-size:14px}
+fieldset{border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin:0;background:var(--surface);min-width:0}
+legend{font-weight:600;padding:0;float:left;width:100%;margin:0 0 4px;line-height:1.4}
+fieldset>legend+*{clear:both}
+#f{display:flex;flex-direction:column;gap:10px}#f h2{margin-top:8px}
+.opts{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
+.opts label{display:flex;gap:8px;align-items:center;border:1px solid var(--line);border-radius:99px;padding:7px 14px;cursor:pointer;background:var(--surface2);min-height:40px}
+.opts input{accent-color:var(--accent);width:18px;height:18px;margin:0}
+.opts label:has(input:checked){border-color:var(--accent);background:var(--accent-soft)}
+.opts label:has(input:focus-visible){outline:2px solid var(--accent);outline-offset:2px}
+textarea{width:100%;font:inherit;padding:9px 12px;border:1px solid var(--line);border-radius:8px;background:var(--surface2);color:inherit;margin-top:6px}
+textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-soft)}
+button{font:inherit;font-weight:500;padding:11px 18px;border-radius:8px;border:1px solid var(--accent);background:var(--accent);color:var(--accent-ink);cursor:pointer}
+button.sec{background:none;color:var(--accent)}
+button:disabled{opacity:.6;cursor:wait}
+.res{padding:12px 14px;border-radius:8px}.res.ok{background:var(--ok-soft);color:var(--ok)}.res.bad{background:var(--danger-soft);color:var(--danger)}
+fieldset.miss{border-color:var(--danger)}
+</style>
+</head>
+<body>
+<main id="m"><div class="card"><p class="muted">Cargando…</p></div></main>
+<script>
+const $ = s => document.querySelector(s);
+const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const H = { 'Content-Type': 'application/json', 'X-Requested-With': 'archivo-clinico' };
+const q = new URLSearchParams(location.search), token = q.get('t') || '';
+const logo = '<svg width="30" height="30" viewBox="0 0 120 120" aria-hidden="true"><rect x="6" y="6" width="108" height="108" rx="16" fill="#4A3F9E"/><rect x="34" y="22" width="52" height="64" rx="6" fill="#FFFFFF"/><rect x="46" y="14" width="28" height="16" rx="4" fill="#FFFFFF" stroke="#4A3F9E" stroke-width="4"/><rect x="42" y="46" width="36" height="6" rx="3" fill="#4A3F9E"/><rect x="42" y="58" width="36" height="6" rx="3" fill="#4A3F9E"/><rect x="42" y="70" width="22" height="6" rx="3" fill="#4A3F9E"/></svg>';
+const card = html => { $('#m').innerHTML = `<div class="card">${html}</div>`; };
+async function start() {
+  if (!token) return card('<div class="res bad">El enlace está incompleto. Ábralo de nuevo desde el mensaje que recibió.</div>');
+  let d;
+  try {
+    const r = await fetch('/api/encuesta/' + encodeURIComponent(token), { headers: H });
+    if (r.status === 404) return card('<div class="res bad">Este enlace no es válido. Ábralo de nuevo desde el mensaje que recibió.</div>');
+    if (!r.ok) throw new Error();
+    d = await r.json();
+  } catch (e) { return card('<div class="res bad">No se pudo cargar la encuesta. Intente de nuevo en unos minutos.</div>'); }
+  const who = esc(d.consultorio || d.profesional || 'su psicólogo(a)');
+  if (q.get('baja') === '1') return optout(who);
+  if (d.estado === 'respondida') return card(`<h1>${logo}Encuesta de satisfacción</h1><div class="res ok">Esta encuesta ya fue respondida. ¡Gracias!</div>`);
+  if (d.estado === 'vencida') return card(`<h1>${logo}Encuesta de satisfacción</h1><div class="res bad">Esta encuesta ya cerró.</div>`);
+  let dim = '', html = `<div class="card"><h1>${logo}Encuesta de satisfacción</h1><p>Atención en <b>${who}</b>${d.profesional && d.consultorio ? ' con ' + esc(d.profesional) : ''}.</p><p class="muted">${esc(d.intro)}</p>${d.prueba ? '<div class="res ok">Esta es una <b>encuesta de prueba</b>: sus respuestas quedan marcadas como prueba y no se mezclan con las de los pacientes.</div>' : ''}</div><form id="f" novalidate>`;
+  d.preguntas.forEach((p, k) => {
+    if (p.dim !== dim) { dim = p.dim; html += `<h2>${esc(dim)}</h2>`; }
+    html += `<fieldset id="q_${k}" data-id="${esc(p.id)}" data-tipo="${esc(p.tipo)}"><legend>${k + 1}. ${esc(p.texto)}${p.tipo === 'texto' ? '' : ' <span aria-hidden="true" style="color:var(--danger)">*</span>'}</legend>` +
+      (p.tipo === 'texto' ? `<textarea name="r_${k}" rows="3" maxlength="1500" aria-label="${esc(p.texto)}"></textarea>`
+        : `<div class="opts">${p.opciones.map((o, j) => `<label><input type="radio" name="r_${k}" value="${j}" ${j === 0 ? 'required' : ''}> ${esc(o)}</label>`).join('')}</div>`) + '</fieldset>';
+  });
+  html += `<div id="err" aria-live="polite"></div><button id="send">Enviar respuestas</button><p class="muted">* Obligatoria. Sus respuestas se guardan sin su nombre. <a href="?t=${encodeURIComponent(token)}&baja=1" style="color:var(--muted)">No quiero recibir más encuestas</a></p></form>`;
+  $('#m').innerHTML = html;
+  $('#f').addEventListener('change', e => { const fs = e.target.closest('fieldset'); if (fs) fs.classList.remove('miss'); if (!document.querySelector('fieldset.miss')) $('#err').innerHTML = ''; });
+  $('#f').onsubmit = async e => {
+    e.preventDefault();
+    const resp = {}, miss = [];
+    document.querySelectorAll('fieldset').forEach((fs, k) => {
+      fs.classList.remove('miss');
+      if (fs.dataset.tipo === 'texto') { const v = fs.querySelector('textarea').value.trim(); if (v) resp[fs.dataset.id] = v; return; }
+      const c = fs.querySelector('input:checked'); if (c) resp[fs.dataset.id] = +c.value; else { miss.push(fs); fs.classList.add('miss'); }
+    });
+    if (miss.length) { $('#err').innerHTML = `<div class="res bad">Falta responder ${miss.length} pregunta(s), marcadas en rojo.</div>`; miss[0].scrollIntoView({ block: 'center' }); miss[0].querySelector('input').focus(); return; }
+    const b = $('#send'); b.disabled = true; b.textContent = 'Enviando…';
+    try {
+      const r = await fetch('/api/encuesta/' + encodeURIComponent(token), { method: 'POST', headers: H, body: JSON.stringify({ respuestas: resp }) });
+      if (r.status === 204) { card(`<h1>${logo}¡Gracias!</h1><div class="res ok">Sus respuestas quedaron guardadas. Nos ayudan a mejorar la atención.</div>`); scrollTo(0, 0); return; }
+      let m = 'No se pudo enviar. Intente de nuevo.'; try { const j = await r.json(); if (j.detail) m = j.detail; } catch (x) { /* sin cuerpo */ }
+      $('#err').innerHTML = `<div class="res bad">${esc(m)}</div>`;
+    } catch (x) { $('#err').innerHTML = '<div class="res bad">No hay conexión. Sus respuestas siguen aquí: intente de nuevo.</div>'; }
+    b.disabled = false; b.textContent = 'Enviar respuestas';
+  };
+}
+function optout(who) {
+  card(`<h1>${logo}No recibir más encuestas</h1><p>¿Quiere dejar de recibir encuestas de satisfacción de <b>${who}</b>? Esto no afecta su atención.</p><div id="err"></div><div style="display:flex;gap:8px;flex-wrap:wrap"><button id="yes">Sí, no enviarme más</button><a href="?t=${encodeURIComponent(token)}"><button class="sec" type="button">Volver a la encuesta</button></a></div>`);
+  $('#yes').onclick = async () => {
+    try { const r = await fetch('/api/encuesta/' + encodeURIComponent(token) + '/baja', { method: 'POST', headers: H }); if (r.status !== 204) throw new Error(); card(`<h1>${logo}Listo</h1><div class="res ok">No le enviaremos más encuestas.</div>`); }
+    catch (e) { $('#err').innerHTML = '<div class="res bad">No se pudo guardar. Intente de nuevo.</div>'; }
+  };
+}
+start();
+</script>
+</body>
+</html>

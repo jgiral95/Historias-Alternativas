@@ -1,0 +1,11 @@
+{
+  "name": "historia-clinica-e2e",
+  "private": true,
+  "description": "Pruebas de navegador de Karute (Playwright).",
+  "scripts": {
+    "test": "bash run.sh todas"
+  },
+  "devDependencies": {
+    "playwright": "^1.48.0"
+  }
+}

@@ -1,0 +1,76 @@
+// Comentarios de la beta: botón flotante, tema según la pantalla, captura, bandeja del administrador y exportación para Claude.
+require('fs').mkdirSync(__dirname + '/out', { recursive: true });
+const fs = require('fs'), zlib = require('zlib');
+const { chromium, devices } = require('playwright');
+const OUT = process.env.OUT || (__dirname + '/out/'), BASE = process.env.BASE || 'http://127.0.0.1:8100/';
+let bad = 0; const ok = (c, m) => { console.log((c ? 'OK   ' : 'FALLA') + ' ' + m); if (!c) bad = 1; };
+(async () => {
+  const b = await chromium.launch(); const ctx = await b.newContext({ viewport: { width: 1150, height: 900 }, acceptDownloads: true }); const page = require('./autofill')(await ctx.newPage());
+  await ctx.route('**/*', r => (r.request().url().startsWith('http://127.0.0.1') ? r.continue() : r.abort()));
+  const errors = []; page.on('pageerror', e => errors.push(e.message));
+  const login = async (email) => { await page.goto(BASE + 'app'); await page.waitForSelector('#loginform'); await page.fill('#lg_email', email); await page.fill('#lg_pass', 'contraseña-segura-123'); await page.click('#loginform button[type=submit]'); await page.waitForSelector('[data-act="menu"]'); };
+  const logout = async () => { await page.click('[data-act="menu"]'); await page.click('[data-act="logout"]'); await page.waitForSelector('#loginform'); };
+  ok(await page.goto(BASE + 'app').then(() => page.waitForSelector('#loginform')).then(() => page.locator('#fb_btn').count()) === 0, 'sin sesión no aparece el botón');
+  await login('psico@ejemplo.co');
+  await page.evaluate(() => api('/records/p_fb1', { method: 'PUT', body: { id: 'p_fb1', kind: 'patient', nombres: 'Camila', apellidos: 'Ortiz', documento: '55501', estado: 'Activo', consents: [] } }));
+  await page.reload(); await page.waitForSelector('#fb_btn');
+  ok(await page.locator('#fb_btn').isVisible(), 'el botón «Comentarios» aparece abajo a la derecha');
+  const bb = await page.locator('#fb_btn').boundingBox(); ok(bb.x + bb.width > 1100 && bb.y + bb.height > 850, 'está en la esquina inferior derecha');
+  await page.click('.prow:has-text("Camila")'); await page.click('[data-act="tab"][data-tab="evol"]'); await page.waitForTimeout(200);
+  await page.click('#fb_btn'); await page.waitForSelector('#fb_panel');
+  ok(await page.inputValue('#fb_tema') === 'Evolución', 'el tema se sugiere según la pestaña abierta (Evolución)');
+  ok((await page.locator('#fb_tema option').allTextContents()).includes('Mis formatos'), 'la lista de temas incluye formatos, primera vez, agenda, etc.');
+  await page.click('#fb_send'); await page.waitForTimeout(200);
+  ok(await page.locator('#fb_panel').count() === 1, 'sin texto no se envía');
+  await page.fill('#fb_txt', 'Al guardar la evolución no me deja\nseleccionar la hora.');
+  // captura: un PNG
+  const png = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==', 'base64');
+  fs.writeFileSync(OUT + 'captura_prueba.png', png);
+  await page.setInputFiles('#fb_file', OUT + 'captura_prueba.png'); await page.waitForSelector('.fbshot img');
+  ok(await page.inputValue('#fb_txt') === 'Al guardar la evolución no me deja\nseleccionar la hora.', 'adjuntar la captura no borra lo escrito');
+  await page.screenshot({ path: OUT + 'comentarios_panel.png' });
+  await page.click('#fb_send'); await page.waitForSelector('#fb_panel', { state: 'detached' });
+  ok(/Gracias/.test(await page.locator('.toast').textContent()), 'confirma que el comentario se envió');
+  // sugerencia desde la agenda
+  await page.click('[data-act="view"][data-v="agenda"]'); await page.click('#fb_btn'); await page.waitForSelector('#fb_panel');
+  ok(await page.inputValue('#fb_tema') === 'Agenda y calendario', 'en la agenda sugiere «Agenda y calendario»');
+  await page.check('input[name="fb_tipo"][value="Sugerencia"]'); await page.fill('#fb_txt', 'Me gustaría arrastrar las citas.');
+  await page.click('#fb_close'); await page.click('#fb_btn'); await page.waitForSelector('#fb_panel');
+  ok(await page.inputValue('#fb_txt') === 'Me gustaría arrastrar las citas.', 'si cierra el panel, el borrador se conserva');
+  await page.click('#fb_send'); await page.waitForSelector('#fb_panel', { state: 'detached' });
+  await page.click('#fb_btn'); await page.waitForSelector('#fb_mine');
+  ok(/Mis comentarios \(2\)/.test(await page.locator('#fb_mine summary').textContent()), 've sus comentarios enviados');
+  await page.keyboard.press('Escape'); await page.waitForSelector('#fb_panel', { state: 'detached' });
+  ok(!(await page.locator('#fb_btn').getAttribute('class')).includes('x') && await page.locator('#fb_btn').count() === 1, 'Escape cierra el panel');
+  // en celular: solo el ícono
+  const m = await b.newContext({ ...devices['iPhone 13'] }); const mp = await m.newPage();
+  await m.route('**/*', r => (r.request().url().startsWith('http://127.0.0.1') ? r.continue() : r.abort()));
+  await mp.goto(BASE + 'app'); await mp.fill('#lg_email', 'psico@ejemplo.co'); await mp.fill('#lg_pass', 'contraseña-segura-123'); await mp.click('#loginform button[type=submit]'); await mp.waitForSelector('#fb_btn');
+  const mb = await mp.locator('#fb_btn').boundingBox(); ok(mb.width < 60 && mb.x + mb.width <= 390, 'en el celular es un botón redondo pequeño dentro de la pantalla');
+  await mp.click('#fb_btn'); await mp.waitForSelector('#fb_panel'); const pb = await mp.locator('#fb_panel').boundingBox();
+  ok(pb.x >= 0 && pb.x + pb.width <= 390, 'el panel cabe en el celular');
+  await mp.screenshot({ path: OUT + 'comentarios_movil.png' }); await m.close();
+  await logout();
+  // administrador
+  await login('admin@ejemplo.co');
+  await page.click('[data-act="menu"]'); await page.click('[data-act="fbAdmin"]'); await page.waitForSelector('#fbadm');
+  const adm = await page.locator('#fbadm').textContent();
+  ok(/Al guardar la evolución/.test(adm) && /pestaña: Evolución/.test(adm) && /Psicóloga Prueba/.test(adm) && /2 abierto/.test(adm), 'el administrador ve los comentarios con quién y dónde');
+  ok(!/Camila|55501/.test(adm), 'el contexto no trae datos del paciente');
+  await page.screenshot({ path: OUT + 'comentarios_admin.png' });
+  const [dl] = await Promise.all([page.waitForEvent('download'), page.click('[data-fa="zip"]')]);
+  const zp = OUT + 'comentarios.zip'; await dl.saveAs(zp);
+  const z = fs.readFileSync(zp).toString('latin1');
+  ok(/comentarios\.md/.test(z) && /capturas\/comentario-\d+\.png/.test(z) && /^comentarios-beta-\d{4}-\d\d-\d\d\.zip$/.test(dl.suggestedFilename()), 'descarga un .zip con comentarios.md y las capturas');
+  const card = page.locator('#fbadm .card[data-id]').filter({ hasText: 'arrastrar' });
+  await card.locator('[data-fa="resp"]').fill('Buena idea, lo agregamos en la próxima versión'); await card.locator('[data-fa="save"]').click(); await page.waitForTimeout(300);
+  await card.locator('select[data-fa="estado"]').selectOption('Resuelto'); await page.waitForTimeout(500);
+  ok(/1 abierto/.test(await page.locator('#fbadm').textContent()), 'al marcarlo resuelto sale de los abiertos');
+  const txt = await page.evaluate(() => api('/admin/comentarios/texto').then(r => r.texto));
+  ok(/^# Comentarios de la beta/.test(txt) && /## Evolución \(1\)/.test(txt) && !/arrastrar/.test(txt), 'el texto para Claude solo trae los abiertos, agrupados por tema');
+  await page.click('[data-fa="close"]'); await logout();
+  await login('psico@ejemplo.co'); await page.click('#fb_btn'); await page.waitForSelector('#fb_mine'); await page.click('#fb_mine summary');
+  ok(/Resuelto[\s\S]*Respuesta: Buena idea/.test(await page.locator('#fb_mine').textContent()), 'quien comentó ve el estado y la respuesta');
+  ok(!errors.length, 'sin errores de JavaScript ' + errors.join(' | '));
+  await b.close(); console.log(bad ? 'PRUEBA CON FALLAS' : 'PRUEBA OK'); process.exit(bad);
+})().catch(e => { console.error(e); process.exit(1); });

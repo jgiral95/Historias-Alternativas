@@ -1,0 +1,61 @@
+require('fs').mkdirSync(__dirname + '/out', { recursive: true });
+// Verificación en dos pasos de punta a punta en el navegador.
+const { chromium } = require('playwright'); const crypto = require('crypto');
+const OUT = process.env.OUT || (__dirname + '/out/'), FIX = __dirname + '/fixtures/', BASE = process.env.BASE || 'http://127.0.0.1:8100/';
+let bad = 0; const ok = (c, m) => { console.log((c ? 'OK   ' : 'FALLA') + ' ' + m); if (!c) bad = 1; };
+const b32 = s => { const a = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567'; let bits = ''; for (const ch of s.replace(/\s|=/g, '')) bits += a.indexOf(ch).toString(2).padStart(5, '0'); const out = []; for (let i = 0; i + 8 <= bits.length; i += 8) out.push(parseInt(bits.slice(i, i + 8), 2)); return Buffer.from(out); };
+const hotp = (sec, c) => { const b = Buffer.alloc(8); b.writeBigUInt64BE(BigInt(c)); const h = crypto.createHmac('sha1', b32(sec)).update(b).digest(), o = h[h.length - 1] & 15; return String((h.readUInt32BE(o) & 0x7fffffff) % 1e6).padStart(6, '0'); };
+const step = () => Math.floor(Date.now() / 30000);
+(async () => {
+  const b = await chromium.launch(); global.B = b; const ctx = await b.newContext({ viewport: { width: 1100, height: 950 } }); const page = require('./autofill')(await ctx.newPage());
+  await page.route('**/*', r => (r.request().url().startsWith('http://127.0.0.1') ? r.continue() : r.abort()));
+  const errors = []; page.on('pageerror', e => errors.push(e.message));
+  const login = async () => { await page.goto(BASE + 'app'); await page.waitForSelector('#loginform'); await page.fill('#lg_email', 'psico@ejemplo.co'); await page.fill('#lg_pass', 'contraseña-segura-123'); await page.click('#loginform button[type=submit]'); };
+  await login(); await page.waitForSelector('[data-act="menu"]');
+  await page.click('[data-act="menu"]'); await page.click('[data-act="profile"]'); await page.click('#tfbox summary'); await page.waitForSelector('#tfstart');
+  await page.click('#tfstart'); await page.waitForSelector('#tf_code');
+  ok(await page.locator('#tfbody svg').count() === 1, 'muestra el código QR para escanear');
+  const secret = (await page.locator('#tfbody b').last().textContent()).replace(/\s/g, '');
+  await page.screenshot({ path: OUT + '2fa_qr.png' });
+  await page.fill('#tf_code', '000000'); await page.click('#tfenable'); await page.waitForTimeout(400);
+  ok(await page.locator('#tf_code').count() === 1, 'un código equivocado no la activa');
+  await page.fill('#tf_code', hotp(secret, step())); await page.click('#tfenable'); await page.waitForSelector('#tfcodes');
+  const codes = await page.$$eval('#tfcodes span', s => s.map(x => x.textContent));
+  ok(codes.length === 10 && /^[a-z0-9]{4}-[a-z0-9]{4}$/.test(codes[0]), 'al activarla entrega 10 códigos de recuperación');
+  await page.screenshot({ path: OUT + '2fa_codigos.png' });
+  await page.click('#tfdone'); await page.waitForSelector('#tfoff');
+  await page.click('#pcl');
+  // ingreso con código de la app
+  await page.click('[data-act="menu"]'); await page.click('[data-act="logout"]'); await page.waitForSelector('#loginform'); await login(); await page.waitForSelector('#codeform');
+  ok(await page.locator('[data-act="menu"]').count() === 0, 'con la contraseña sola no entra: pide el código');
+  await page.screenshot({ path: OUT + '2fa_ingreso.png' });
+  await page.fill('#lg_code', '123456'); await page.click('#codeform button[type=submit]'); await page.waitForSelector('#codeform [role=alert]');
+  ok(/no es válido/.test(await page.locator('#codeform [role=alert]').textContent()), 'un código equivocado se rechaza');
+  ok(await page.isChecked('#lg_remember'), '«Recordar este dispositivo» viene marcado');
+  await page.uncheck('#lg_remember');
+  await page.fill('#lg_code', hotp(secret, step() + 1)); await page.click('#codeform button[type=submit]'); await page.waitForSelector('[data-act="menu"]');
+  ok(true, 'con el código de la app entra');
+  // ingreso con código de recuperación
+  await page.click('[data-act="menu"]'); await page.click('[data-act="logout"]'); await page.waitForSelector('#loginform'); await login(); await page.waitForSelector('#codeform');
+  ok(true, 'sin «recordar», vuelve a pedir el código');
+  await page.fill('#lg_code', codes[3]); await page.click('#codeform button[type=submit]'); await page.waitForSelector('[data-act="menu"]');
+  ok(true, 'con un código de recuperación entra (y recuerda el dispositivo)');
+  // dispositivo recordado: entra solo con la contraseña
+  await page.click('[data-act="menu"]'); await page.click('[data-act="logout"]'); await page.waitForSelector('#loginform'); await login(); await page.waitForSelector('[data-act="menu"]');
+  ok(true, 'en un dispositivo recordado no pide el código');
+  await page.click('[data-act="menu"]'); await page.click('[data-act="profile"]'); await page.click('#tfbox summary'); await page.waitForSelector('#tfforget');
+  ok((await page.locator('#tfbody li').count()) === 1, 'el perfil muestra el dispositivo recordado');
+  await page.click('#tfforget'); await page.waitForSelector('#tfoff'); await page.waitForTimeout(300);
+  ok((await page.locator('#tfforget').count()) === 0, '«Olvidar todos los dispositivos» los quita');
+  await page.click('#pcl'); await page.click('[data-act="menu"]'); await page.click('[data-act="logout"]'); await page.waitForSelector('#loginform'); await login(); await page.waitForSelector('#codeform');
+  ok(true, 'después de olvidarlos, vuelve a pedir el código');
+  await page.uncheck('#lg_remember'); await page.fill('#lg_code', codes[4]); await page.click('#codeform button[type=submit]'); await page.waitForSelector('[data-act="menu"]');
+  await page.click('[data-act="menu"]'); await page.click('[data-act="profile"]'); await page.click('#tfbox summary'); await page.waitForSelector('#tfoff');
+  ok(/quedan <b>8<\/b>|Le quedan 8/.test(await page.locator('#tfbody').innerHTML()) || /8/.test(await page.locator('#tfbody .banner').textContent()), 'los códigos de recuperación usados ya no cuentan (quedan 8)');
+  await page.fill('#tf_pw', 'contraseña-segura-123'); await page.fill('#tf_c2', codes[5]); await page.click('#tfoff'); await page.waitForSelector('#tfstart');
+  ok(true, 'se desactiva con contraseña y código');
+  await page.click('#pcl'); await page.click('[data-act="menu"]'); await page.click('[data-act="logout"]'); await page.waitForSelector('#loginform'); await login(); await page.waitForSelector('[data-act="menu"]');
+  ok(true, 'desactivada, vuelve a entrar solo con la contraseña');
+  ok(errors.length === 0, 'sin errores de JavaScript ' + errors.join(' | '));
+  await b.close(); console.log(bad ? 'PRUEBA CON FALLAS' : 'PRUEBA OK'); process.exit(bad);
+})().catch(async e => { console.error('ERROR', e.message); try { const p = (await (global.B.contexts()[0].pages()))[0]; await p.screenshot({ path: OUT + '2fa_error.png' }); console.error((await p.locator('body').innerText()).slice(0, 600)); } catch (x) {} process.exit(1); });

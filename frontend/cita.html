@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Confirmar cita</title>
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<meta name="robots" content="noindex">
+<style>
+/* Página pública: el paciente confirma o cancela su cita con el enlace del recordatorio. */
+:root{--bg:#F3F1F7;--surface:#FFFFFF;--surface2:#F8F7FB;--ink:#2A2735;--muted:#625E73;--line:#DDD9E8;--accent:#4A3F9E;--accent-ink:#FFFFFF;--accent-soft:#ECE9F5;
+  --ok:#2B7A4B;--ok-soft:#DDF0E4;--danger:#B3261E;--danger-soft:#F8DEDC;color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#17161B;--surface:#1F1E24;--surface2:#26252C;--ink:#E9E8EE;--muted:#A3A1AE;--line:#353440;
+  --accent:#8A7FE0;--accent-ink:#17161B;--accent-soft:#2A2838;--ok:#6CCB92;--ok-soft:#183324;--danger:#F08A82;--danger-soft:#3B1E1C;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#17161B;--surface:#1F1E24;--surface2:#26252C;--ink:#E9E8EE;--muted:#A3A1AE;--line:#353440;
+  --accent:#8A7FE0;--accent-ink:#17161B;--accent-soft:#2A2838;--ok:#6CCB92;--ok-soft:#183324;--danger:#F08A82;--danger-soft:#3B1E1C;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif;padding:24px 16px}
+main{max-width:520px;margin:0 auto}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:20px;display:flex;flex-direction:column;gap:14px}
+h1{margin:0;font-size:21px;display:flex;gap:10px;align-items:center;line-height:1.25}
+p{margin:0}.muted{color:var(--muted);font-size:14px}
+.when{font-size:19px;font-weight:600}
+.btns{display:flex;flex-direction:column;gap:10px}
+button{font:inherit;font-weight:500;padding:12px 18px;border-radius:8px;border:1px solid var(--accent);background:var(--accent);color:var(--accent-ink);cursor:pointer}
+button.sec{background:none;color:var(--danger);border-color:var(--danger)}
+button:disabled{opacity:.6;cursor:wait}
+.res{padding:12px 14px;border-radius:8px}.res.ok{background:var(--ok-soft);color:var(--ok)}.res.bad{background:var(--danger-soft);color:var(--danger)}
+</style>
+</head>
+<body>
+<main id="m"><div class="card"><p class="muted">Cargando…</p></div></main>
+<script>
+const $ = s => document.querySelector(s);
+const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const H = { 'Content-Type': 'application/json', 'X-Requested-With': 'archivo-clinico' };
+const token = new URLSearchParams(location.search).get('t') || '';
+const logo = '<svg width="28" height="28" viewBox="0 0 120 120" aria-hidden="true"><rect x="6" y="6" width="108" height="108" rx="16" fill="#4A3F9E"/><rect x="34" y="22" width="52" height="64" rx="6" fill="#FFFFFF"/><rect x="46" y="14" width="28" height="16" rx="4" fill="#FFFFFF" stroke="#4A3F9E" stroke-width="4"/><rect x="42" y="46" width="36" height="6" rx="3" fill="#4A3F9E"/><rect x="42" y="58" width="36" height="6" rx="3" fill="#4A3F9E"/><rect x="42" y="70" width="22" height="6" rx="3" fill="#4A3F9E"/></svg>';
+const card = h => { $('#m').innerHTML = `<div class="card">${h}</div>`; };
+let d;
+function draw(msg) {
+  const who = esc(d.profesional || 'su psicólogo(a)'), head = `<h1>${logo}Su cita</h1><p class="when">${esc(d.cuando)}</p><p>Con <b>${who}</b>${d.consultorio ? ' · ' + esc(d.consultorio) : ''} · ${esc(d.modalidad)}</p>`;
+  if (d.estado === 'Cancelada') return card(head + `<div class="res bad">Esta cita está cancelada.</div>${msg || ''}<p class="muted">Si quiere reprogramarla, comuníquese con el consultorio.</p>`);
+  if (d.pasada) return card(head + '<div class="res bad">Esta cita ya pasó.</div>');
+  card(head + (d.respuesta === 'Confirmada' ? '<div class="res ok">Su asistencia está confirmada. ¡Lo esperamos!</div>' : '') + (msg || '') +
+    `<div class="btns">${d.respuesta === 'Confirmada' ? '' : '<button id="yes">Confirmo que asistiré</button>'}<button class="sec" id="no">No puedo asistir: cancelar la cita</button></div><p class="muted">Si quiere cambiar la hora, cancele aquí y comuníquese con el consultorio.</p>`);
+  if ($('#yes')) $('#yes').onclick = () => answer('confirmar');
+  $('#no').onclick = () => { if ($('#no').dataset.sure) answer('cancelar'); else { $('#no').dataset.sure = 1; $('#no').textContent = 'Sí, cancelar la cita'; } };
+}
+async function answer(accion) {
+  document.querySelectorAll('button').forEach(b => { b.disabled = true; });
+  try {
+    const r = await fetch('/api/cita/' + encodeURIComponent(token), { method: 'POST', headers: H, body: JSON.stringify({ accion }) });
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok) { draw(`<div class="res bad">${esc(j.detail || 'No se pudo guardar. Intente de nuevo.')}</div>`); return; }
+    d.estado = j.estado; d.respuesta = j.respuesta;
+    draw(accion === 'cancelar' ? '<div class="res ok">Listo, avisamos al consultorio que no podrá asistir.</div>' : '');
+  } catch (e) { draw('<div class="res bad">No hay conexión. Intente de nuevo.</div>'); }
+}
+(async () => {
+  if (!token) return card('<div class="res bad">El enlace está incompleto. Ábralo de nuevo desde el mensaje que recibió.</div>');
+  try {
+    const r = await fetch('/api/cita/' + encodeURIComponent(token), { headers: H });
+    if (r.status === 404) return card('<div class="res bad">Este enlace no es válido. Ábralo de nuevo desde el mensaje que recibió.</div>');
+    if (!r.ok) throw new Error();
+    d = await r.json(); draw();
+  } catch (e) { card('<div class="res bad">No se pudo cargar la cita. Intente en unos minutos.</div>'); }
+})();
+</script>
+</body>
+</html>
