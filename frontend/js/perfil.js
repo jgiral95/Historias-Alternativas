@@ -370,9 +370,9 @@ function saveFormats() {
 /* Pestañas de la ficha: renombrar, ocultar y crear propias (texto libre por consultante). */
 let TM = null;
 const tabsDraw = () => {
-  const root = $('#modal-root'), row = (id, n, hid, ex) => `<div class="edf"><input type="text" data-tm-n="${id}" value="${esc(n)}" maxlength="60" aria-label="Nombre de la pestaña">${id === 'datos' ? '<span class="chip">Siempre visible</span>' : ex ? `<button class="btn sm warn" data-tm="del:${id}">Borrar</button>` : `<button class="btn sm ${hid ? '' : 'pri'}" data-tm="hid:${id}">${hid ? 'Oculta · mostrar' : 'Visible · ocultar'}</button>`}</div>`;
+  const root = $('#modal-root'), row = (id, n, hid, ex) => `<div class="edf"><input type="text" data-tm-n="${id}" value="${esc(n)}" maxlength="60" aria-label="Nombre de la pestaña">${id === 'datos' ? '<span class="chip">Siempre visible</span>' : ex ? `<button class="btn sm" data-tm="mod:${id}" title="Una sola vez: datos que casi no cambian. Por sesión: se agrega una entrada con fecha en cada encuentro.">${(TM.extra.find(y => y.id === id) || {}).modo === 'sesion' ? 'Por sesión' : 'Una sola vez'} · cambiar</button><button class="btn sm warn" data-tm="del:${id}">Borrar</button>` : `<button class="btn sm ${hid ? '' : 'pri'}" data-tm="hid:${id}">${hid ? 'Oculta · mostrar' : 'Visible · ocultar'}</button>`}</div>`;
   root.innerHTML = `<div class="modal" role="dialog" aria-modal="true" aria-label="Mis formatos"><div class="box"><div class="row" style="justify-content:space-between"><h3>Mis formatos</h3><button class="btn sm" data-tm="close">Cerrar</button></div>${hubTabs('pestanas')}
-  <p style="margin:0;font-size:13px;color:var(--muted)">Cambie el nombre, oculte o cree las pestañas de la ficha del consultante. Ocultar no borra lo ya escrito. Las pestañas nuevas son de texto libre.</p>
+  <p style="margin:0;font-size:13px;color:var(--muted)">Cambie el nombre, oculte o cree las pestañas de la ficha del consultante. Ocultar no borra lo ya escrito. Para cada pestaña nueva elija «Una sola vez» (datos que casi no cambian, como los del consultante) o «Por sesión» (una entrada con fecha en cada encuentro).</p>
   <div class="card">${TABS.map(([k, l]) => row(k, TM.nombres[k] || l, TM.ocultas.includes(k), false)).join('')}${TM.extra.map(x => row(x.id, x.nombre, false, true)).join('')}<div class="row"><button class="btn" data-tm="add">+ Pestaña nueva</button></div></div>
   <div class="row end"><button class="btn pri" data-tm="save">Guardar</button></div></div></div>`;
 };
@@ -387,12 +387,13 @@ function tabsManage() {
     const [op, arg = ''] = b.dataset.tm.split(':');
     if (op === 'close') { TM = null; root.innerHTML = ''; root.onclick = root.oninput = null; return; }
     if (op === 'hid') { const i = TM.ocultas.indexOf(arg); if (i < 0) TM.ocultas.push(arg); else TM.ocultas.splice(i, 1); }
+    else if (op === 'mod') { const x = TM.extra.find(y => y.id === arg); if (x) x.modo = x.modo === 'sesion' ? 'unica' : 'sesion'; }
     else if (op === 'del') TM.extra = TM.extra.filter(x => x.id !== arg);
-    else if (op === 'add') { if (TM.extra.length >= 10) return toast('Máximo 10 pestañas nuevas.'); TM.extra.push({ id: 'x_' + newKey(), nombre: 'Nueva pestaña', secs: [] }); }
+    else if (op === 'add') { if (TM.extra.length >= 10) return toast('Máximo 10 pestañas nuevas.'); TM.extra.push({ id: 'x_' + newKey(), nombre: 'Nueva pestaña', modo: 'unica', secs: [] }); }
     else if (op === 'save') {
       const nombres = Object.fromEntries(Object.entries(TM.nombres).map(([k, v]) => [k, v.trim()]).filter(([, v]) => v));
       if (TM.extra.some(x => !x.nombre.trim())) return toast('Cada pestaña necesita un nombre.');
-      const snap = clone(S.profile); S.profile.formatos = Object.assign({}, S.profile.formatos, { pestanas: { nombres, ocultas: TM.ocultas, extra: TM.extra.map(x => ({ id: x.id, nombre: x.nombre.trim(), secs: x.secs || [] })) } });
+      const snap = clone(S.profile); S.profile.formatos = Object.assign({}, S.profile.formatos, { pestanas: { nombres, ocultas: TM.ocultas, extra: TM.extra.map(x => ({ id: x.id, nombre: x.nombre.trim(), modo: x.modo === 'sesion' ? 'sesion' : 'unica', secs: x.secs || [] })) } });
       const t = tabsList().map(x => x[0]); if (!t.includes(S.tab)) S.tab = 'datos';
       return persist([S.profile], b).then(ok => { if (!ok) { restore(S.profile, snap); return; } toast('Pestañas guardadas.'); render(); tabsDraw(); });
     }
@@ -400,18 +401,49 @@ function tabsManage() {
   };
 }
 /* Pestaña propia: texto libre guardado en la ficha. */
+const extraFields = (x, vo) => (x.secs || []).length
+  ? x.secs.map(([t, fs]) => `<div class="sec"><h3>${esc(t)}</h3><div class="grid">${fs.map(f => F(f[1], f[0], vo[f[0]] || f[3] || '', { type: 'area', rows: f[2] || 3, wide: true, aria: t })).join('')}</div></div>`).join('')
+  : `<div class="sec"><div class="fld"><textarea id="f_extra" data-f="extra" rows="10" aria-label="${esc(x.nombre)}">${esc(typeof vo === 'string' ? vo : (vo.extra || ''))}</textarea></div></div>`;
+const extraOf = x => (x.secs || []).length ? (o => o) : (o => ({ extra: o.extra || '' }));
 function tabExtra(p) {
   const x = (tabsConf().extra || []).find(y => y.id === S.tab); if (!x) return '';
-  const v = (p.extras || {})[x.id], vo = v && typeof v === 'object' ? v : {};
-  const body = (x.secs || []).length
-    ? x.secs.map(([t, fs]) => `<div class="sec"><h3>${esc(t)}</h3><div class="grid">${fs.map(f => F(f[1], f[0], vo[f[0]] || f[3] || '', { type: 'area', rows: f[2] || 3, wide: true, aria: t })).join('')}</div></div>`).join('')
-    : `<div class="sec"><h3>${esc(x.nombre)}</h3><div class="fld"><textarea id="f_extra" data-f="extra" rows="12" aria-label="${esc(x.nombre)}">${esc(typeof v === 'string' ? v : '')}</textarea></div><p class="stnote">Para dividirla en apartados y campos, use Mis formatos.</p></div>`;
-  return `${body}<div class="row end"><button class="btn pri" data-act="saveExtra">Guardar</button></div>`;
+  const v = (p.extras || {})[x.id];
+  if (x.modo !== 'sesion') {
+    const vo = v && typeof v === 'object' ? v : { extra: typeof v === 'string' ? v : '' };
+    return `<div class="sec"><h3>${esc(x.nombre)}</h3><p class="stnote">Datos de una sola vez: se actualizan cuando cambian.</p></div>${extraFields(x, vo)}<div class="row end"><button class="btn pri" data-act="saveExtra">Guardar</button></div>`;
+  }
+  const list = (Array.isArray(v) ? v : []).slice().sort((a, b) => (b.at || '').localeCompare(a.at || ''));
+  const ed = S.extraEd && S.extraEd.tab === x.id ? S.extraEd.id : null;
+  if (ed) {
+    const cur = ed === 'new' ? { at: nowISO().slice(0, 10), v: {} } : (list.find(e => e.id === ed) || { at: nowISO().slice(0, 10), v: {} });
+    return `<div class="sec"><h3>${ed === 'new' ? 'Nueva entrada' : 'Editar entrada'} · ${esc(x.nombre)}</h3>${F('Fecha', 'extraAt', (cur.at || '').slice(0, 10), { type: 'date' })}</div>${extraFields(x, cur.v || {})}<div class="row end"><button class="btn" data-act="extraCancel">Cancelar</button><button class="btn pri" data-act="extraSave">Guardar entrada</button></div>`;
+  }
+  const show = e => (x.secs || []).length ? x.secs.map(([t, fs]) => fs.map(f => (e.v || {})[f[0]] ? `<p style="margin:4px 0"><b>${esc(f[1] || t)}:</b> ${esc(e.v[f[0]])}</p>` : '').join('')).join('') : `<p style="margin:4px 0">${esc((e.v || {}).extra || '')}</p>`;
+  return `<div class="sec"><div class="row" style="justify-content:space-between"><h3 style="flex:1">${esc(x.nombre)} (${list.length})</h3><button class="btn pri" data-act="extraNew">Nueva entrada</button></div>
+  ${list.length ? list.map(e => `<div class="card"><div class="row" style="justify-content:space-between"><b>${esc((e.at || '').slice(0, 10))}</b><span><button class="btn sm" data-act="extraEdit" data-id="${e.id}">Editar</button> <button class="btn sm warn" data-act="extraDel" data-id="${e.id}">Borrar</button></span></div>${show(e)}</div>`).join('') : '<p class="stnote" style="text-align:center">Aún no hay entradas. Cada sesión se agrega aquí.</p>'}</div>`;
 }
+const extraCur = () => (tabsConf().extra || []).find(y => y.id === S.tab);
 ACT.saveExtra = async b => {
-  const p = curPatient(), snap = clone(p), o = readForm($('#tabbody'), {}), x = (tabsConf().extra || []).find(y => y.id === S.tab);
-  p.extras = Object.assign({}, p.extras, { [S.tab]: x && (x.secs || []).length ? o : (o.extra || '') });
+  const p = curPatient(), snap = clone(p), o = readForm($('#tabbody'), {}), x = extraCur();
+  p.extras = Object.assign({}, p.extras, { [S.tab]: extraOf(x)(o) });
   if (!(await persist([p], b))) { restore(p, snap); return; } toast('Guardado.');
+};
+ACT.extraNew = () => { S.extraEd = { tab: S.tab, id: 'new' }; render(); };
+ACT.extraEdit = b => { S.extraEd = { tab: S.tab, id: b.dataset.id }; render(); };
+ACT.extraCancel = () => { S.extraEd = null; render(); };
+ACT.extraSave = async b => {
+  const p = curPatient(), snap = clone(p), x = extraCur(), o = readForm($('#tabbody'), {}), id = S.extraEd && S.extraEd.id;
+  const at = o.extraAt || nowISO().slice(0, 10); delete o.extraAt;
+  const list = Array.isArray((p.extras || {})[S.tab]) ? clone(p.extras[S.tab]) : [], v = extraOf(x)(o);
+  if (id && id !== 'new' && list.some(e => e.id === id)) Object.assign(list.find(e => e.id === id), { at, v }); else list.push({ id: newId('e'), at, v });
+  p.extras = Object.assign({}, p.extras, { [S.tab]: list });
+  if (!(await persist([p], b))) { restore(p, snap); return; } S.extraEd = null; toast('Entrada guardada.'); render();
+};
+ACT.extraDel = async b => {
+  if (!b.dataset.sure) { b.dataset.sure = 1; b.textContent = 'Confirmar'; return; }
+  const p = curPatient(), snap = clone(p);
+  p.extras = Object.assign({}, p.extras, { [S.tab]: (p.extras[S.tab] || []).filter(e => e.id !== b.dataset.id) });
+  if (!(await persist([p], b))) { restore(p, snap); return; } render();
 };
 function finishFormats() {
   toast('Formato guardado.'); if (!S.dirty) render(); else hubClosed();
