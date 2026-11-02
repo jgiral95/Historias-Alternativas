@@ -51,9 +51,10 @@ ul.ritmo{margin:46px 0 0;padding:0}
 .lista li{padding-left:30px;position:relative;color:var(--suave)}
 .lista li::before{content:"";position:absolute;left:0;top:9px;width:14px;height:14px;border-radius:0 80% 0 80%;background:var(--salvia)}
 .lista b{color:var(--tinta);font-weight:600}
-.piedra{background:var(--crema);border:1px solid var(--linea);border-radius:200px 200px 24px 24px;padding:56px 36px 36px;text-align:center}
-.piedra blockquote{margin:0;font-family:"Source Serif 4",serif;font-size:24px;line-height:1.4;color:var(--bosque);font-style:italic}
-.piedra small{display:block;margin-top:18px;color:var(--suave);font-size:14px}
+.piedra{position:relative;background:var(--crema);border:1px solid var(--linea);border-left:5px solid var(--salvia);border-radius:6px 28px 28px 6px;padding:38px 36px}
+.piedra blockquote{margin:0;font-family:"Source Serif 4",serif;font-size:25px;line-height:1.45;color:var(--bosque);font-style:italic}
+.piedra cite{display:block;margin-top:20px;font-style:normal;font-size:15px;color:var(--tierra);font-weight:500}
+.piedra cite span{display:block;color:var(--suave);font-weight:400;font-size:14px}
 .faq{max-width:760px;margin:40px auto 0;border-top:1px solid var(--linea)}
 .faq details{border-bottom:1px solid var(--linea)}
 .faq summary{cursor:pointer;list-style:none;padding:20px 40px 20px 0;font-family:"Source Serif 4",serif;font-size:20px;font-weight:600;color:var(--bosque);position:relative}
@@ -181,10 +182,10 @@ footer a{color:var(--suave)}
       <p style="margin-top:22px"><a href="privacidad">Leer la política de privacidad</a></p>
     </div>
     <div>
-      <div class="piedra">
-        <blockquote>«Un buen registro no interrumpe la sesión: la sostiene.»</blockquote>
-        <small>Menos tiempo en papeles, más presencia para quien llega a consulta.</small>
-      </div>
+      <figure class="piedra" style="margin:0">
+        <blockquote>«No se debe intentar curar el cuerpo sin curar el alma.»</blockquote>
+        <cite>Platón<span><i>Cármides</i>, 156e · palabras que Sócrates atribuye a los médicos tracios</span></cite>
+      </figure>
     </div>
   </div>
 </section>
