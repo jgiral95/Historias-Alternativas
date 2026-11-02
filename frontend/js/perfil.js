@@ -394,7 +394,7 @@ function tabsManage() {
       if (TM.extra.some(x => !x.nombre.trim())) return toast('Cada pestaña necesita un nombre.');
       const snap = clone(S.profile); S.profile.formatos = Object.assign({}, S.profile.formatos, { pestanas: { nombres, ocultas: TM.ocultas, extra: TM.extra.map(x => ({ id: x.id, nombre: x.nombre.trim(), secs: x.secs || [] })) } });
       const t = tabsList().map(x => x[0]); if (!t.includes(S.tab)) S.tab = 'datos';
-      return persist([S.profile], b).then(ok => { if (!ok) { restore(S.profile, snap); return; } TM = null; root.innerHTML = ''; root.onclick = root.oninput = null; toast('Pestañas guardadas.'); render(); });
+      return persist([S.profile], b).then(ok => { if (!ok) { restore(S.profile, snap); return; } toast('Pestañas guardadas.'); render(); tabsDraw(); });
     }
     tabsDraw();
   };
@@ -414,7 +414,7 @@ ACT.saveExtra = async b => {
   if (!(await persist([p], b))) { restore(p, snap); return; } toast('Guardado.');
 };
 function finishFormats() {
-  ED = null; const root = $('#modal-root'); root.innerHTML = ''; root.onclick = root.oninput = root.onchange = null;
   toast('Formato guardado.'); if (!S.dirty) render(); else hubClosed();
+  drawFormats();  // el panel sigue abierto para seguir editando
 }
 
