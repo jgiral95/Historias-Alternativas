@@ -5,17 +5,18 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Encuesta de satisfacción</title>
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="stylesheet" href="css/fonts.css">
 <meta name="robots" content="noindex">
 <style>
 /* Página pública: el paciente responde la encuesta de satisfacción con el enlace que recibió. */
-:root{--bg:#F3F1F7;--surface:#FFFFFF;--surface2:#F8F7FB;--ink:#2A2735;--muted:#625E73;--line:#DDD9E8;--accent:#4A3F9E;--accent-ink:#FFFFFF;--accent-soft:#ECE9F5;
+:root{--bg:#F6F1E7;--surface:#FBF8F2;--surface2:#F1ECDF;--ink:#2B2A25;--muted:#6A675C;--line:#E3DBCB;--accent:#4E6B58;--accent-ink:#FFFFFF;--accent-soft:#E4EBE2;
   --ok:#2B7A4B;--ok-soft:#DDF0E4;--danger:#B3261E;--danger-soft:#F8DEDC;color-scheme:light}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#17161B;--surface:#1F1E24;--surface2:#26252C;--ink:#E9E8EE;--muted:#A3A1AE;--line:#353440;
-  --accent:#8A7FE0;--accent-ink:#17161B;--accent-soft:#2A2838;--ok:#6CCB92;--ok-soft:#183324;--danger:#F08A82;--danger-soft:#3B1E1C;color-scheme:dark}}
-:root[data-theme="dark"]{--bg:#17161B;--surface:#1F1E24;--surface2:#26252C;--ink:#E9E8EE;--muted:#A3A1AE;--line:#353440;
-  --accent:#8A7FE0;--accent-ink:#17161B;--accent-soft:#2A2838;--ok:#6CCB92;--ok-soft:#183324;--danger:#F08A82;--danger-soft:#3B1E1C;color-scheme:dark}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#1A211C;--surface:#222B25;--surface2:#2B362E;--ink:#ECE8DC;--muted:#A9B2A8;--line:#36423A;
+  --accent:#8FB09A;--accent-ink:#1A211C;--accent-soft:#2C3A31;--ok:#6CCB92;--ok-soft:#183324;--danger:#F08A82;--danger-soft:#3B1E1C;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#1A211C;--surface:#222B25;--surface2:#2B362E;--ink:#ECE8DC;--muted:#A9B2A8;--line:#36423A;
+  --accent:#8FB09A;--accent-ink:#1A211C;--accent-soft:#2C3A31;--ok:#6CCB92;--ok-soft:#183324;--danger:#F08A82;--danger-soft:#3B1E1C;color-scheme:dark}
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif;padding:24px 16px}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 "IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;padding:24px 16px}
 main{max-width:680px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
 .card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:18px 20px;display:flex;flex-direction:column;gap:10px}
 h1{margin:0;font-size:22px;display:flex;gap:10px;align-items:center;line-height:1.25}
@@ -46,7 +47,7 @@ const $ = s => document.querySelector(s);
 const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const H = { 'Content-Type': 'application/json', 'X-Requested-With': 'archivo-clinico' };
 const q = new URLSearchParams(location.search), token = q.get('t') || '';
-const logo = '<svg width="30" height="30" viewBox="0 0 120 120" aria-hidden="true"><rect x="6" y="6" width="108" height="108" rx="16" fill="#4A3F9E"/><rect x="34" y="22" width="52" height="64" rx="6" fill="#FFFFFF"/><rect x="46" y="14" width="28" height="16" rx="4" fill="#FFFFFF" stroke="#4A3F9E" stroke-width="4"/><rect x="42" y="46" width="36" height="6" rx="3" fill="#4A3F9E"/><rect x="42" y="58" width="36" height="6" rx="3" fill="#4A3F9E"/><rect x="42" y="70" width="22" height="6" rx="3" fill="#4A3F9E"/></svg>';
+const logo = '<svg width="30" height="30" viewBox="0 0 120 120" aria-hidden="true"><rect x="6" y="6" width="108" height="108" rx="16" fill="#4E6B58"/><rect x="34" y="22" width="52" height="64" rx="6" fill="#FFFFFF"/><rect x="46" y="14" width="28" height="16" rx="4" fill="#FFFFFF" stroke="#4E6B58" stroke-width="4"/><rect x="42" y="46" width="36" height="6" rx="3" fill="#4E6B58"/><rect x="42" y="58" width="36" height="6" rx="3" fill="#4E6B58"/><rect x="42" y="70" width="22" height="6" rx="3" fill="#4E6B58"/></svg>';
 const card = html => { $('#m').innerHTML = `<div class="card">${html}</div>`; };
 async function start() {
   if (!token) return card('<div class="res bad">El enlace está incompleto. Ábralo de nuevo desde el mensaje que recibió.</div>');
