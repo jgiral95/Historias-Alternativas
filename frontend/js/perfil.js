@@ -244,12 +244,15 @@ async function draw2fa(step, data) {
 /* ----- Mis formatos: único lugar para estructuras, plantillas, modelos y frases ----- */
 /* Mismo orden que las pestañas de la ficha del consultante; luego lo que se usa en varias partes. */
 const HUB = [['pestanas', 'Pestañas'], ['datos', 'Datos del consultante'], ['consent', 'Consentimientos'], ['intake', 'Primera vez'], ['evol', 'Sesión'], ['escalas', 'Chequeos'], ['informes', 'Informes'], ['frases', 'Frases']];
-const hubTabs = active => `<div class="tabs hubtabs" role="tablist" aria-label="Secciones de Mis formatos">${HUB.map(([k, l]) => `<button type="button" class="tab ${active === k ? 'on' : ''}" role="tab" aria-selected="${active === k}" data-hub="${k}">${l}</button>`).join('')}</div>`;
+/* Barra de Mis formatos: sin las pestañas ocultas, con los nombres propios y con las pestañas nuevas. */
+const hubList = () => { const c = tabsConf(), oc = c.ocultas || [], nm = c.nombres || {};
+  return HUB.filter(([k]) => !oc.includes(k)).map(([k, l]) => [k, nm[k] || l]).concat((c.extra || []).map(x => [x.id, x.nombre])); };
+const hubTabs = active => `<div class="tabs hubtabs" role="tablist" aria-label="Secciones de Mis formatos">${hubList().map(([k, l]) => `<button type="button" class="tab ${active === k ? 'on' : ''}" role="tab" aria-selected="${active === k}" data-hub="${k}">${l}</button>`).join('')}</div>`;
 function openHub(k) {
   if (ED && ['intake', 'evol', 'datos'].includes(k)) { ED.which = k; return drawFormats(); }  // conserva lo no guardado
   const root = $('#modal-root'); root.onclick = root.oninput = root.onchange = null; ED = null;
   if (['intake', 'evol', 'datos'].includes(k)) return ACT.formats({ dataset: { hub: k } });
-  if (k === 'pestanas') return tabsManage();
+  if (k === 'pestanas' || k.startsWith('x_')) return tabsManage();
   if (k === 'consent') return ACT.consentManage();
   if (k === 'informes') return ACT.tplManage();
   if (k === 'escalas') return ACT.scaleManage();
