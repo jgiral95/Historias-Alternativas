@@ -3,314 +3,222 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Karute · Un espacio para acompañar mejor cada proceso</title>
-<meta name="description" content="Historias clínicas, agenda, consentimientos, evoluciones e informes para profesionales de la psicología.">
+<title>Alter-Karute · Acompañe cada proceso con calma</title>
+<meta name="description" content="Fichas de consultantes, sesiones, agenda y consentimientos para terapeutas holísticos y de terapias alternativas.">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link rel="stylesheet" href="css/fonts.css">
 <style>
-/* Página de inicio pública. La app está en /app. */
-body{margin:0;background:#F3F1F7}
-a{color:#4A3F9E}a:hover{color:#3B3280}
-a:focus-visible{outline:3px solid #4A3F9E;outline-offset:3px}
+:root{--arena:#F6F1E7;--crema:#FBF8F2;--salvia:#7C9A83;--bosque:#2F4A3A;--musgo:#4E6B58;--terracota:#C47A56;--tierra:#6B4F3A;--tinta:#2B2A25;--suave:#6A675C;--linea:#E3DBCB}
+*{box-sizing:border-box}
 html{scroll-behavior:smooth}
-/* Vista previa interactiva (portada.js) */
-.demo-wrap{max-width:1160px;margin:0 auto;padding:0 24px 96px}
-.demo{background:#FFFFFF;border:1px solid #DDD9E8;border-radius:20px;box-shadow:0 30px 60px rgba(42,39,53,.10);display:flex;flex-wrap:wrap;overflow:hidden;text-align:left}
-.demo-agenda{flex:1 1 260px;min-width:0;background:#F8F7FB;padding:22px;display:flex;flex-direction:column;gap:10px;border-right:1px solid #DDD9E8}
-.demo-kicker{font-size:13px;letter-spacing:.8px;text-transform:uppercase;color:#625E73}
-.demo-citas{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}
-.cita{width:100%;min-height:48px;font:inherit;font-size:14px;color:#2A2735;text-align:left;cursor:pointer;background:#FFFFFF;border:1px solid #DDD9E8;border-radius:10px;padding:12px;display:flex;justify-content:space-between;gap:8px;transition:border-color .15s,background .15s}
-.cita:hover{border-color:#4A3F9E}
-.cita[aria-pressed="true"]{background:#ECE9F5;border-color:#4A3F9E;box-shadow:inset 3px 0 0 #4A3F9E}
-.st{color:#625E73}.st-ok{color:#22663E;font-weight:600}.st-ac{color:#3B3280;font-weight:600}.st-warn{color:#A8501A;font-weight:600}
-.demo-hint{margin:6px 0 0;font-size:13px;color:#625E73}
-.demo-main{flex:999 1 520px;min-width:0;padding:28px;display:flex;flex-direction:column;gap:16px}
-.demo-flash{animation:demoIn .35s ease}
-@keyframes demoIn{from{opacity:.4}to{opacity:1}}
-.demo-head{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 14px}
-.demo-head h3{margin:0;font-size:22px;font-weight:600}
-.demo-head span{font-size:14px;color:#625E73}
-.demo-banner{margin:0;font-size:14px;background:#F7E6D9;color:#7A3A12;border-radius:10px;padding:10px 14px}
-.demo-tabs{display:flex;flex-wrap:wrap;gap:8px}
-.demo-tabs [role="tab"]{font:inherit;font-size:14px;min-height:40px;padding:8px 16px;border-radius:99px;border:1px solid transparent;background:#F8F7FB;color:#2A2735;cursor:pointer}
-.demo-tabs [role="tab"]:hover{border-color:#C9C4DA}
-.demo-tabs [role="tab"][aria-selected="true"]{background:#2A2735;color:#FFFFFF}
-.cita:focus-visible,.demo-tabs [role="tab"]:focus-visible{outline:3px solid #4A3F9E;outline-offset:2px}
-.demo-panel{min-height:210px}
-.demo-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:18px}
-.demo-field b,.escala-top b{font-size:14px}
-.demo-field p{margin:6px 0 0;font-size:15px;color:#625E73;line-height:1.5}
-.demo-geno{border:1px dashed #C9C4DA;border-radius:12px;padding:16px;display:flex;flex-direction:column;align-items:center;gap:10px}
-.demo-geno svg{width:100%;max-width:340px;height:auto;font-family:inherit}
-.geno-tools{display:flex;flex-wrap:wrap;gap:6px;font-size:12px}
-.geno-tools span{background:#F8F7FB;border:1px solid #DDD9E8;border-radius:6px;padding:4px 10px;color:#625E73}
-.demo-note{margin:0;font-size:13px;color:#625E73}
-.demo-escalas{display:flex;flex-direction:column;gap:18px}
-.escala-top{display:flex;flex-wrap:wrap;justify-content:space-between;gap:6px;font-size:14px;margin-bottom:8px}
-.barra{height:10px;background:#ECE9F5;border-radius:99px;overflow:hidden}
-.barra i{display:block;height:100%;background:#4A3F9E;border-radius:99px;transition:width .4s ease}
-.demo-dx{display:flex;flex-direction:column;gap:14px}
-.dx-buscar{border:1px solid #DDD9E8;border-radius:10px;padding:11px 14px;font-size:14px;color:#625E73}
-.dx-chip{display:flex;flex-wrap:wrap;align-items:center;gap:10px;background:#ECE9F5;border-radius:10px;padding:12px 14px;font-size:15px;font-weight:500}
-.dx-code{font-family:'IBM Plex Mono',ui-monospace,monospace;background:#FFFFFF;border:1px solid #C9C4DA;border-radius:6px;padding:2px 8px;color:#3B3280}
-/* Preguntas frecuentes */
-.faq{display:flex;flex-direction:column;border-top:1px solid #DDD9E8}
-.faq details{border-bottom:1px solid #DDD9E8}
-.faq summary{cursor:pointer;list-style:none;padding:20px 40px 20px 0;font-size:18px;font-weight:600;position:relative;min-height:44px;box-sizing:border-box}
+body{margin:0;background:var(--arena);color:var(--tinta);font-family:"IBM Plex Sans",system-ui,sans-serif;line-height:1.6;font-size:17px}
+h1,h2,h3{font-family:"Source Serif 4",Georgia,serif;font-weight:600;margin:0;line-height:1.15;color:var(--bosque)}
+p{margin:0}
+a{color:var(--musgo)}a:hover{color:var(--bosque)}
+a:focus-visible,summary:focus-visible{outline:3px solid var(--terracota);outline-offset:3px;border-radius:6px}
+.wrap{max-width:1080px;margin:0 auto;padding:0 24px}
+section{padding:88px 0}
+.btn{display:inline-block;text-decoration:none;padding:14px 28px;border-radius:99px;font-weight:600;font-size:16px;min-height:48px}
+.btn.pri{background:var(--bosque);color:#fff}.btn.pri:hover{background:var(--musgo);color:#fff}
+.btn.sec{border:1.5px solid var(--bosque);color:var(--bosque)}.btn.sec:hover{background:var(--crema)}
+header.top{display:flex;justify-content:space-between;align-items:center;padding:22px 0}
+.marca{display:flex;align-items:center;gap:10px;font-family:"Source Serif 4",serif;font-size:24px;font-weight:600;color:var(--bosque);text-decoration:none}
+.hero{position:relative;overflow:hidden;text-align:center;padding:72px 0 110px}
+.hero h1{font-size:clamp(40px,6.4vw,76px);letter-spacing:-1px;max-width:14em;margin:0 auto 22px}
+.hero h1 em{font-style:italic;color:var(--terracota)}
+.hero p.lead{max-width:36em;margin:0 auto 34px;font-size:20px;color:var(--suave)}
+.hero .acciones{display:flex;flex-wrap:wrap;gap:14px;justify-content:center}
+.mandala{position:absolute;left:50%;top:50%;width:min(900px,140vw);transform:translate(-50%,-50%);opacity:.5;z-index:-1;pointer-events:none}
+.kicker{font-size:13px;letter-spacing:2px;text-transform:uppercase;color:var(--terracota);font-weight:600;margin-bottom:14px}
+.centro{text-align:center}.centro h2{max-width:18em;margin:0 auto 16px}.centro .sub{max-width:38em;margin:0 auto;color:var(--suave)}
+h2{font-size:clamp(30px,4vw,46px);letter-spacing:-.5px}
+.terapias{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:34px}
+.terapias span{background:var(--crema);border:1px solid var(--linea);border-radius:99px;padding:9px 18px;font-size:15px;color:var(--tierra)}
+.tres{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:22px;margin-top:48px}
+.tarjeta{background:var(--crema);border:1px solid var(--linea);border-radius:28px 28px 28px 8px;padding:30px}
+.tarjeta .ico{width:48px;height:48px;border-radius:50%;background:#E4EBE2;display:grid;place-items:center;margin-bottom:18px}
+.tarjeta h3{font-size:23px;margin-bottom:8px}.tarjeta p{color:var(--suave);font-size:16px}
+.banda{background:var(--bosque);color:#F1ECE0}
+.banda h2{color:#F6F1E7}.banda .kicker{color:#E0A98B}
+.ritmo{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:26px;margin-top:46px;counter-reset:p}
+.ritmo li{list-style:none;position:relative;padding-top:54px}
+.ritmo li::before{counter-increment:p;content:counter(p);position:absolute;top:0;left:0;width:40px;height:40px;border-radius:50%;border:1.5px solid #E0A98B;color:#E0A98B;display:grid;place-items:center;font-family:"Source Serif 4",serif;font-size:19px}
+.ritmo h3{color:#F6F1E7;font-size:21px;margin-bottom:6px}.ritmo p{color:#CFD8CC;font-size:15.5px}
+ul.ritmo{margin:46px 0 0;padding:0}
+.dos{display:flex;flex-wrap:wrap;gap:48px;align-items:center}
+.dos>div{flex:1 1 380px;min-width:0}
+.lista{list-style:none;margin:22px 0 0;padding:0;display:grid;gap:14px}
+.lista li{padding-left:30px;position:relative;color:var(--suave)}
+.lista li::before{content:"";position:absolute;left:0;top:9px;width:14px;height:14px;border-radius:0 80% 0 80%;background:var(--salvia)}
+.lista b{color:var(--tinta);font-weight:600}
+.piedra{background:var(--crema);border:1px solid var(--linea);border-radius:200px 200px 24px 24px;padding:56px 36px 36px;text-align:center}
+.piedra blockquote{margin:0;font-family:"Source Serif 4",serif;font-size:24px;line-height:1.4;color:var(--bosque);font-style:italic}
+.piedra small{display:block;margin-top:18px;color:var(--suave);font-size:14px}
+.faq{max-width:760px;margin:40px auto 0;border-top:1px solid var(--linea)}
+.faq details{border-bottom:1px solid var(--linea)}
+.faq summary{cursor:pointer;list-style:none;padding:20px 40px 20px 0;font-family:"Source Serif 4",serif;font-size:20px;font-weight:600;color:var(--bosque);position:relative}
 .faq summary::-webkit-details-marker{display:none}
-.faq summary::after{content:"+";position:absolute;right:4px;top:16px;font-size:26px;font-weight:400;color:#4A3F9E}
-.faq details[open] summary::after{content:"–"}
-.faq summary:hover{color:#3B3280}
-.faq summary:focus-visible{outline:3px solid #4A3F9E;outline-offset:2px}
-.faq p{margin:0 0 22px;color:#625E73;font-size:16px;max-width:44em}
-@media (prefers-reduced-motion:reduce){.demo-flash{animation:none}.barra i{transition:none}html{scroll-behavior:auto}}
+.faq summary::after{content:"+";position:absolute;right:6px;top:16px;font-size:28px;color:var(--terracota);transition:transform .2s}
+.faq details[open] summary::after{transform:rotate(45deg)}
+.faq details p{padding:0 0 22px;color:var(--suave)}
+.cierre{text-align:center;background:linear-gradient(180deg,var(--arena),#E9E2D0)}
+.cierre h2{max-width:16em;margin:0 auto 18px}.cierre p{color:var(--suave);max-width:34em;margin:0 auto 32px}
+footer{padding:36px 0 48px;font-size:14px;color:var(--suave)}
+footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px}
+footer a{color:var(--suave)}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+@media (max-width:640px){section{padding:60px 0}.hero{padding:40px 0 70px}}
 </style>
 </head>
 <body>
-<div style="font-family: 'IBM Plex Sans', system-ui, sans-serif; color: #2A2735; background: #F3F1F7; line-height: 1.55; font-size: 17px">
-
-  <header style="max-width: 1160px; margin: 0 auto; padding: 22px 24px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px">
-    <div style="display: flex; align-items: center; gap: 10px">
-      <svg width="44" height="44" viewBox="0 0 120 120" aria-hidden="true"><rect x="10" y="10" width="100" height="100" rx="14" fill="#4A3F9E"></rect><rect x="40" y="26" width="40" height="42" rx="5" fill="#F3F1F7"></rect><rect x="50" y="20" width="20" height="12" rx="3" stroke-width="3" fill="#F3F1F7" stroke="#4A3F9E"></rect><rect x="47" y="42" width="26" height="4" rx="2" fill="#4A3F9E"></rect><rect x="47" y="50" width="26" height="4" rx="2" fill="#4A3F9E"></rect><rect x="47" y="58" width="16" height="4" rx="2" fill="#4A3F9E"></rect><text x="60" y="97" text-anchor="middle" font-size="24" font-weight="700" fill="#F3F1F7" font-family="sans-serif">カルテ</text></svg>
-      <b style="font-size: 21px; font-weight: 700; letter-spacing: 0.5px">Karute</b>
-    </div>
-    <a href="/app" style="color: #2A2735; text-decoration: none; padding: 10px 18px; border: 1.5px solid #2A2735; border-radius: 10px; font-weight: 500; font-size: 15px; min-height: 44px; box-sizing: border-box; display: inline-flex; align-items: center">Ingresar</a>
+<div class="wrap">
+  <header class="top">
+    <a class="marca" href="/" aria-label="Alter-Karute, inicio">
+      <svg width="34" height="34" viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="19" fill="#E4EBE2"/><path d="M20 31c-7-3-10-9-9-17 7 0 12 3 14 9 1 3 0 6-5 8z" fill="#7C9A83"/><path d="M20 31c0-7 1-11 6-15" stroke="#2F4A3A" stroke-width="1.6" fill="none" stroke-linecap="round"/></svg>
+      Alter-Karute
+    </a>
+    <a class="btn sec" href="/app" style="padding:10px 22px;min-height:44px">Ingresar</a>
   </header>
-
-  <section style="max-width: 1160px; margin: 0 auto; padding: 64px 24px 72px; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 24px">
-    <span style="font-size: 14px; font-weight: 600; letter-spacing: 1.2px; text-transform: uppercase; color: #4A3F9E">Historia clínica para psicólogos</span>
-    <h1 style="margin: 0; font-size: clamp(40px, 6vw, 78px); font-weight: 700; line-height: 1.04; letter-spacing: -1.5px; max-width: 14em">Un espacio para acompañar mejor <span style="color: #4A3F9E; box-shadow: inset 0 -0.22em 0 #D6D1E8">cada proceso.</span></h1>
-    <p style="margin: 0; font-size: 20px; color: #625E73; max-width: 34em">Historias clínicas, agenda, consentimientos, evoluciones e informes, organizados en un lugar pensado para el trabajo de los profesionales de la psicología.</p>
-    <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 12px">
-      <a href="#acompana" style="background: #4A3F9E; color: #FFFFFF; text-decoration: none; padding: 15px 28px; border-radius: 10px; font-weight: 600; min-height: 50px; box-sizing: border-box; display: inline-flex; align-items: center">Conocer Karute</a>
-      <a href="#empezar" style="color: #2A2735; text-decoration: none; padding: 15px 28px; border-radius: 10px; border: 1px solid #C9C4DA; font-weight: 500; min-height: 50px; box-sizing: border-box; display: inline-flex; align-items: center">Solicitar acceso</a>
-    </div>
-  </section>
-
-  <section class="demo-wrap" aria-label="Vista previa de la app">
-    <div class="demo">
-      <div class="demo-agenda">
-        <b class="demo-kicker" id="d-hoy">Hoy</b>
-        <ul class="demo-citas" aria-labelledby="d-hoy">
-          <li><button type="button" class="cita" data-p="maria" aria-pressed="false"><span>8:00 · María P.</span><span class="st st-ok">Confirmó</span></button></li>
-          <li><button type="button" class="cita" data-p="andres" aria-pressed="true"><span>10:00 · Andrés G.</span><span class="st st-ac">Primera vez</span></button></li>
-          <li><button type="button" class="cita" data-p="lucia" aria-pressed="false"><span>11:30 · Lucía R.</span><span class="st">Telesalud</span></button></li>
-          <li><button type="button" class="cita" data-p="camilo" aria-pressed="false"><span>15:00 · Camilo T.</span><span class="st st-warn">Firma pendiente</span></button></li>
-        </ul>
-        <p class="demo-hint">Cada cita y cada pestaña se pueden explorar.</p>
-      </div>
-
-      <div class="demo-main">
-        <div class="demo-head">
-          <h3 id="d-nombre">Andrés G.</h3>
-          <span id="d-meta">10:00 · Presencial · Sesión 1</span>
-        </div>
-        <p class="demo-banner" id="d-firma" hidden>El consentimiento informado se envió por enlace y está pendiente de firma. Queda en Pendientes hasta que el paciente lo firme.</p>
-
-        <div class="demo-tabs" role="tablist" aria-label="Secciones de la historia">
-          <button type="button" role="tab" id="t-primera" aria-controls="p-primera" aria-selected="true">Primera vez</button>
-          <button type="button" role="tab" id="t-genograma" aria-controls="p-genograma" aria-selected="false" tabindex="-1">Genograma</button>
-          <button type="button" role="tab" id="t-escalas" aria-controls="p-escalas" aria-selected="false" tabindex="-1">Escalas</button>
-          <button type="button" role="tab" id="t-diagnostico" aria-controls="p-diagnostico" aria-selected="false" tabindex="-1">Diagnóstico</button>
-        </div>
-
-        <div role="tabpanel" id="p-primera" aria-labelledby="t-primera" class="demo-panel">
-          <div class="demo-grid">
-            <div class="demo-field"><b>Motivo de consulta</b><p id="d-motivo">Dificultad para dormir y estrés por la carga de trabajo desde hace tres meses.</p></div>
-            <div class="demo-field"><b>Examen mental</b><p id="d-examen">Alerta y orientado. Afecto ansioso, discurso coherente, sin alteraciones de la percepción.</p></div>
-            <div class="demo-field"><b>Plan</b><p id="d-plan">Psicoeducación sobre higiene del sueño y registro de pensamientos durante dos semanas.</p></div>
-          </div>
-        </div>
-
-        <div role="tabpanel" id="p-genograma" aria-labelledby="t-genograma" class="demo-panel" hidden>
-          <div class="demo-geno">
-            <div class="geno-tools" aria-hidden="true"><span>Lápiz</span><span>Símbolos</span><span>Texto</span><span>Subir imagen</span></div>
-            <svg viewBox="0 0 320 170" role="img" aria-label="Genograma de ejemplo: padre, madre, el paciente y un hermano">
-              <rect x="70" y="18" width="34" height="34" fill="#FFFFFF" stroke="#2A2735" stroke-width="2.5"></rect>
-              <circle cx="233" cy="35" r="17" fill="#FFFFFF" stroke="#2A2735" stroke-width="2.5"></circle>
-              <path d="M87 52v22h146V52M120 74v30M200 74v30" fill="none" stroke="#2A2735" stroke-width="2.5"></path>
-              <rect x="103" y="104" width="34" height="34" fill="#ECE9F5" stroke="#4A3F9E" stroke-width="3" id="d-geno-pac"></rect>
-              <circle cx="120" cy="121" r="17" fill="#ECE9F5" stroke="#4A3F9E" stroke-width="3" id="d-geno-pac-m" style="display: none"></circle>
-              <circle cx="200" cy="121" r="17" fill="#FFFFFF" stroke="#2A2735" stroke-width="2.5" id="d-geno-her"></circle>
-              <rect x="183" y="104" width="34" height="34" fill="#FFFFFF" stroke="#2A2735" stroke-width="2.5" id="d-geno-her-h" style="display: none"></rect>
-              <text x="87" y="12" text-anchor="middle" font-size="11" fill="#625E73">Padre</text>
-              <text x="233" y="12" text-anchor="middle" font-size="11" fill="#625E73">Madre</text>
-              <text x="120" y="158" text-anchor="middle" font-size="11" fill="#2A2735" font-weight="600" id="d-geno-lab">Andrés</text>
-              <text x="200" y="158" text-anchor="middle" font-size="11" fill="#625E73" id="d-geno-her-lab">Hermana</text>
-            </svg>
-            <p class="demo-note" id="d-geno-nota">Se dibuja en pantalla o se sube como imagen y se completa encima.</p>
-          </div>
-        </div>
-
-        <div role="tabpanel" id="p-escalas" aria-labelledby="t-escalas" class="demo-panel" hidden>
-          <div class="demo-escalas">
-            <div class="escala">
-              <div class="escala-top"><b>PHQ-9 · Depresión</b><span><b id="d-phq">6</b> / 27 · <span id="d-phq-lab">Leve</span></span></div>
-              <div class="barra" aria-hidden="true"><i id="d-phq-bar" style="width: 22%"></i></div>
-            </div>
-            <div class="escala">
-              <div class="escala-top"><b>GAD-7 · Ansiedad</b><span><b id="d-gad">11</b> / 21 · <span id="d-gad-lab">Moderada</span></span></div>
-              <div class="barra" aria-hidden="true"><i id="d-gad-bar" style="width: 52%"></i></div>
-            </div>
-            <p class="demo-note" id="d-esc-nota">Primera aplicación. Los puntajes quedan en la historia para comparar sesión a sesión.</p>
-          </div>
-        </div>
-
-        <div role="tabpanel" id="p-diagnostico" aria-labelledby="t-diagnostico" class="demo-panel" hidden>
-          <div class="demo-dx">
-            <div class="dx-buscar" aria-hidden="true">Escriba una impresión…</div>
-            <div class="dx-chip"><span id="d-dx-name">Ansiedad ante exámenes</span></div>
-            <p class="demo-note">Texto libre · <span id="d-dx-tipo">Impresión inicial</span></p>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <section id="acompana" style="max-width: 1160px; margin: 0 auto; padding: 0 24px 96px; display: flex; flex-direction: column; gap: 40px">
-    <div style="display: flex; flex-direction: column; gap: 12px; max-width: 760px">
-      <h2 style="margin: 0; font-size: clamp(32px, 4vw, 50px); font-weight: 700; letter-spacing: -0.8px; line-height: 1.1">Cada parte de la práctica, en su lugar.</h2>
-      <p style="margin: 0; font-size: 18px; color: #625E73">Karute organiza, documenta y facilita el trabajo diario. Las decisiones clínicas siguen en manos del profesional.</p>
-    </div>
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 36px 32px">
-        <div style="display: flex; flex-direction: column; gap: 8px; border-top: 2px solid #4A3F9E; padding-top: 18px">
-          <span style="font-family: 'IBM Plex Mono', monospace; font-size: 15px; color: #4A3F9E">01</span>
-          <h3 style="margin: 0; font-size: 20px; font-weight: 600">Cada proceso tiene su propio espacio</h3>
-          <p style="margin: 0; color: #625E73; font-size: 16px">Cada historia reúne los datos, antecedentes, consentimientos, sesiones y documentos del paciente. Los apartados de la primera vez y de la evolución se adaptan a la manera de trabajar de cada profesional.</p>
-        </div>
-        <div style="display: flex; flex-direction: column; gap: 8px; border-top: 2px solid #4A3F9E; padding-top: 18px">
-          <span style="font-family: 'IBM Plex Mono', monospace; font-size: 15px; color: #4A3F9E">02</span>
-          <h3 style="margin: 0; font-size: 20px; font-weight: 600">El seguimiento encuentra su continuidad</h3>
-          <p style="margin: 0; color: #625E73; font-size: 16px">Las notas de evolución, las escalas como PHQ-9 y GAD-7 y las impresiones permiten ver el recorrido de cada proceso a lo largo del tiempo.</p>
-        </div>
-        <div style="display: flex; flex-direction: column; gap: 8px; border-top: 2px solid #4A3F9E; padding-top: 18px">
-          <span style="font-family: 'IBM Plex Mono', monospace; font-size: 15px; color: #4A3F9E">03</span>
-          <h3 style="margin: 0; font-size: 20px; font-weight: 600">Una agenda conectada con la consulta</h3>
-          <p style="margin: 0; color: #625E73; font-size: 16px">Las citas se ven por día, semana o mes. Los recordatorios y las confirmaciones llegan a los pacientes por enlace, y la agenda puede sincronizarse con Google Calendar.</p>
-        </div>
-        <div style="display: flex; flex-direction: column; gap: 8px; border-top: 2px solid #4A3F9E; padding-top: 18px">
-          <span style="font-family: 'IBM Plex Mono', monospace; font-size: 15px; color: #4A3F9E">04</span>
-          <h3 style="margin: 0; font-size: 20px; font-weight: 600">Los documentos, en orden</h3>
-          <p style="margin: 0; color: #625E73; font-size: 16px">Consentimientos, informes, remisiones y constancias se preparan desde plantillas.</p>
-        </div>
-        <div style="display: flex; flex-direction: column; gap: 8px; border-top: 2px solid #4A3F9E; padding-top: 18px">
-          <span style="font-family: 'IBM Plex Mono', monospace; font-size: 15px; color: #4A3F9E">05</span>
-          <h3 style="margin: 0; font-size: 20px; font-weight: 600">Un equipo, cada quien en su lugar</h3>
-          <p style="margin: 0; color: #625E73; font-size: 16px">Los asistentes tienen su propio acceso para gestionar citas y tareas administrativas, mientras la información clínica permanece reservada al profesional.</p>
-        </div>
-        <div style="display: flex; flex-direction: column; gap: 8px; border-top: 2px solid #4A3F9E; padding-top: 18px">
-          <span style="font-family: 'IBM Plex Mono', monospace; font-size: 15px; color: #4A3F9E">06</span>
-          <h3 style="margin: 0; font-size: 20px; font-weight: 600">Cada registro conserva su historia</h3>
-          <p style="margin: 0; color: #625E73; font-size: 16px">Las notas firmadas quedan con firma, fecha y hora, y no se modifican. Cualquier complemento posterior se documenta como una adenda.</p>
-        </div>
-        <div style="display: flex; flex-direction: column; gap: 8px; border-top: 2px solid #4A3F9E; padding-top: 18px">
-          <span style="font-family: 'IBM Plex Mono', monospace; font-size: 15px; color: #4A3F9E">07</span>
-          <h3 style="margin: 0; font-size: 20px; font-weight: 600">Un espacio para pensar el proceso</h3>
-          <p style="margin: 0; color: #625E73; font-size: 16px">Las notas de proceso guardan hipótesis, formulaciones de caso y apuntes de supervisión, separadas de la historia clínica: no salen en copias ni informes y el equipo no las ve. También pueden escribirse a mano.</p>
-        </div>
-        <div style="display: flex; flex-direction: column; gap: 8px; border-top: 2px solid #4A3F9E; padding-top: 18px">
-          <span style="font-family: 'IBM Plex Mono', monospace; font-size: 15px; color: #4A3F9E">08</span>
-          <h3 style="margin: 0; font-size: 20px; font-weight: 600">Una mirada al conjunto de la consulta</h3>
-          <p style="margin: 0; color: #625E73; font-size: 16px">Las estadísticas muestran los diagnósticos más frecuentes, las modalidades de atención, el estado de los casos y los resultados de las encuestas de satisfacción, sin exponer la identidad de los pacientes.</p>
-        </div>
-    </div>
-  </section>
-
-  <section id="dia" style="background: #FFFFFF; border-top: 1px solid #DDD9E8; border-bottom: 1px solid #DDD9E8">
-    <div style="max-width: 900px; margin: 0 auto; padding: 96px 24px; display: flex; flex-direction: column; gap: 48px">
-      <div style="display: flex; flex-direction: column; gap: 12px">
-        <h2 style="margin: 0; font-size: clamp(32px, 4vw, 50px); font-weight: 700; letter-spacing: -0.8px; line-height: 1.1">De la primera entrevista al seguimiento de cada proceso.</h2>
-        <p style="margin: 0; font-size: 18px; color: #625E73">El ciclo de trabajo de la consulta, acompañado por Karute.</p>
-      </div>
-      <div style="display: flex; flex-wrap: wrap; gap: 12px 24px; padding-bottom: 32px; border-bottom: 1px solid #DDD9E8">
-        <span style="flex: 0 0 56px; font-family: 'IBM Plex Mono', monospace; font-size: 22px; color: #4A3F9E">01</span>
-        <div style="flex: 1 1 360px; min-width: 0; display: flex; flex-direction: column; gap: 6px">
-          <span style="font-size: 13px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: #4A3F9E">Antes del encuentro</span>
-          <h3 style="margin: 0; font-size: 22px; font-weight: 600">La agenda, los recordatorios y los consentimientos</h3>
-          <p style="margin: 0; color: #625E73">Las citas se organizan por día, semana o mes, los pacientes reciben recordatorios y confirman por enlace, y los consentimientos pueden firmarse desde el celular antes de llegar.</p>
-        </div>
-      </div>
-
-      <div style="display: flex; flex-wrap: wrap; gap: 12px 24px; padding-bottom: 32px; border-bottom: 1px solid #DDD9E8">
-        <span style="flex: 0 0 56px; font-family: 'IBM Plex Mono', monospace; font-size: 22px; color: #4A3F9E">02</span>
-        <div style="flex: 1 1 360px; min-width: 0; display: flex; flex-direction: column; gap: 6px">
-          <span style="font-size: 13px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: #4A3F9E">Durante el proceso</span>
-          <h3 style="margin: 0; font-size: 22px; font-weight: 600">Una historia que refleja cada proceso</h3>
-          <p style="margin: 0; color: #625E73">Antecedentes, examen mental, genograma, escalas y diagnóstico se registran en formatos que cada profesional ajusta a su enfoque.</p>
-        </div>
-      </div>
-
-      <div style="display: flex; flex-wrap: wrap; gap: 12px 24px; padding-bottom: 32px; border-bottom: 1px solid #DDD9E8">
-        <span style="flex: 0 0 56px; font-family: 'IBM Plex Mono', monospace; font-size: 22px; color: #4A3F9E">03</span>
-        <div style="flex: 1 1 360px; min-width: 0; display: flex; flex-direction: column; gap: 6px">
-          <span style="font-size: 13px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: #4A3F9E">Después de cada sesión</span>
-          <h3 style="margin: 0; font-size: 22px; font-weight: 600">La evolución, firmada y en continuidad</h3>
-          <p style="margin: 0; color: #625E73">Cada nota de evolución se guarda con la firma, la fecha y la hora del profesional, y se suma al recorrido del proceso. Los complementos posteriores se documentan como adendas.</p>
-        </div>
-      </div>
-
-      <div style="display: flex; flex-wrap: wrap; gap: 12px 24px">
-        <span style="flex: 0 0 56px; font-family: 'IBM Plex Mono', monospace; font-size: 22px; color: #4A3F9E">04</span>
-        <div style="flex: 1 1 360px; min-width: 0; display: flex; flex-direction: column; gap: 6px">
-          <span style="font-size: 13px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: #4A3F9E">En la gestión de la consulta</span>
-          <h3 style="margin: 0; font-size: 22px; font-weight: 600">Informes y pendientes</h3>
-          <p style="margin: 0; color: #625E73">Las plantillas ayudan a preparar informes, remisiones y constancias con código de verificación; el resumen muestra lo pendiente,.</p>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <section id="cuidado" style="background: #2A2735; color: #E9E8EE">
-    <div style="max-width: 1160px; margin: 0 auto; padding: 88px 24px; display: flex; flex-wrap: wrap; gap: 48px; align-items: flex-start">
-      <div style="flex: 1 1 400px; min-width: 0; display: flex; flex-direction: column; gap: 14px">
-        <h2 style="margin: 0; font-size: clamp(30px, 3.6vw, 44px); font-weight: 700; letter-spacing: -0.6px; line-height: 1.12">La información merece cuidado.</h2>
-        <p style="margin: 0; color: #C3BFD3; font-size: 17px">Lo que se registra en una consulta es confidencial. Karute se construyó con ese cuidado desde el principio, y su política de tratamiento de datos protege la información de sus consultantes.</p>
-        <a href="privacidad" style="color: #C9C3EE; font-size: 16px">Leer la política de privacidad</a>
-      </div>
-      <ul style="flex: 1 1 400px; min-width: 0; list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; font-size: 15px">
-        <li style="border: 1px solid #45414F; border-radius: 12px; padding: 16px">El contenido de las historias clínicas y sus documentos se almacena cifrado.</li>
-        <li style="border: 1px solid #45414F; border-radius: 12px; padding: 16px">Verificación en dos pasos disponible para proteger el acceso.</li>
-        <li style="border: 1px solid #45414F; border-radius: 12px; padding: 16px">Registro de actividad y de los accesos a la plataforma.</li>
-        <li style="border: 1px solid #45414F; border-radius: 12px; padding: 16px">Los asistentes gestionan la agenda y los datos administrativos, sin acceder al contenido clínico.</li>
-        <li style="border: 1px solid #45414F; border-radius: 12px; padding: 16px">Los documentos emitidos llevan un código de verificación.</li>
-      </ul>
-    </div>
-  </section>
-
-  <section id="preguntas" style="max-width: 900px; margin: 0 auto; padding: 96px 24px; display: flex; flex-direction: column; gap: 32px">
-    <h2 style="margin: 0; font-size: clamp(32px, 4vw, 50px); font-weight: 700; letter-spacing: -0.8px; line-height: 1.1">Preguntas frecuentes</h2>
-    <div class="faq">
-      <details name="faq"><summary>¿Karute está pensado solo para psicólogos?</summary><p>Está diseñado para la práctica de la psicología en Colombia: sus formatos, escalas, informes y reportes parten de ese trabajo.</p></details>
-      <details name="faq"><summary>¿Sirve para psicólogos de cualquier enfoque?</summary><p>Sí. Karute está pensado para que cualquier psicólogo pueda usarlo, sin importar su corriente: cognitivo-conductual, psicodinámica, sistémica, humanista u otra. Los formatos de la historia y de las notas se ajustan a la manera de trabajar de cada profesional.</p></details>
-      <details name="faq"><summary>¿Se pueden personalizar las historias clínicas?</summary><p>Sí. Desde «Mis formatos» cada profesional agrega, renombra, reordena o quita apartados y campos de la primera vez y de las notas de evolución. Los informes también admiten plantillas propias.</p></details>
-      <details name="faq"><summary>¿Funciona desde el celular?</summary><p>Sí. Karute se usa desde el navegador del celular, la tableta o el computador, sin instalar nada.</p></details>
-      <details name="faq"><summary>¿Cómo se firman los consentimientos?</summary><p>En pantalla, durante la consulta, o a distancia: el paciente recibe un enlace y firma desde su celular. Después firma el profesional, y el documento queda con fecha y hora.</p></details>
-      <details name="faq"><summary>¿Qué ocurre después de firmar una nota clínica?</summary><p>La nota queda con la firma, la fecha y la hora del profesional, y no se puede modificar. Si hace falta corregir o complementar algo, se agrega una adenda, que también queda registrada.</p></details>
-      <details name="faq"><summary>¿Se puede trabajar con un asistente?</summary><p>Sí. Se pueden crear cuentas para el equipo, que manejan la agenda y los recordatorios sin acceso a la información clínica.</p></details>
-      <details name="faq"><summary>¿Cómo se protege la información de los pacientes?</summary><p>El contenido clínico de las historias y sus documentos se almacena cifrado, cada cuenta puede activar la verificación en dos pasos y la plataforma registra los accesos. La <a href="privacidad">política de privacidad</a> explica en detalle qué se guarda y cómo se protege.</p></details>
-      <details name="faq"><summary>¿Se puede obtener una copia de la historia clínica?</summary><p>Sí. Cada historia puede descargarse completa, con sus documentos firmados y anexos. Esto permite atender solicitudes de copia y conservar la documentación fuera de la plataforma cuando sea necesario. Por seguridad, la descarga se hace paciente por paciente.</p></details>
-    </div>
-  </section>
-
-  <section id="empezar" style="max-width: 1160px; margin: 0 auto; padding: 0 24px 96px">
-    <div style="background: #4A3F9E; color: #FFFFFF; border-radius: 24px; padding: 64px 32px; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 18px">
-      <h2 style="margin: 0; font-size: clamp(30px, 4vw, 48px); font-weight: 700; letter-spacing: -0.6px; line-height: 1.1; max-width: 16em">Su práctica clínica merece un espacio propio.</h2>
-      <p style="margin: 0; font-size: 18px; color: #F3F1F7; max-width: 34em">Conozca Karute, explore sus herramientas y descubra cómo puede acompañar su manera de trabajar. Estamos disponibles para resolver sus preguntas y acompañarle en el inicio.</p>
-      <a href="mailto:jgiral95@gmail.com?subject=Quiero%20conocer%20Karute" style="background: #FFFFFF; color: #2A2735; text-decoration: none; padding: 15px 28px; border-radius: 10px; font-weight: 600; min-height: 50px; box-sizing: border-box; display: inline-flex; align-items: center">Solicitar acceso</a>
-      <a href="/app" style="color: #FFFFFF; font-size: 15px">¿Ya tiene cuenta? Ingresar</a>
-    </div>
-  </section>
-
-  <footer style="border-top: 1px solid #DDD9E8">
-    <div style="max-width: 1160px; margin: 0 auto; padding: 28px 24px; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px; font-size: 14px; color: #625E73">
-      <span>Karute · Historia clínica hecha por y para psicólogos en Colombia</span>
-      <div style="display: flex; flex-wrap: wrap; gap: 20px">
-        <a href="privacidad" style="color: #625E73">Privacidad</a>
-        <a href="mailto:jgiral95@gmail.com" style="color: #625E73">jgiral95@gmail.com</a>
-      </div>
-    </div>
-  </footer>
 </div>
-<script src="portada.js"></script>
+
+<main>
+<section class="hero" style="padding-top:56px">
+  <svg class="mandala" viewBox="0 0 600 600" fill="none" stroke="#7C9A83" stroke-width="1" aria-hidden="true">
+    <circle cx="300" cy="300" r="290"/><circle cx="300" cy="300" r="220"/><circle cx="300" cy="300" r="150"/>
+    <g id="p"><ellipse cx="300" cy="150" rx="38" ry="100"/></g>
+    <use href="#p" transform="rotate(45 300 300)"/><use href="#p" transform="rotate(90 300 300)"/><use href="#p" transform="rotate(135 300 300)"/>
+    <use href="#p" transform="rotate(180 300 300)"/><use href="#p" transform="rotate(225 300 300)"/><use href="#p" transform="rotate(270 300 300)"/><use href="#p" transform="rotate(315 300 300)"/>
+  </svg>
+  <div class="wrap">
+    <p class="kicker">Para terapeutas holísticos</p>
+    <h1>Acompañe cada proceso con <em>calma</em> y presencia</h1>
+    <p class="lead">Un espacio sereno para llevar el seguimiento de sus consultantes: sesiones, agenda y consentimientos en un solo lugar, sin formularios clínicos que no le corresponden.</p>
+    <div class="acciones">
+      <a class="btn pri" href="mailto:jgiral95@gmail.com?subject=Quiero%20conocer%20Alter-Karute">Quiero conocerla</a>
+      <a class="btn sec" href="#camino">Ver cómo acompaña</a>
+    </div>
+  </div>
+</section>
+
+<section id="para-quien" style="background:var(--crema)">
+  <div class="wrap centro">
+    <p class="kicker">Para quién es</p>
+    <h2>Hecha para quienes sanan desde otras miradas</h2>
+    <p class="sub">Si su práctica nace de la escucha, el cuerpo y el equilibrio, aquí encontrará un lugar que habla su idioma.</p>
+    <div class="terapias">
+      <span>Reiki</span><span>Acupuntura</span><span>Naturopatía</span><span>Aromaterapia</span><span>Flores de Bach</span><span>Yoga terapéutico</span><span>Masaje y terapias corporales</span><span>Constelaciones</span><span>Respiración consciente</span><span>Medicina ancestral</span><span>Coaching holístico</span>
+    </div>
+  </div>
+</section>
+
+<section id="camino">
+  <div class="wrap">
+    <div class="centro">
+      <p class="kicker">Cuerpo · mente · espíritu</p>
+      <h2>Todo lo que su práctica necesita, sin ruido</h2>
+    </div>
+    <div class="tres">
+      <article class="tarjeta">
+        <div class="ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#2F4A3A" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c1-5 4-7 8-7s7 2 8 7"/></svg></div>
+        <h3>Ficha del consultante</h3>
+        <p>Su historia, sus motivos y lo que le trae a consulta, con sus propias palabras. Un genograma y espacios libres para lo que usted observa.</p>
+      </article>
+      <article class="tarjeta">
+        <div class="ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#2F4A3A" stroke-width="1.8" stroke-linecap="round"><path d="M4 18c4 0 5-4 8-8s5-4 8-4"/><circle cx="4" cy="18" r="1.5"/><circle cx="12" cy="10" r="1.5"/><circle cx="20" cy="6" r="1.5"/></svg></div>
+        <h3>Seguimiento de sesiones</h3>
+        <p>Registre cada encuentro y vea el recorrido: cómo evoluciona el consultante, qué se trabajó y qué viene después.</p>
+      </article>
+      <article class="tarjeta">
+        <div class="ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#2F4A3A" stroke-width="1.8" stroke-linecap="round"><rect x="4" y="5" width="16" height="15" rx="3"/><path d="M8 3v4M16 3v4M4 10h16"/></svg></div>
+        <h3>Agenda y recordatorios</h3>
+        <p>Citas por día, semana o mes, con recordatorios y confirmación por enlace para que cada sesión comience tranquila.</p>
+      </article>
+      <article class="tarjeta">
+        <div class="ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#2F4A3A" stroke-width="1.8" stroke-linecap="round"><path d="M6 3h9l4 4v14H6z"/><path d="M9 13c2-2 3 1 5-1M9 17h6"/></svg></div>
+        <h3>Consentimientos firmados</h3>
+        <p>Acuerdos claros que el consultante firma en pantalla o desde su celular, a su ritmo y con su propia firma.</p>
+      </article>
+      <article class="tarjeta">
+        <div class="ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#2F4A3A" stroke-width="1.8" stroke-linecap="round"><path d="M5 5h14v10H9l-4 4z"/></svg></div>
+        <h3>Informes y constancias</h3>
+        <p>Plantillas para constancias de asistencia o remisiones a otros terapeutas, con código de verificación.</p>
+      </article>
+      <article class="tarjeta">
+        <div class="ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#2F4A3A" stroke-width="1.8" stroke-linecap="round"><path d="M12 3c4 3 6 6 6 10a6 6 0 0 1-12 0c0-4 2-7 6-10z"/></svg></div>
+        <h3>Su propio estilo</h3>
+        <p>Cambie los apartados y formatos para que reflejen su método. Nada viene impuesto: usted decide qué registrar.</p>
+      </article>
+    </div>
+  </div>
+</section>
+
+<section class="banda">
+  <div class="wrap">
+    <div class="centro">
+      <p class="kicker">El ritmo de un proceso</p>
+      <h2>De la primera conversación al cierre consciente</h2>
+    </div>
+    <ul class="ritmo">
+      <li><h3>Encuentro</h3><p>Reciba al consultante, escuche su motivo y deje constancia del acuerdo de trabajo.</p></li>
+      <li><h3>Camino</h3><p>Registre cada sesión: lo que se sintió, se hizo y se propuso.</p></li>
+      <li><h3>Seguimiento</h3><p>Observe avances en el tiempo y ajuste el acompañamiento con claridad.</p></li>
+      <li><h3>Cierre</h3><p>Concluya el proceso con una nota de cierre y las recomendaciones para seguir.</p></li>
+    </ul>
+  </div>
+</section>
+
+<section>
+  <div class="wrap dos">
+    <div>
+      <p class="kicker">Privacidad</p>
+      <h2>Lo que le confían merece cuidado</h2>
+      <ul class="lista">
+        <li><b>Contenido cifrado.</b> Las fichas y documentos se guardan protegidos.</li>
+        <li><b>Solo suyo.</b> Cada terapeuta ve únicamente a sus consultantes.</li>
+        <li><b>Equipo con límites.</b> Quien le ayude con la agenda no accede a lo personal de las sesiones.</li>
+        <li><b>Acceso seguro.</b> Verificación en dos pasos y registro de quién entra.</li>
+      </ul>
+      <p style="margin-top:22px"><a href="privacidad">Leer la política de privacidad</a></p>
+    </div>
+    <div>
+      <div class="piedra">
+        <blockquote>«Un buen registro no interrumpe la sesión: la sostiene.»</blockquote>
+        <small>Menos tiempo en papeles, más presencia para quien llega a consulta.</small>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section style="background:var(--crema)">
+  <div class="wrap">
+    <div class="centro"><p class="kicker">Dudas frecuentes</p><h2>Preguntas con respuestas simples</h2></div>
+    <div class="faq">
+      <details name="faq"><summary>¿Necesito conocimientos técnicos?</summary><p>No. Se usa desde el navegador, en el computador o el celular, y viene con datos de ejemplo para que explore antes de empezar con consultantes reales.</p></details>
+      <details name="faq"><summary>¿Puedo adaptar los formatos a mi método?</summary><p>Sí. Los apartados de la ficha y de las sesiones se pueden cambiar, agregar o quitar para que se parezcan a su forma de trabajar.</p></details>
+      <details name="faq"><summary>¿Cómo se firman los consentimientos?</summary><p>En pantalla durante la sesión, o a distancia: el consultante recibe un enlace y firma desde su celular.</p></details>
+      <details name="faq"><summary>¿Cómo se protege la información?</summary><p>El contenido se almacena cifrado, cada cuenta ve solo sus consultantes y puede activar la verificación en dos pasos.</p></details>
+      <details name="faq"><summary>¿Puedo llevarme una copia de la ficha de un consultante?</summary><p>Sí. Cada ficha puede descargarse completa, con sus documentos firmados y adjuntos.</p></details>
+    </div>
+  </div>
+</section>
+
+<section class="cierre" id="empezar">
+  <div class="wrap">
+    <h2>Su práctica, en equilibrio</h2>
+    <p>Escríbanos y le mostramos Alter-Karute con calma, sin compromiso.</p>
+    <div style="display:flex;flex-wrap:wrap;gap:16px;justify-content:center;align-items:center">
+      <a class="btn pri" href="mailto:jgiral95@gmail.com?subject=Quiero%20conocer%20Alter-Karute">Escribir ahora</a>
+      <a href="/app">¿Ya tiene cuenta? Ingresar</a>
+    </div>
+  </div>
+</section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>© Alter-Karute</span>
+    <span><a href="privacidad">Privacidad</a> · <a href="mailto:jgiral95@gmail.com">jgiral95@gmail.com</a></span>
+  </div>
+</footer>
 </body>
 </html>
