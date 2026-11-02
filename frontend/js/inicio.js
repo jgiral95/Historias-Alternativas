@@ -32,9 +32,9 @@ function stepsList() {
   const real = S.patients.filter(x => !x.demo), ps = (S.profile && S.profile.pasos) || {}, demo = S.patients.some(x => x.demo);
   return [
     ['perfil', !!(S.profile.nombre && S.profile.firma), 'Complete su perfil y dibuje su firma', 'Con ella se firman los consentimientos, las evoluciones y los informes.', '<button class="btn sm pri" data-act="profile">Mi perfil y firma</button>'],
-    ['ejemplo', demo || !!ps.ejemplo, 'Explore con pacientes de ejemplo', 'Cargamos 3 pacientes ficticios con consentimientos, primera vez, evoluciones, citas y notas de proceso. Los borra con un clic.', demo ? '<button class="btn sm" data-act="demoDel">Borrar los ejemplos</button>' : '<button class="btn sm pri" data-act="demoLoad">Cargar ejemplos</button>'],
+    ['ejemplo', demo || !!ps.ejemplo, 'Explore con consultantes de ejemplo', 'Cargamos 3 consultantes ficticios con consentimientos, primera vez, evoluciones, citas y notas de proceso. Los borra con un clic.', demo ? '<button class="btn sm" data-act="demoDel">Borrar los ejemplos</button>' : '<button class="btn sm pri" data-act="demoLoad">Cargar ejemplos</button>'],
     ['formatos', !!ps.formatos, 'Revise sus formatos', 'Consentimiento, primera vez y evolución: ajústelos a su forma de trabajo.', '<button class="btn sm" data-act="formats">Mis formatos</button>'],
-    ['paciente', real.length > 0, 'Cree su primer paciente', 'Con datos ficticios mientras sea una prueba.', '<button class="btn sm" data-act="newPatient">Nuevo paciente</button>'],
+    ['paciente', real.length > 0, 'Cree su primer consultante', 'Con datos ficticios mientras sea una prueba.', '<button class="btn sm" data-act="newPatient">Nuevo consultante</button>'],
     ['cita', S.appts.some(a => !a.demo), 'Agende una cita', 'Desde la agenda; puede conectarla con Google Calendar.', '<button class="btn sm" data-act="view" data-v="agenda">Ir a la agenda</button>'],
     ['comentario', !!ps.comentario, 'Cuéntenos qué mejorar', 'Use el botón «Comentarios», abajo a la derecha: elija el apartado del programa y cuéntenos qué falla, qué no entiende o qué le gustaría.', '<button class="btn sm" data-act="fbOpenStep">Escribir un comentario</button>']
   ];
@@ -44,8 +44,8 @@ function stepsHTML() {
   const L = stepsList(), done = L.filter(x => x[1]).length;
   if (done === L.length) return '';
   const hello = (S.profile.pasos || {}).bienvenida ? '' : `<div class="card" style="background:var(--surface)"><b style="font-size:16px">Bienvenido(a) a Alter-Karute · versión de prueba</b>
-    <p style="margin:0;font-size:15px"><b>¡Gracias por hacer parte de nuestro equipo de prueba!</b> Su colaboración es muy valiosa: como agradecimiento, contará con <b>tres meses gratis</b> cuando el software se lance oficialmente. Le pedimos que haga todos los comentarios que necesite, para que juntos lleguemos a un software completo, intuitivo e integral para sus historias clínicas.</p>
-    <ul style="margin:0;padding-left:20px;display:flex;flex-direction:column;gap:4px;font-size:14px"><li><b>Use solo datos inventados</b> mientras dure la prueba: puede cargar pacientes de ejemplo para ver la app «llena».</li>
+    <p style="margin:0;font-size:15px"><b>¡Gracias por hacer parte de nuestro equipo de prueba!</b> Su colaboración es muy valiosa: como agradecimiento, contará con <b>tres meses gratis</b> cuando el software se lance oficialmente. Le pedimos que haga todos los comentarios que necesite, para que juntos lleguemos a un software completo, intuitivo e integral para sus fichas.</p>
+    <ul style="margin:0;padding-left:20px;display:flex;flex-direction:column;gap:4px;font-size:14px"><li><b>Use solo datos inventados</b> mientras dure la prueba: puede cargar consultantes de ejemplo para ver la app «llena».</li>
     <li>Lo que firma (consentimientos, primera vez, evoluciones, informes) <b>no se puede modificar</b>, como en papel: solo se agregan adendas.</li>
     <li>Si algo falla o no se entiende, use el botón <b>Comentarios</b>, abajo a la derecha. Por favor <b>elija el apartado del programa</b> al que se refiere (Agenda, Evolución, Consentimiento…): así podemos ubicar y corregir más rápido.</li></ul>
     <div class="row end"><button class="btn sm" data-act="welcomeOk">Entendido</button></div></div>`;
@@ -59,7 +59,7 @@ ACT.fbOpenStep = () => fbOpen();
 function welcome() { /* la bienvenida va dentro de «Primeros pasos», sin tapar la pantalla */ }
 ACT.welcomeOk = async () => { await stepDone('bienvenida'); render(); };
 
-/* ===== Datos de ejemplo: pacientes ficticios para conocer la app ===== */
+/* ===== Datos de ejemplo: consultantes ficticios para conocer la app ===== */
 function demoSig(seed) {  // una firma ficticia (garabato) como imagen
   const c = document.createElement('canvas'); c.width = 360; c.height = 120; const g = c.getContext('2d');
   g.fillStyle = '#fff'; g.fillRect(0, 0, 360, 120); g.strokeStyle = '#10222a'; g.lineWidth = 2.6; g.lineCap = 'round'; g.lineJoin = 'round';
@@ -72,10 +72,10 @@ function demoSig(seed) {  // una firma ficticia (garabato) como imagen
 function demoRecords() {
   const now = new Date(), at = (days, h = 10, m = 0) => { const d = new Date(now); d.setDate(d.getDate() + days); d.setHours(h, m, 0, 0); return d.toISOString(); };
   const iso = nowISO(), pr = S.profile || {};
-  const ther = { therapistName: pr.nombre || 'Profesional de ejemplo', therapistDocId: pr.cedula || undefined, therapistReg: pr.registro || 'TP-EJEMPLO', therapistSig: pr.firma || demoSig('profesional'), consultorio: pr.consultorio || '' };
+  const ther = { therapistName: pr.nombre || 'Terapeuta de ejemplo', therapistDocId: pr.cedula || undefined, therapistReg: pr.registro || 'TP-EJEMPLO', therapistSig: pr.firma || demoSig('profesional'), consultorio: pr.consultorio || '' };
   const dx = nombre => [{ nombre, fecha: iso, estado: 'Activo' }];
   const P = (id, o) => Object.assign({ id, kind: 'patient', tipoDoc: 'CC', estado: 'Activo', servicio: 'Individual', paisNac: 'Colombia', paisRes: 'Colombia', telInd: '+57', consents: [], createdAt: iso }, o);
-  const consent = (p, tipo, signer) => Object.assign({ copia: COPIA[1], tipo, text: consentText(p, tipo), signerType: signer ? 'Acudiente' : 'Paciente', signerName: signer || fullName(p), signerDoc: signer ? 'DEMO-ACUD' : p.documento, signerSig: demoSig(signer || p.nombres), signedAt: iso }, ther);
+  const consent = (p, tipo, signer) => Object.assign({ copia: COPIA[1], tipo, text: consentText(p, tipo), signerType: signer ? 'Acudiente' : 'Consultante', signerName: signer || fullName(p), signerDoc: signer ? 'DEMO-ACUD' : p.documento, signerSig: demoSig(signer || p.nombres), signedAt: iso }, ther);
   const ids = { a: newId('p'), b: newId('p'), c: newId('p') };
   const A = P(ids.a, { nombres: 'Laura', apellidos: 'Restrepo Gómez', documento: 'DEMO-0001', nacimiento: '1991-04-12', sexo: 'Femenino', identidadGenero: 'Cisgénero', ciudad: 'Bogotá', localidad: 'Chapinero', telefono: '3000000001', ocupacion: 'Diseñadora gráfica', modalidadAt: 'Presencial', estadoCivil: 'Soltero/a', escolaridad: 'Pregrado' });
   const B = P(ids.b, { nombres: 'Andrés', apellidos: 'Quintero Ruiz', documento: 'DEMO-0002', nacimiento: '1997-09-03', sexo: 'Masculino', identidadGenero: 'Cisgénero', ciudad: 'Medellín', telefono: '3000000002', ocupacion: 'Estudiante de ingeniería', modalidadAt: 'Virtual', escolaridad: 'Secundaria' });
@@ -104,9 +104,9 @@ function demoRecords() {
   return recs;
 }
 ACT.demoLoad = async b => {
-  if (S.patients.some(x => x.demo)) { toast('Ya tiene los pacientes de ejemplo.'); return; }
+  if (S.patients.some(x => x.demo)) { toast('Ya tiene los consultantes de ejemplo.'); return; }
   setBusy(b, true);
-  try { await api('/demo', { method: 'POST', body: { records: demoRecords() } }); await Store.load(); stepDone('ejemplo'); S.view = 'patients'; S.pid = null; render(); toast('Listo: 3 pacientes de ejemplo. Ábralos desde la lista de la izquierda.'); }
+  try { await api('/demo', { method: 'POST', body: { records: demoRecords() } }); await Store.load(); stepDone('ejemplo'); S.view = 'patients'; S.pid = null; render(); toast('Listo: 3 consultantes de ejemplo. Ábralos desde la lista de la izquierda.'); }
   catch (e) { toast(e.message); } finally { if (b && b.isConnected) setBusy(b, false); }
 };
 ACT.demoDel = async b => {

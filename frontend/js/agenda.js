@@ -5,7 +5,7 @@ const MODS = ['Presencial', 'Virtual', 'Telefónica'];
 const dayKey = d => { const p = n => String(n).padStart(2, '0'); return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`; };
 const mondayOf = d => { const x = new Date(d); x.setHours(12, 0, 0, 0); x.setDate(x.getDate() - ((x.getDay() + 6) % 7)); return x; };
 const hhmm = iso => new Date(iso).toLocaleTimeString('es-CO', { hour: 'numeric', minute: '2-digit' });
-const patName = id => { const p = S.patients.find(x => x.id === id); return p ? fullName(p) : 'Paciente eliminado'; };
+const patName = id => { const p = S.patients.find(x => x.id === id); return p ? fullName(p) : 'Consultante eliminado'; };
 const apptsOn = key => S.appts.filter(a => dayKey(new Date(a.startAt)) === key).sort((a, b) => a.startAt.localeCompare(b.startAt));
 const remChip = a => { const c = a.confirmacion && a.confirmacion.estado, r = S.rem && S.rem.items && S.rem.items[a.id]; return c === 'Confirmada' ? ' · ✓ confirmó' : c ? ' · canceló' : r && r.enviado ? ' · recordada' : ''; };
 function apptBtn(a) {
@@ -70,17 +70,17 @@ ACT.view = async b => { await pnLeave(); S.view = b.dataset.v; if (S.view === 'p
 ACT.apptEdit = b => {
   const a = b && b.dataset.id ? S.appts.find(x => x.id === b.dataset.id) : null;
   const pats = [...S.patients].filter(p => !isClosed(p) || (a && a.patientId === p.id)).sort((x, y) => fullName(x).localeCompare(fullName(y)));
-  if (!a && !pats.length) { toast('Primero cree un paciente.'); return; }
+  if (!a && !pats.length) { toast('Primero cree un consultante.'); return; }
   const start = a ? new Date(a.startAt) : (() => { const d = b && b.dataset.date ? new Date(b.dataset.date + 'T' + String(b.dataset.hour || 9).padStart(2, '0') + ':00:00') : new Date(); if (!(b && b.dataset.date)) { d.setMinutes(0, 0, 0); d.setHours(d.getHours() + 1); } return d; })();
   const t = localInput(start), pre = a ? a.patientId : (b && b.dataset.patient) || (S.pid && !S.draft ? S.pid : '');
   const root = $('#modal-root');
   root.innerHTML = `<div class="modal" role="dialog" aria-modal="true" aria-label="Cita"><div class="box" id="apform" style="width:min(560px,100%)"><div class="row" style="justify-content:space-between"><h3>${a ? 'Cita' : 'Nueva cita'}</h3><button class="btn sm" id="apcl">Cerrar</button></div>
-  <div class="grid"><div class="fld wide"><label for="f_patientId">Paciente</label><select id="f_patientId" data-f="patientId"><option value="">Elija un paciente…</option>${pats.map(p => `<option value="${p.id}" ${p.id === pre ? 'selected' : ''}>${esc(fullName(p))}</option>`).join('')}</select></div>
+  <div class="grid"><div class="fld wide"><label for="f_patientId">Consultante</label><select id="f_patientId" data-f="patientId"><option value="">Elija un consultante…</option>${pats.map(p => `<option value="${p.id}" ${p.id === pre ? 'selected' : ''}>${esc(fullName(p))}</option>`).join('')}</select></div>
   ${F('Fecha', 'fecha', t.slice(0, 10), { type: 'date' })}<div class="fld"><label for="f_hora">Hora</label><input id="f_hora" data-f="hora" type="time" value="${t.slice(11, 16)}"></div>
   ${F('Duración (min)', 'duracion', a ? a.duracion : 50, { type: 'number' })}${F('Modalidad', 'modalidad', a ? a.modalidad : 'Presencial', { type: 'select', opts: MODS })}
   ${a ? F('Estado', 'estado', a.estado || 'Programada', { type: 'select', opts: APPT_EST }) : F('Repetir cada semana', 'repetir', '0', { type: 'select', opts: ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'] })}</div>
   ${a ? '' : '<p style="margin:-4px 0 0;font-size:12px;color:var(--muted)">«Repetir» crea esa cantidad de citas adicionales, una por semana.</p>'}
-  <div id="apwarn"></div>${a ? remApptHTML(a) : ''}<div class="row" style="justify-content:space-between">${a ? `<span class="row">${TEAM() ? '' : a.noteId ? `<button class="btn sm" data-ap="note">Ver evolución</button>` : `<button class="btn sm pri" data-ap="evol">Registrar evolución</button>`}${a.estado === 'Programada' || !a.estado ? `<button class="btn sm" data-ap="rem">Enviar recordatorio</button>` : ''}<button class="btn sm" data-ap="open">Abrir paciente</button><button class="btn sm warn" data-ap="del">Eliminar cita</button></span>` : '<span></span>'}<button class="btn pri" data-ap="save">Guardar cita</button></div></div></div>`;
+  <div id="apwarn"></div>${a ? remApptHTML(a) : ''}<div class="row" style="justify-content:space-between">${a ? `<span class="row">${TEAM() ? '' : a.noteId ? `<button class="btn sm" data-ap="note">Ver evolución</button>` : `<button class="btn sm pri" data-ap="evol">Registrar evolución</button>`}${a.estado === 'Programada' || !a.estado ? `<button class="btn sm" data-ap="rem">Enviar recordatorio</button>` : ''}<button class="btn sm" data-ap="open">Abrir consultante</button><button class="btn sm warn" data-ap="del">Eliminar cita</button></span>` : '<span></span>'}<button class="btn pri" data-ap="save">Guardar cita</button></div></div></div>`;
   const close = () => { root.innerHTML = ''; };
   $('#apcl').onclick = close;
   /* Sin el consentimiento que corresponde a la modalidad no se puede programar la cita (el servidor también lo exige). */
@@ -92,7 +92,7 @@ ACT.apptEdit = b => {
   };
   const warn = () => {
     const m = missing(), pid = $('#f_patientId').value;
-    $('#apwarn').innerHTML = m ? `<div class="banner"><b>Consentimiento pendiente.</b> El paciente no tiene un consentimiento informado vigente de ${esc(m)}, que es el que corresponde a una cita ${esc($('#f_modalidad').value.toLowerCase())}. Fírmelo (o envíelo para firmar a distancia) antes de agendar.${TEAM() ? ' Pídale al profesional que lo registre.' : `<div class="row" style="margin-top:6px"><button class="btn sm pri" data-ap="consent" data-pid="${esc(pid)}" data-need="${esc(m)}">Ir al consentimiento</button></div>`}</div>` : '';
+    $('#apwarn').innerHTML = m ? `<div class="banner"><b>Consentimiento pendiente.</b> El consultante no tiene un consentimiento informado vigente de ${esc(m)}, que es el que corresponde a una cita ${esc($('#f_modalidad').value.toLowerCase())}. Fírmelo (o envíelo para firmar a distancia) antes de agendar.${TEAM() ? ' Pídale al terapeuta que lo registre.' : `<div class="row" style="margin-top:6px"><button class="btn sm pri" data-ap="consent" data-pid="${esc(pid)}" data-need="${esc(m)}">Ir al consentimiento</button></div>`}</div>` : '';
     const sv = root.querySelector('[data-ap="save"]'); if (sv) sv.disabled = !!m;
   };
   ['#f_patientId', '#f_modalidad', '#f_estado'].forEach(s => { const el = root.querySelector(s); if (el) el.addEventListener('change', warn); });
@@ -110,8 +110,8 @@ ACT.apptEdit = b => {
       S.appts = S.appts.filter(x => x.id !== a.id); Store.remove(a.id); close(); toast('Cita eliminada.'); render(); return;
     }
     const o = readForm($('#apform'), {});
-    if (!o.patientId) { toast('Elija el paciente.'); return; }
-    if (missing()) { toast('Falta el consentimiento de ' + missing() + ' de este paciente.'); warn(); return; }
+    if (!o.patientId) { toast('Elija el consultante.'); return; }
+    if (missing()) { toast('Falta el consentimiento de ' + missing() + ' de este consultante.'); warn(); return; }
     if (!o.fecha || !o.hora) { toast('Indique fecha y hora.'); return; }
     const st = new Date(o.fecha + 'T' + o.hora), dur = Math.max(5, Math.min(600, +o.duracion || 50));
     if (isNaN(st)) { toast('La fecha no es válida.'); return; }
@@ -130,7 +130,7 @@ ACT.apptEdit = b => {
     close(); toast(clash ? 'Cita guardada. Ojo: se cruza con otra cita.' : made.length > 1 ? made.length + ' citas guardadas.' : 'Cita guardada.'); render();
   };
 };
-const DETAILS = [['iniciales', 'Solo las iniciales del paciente (recomendado)'], ['oculto', 'Solo «Cita de psicología», sin paciente'], ['nombre', 'Nombre completo del paciente']];
+const DETAILS = [['iniciales', 'Solo las iniciales del consultante (recomendado)'], ['oculto', 'Solo «Cita de terapia», sin consultante'], ['nombre', 'Nombre completo del consultante']];
 ACT.gcal = async () => {
   const root = $('#modal-root');
   let st, gs; try { [st, gs] = await Promise.all([api('/calendar/feed'), api('/google/status')]); } catch (e) { toast(e.message); return; }
@@ -147,10 +147,10 @@ ACT.gcal = async () => {
     const url = token ? location.origin + '/api/calendar/' + token + '.ics' : '';
     root.innerHTML = `<div class="modal" role="dialog" aria-modal="true" aria-label="Google Calendar"><div class="box" id="gcform" style="width:min(620px,100%)"><div class="row" style="justify-content:space-between"><h3>Google Calendar</h3><button class="btn sm" data-g="close">Cerrar</button></div>
     <div class="sec"><h3>Conexión directa${gs.enabled && !gs.connected ? ' (recomendada)' : ''}</h3>${direct()}</div>
-    <p style="margin:0;font-size:13px;color:var(--muted)">Nunca se envían notas ni datos clínicos: solo la hora, la duración, la modalidad y lo que elija.</p>
+    <p style="margin:0;font-size:13px;color:var(--muted)">Nunca se envían notas ni datos de las sesiones: solo la hora, la duración, la modalidad y lo que elija.</p>
     <details class="sec" ${!gs.enabled || token ? 'open' : ''}><summary class="sum">${gs.enabled ? 'Alternativa: enlace iCal (se actualiza cada pocas horas)' : 'Enlace iCal'}</summary>
     <p style="margin:0;font-size:14px">La app crea un <b>enlace privado</b> con sus citas al que Google Calendar se suscribe. Google lo actualiza cada pocas horas.</p>
-    <div class="fld"><label for="g_detail">Qué verá Google de cada cita</label><select id="g_detail">${[['iniciales', 'Solo las iniciales del paciente (recomendado)'], ['oculto', 'Solo «Cita de psicología», sin paciente'], ['nombre', 'Nombre completo del paciente']].map(([v, l]) => `<option value="${v}" ${st.detail === v ? 'selected' : ''}>${l}</option>`).join('')}</select></div>
+    <div class="fld"><label for="g_detail">Qué verá Google de cada cita</label><select id="g_detail">${[['iniciales', 'Solo las iniciales del consultante (recomendado)'], ['oculto', 'Solo «Cita de terapia», sin consultante'], ['nombre', 'Nombre completo del consultante']].map(([v, l]) => `<option value="${v}" ${st.detail === v ? 'selected' : ''}>${l}</option>`).join('')}</select></div>
     ${url ? `<div class="banner ok">Copie este enlace ahora: por seguridad no se vuelve a mostrar.</div><div class="row"><input type="text" id="g_url" readonly value="${esc(url)}" style="flex:1"><button class="btn" data-g="copy">Copiar</button></div>
       <ol style="margin:0;padding-left:20px;font-size:14px;line-height:1.7"><li>Abra Google Calendar en el computador.</li><li>A la izquierda, junto a «Otros calendarios», pulse <b>+</b> y luego <b>Desde URL</b>.</li><li>Pegue el enlace y pulse <b>Agregar calendario</b>.</li></ol>`
       : st.active ? `<div class="banner ok">Hay un enlace activo desde ${esc(fmtShort(st.created_at))}. Si lo perdió, cree uno nuevo: el anterior deja de funcionar.</div>` : ''}
@@ -175,7 +175,7 @@ ACT.gcal = async () => {
 };
 
 /* ===== Nota de cierre ===== */
-const CIERRE_MOT = ['Cumplimiento de objetivos', 'Decisión del paciente', 'Remisión a otro profesional o servicio', 'Inasistencia o abandono', 'Cambio de ciudad o de condiciones', 'Otro'];
+const CIERRE_MOT = ['Cumplimiento de objetivos', 'Decisión del consultante', 'Remisión a otro terapeuta o servicio', 'Inasistencia o abandono', 'Cambio de ciudad o de condiciones', 'Otro'];
 const CIERRE_FIELDS = [['resumen', 'Resumen del proceso', 4], ['logros', 'Logros y estado al cierre', 3], ['recomendaciones', 'Recomendaciones', 3], ['remision', 'Remisión (si aplica)', 2]];
 function docCierre(p, c) {
   const pr = { nombre: c.therapistName, registro: c.therapistReg, consultorio: c.consultorio };
@@ -189,15 +189,15 @@ function tabCierre(p) {
   const list = cs.map((c, i) => `<div class="card"><div class="row" style="justify-content:space-between"><b>Cierre del ${esc(fmtD(c.fecha))}</b><span class="chip ok">Firmado</span></div><span class="ts">${esc(c.motivo)} · firmado ${esc(fmtShort(c.signedAt))}</span><div class="row"><button class="btn sm pri" data-act="viewCierre" data-i="${i}">Ver y descargar</button></div></div>`).join('');
   if (isClosed(p)) {
     return `<div class="sec"><h3>Cierre del proceso</h3><div class="banner ok">Este proceso está cerrado. Estado: ${esc(p.estado)}.</div>${list}
-    <div class="row"><button class="btn" data-act="reopen">Reabrir proceso</button><span style="font-size:13px;color:var(--muted)">Úselo si el paciente vuelve a consulta. Las notas de cierre anteriores se conservan.</span></div></div>`;
+    <div class="row"><button class="btn" data-act="reopen">Reabrir proceso</button><span style="font-size:13px;color:var(--muted)">Úselo si el consultante vuelve a consulta. Las notas de cierre anteriores se conservan.</span></div></div>`;
   }
   const fut = S.appts.filter(a => a.patientId === p.id && a.estado === 'Programada' && a.startAt >= nowISO()).length;
   return `<div class="sec">${list ? `<h3>Cierres anteriores</h3>${list}` : ''}<div id="cierreform" class="sec"><h3>Nota de cierre</h3>${sigNeeded()}
-  ${fut ? `<div class="banner">Este paciente tiene ${fut} cita${fut > 1 ? 's' : ''} futura${fut > 1 ? 's' : ''} programada${fut > 1 ? 's' : ''}. Al cerrar el proceso se marcarán como canceladas.</div>` : ''}
-  <div class="grid">${F('Fecha de cierre', 'fecha', localInput().slice(0, 10), { type: 'date' })}${F('Motivo de cierre', 'motivo', CIERRE_MOT[0], { type: 'select', opts: CIERRE_MOT })}${F('Estado del paciente al cerrar', 'estadoFinal', 'Alta', { type: 'select', opts: CLOSED })}</div>
+  ${fut ? `<div class="banner">Este consultante tiene ${fut} cita${fut > 1 ? 's' : ''} futura${fut > 1 ? 's' : ''} programada${fut > 1 ? 's' : ''}. Al cerrar el proceso se marcarán como canceladas.</div>` : ''}
+  <div class="grid">${F('Fecha de cierre', 'fecha', localInput().slice(0, 10), { type: 'date' })}${F('Motivo de cierre', 'motivo', CIERRE_MOT[0], { type: 'select', opts: CIERRE_MOT })}${F('Estado del consultante al cerrar', 'estadoFinal', 'Alta', { type: 'select', opts: CLOSED })}</div>
   <div class="grid">${CIERRE_FIELDS.map(f => F(f[1], f[0], '', { type: 'area', rows: f[2], wide: true, req: true })).join('')}</div>
   <div class="fld"><span class="lbl">Firma del terapeuta (de su perfil)</span>${therPreview()}</div>
-  <p class="lock-note">Al guardar, la nota de cierre queda firmada y <b>no podrá modificarse</b>, y el paciente pasa al estado que elija arriba.</p>
+  <p class="lock-note">Al guardar, la nota de cierre queda firmada y <b>no podrá modificarse</b>, y el consultante pasa al estado que elija arriba.</p>
   <div class="row end"><button class="btn pri" data-act="saveCierre">Firmar cierre</button></div></div></div>`;
 }
 ACT.saveCierre = async b => {

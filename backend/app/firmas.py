@@ -1,6 +1,6 @@
 """Firma de consentimientos a distancia (telepsicología).
 
-El profesional prepara el consentimiento y envía al paciente un enlace personal. Para abrirlo, el paciente
+El terapeuta prepara el consentimiento y envía al consultante un enlace personal. Para abrirlo, el consultante
 escribe su número de documento; lee el texto completo, marca que lo acepta y firma con el dedo. La hora de
 la firma la pone el servidor y el documento queda agregado a la historia, igual de inmutable que los demás.
 Como evidencia se guardan la hora de envío y de firma, la dirección IP, el navegador y la huella SHA-256 del texto."""
@@ -16,7 +16,7 @@ from .config import PUBLIC_URL
 
 DAYS = 7
 MAX_ATTEMPTS = 5
-SIGNER_TYPES = ("Paciente", "Acudiente")
+SIGNER_TYPES = ("Consultante", "Paciente", "Acudiente")  # «Paciente»: registros anteriores
 
 
 def token_hash(t: str) -> str:
@@ -46,13 +46,13 @@ def link(token: str, base: str = "") -> str:
 
 def message(p: dict, prof: dict, tipo: str, url: str) -> str:
     first = str(p.get("nombres") or "").split(" ")[0]
-    who = prof.get("nombre") or "su psicólogo(a)"
+    who = prof.get("nombre") or "su terapeuta"
     return (f"Hola{(' ' + first) if first else ''}, {who} le envía el documento «{tipo}» para que lo lea y lo firme desde su celular: {url} "
             f"Para abrirlo se le pedirá su número de documento. El enlace vence en {DAYS} días.")
 
 
 def send_mail(to: str, body: str, prof: dict, acc: dict) -> None:
-    """Envía el enlace desde el correo del profesional. Se reemplaza en las pruebas."""
+    """Envía el enlace desde el correo del terapeuta. Se reemplaza en las pruebas."""
     m = EmailMessage()
     place = prof.get("consultorio") or prof.get("nombre") or "su consulta"
     m["Subject"] = f"Consentimiento para firmar — {place}"

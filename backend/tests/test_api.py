@@ -436,7 +436,7 @@ def test_report_requires_consent_and_first_session():
     c.put("/api/records/p_1", json=patient("p_1"))
     r = c.put("/api/records/r_1", json=rep)
     assert r.status_code == 400 and "consentimiento" in r.json()["detail"]
-    data = {"text": "t", "tipo": "Autorización de tratamiento de datos personales", "signedAt": NOW}
+    data = {"text": "t", "tipo": "Autorización de uso de datos personales", "signedAt": NOW}
     c.put("/api/records/p_1", json=patient("p_1", consents=[data]))
     assert c.put("/api/records/r_1", json=rep).status_code == 400  # la autorización de datos no basta
     con = {"text": "t", "tipo": "Atención presencial", "signedAt": NOW}
@@ -604,7 +604,7 @@ def test_appointment_needs_the_matching_consent():
     assert c.put("/api/records/a_1", json={**appt, "estado": "Cancelada"}).status_code in (200, 204)  # no programada: se permite
     p = next(x for x in c.get("/api/records").json() if x["id"] == "p_1")
     # solo la autorización de datos no basta
-    c.put("/api/records/p_1", json={**p, "consents": consent("Autorización de tratamiento de datos personales")})
+    c.put("/api/records/p_1", json={**p, "consents": consent("Autorización de uso de datos personales")})
     assert c.put("/api/records/a_2", json={**appt, "id": "a_2"}).status_code == 400
     p = next(x for x in c.get("/api/records").json() if x["id"] == "p_1")
     c.put("/api/records/p_1", json={**p, "consents": p["consents"] + consent("Atención presencial")})

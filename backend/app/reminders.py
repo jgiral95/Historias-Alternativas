@@ -1,10 +1,10 @@
 """Recordatorios de citas.
 
-Cada profesional los activa (perfil → «recordatorios»: activo, horas antes). El servidor revisa cada
-15 minutos las citas programadas que empiezan dentro de ese plazo y, si el paciente tiene correo y el
-profesional configuró su correo de envío, le envía un recordatorio con un enlace para confirmar o
+Cada terapeuta los activa (perfil → «recordatorios»: activo, horas antes). El servidor revisa cada
+15 minutos las citas programadas que empiezan dentro de ese plazo y, si el consultante tiene correo y el
+terapeuta configuró su correo de envío, le envía un recordatorio con un enlace para confirmar o
 cancelar. Las demás quedan para enviar a mano (WhatsApp o copiar el mensaje) desde Pendientes.
-El mensaje no lleva información clínica: solo fecha, hora, modalidad y el nombre del profesional."""
+El mensaje no lleva información de las sesiones: solo fecha, hora, modalidad y el nombre del terapeuta."""
 import hashlib
 import secrets
 from datetime import datetime, timedelta, timezone
@@ -69,7 +69,7 @@ def link(token: str, base: str = "") -> str:
 
 def text(p: dict, a: dict, prof: dict, url: str, nota: str = "") -> str:
     first = str(p.get("nombres") or "").split(" ")[0]
-    who = prof.get("nombre") or "su psicólogo(a)"
+    who = prof.get("nombre") or "su terapeuta"
     start = parse(a.get("startAt"))
     mod = a.get("modalidad") or "Presencial"
     return (f"Hola{(' ' + first) if first else ''}, le recordamos su cita con {who} el {when_text(start)} ({mod.lower()}). "
@@ -77,7 +77,7 @@ def text(p: dict, a: dict, prof: dict, url: str, nota: str = "") -> str:
 
 
 def send_mail(to: str, body: str, prof: dict, acc: dict) -> None:
-    """Envía el recordatorio desde el correo del profesional. Se reemplaza en las pruebas."""
+    """Envía el recordatorio desde el correo del terapeuta. Se reemplaza en las pruebas."""
     m = EmailMessage()
     place = prof.get("consultorio") or prof.get("nombre") or "su consulta"
     m["Subject"] = f"Recordatorio de su cita — {place}"

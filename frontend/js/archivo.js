@@ -1,7 +1,7 @@
 /* Archivo: adjuntos, solicitudes de copia, exportación e historia en papel. Parte de app.html (scripts clásicos que comparten el ámbito global; el orden de carga importa). */
 /* ===== Archivo: adjuntos, solicitudes de copia y exportación ===== */
-const FILE_CATS = ['Remisión u orden médica', 'Resultado de prueba o examen', 'Documento firmado en papel', 'Autorización', 'Informe de otro profesional', 'Otro'];
-const SOL_CALIDAD = ['Paciente', 'Representante legal o acudiente', 'Tercero autorizado por el paciente', 'Autoridad judicial o de salud', 'Familiar de paciente fallecido'];
+const FILE_CATS = ['Remisión u orden médica', 'Resultado de prueba o examen', 'Documento firmado en papel', 'Autorización', 'Informe de otro terapeuta', 'Otro'];
+const SOL_CALIDAD = ['Consultante', 'Representante legal o acudiente', 'Tercero autorizado por el consultante', 'Autoridad judicial o de salud', 'Familiar de consultante fallecido'];
 const SOL_MEDIO = ['Correo electrónico', 'Copia impresa', 'Medio digital (USB u otro)'];
 const FILE_TYPES = { 'application/pdf': 'PDF', 'image/png': 'PNG', 'image/jpeg': 'JPG', 'image/webp': 'WEBP' };
 const fmtSize = n => n > 1048576 ? (n / 1048576).toFixed(1) + ' MB' : Math.max(1, Math.round(n / 1024)) + ' KB';
@@ -35,17 +35,17 @@ function tabArchivo(p) {
   const solForm = S.newSol ? `<div class="card" id="solform"><h3>Nueva solicitud de copia</h3><div class="grid">
     ${F('Fecha de la solicitud', 'fecha', today, { type: 'date' })}${F('Quién la solicita', 'calidad', SOL_CALIDAD[0], { type: 'select', opts: SOL_CALIDAD })}${F('Nombre del solicitante', 'solicitante', fullName(p))}${F('Documento del solicitante', 'documento', p.documento || '')}
     ${F('Medio de entrega preferido', 'medio', SOL_MEDIO[0], { type: 'select', opts: SOL_MEDIO })}${F('Observaciones (alcance, dirección de envío…)', 'observaciones', '', { type: 'area', rows: 2, wide: true })}</div>
-    <label class="check"><input type="checkbox" id="f_verifica" data-f="verificado"> <span>Verifiqué la identidad del solicitante y, si no es el paciente, el soporte que lo autoriza (poder, autorización escrita, orden judicial, registro de defunción y parentesco).</span></label>
+    <label class="check"><input type="checkbox" id="f_verifica" data-f="verificado"> <span>Verifiqué la identidad del solicitante y, si no es el consultante, el soporte que lo autoriza (poder, autorización escrita, orden judicial, registro de defunción y parentesco).</span></label>
     <div class="row end"><button class="btn" data-act="cancelSol">Cancelar</button><button class="btn pri" data-act="saveSol">Registrar solicitud</button></div></div>` : '';
   const last = lastAttention(p);
   return `${incorpHTML(p)}<div class="sec"><h3>Adjuntos</h3>${files}</div>
   <div class="sec"><div class="row" style="justify-content:space-between"><h3 style="flex:1">Solicitudes de copia de la historia</h3>${S.newSol ? '' : '<button class="btn" data-act="newSol">Registrar solicitud</button>'}</div>
-  <p style="margin:0;font-size:13px;color:var(--muted)">La historia clínica es reservada: solo se entrega al paciente, a su representante, a terceros con autorización del paciente y a las autoridades cuando corresponda. El plazo que se muestra es de 10 días hábiles (sin descontar festivos).</p>
+  <p style="margin:0;font-size:13px;color:var(--muted)">La ficha es reservada: solo se entrega al consultante, a su representante, a terceros con autorización del consultante y a las autoridades cuando corresponda. El plazo que se muestra es de 10 días hábiles (sin descontar festivos).</p>
   ${solForm}${solList || (S.newSol ? '' : '<p style="margin:0;color:var(--muted)">No hay solicitudes registradas.</p>')}</div>
   <div class="sec"><h3>Exportación</h3><dl class="kv"><dt>Última atención</dt><dd>${last ? esc(fmtD(last)) : 'Sin atenciones firmadas'}</dd></dl>
-  <p style="margin:0;font-size:13px;color:var(--muted)">La copia completa incluye consentimientos, primera vez, evoluciones, informes, cierres y adjuntos. Sirve para entregar copia al paciente o para trasladar la historia si deja de usar esta plataforma.</p>
+  <p style="margin:0;font-size:13px;color:var(--muted)">La copia completa incluye consentimientos, primera vez, evoluciones, informes, cierres y adjuntos. Sirve para entregar copia al consultante o para trasladar la historia si deja de usar esta plataforma.</p>
   <div class="row"><button class="btn pri" data-act="exportZip">Descargar historia completa (ZIP)</button></div></div>
-  <details class="sec"><summary class="sum">Eliminar el expediente</summary>${hasDocs(p) ? '<p style="margin:0;font-size:13px;color:var(--muted)">Este expediente tiene documentos firmados, así que no se puede eliminar: conviene conservar el expediente. Si el proceso terminó, use la pestaña «Cierre».</p>' : '<p style="margin:0;font-size:13px;color:var(--muted)">Como este paciente aún no tiene documentos firmados, puede eliminar su registro (por ejemplo, si lo creó por error). Se borra del servidor y no se puede recuperar.</p><div class="row"><button class="btn warn" data-act="delPatient">Eliminar paciente</button></div>'}</details>`;
+  <details class="sec"><summary class="sum">Eliminar el expediente</summary>${hasDocs(p) ? '<p style="margin:0;font-size:13px;color:var(--muted)">Este expediente tiene documentos firmados, así que no se puede eliminar: conviene conservar el expediente. Si el proceso terminó, use la pestaña «Cierre».</p>' : '<p style="margin:0;font-size:13px;color:var(--muted)">Como este consultante aún no tiene documentos firmados, puede eliminar su registro (por ejemplo, si lo creó por error). Se borra del servidor y no se puede recuperar.</p><div class="row"><button class="btn warn" data-act="delPatient">Eliminar consultante</button></div>'}</details>`;
 }
 ACT.uploadFile = async b => {
   const p = curPatient(), inp = $('#f_upfile'), f = inp && inp.files[0], o = readForm($('#fileform'), {});
@@ -111,7 +111,7 @@ ACT.revokeConsent = b => {
   root.innerHTML = `<div class="modal" role="dialog" aria-modal="true" aria-label="Revocación"><div class="box" id="revform" style="width:min(640px,100%)"><div class="row" style="justify-content:space-between"><h3>Revocación del consentimiento</h3><button class="btn sm" id="rvcl">Cerrar</button></div>
   <p style="margin:0;font-size:14px">Consentimiento de ${esc(c.tipo || 'atención presencial').toLowerCase()} firmado el ${esc(fmtD(c.signedAt))}.</p>
   <div class="grid">${F('Fecha', 'fecha', dayKey(new Date()), { type: 'date' })}${F('Alcance', 'alcance', 'Total', { type: 'select', opts: ['Total', 'Parcial'] })}${F('Detalle (si es parcial)', 'detalle', '', { ph: 'Ej.: no autoriza la atención por videollamada' })}
-  ${F('Firma quien', 'signerType', c.signerType || 'Paciente', { type: 'select', opts: ['Paciente', 'Acudiente'] })}${F('Nombre del firmante', 'signerName', c.signerName)}${F('Documento', 'signerDoc', c.signerDoc || '')}${F('Motivo expresado (opcional)', 'motivo', '', { type: 'area', rows: 2, wide: true })}</div>
+  ${F('Firma quien', 'signerType', c.signerType || 'Consultante', { type: 'select', opts: ['Consultante', 'Acudiente'] })}${F('Nombre del firmante', 'signerName', c.signerName)}${F('Documento', 'signerDoc', c.signerDoc || '')}${F('Motivo expresado (opcional)', 'motivo', '', { type: 'area', rows: 2, wide: true })}</div>
   <p style="margin:0;font-size:13px">${esc(REVOC_NOTE)}</p>
   <div class="fld"><span class="lbl">Firma de quien revoca</span><div class="sigbox" id="rvsig"></div><div class="row"><button class="btn sm" id="rvclr">Borrar firma</button></div></div>
   <p class="lock-note">La revocación queda firmada y no se puede modificar.</p><div class="row end"><button class="btn pri" id="rvsave">Firmar revocación</button></div></div></div>`;
@@ -162,8 +162,8 @@ const upTooBig = f => f.size > (/^image\//.test(f.type) ? MAX_IMG_IN : MAX_UP);
 const savedNote = (orig, size) => orig > size * 1.1 ? ` (comprimido de ${fmtSize(orig)} a ${fmtSize(size)})` : '';
 function docIncorp(p, c) {
   const pr = { nombre: c.therapistName, registro: c.therapistReg, consultorio: c.consultorio };
-  return `<div class="docpage">${letterhead(pr)}<h2>Constancia de incorporación de historia clínica en físico</h2>${patientTable(p)}
-  <p>El ${esc(fmtDT(c.signedAt))} incorporé a la historia clínica electrónica de ${esc(fullName(p))} la copia digitalizada, mediante escaneo, de los documentos en físico que se relacionan a continuación.</p>
+  return `<div class="docpage">${letterhead(pr)}<h2>Constancia de incorporación de ficha en físico</h2>${patientTable(p)}
+  <p>El ${esc(fmtDT(c.signedAt))} incorporé a la ficha electrónica de ${esc(fullName(p))} la copia digitalizada, mediante escaneo, de los documentos en físico que se relacionan a continuación.</p>
   <table><tr><td><b>Periodo de atención que cubren</b></td><td>${esc([c.desde && fmtD(c.desde), c.hasta && fmtD(c.hasta)].filter(Boolean).join(' a ') || 'No indicado')}</td></tr>
   <tr><td><b>Elaborados por</b></td><td>${esc(c.autor || '')}</td></tr><tr><td><b>Folios en físico</b></td><td>${esc(c.folios || 'No indicado')}</td></tr>
   <tr><td><b>Ubicación de los originales</b></td><td>${esc(c.originales || '')}</td></tr></table>
@@ -185,7 +185,7 @@ function incorpHTML(p) {
     <p class="lock-note">Se firmará una constancia con la fecha y hora de hoy y la huella de cada archivo. No se podrá modificar.</p>
     <div class="row end"><button class="btn" data-act="cancelIncorp">Cancelar</button><button class="btn pri" data-act="saveIncorp">Subir y firmar constancia</button></div></div>` : '';
   return `<div class="sec"><div class="row" style="justify-content:space-between"><h3 style="flex:1">Historia en papel</h3>${S.newIncorp ? '' : '<button class="btn" data-act="newIncorp">Incorporar documentos en físico</button>'}</div>
-  ${list || S.newIncorp ? '' : '<p style="margin:0;font-size:13px;color:var(--muted)">Si este paciente tiene historia clínica en papel de antes de usar la app, escanéela y súbala aquí. Queda una constancia firmada de la fecha en que se incorporó.</p>'}${form}${list}</div>`;
+  ${list || S.newIncorp ? '' : '<p style="margin:0;font-size:13px;color:var(--muted)">Si este consultante tiene ficha en papel de antes de usar la app, escanéela y súbala aquí. Queda una constancia firmada de la fecha en que se incorporó.</p>'}${form}${list}</div>`;
 }
 ACT.newIncorp = () => { S.newIncorp = true; render(); };
 ACT.cancelIncorp = () => { S.newIncorp = false; render(); };
@@ -207,7 +207,7 @@ ACT.saveIncorp = async b => {
       const id = newId('f'), up = await shrinkImage(f);
       if (up.size > MAX_UP) throw new Error('«' + f.name + '» sigue superando 8 MB.');
       const j = await uploadBlob(id, up), sha = j.sha256;
-      const rec = { id, kind: 'file', patientId: p.id, nombre: up.name.slice(0, 200), mime: up.type, size: j.size, sizeOriginal: f.size, categoria: 'Historia clínica en físico (digitalizada)', descripcion: 'Incorporada con constancia firmada', uploadedAt: nowISO(), sha256: sha, incorporacion: incId, therapistName: S.profile.nombre };
+      const rec = { id, kind: 'file', patientId: p.id, nombre: up.name.slice(0, 200), mime: up.type, size: j.size, sizeOriginal: f.size, categoria: 'Ficha en físico (digitalizada)', descripcion: 'Incorporada con constancia firmada', uploadedAt: nowISO(), sha256: sha, incorporacion: incId, therapistName: S.profile.nombre };
       await Store.save(rec, { strict: true }); S.files.push(rec); recs.push(rec);
     }
     b.textContent = 'Firmando…';
@@ -244,14 +244,14 @@ async function buildZip(b, p, sin) {
   const name = slug(fullName(p)), stamp = dayKey(new Date());
   const old = b.textContent; b.disabled = true; b.textContent = 'Preparando…';
   try {
-    const files = [{ name: 'historia-clinica-' + name + '.html', data: standalone('Historia clínica · ' + fullName(p), docFull(p, sin)) }];
+    const files = [{ name: 'historia-clinica-' + name + '.html', data: standalone('Ficha · ' + fullName(p), docFull(p, sin)) }];
     const used = new Set();
     for (const f of sin.includes('anexos') ? [] : S.files.filter(x => x.patientId === p.id)) {
       let fn = 'anexos/' + dayKey(new Date(f.uploadedAt)) + '-' + f.nombre.replace(/[\\/:*?"<>|]+/g, '_');
       while (used.has(fn)) fn = fn.replace(/(\.[^.]*)?$/, '-1$1'); used.add(fn);
       files.push({ name: fn, data: new Uint8Array(await (await fetchBlob(f.id)).arrayBuffer()) });
     }
-    files.push({ name: 'LEAME.txt', data: `Copia de la historia clínica de ${fullName(p)}\nGenerada el ${fmtDT(nowISO())} por ${S.profile.nombre || ''}.\n\nAbra el archivo .html en un navegador; desde allí puede imprimirlo o guardarlo como PDF.\nLa carpeta «anexos» contiene los documentos adjuntos.\n\nInformación reservada. Entréguela solo a quien tiene derecho a recibirla.\n` });
+    files.push({ name: 'LEAME.txt', data: `Copia de la ficha de ${fullName(p)}\nGenerada el ${fmtDT(nowISO())} por ${S.profile.nombre || ''}.\n\nAbra el archivo .html en un navegador; desde allí puede imprimirlo o guardarlo como PDF.\nLa carpeta «anexos» contiene los documentos adjuntos.\n\nInformación reservada. Entréguela solo a quien tiene derecho a recibirla.\n` });
     const zip = makeZip(files), url = URL.createObjectURL(zip), a = document.createElement('a');
     a.href = url; a.download = 'historia-clinica-' + name + (sin.length ? '-parcial' : '') + '-' + stamp + '.zip'; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 10000);
     if (S.mode === 'server') api('/audit/export', { method: 'POST', body: { patientId: p.id } }).catch(() => { });

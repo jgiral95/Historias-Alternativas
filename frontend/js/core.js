@@ -23,7 +23,7 @@ const ageTxt = b => { const a = ageOf(b); if (a === null || a > 130) return ''; 
 ['input', 'change'].forEach(ev => document.addEventListener(ev, e => { const t = e.target, out = t && t.id && document.getElementById('age_' + (t.dataset || {}).f);
   if (out && t.id === 'f_' + t.dataset.f) out.textContent = ageTxt(t.value); }, true));
 const ageOf = b => { if (!b || !/^\d{4}-\d{2}-\d{2}$/.test(b)) return null; const d = new Date(b + 'T12:00:00'), n = new Date(); let a = n.getFullYear() - d.getFullYear(); const m = n.getMonth() - d.getMonth(); if (m < 0 || (m === 0 && n.getDate() < d.getDate())) a--; return a >= 0 ? a : null; };
-const fullName = p => [p.nombres, p.apellidos].filter(Boolean).join(' ').trim() || 'Paciente sin nombre';
+const fullName = p => [p.nombres, p.apellidos].filter(Boolean).join(' ').trim() || 'Consultante sin nombre';
 
 function toast(msg) {
   $$('.toast').forEach(t => t.remove());
@@ -79,11 +79,11 @@ const Store = {
   },
   localRead() { try { return JSON.parse(localStorage.getItem('archivo_clinico') || 'null'); } catch (e) { return null; } },
   localWrite() {
-    if (S.mode !== 'local') return; // en modo servidor o nube no se deja información clínica en el navegador
+    if (S.mode !== 'local') return; // en modo servidor o nube no se deja información de las sesiones en el navegador
     try { localStorage.setItem('archivo_clinico', JSON.stringify({ profile: S.profile, patients: S.patients, notes: S.notes, reports: S.reports, appts: S.appts, scales: S.scales, pnotes: S.pnotes })); } catch (e) { /* sin almacenamiento */ }
   },
   /* Carga todo y lo reemplaza de una vez. Si ya hay una carga en curso, se espera esa misma:
-     dos cargas a la vez duplicaban los pacientes en la lista. */
+     dos cargas a la vez duplicaban los consultantes en la lista. */
   load() {
     if (!this._loading) this._loading = this._load().finally(() => { this._loading = null; });
     return this._loading;

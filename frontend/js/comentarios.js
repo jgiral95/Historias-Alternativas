@@ -11,15 +11,15 @@ function fbGuess() {
   if (/perfil|cuenta|equipo|usuarios|dos pasos/i.test(lab)) return /perfil/i.test(lab) ? 'Mi perfil y firma' : 'Cuenta, equipo y acceso';
   if (/firmar a distancia|enviar consentimiento/i.test(lab)) return 'Firma a distancia';
   if (S.view === 'agenda' || /cita/i.test(lab)) return 'Agenda y calendario';
-  if (S.pid) return { datos: 'Datos del paciente', consent: 'Consentimiento', intake: 'Primera vez', evol: 'Evolución', escalas: 'Escalas', informes: 'Informes', cierre: 'Cierre', archivo: 'Archivo y adjuntos' }[S.tab] || '';
+  if (S.pid) return { datos: 'Datos del consultante', consent: 'Consentimiento', intake: 'Primera vez', evol: 'Evolución', escalas: 'Escalas', informes: 'Informes', cierre: 'Cierre', archivo: 'Archivo y adjuntos' }[S.tab] || '';
   return S.homeTab === 'stats' ? 'Estadísticas' : S.homeTab === 'enc' ? 'Encuesta de satisfacción' : 'Resumen y pendientes';
 }
-/* Dónde estaba la persona: sin nombres ni datos de pacientes. */
+/* Dónde estaba la persona: sin nombres ni datos de consultantes. */
 function fbContext() {
   const m = $('#modal-root .modal'), ua = navigator.userAgent;
   const nav = (/Edg\//.test(ua) ? 'Edge' : /Chrome\//.test(ua) ? 'Chrome' : /Firefox\//.test(ua) ? 'Firefox' : /Safari\//.test(ua) ? 'Safari' : 'Otro') + ' · ' + (/iPhone|iPad/.test(ua) ? 'iOS' : /Android/.test(ua) ? 'Android' : /Mac OS/.test(ua) ? 'Mac' : /Windows/.test(ua) ? 'Windows' : /Linux/.test(ua) ? 'Linux' : 'otro');
   const tabs = Object.fromEntries(TABS);
-  return { vista: S.view === 'agenda' ? 'Agenda' : S.pid ? (S.draft ? 'Paciente nuevo' : 'Ficha del paciente') : 'Inicio', 'pestaña': S.view === 'agenda' ? '' : S.pid ? tabs[S.tab] || S.tab : ({ stats: 'Estadísticas', enc: 'Encuesta de satisfacción' }[S.homeTab] || 'Resumen'),
+  return { vista: S.view === 'agenda' ? 'Agenda' : S.pid ? (S.draft ? 'Consultante nuevo' : 'Ficha del consultante') : 'Inicio', 'pestaña': S.view === 'agenda' ? '' : S.pid ? tabs[S.tab] || S.tab : ({ stats: 'Estadísticas', enc: 'Encuesta de satisfacción' }[S.homeTab] || 'Resumen'),
     ventana: m ? m.getAttribute('aria-label') || '' : '', pantalla: innerWidth + '×' + innerHeight, navegador: nav, rol: TEAM() ? 'Equipo' : 'Terapeuta', modo: document.documentElement.getAttribute('data-theme') === 'dark' || (!document.documentElement.getAttribute('data-theme') && matchMedia('(prefers-color-scheme: dark)').matches) ? 'oscuro' : 'claro' };
 }
 function fbMount() {
@@ -34,12 +34,12 @@ function fbDraw() {
   const d = FB.draft, mine = FB.items;
   root.innerHTML = `<div class="fbpanel" id="fb_panel" role="dialog" aria-label="Comentarios de la beta">
     <div class="row" style="justify-content:space-between"><h3>Comentarios · Beta</h3><button class="btn sm" id="fb_close" aria-label="Cerrar comentarios">Cerrar</button></div>
-    <p class="stnote" style="margin:0">Cuéntenos qué falla, qué no entiende o qué mejoraría. <b>No escriba datos reales de pacientes.</b></p>
+    <p class="stnote" style="margin:0">Cuéntenos qué falla, qué no entiende o qué mejoraría. <b>No escriba datos reales de consultantes.</b></p>
     <div class="fld"><label for="fb_tema">Apartado del programa</label><select id="fb_tema"><option value="">Elija el apartado al que se refiere…</option>${FB.temas.map(t => `<option ${t === d.tema ? 'selected' : ''}>${esc(t)}</option>`).join('')}</select></div>
     <div class="fbtipos" role="radiogroup" aria-label="Tipo de comentario">${FB.tipos.map(t => `<label><input type="radio" name="fb_tipo" value="${t}" ${t === d.tipo ? 'checked' : ''}> ${t === 'Error' ? 'Algo falla' : t === 'Duda' ? 'Tengo una duda' : 'Sugerencia'}</label>`).join('')}</div>
     <div class="fld"><label for="fb_txt">Comentario</label><textarea id="fb_txt" maxlength="5000" placeholder="Qué hizo, qué esperaba que pasara y qué pasó.">${esc(d.texto)}</textarea></div>
     <div class="fbshot">${FB.img ? `<img src="${FB.img}" alt="Captura adjunta"><button class="btn sm" id="fb_noimg">Quitar captura</button>` : `<label class="btn sm" for="fb_file" style="cursor:pointer">Adjuntar captura</label><input type="file" id="fb_file" accept="image/png,image/jpeg,image/webp" hidden><span>opcional · también puede pegarla en el comentario</span>`}</div>
-    <p class="stnote" style="margin:0">Se envía también en qué parte de la app estaba (sin datos de pacientes), para ubicar el problema.</p>
+    <p class="stnote" style="margin:0">Se envía también en qué parte de la app estaba (sin datos de consultantes), para ubicar el problema.</p>
     <div class="row end"><button class="btn pri" id="fb_send">Enviar comentario</button></div>
     ${mine.length ? `<details id="fb_mine"><summary class="sum">Mis comentarios (${mine.length})</summary>${mine.map(i => `<div class="fbitem"><span class="ts">#${i.id} · ${esc(fmtShort(i.creado))} · ${esc(i.tema)} · ${esc(i.tipo)} · <b>${esc(i.estado)}</b></span><p>${esc(i.texto)}</p>${i.respuesta ? `<p class="fbreply"><b>Respuesta:</b> ${esc(i.respuesta)}</p>` : ''}</div>`).join('')}</details>` : ''}
   </div>`;

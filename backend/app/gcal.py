@@ -102,7 +102,7 @@ def access_token(link: GoogleLink) -> str:
 
 def create_calendar(token: str) -> str:
     st, j = http("POST", API + "/calendars", {"summary": CAL_NAME, "timeZone": TZ,
-                                              "description": "Citas creadas desde Alter-Karute. No contiene información clínica."}, token=token)
+                                              "description": "Citas creadas desde Alter-Karute. No contiene información de las sesiones."}, token=token)
     if st not in (200, 201) or not j.get("id"):
         raise GoogleError(st, (j.get("error") or {}).get("message", "No se pudo crear el calendario"))
     return j["id"]
@@ -115,7 +115,7 @@ def event_id(user_id: int, appt_id: str) -> str:
 
 def label(p: dict | None, detail: str) -> str:
     if detail == "oculto" or not p:
-        return "Cita de psicología"
+        return "Cita de terapia"
     if detail == "nombre":
         return "Cita · " + " ".join(x for x in (p.get("nombres"), p.get("apellidos")) if x).strip()
     ini = "".join(w[0].upper() + "." for w in f"{p.get('nombres', '')} {p.get('apellidos', '')}".split()[:3])

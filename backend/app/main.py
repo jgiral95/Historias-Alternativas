@@ -108,7 +108,7 @@ def current_user(request: Request, response: Response, db: Session = Depends(get
     user = db.get(User, tok["sub"]) if tok else None
     if not user or not user.active:
         raise HTTPException(401, "Sesión no válida")
-    if user.owner_id:  # la subcuenta deja de funcionar si el profesional está inactivo
+    if user.owner_id:  # la subcuenta deja de funcionar si el terapeuta está inactivo
         owner = db.get(User, user.owner_id)
         if not owner or not owner.active:
             raise HTTPException(401, "Sesión no válida")
@@ -128,7 +128,7 @@ PASSWORD_FIRST_OK = {"/api/auth/me", "/api/auth/password", "/api/auth/logout", "
 
 
 def pro_user(request: Request, user: User = Depends(current_user), db: Session = Depends(get_db)) -> User:
-    """Funciones del profesional. Las subcuentas de equipo solo usan los datos de pacientes y la agenda."""
+    """Funciones del terapeuta. Las subcuentas de equipo solo usan los datos de consultantes y la agenda."""
     if user.role == "asistente":
         audit(db, user.id, "access.denied", f"{request.method} {request.url.path}", ip=client_ip(request))
         raise HTTPException(403, "Su cuenta de equipo no tiene acceso a esta función")
@@ -440,7 +440,7 @@ def server_time():
     return {"now": datetime.now(timezone.utc).isoformat()}
 
 
-# ---------- Registros clínicos (siempre del usuario autenticado) ----------
+# ---------- Registros (siempre del usuario autenticado) ----------
 def _append_only(old: dict, new: dict, what: str) -> None:
     """Un documento firmado no cambia: solo puede crecer la lista de adendas."""
     o = {k: v for k, v in old.items() if k != "addenda"}
@@ -510,12 +510,12 @@ def _check_dx(doc: dict) -> None:
 
 # ---------- Datos del paciente: identidad inamovible, fecha de apertura y registro de cambios ----------
 CLINICAL_KEYS = {"consents", "intake", "cierres", "solicitudes", "incorporaciones"}
-DATA_TIPO = "Autorización de tratamiento de datos personales"
+DATA_TIPO = "Autorización de uso de datos personales"
 REMOTE_MODS = {"Virtual", "Telefónica"}
 
 
 def consent_agenda(pat: dict) -> dict:
-    """Qué modalidades de cita cubren los consentimientos vigentes del paciente.
+    """Qué modalidades de cita cubren los consentimientos vigentes del consultante.
     Telepsicología: el tipo o el texto la mencionan. Presencial: cualquier consentimiento de atención que no sea solo de telepsicología."""
     ok = [c for c in pat.get("consents") or [] if c.get("tipo") != DATA_TIPO and (c.get("revocacion") or {}).get("alcance") != "Total"]
     tele = any("tele" in str(c.get("tipo") or "").lower() or "TELEPSICOLOG" in str(c.get("text") or "").upper() for c in ok)
@@ -530,12 +530,12 @@ def _check_appt_consent(db: Session, oid: int, old: dict | None, new: dict) -> N
         return  # mover una cita ya programada no exige volver a revisar
     prow = db.get(Record, (oid, new.get("patientId") or ""))
     if not prow or prow.kind != "patient":
-        raise HTTPException(400, "Paciente no válido")
+        raise HTTPException(400, "Consultante no válido")
     ca = consent_agenda(decrypt(prow.payload))
     remote = new.get("modalidad") in REMOTE_MODS
     if not ca["distancia" if remote else "presencial"]:
-        raise HTTPException(400, "El paciente tiene pendiente el consentimiento informado de telepsicología: fírmelo antes de agendar una cita virtual o telefónica"
-                            if remote else "El paciente tiene pendiente el consentimiento informado de atención presencial: fírmelo antes de agendar la cita")
+        raise HTTPException(400, "El consultante tiene pendiente el consentimiento informado de telepsicología: fírmelo antes de agendar una cita virtual o telefónica"
+                            if remote else "El consultante tiene pendiente el consentimiento informado de atención presencial: fírmelo antes de agendar la cita")
 IDENTITY_KEYS = {"nombres": "Nombres", "apellidos": "Apellidos", "tipoDoc": "Tipo de documento", "documento": "Número de documento",
                  "nacimiento": "Fecha de nacimiento", "paisNac": "País de nacimiento"}
 SERVER_KEYS = {"abiertaEl", "cambios", "firmasCambios"}
@@ -543,7 +543,7 @@ SIG_RE = re.compile(r"^data:image/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$")
 
 
 def _signer(db: Session, user: User) -> dict:
-    """Quién firma el cambio: nombre, rol, tarjeta profesional, cédula y firma (copias del momento)."""
+    """Quién firma el cambio: nombre, rol, registro, cédula y firma (copias del momento)."""
     if user.role == "asistente":
         prof = decrypt(user.profile) if user.profile else {}
         return {"por": user.name, "rol": "Equipo", "tp": "", "cc": str(prof.get("documento") or ""), "firma": prof.get("firma") or ""}
@@ -580,7 +580,7 @@ def _patient_rules(old: dict | None, new: dict, user: User, restoring: bool, sig
         who["cc"] = signer["cc"][:40]
     sigs = dict((old or {}).get("firmasCambios") or {})
     f = signer.get("firma") or ""
-    if f and SIG_RE.match(f) and len(f) < 400_000:  # cada firma se guarda una vez por paciente
+    if f and SIG_RE.match(f) and len(f) < 400_000:  # cada firma se guarda una vez por consultante
         key = hashlib.sha256(f.encode()).hexdigest()[:16]
         sigs.setdefault(key, f)
         who["firma"] = key
@@ -600,7 +600,7 @@ def _patient_rules(old: dict | None, new: dict, user: User, restoring: bool, sig
 
 
 def _keep_remote(old: dict, new: dict) -> tuple[dict, bool]:
-    """Un consentimiento firmado a distancia llega a la historia mientras el profesional puede tenerla abierta.
+    """Un consentimiento firmado a distancia llega a la historia mientras el terapeuta puede tenerla abierta.
     Si un guardado viene sin él (pantalla desactualizada), se conserva en su lugar en vez de rechazar el guardado."""
     oc, nc = old.get("consents") or [], new.get("consents") or []
     ids = {(c.get("remoto") or {}).get("id") for c in nc if isinstance(c, dict)}
@@ -649,7 +649,7 @@ def _signed_count(db: Session, oid: int, patient_id: str, kind: str, exclude: st
 
 
 def _assign_folios(db: Session, oid: int, kind: str, rid: str, old: dict | None, new: dict) -> bool:
-    """Numera cada documento al firmarlo: consecutivo por tipo de registro dentro de la historia del paciente.
+    """Numera cada documento al firmarlo: consecutivo por tipo de registro dentro de la historia del consultante.
     Las evoluciones llevan además el número de sesión (la primera vez es la sesión 1). Devuelve si asignó alguno."""
     old = old or {}
     done = False
@@ -677,14 +677,14 @@ def _assign_folios(db: Session, oid: int, kind: str, rid: str, old: dict | None,
 
 
 def _same_document(db: Session, oid: int, rid: str, doc) -> str | None:
-    """Una sola historia por persona: nombre del paciente que ya tiene ese documento."""
+    """Una sola historia por persona: nombre del consultante que ya tiene ese documento."""
     d = firmas.norm_doc(doc)
     if len(d) < 3:
         return None
     for r in db.scalars(select(Record).where(Record.user_id == oid, Record.kind == "patient", Record.id != rid)):
         x = decrypt(r.payload)
         if firmas.norm_doc(x.get("documento")) == d:
-            return " ".join(v for v in (x.get("nombres"), x.get("apellidos")) if v) or "otro paciente"
+            return " ".join(v for v in (x.get("nombres"), x.get("apellidos")) if v) or "otro consultante"
     return None
 
 
@@ -726,7 +726,7 @@ def list_records(request: Request, user: User = Depends(current_user), db: Sessi
     rows = db.scalars(select(Record).where(Record.user_id == owner_id(user)))
     if user.role != "asistente":
         return [decrypt(r.payload) for r in rows]
-    # Subcuenta de equipo: solo datos de pacientes (sin nada clínico), la agenda y lo mínimo del perfil.
+    # Subcuenta de equipo: solo datos de consultantes (sin acceso a lo que se habla en sesión), la agenda y lo mínimo del perfil.
     out = []
     for r in rows:
         if r.kind == "patient":
@@ -754,22 +754,22 @@ def put_record(rid: str, request: Request, bg: BackgroundTasks, payload: dict = 
     if kind in PREFIX and not rid.startswith(PREFIX[kind]):
         raise HTTPException(400, "Registro no válido")
     patient_id = rid if kind == "patient" else payload.get("patientId") if kind in ("note", "report", "appt", "file", "scale") else None
-    if kind == "pnote":  # nota de proceso: el paciente es opcional
+    if kind == "pnote":  # nota de proceso: el consultante es opcional
         patient_id = payload.get("patientId") or None
     if patient_id is not None and not (isinstance(patient_id, str) and ID_RE.match(patient_id)):
-        raise HTTPException(400, "Paciente no válido")
+        raise HTTPException(400, "Consultante no válido")
     if len(json.dumps(payload, ensure_ascii=False)) > MAX_RECORD_BYTES:
         raise HTTPException(413, "El registro es demasiado grande")
     oid, team = owner_id(user), user.role == "asistente"
     payload.pop("demo", None)  # la marca de «datos de ejemplo» solo la pone el servidor (POST /api/demo)
     if team and kind not in ("patient", "appt"):
-        raise HTTPException(403, "Su cuenta de equipo solo puede modificar datos de pacientes y la agenda")
+        raise HTTPException(403, "Su cuenta de equipo solo puede modificar datos de consultantes y la agenda")
     row = db.get(Record, (oid, rid))
     old = decrypt(row.payload) if row else None
     restoring = request.headers.get("x-import") == "1" and not team
     if kind == "patient":
         payload.pop("consentAgenda", None)  # dato calculado para el equipo; no se guarda
-        if team:  # el equipo nunca ve ni toca lo clínico (ni la retención especial): se conserva lo que ya había
+        if team:  # el equipo nunca ve ni toca lo que se habla en sesión (ni la retención especial): se conserva lo que ya había
             payload = {**{k: v for k, v in payload.items() if k not in CLINICAL_KEYS and k != "retencion"},
                        **{k: v for k, v in (old or {}).items() if k in CLINICAL_KEYS or k == "retencion"}}
         merged = False
@@ -797,11 +797,11 @@ def put_record(rid: str, request: Request, bg: BackgroundTasks, payload: dict = 
     if kind == "report" and not restoring and payload.get("signedAt") and not (old or {}).get("signedAt"):
         prow = db.get(Record, (oid, patient_id or ""))
         pat = decrypt(prow.payload) if prow else {}
-        care = any(c.get("tipo") != "Autorización de tratamiento de datos personales"
+        care = any(c.get("tipo") != "Autorización de uso de datos personales"
                    and (c.get("revocacion") or {}).get("alcance") != "Total" for c in pat.get("consents") or [])
         first = (pat.get("intake") or {}).get("signedAt") or pat.get("incorporaciones")
         if not (care and first):
-            raise HTTPException(400, "Para emitir un informe el paciente debe tener consentimiento informado vigente y primera vez firmada")
+            raise HTTPException(400, "Para emitir un informe el consultante debe tener consentimiento informado vigente y primera vez firmada")
     if kind == "report" and payload.get("signedAt") and not (old or {}).get("signedAt") and payload.get("verificacion"):
         code = str(payload["verificacion"])
         if not VERIF_RE.match(code):
@@ -856,10 +856,10 @@ def delete_record(rid: str, bg: BackgroundTasks, user: User = Depends(current_us
             if blob:
                 db.delete(blob)
         if row.kind == "patient" and (old.get("consents") or old.get("cierres") or old.get("solicitudes") or old.get("incorporaciones") or (old.get("intake") or {}).get("signedAt")):
-            raise HTTPException(409, "Un paciente con documentos firmados no se puede eliminar")
+            raise HTTPException(409, "Un consultante con documentos firmados no se puede eliminar")
         if row.kind == "patient" and db.scalar(select(func.count()).select_from(Record).where(
                 Record.user_id == oid, Record.patient_id == rid, Record.id != rid, Record.kind != "pnote")):
-            raise HTTPException(409, "Un paciente con documentos no se puede eliminar")
+            raise HTTPException(409, "Un consultante con documentos no se puede eliminar")
         db.delete(row)
         db.commit()
         audit(db, user.id, "record.delete", f"{row.kind}:{rid}", patient_id=row.patient_id)
@@ -931,7 +931,7 @@ def _ics_time(dt: datetime) -> str:
 
 def _label(p: dict | None, detail: str) -> str:
     if detail == "oculto" or not p:
-        return "Cita de psicología"
+        return "Cita de terapia"
     if detail == "nombre":
         return "Cita · " + " ".join(x for x in (p.get("nombres"), p.get("apellidos")) if x).strip()
     ini = "".join(w[0].upper() + "." for w in f"{p.get('nombres', '')} {p.get('apellidos', '')}".split()[:3])
@@ -1021,7 +1021,7 @@ class ExportIn(BaseModel):
 
 @app.post("/api/audit/export", status_code=204)
 def audit_export(body: ExportIn, user: User = Depends(pro_user), db: Session = Depends(get_db)):
-    """Deja constancia (sin contenido clínico) de que se descargó la copia completa de una historia."""
+    """Deja constancia (sin contenido de las sesiones) de que se descargó la copia completa de una historia."""
     if ID_RE.match(body.patientId):
         audit(db, user.id, "history.export", body.patientId, patient_id=body.patientId)
 
@@ -1253,7 +1253,7 @@ def _invite_state(inv: SurveyInvite) -> str:
 
 @app.get("/api/encuesta/{token}")
 def public_survey(token: str, request: Request, db: Session = Depends(get_db)):
-    """Página pública de la encuesta: solo con el enlace que recibió el paciente."""
+    """Página pública de la encuesta: solo con el enlace que recibió el consultante."""
     _public_throttle(request)
     inv = _invite(db, token)
     if not inv:
@@ -1280,7 +1280,7 @@ def public_survey_answer(token: str, request: Request, body: dict = Body(...), d
         raise HTTPException(400, str(e))
     now = datetime.now(timezone.utc)
     inv.answered_at = now
-    # la respuesta no guarda el paciente ni la invitación: solo la cuenta y el mes
+    # la respuesta no guarda el consultante ni la invitación: solo la cuenta y el mes
     # las respuestas de prueba se guardan marcadas: Estadísticas las muestra solo si se pide
     db.add(SurveyResponse(user_id=inv.user_id, month=now.strftime("%Y-%m"),
                           payload=encrypt({"preguntas": d.get("preguntas"), "respuestas": ans, **({"prueba": True} if d.get("prueba") else {})})))
@@ -1393,7 +1393,7 @@ def surveys_test(body: SurveyTestIn, user: User = Depends(pro_user), db: Session
 
 @app.post("/api/encuestas/borrar-pruebas", status_code=204)
 def surveys_delete_tests(user: User = Depends(pro_user), db: Session = Depends(get_db)):
-    """Borra las encuestas de prueba y sus respuestas (antes de empezar con pacientes reales)."""
+    """Borra las encuestas de prueba y sus respuestas (antes de empezar con consultantes reales)."""
     for r in db.scalars(select(SurveyResponse).where(SurveyResponse.user_id == user.id)):
         if decrypt(r.payload).get("prueba"):
             db.delete(r)
@@ -1403,7 +1403,7 @@ def surveys_delete_tests(user: User = Depends(pro_user), db: Session = Depends(g
     audit(db, user.id, "survey.tests.delete", "")
 
 
-# ---------- Correo propio de cada profesional (para enviar sus encuestas) ----------
+# ---------- Correo propio de cada terapeuta (para enviar sus encuestas) ----------
 class MailIn(BaseModel):
     correo: str
     password: str
@@ -1427,7 +1427,7 @@ def mail_get(user: User = Depends(pro_user), db: Session = Depends(get_db)):
 
 @app.put("/api/correo")
 def mail_put(body: MailIn, request: Request, user: User = Depends(pro_user), db: Session = Depends(get_db)):
-    """Guarda el correo del profesional después de comprobar que el servidor de correo acepta la contraseña."""
+    """Guarda el correo del terapeuta después de comprobar que el servidor de correo acepta la contraseña."""
     email = body.correo.strip()
     if not EMAIL_RE.match(email):
         raise HTTPException(400, "Escriba un correo válido")
@@ -1467,7 +1467,7 @@ def mail_delete(user: User = Depends(pro_user), db: Session = Depends(get_db)):
         audit(db, user.id, "mail.delete", "")
 
 
-# ---------- Equipo: subcuentas de cada profesional (secretaría, asistentes) ----------
+# ---------- Equipo: subcuentas de cada terapeuta (secretaría, asistentes) ----------
 class TeamIn(BaseModel):
     email: str
     name: str
@@ -1597,7 +1597,7 @@ class RemoteConsentIn(BaseModel):
     tipo: str
     plantilla: str | None = None
     text: str
-    signerType: str = "Paciente"
+    signerType: str = "Consultante"
     signerName: str
     signerDoc: str
     correo: bool = False
@@ -1635,10 +1635,10 @@ def remote_list(user: User = Depends(pro_user), db: Session = Depends(get_db)):
 
 @app.post("/api/firmas")
 def remote_create(body: RemoteConsentIn, request: Request, user: User = Depends(pro_user), db: Session = Depends(get_db)):
-    """Prepara un consentimiento para que el paciente lo firme desde su celular."""
+    """Prepara un consentimiento para que el consultante lo firme desde su celular."""
     prow = db.get(Record, (user.id, body.patientId)) if ID_RE.match(body.patientId or "") else None
     if not prow or prow.kind != "patient":
-        raise HTTPException(404, "Paciente no encontrado")
+        raise HTTPException(404, "Consultante no encontrado")
     prof_row = db.get(Record, (user.id, "profile"))
     prof = decrypt(prof_row.payload) if prof_row else {}
     if not (prof.get("nombre") and prof.get("firma")):
@@ -1670,7 +1670,7 @@ def _remote_mail(db: Session, user: User, r: ConsentRequest, request: Request) -
     p = decrypt(db.get(Record, (user.id, r.patient_id)).payload)
     to = str(p.get("correo") or "").strip()
     if not EMAIL_RE.match(to):
-        return {"correoEnviado": False, "motivo": "El paciente no tiene un correo válido en sus datos."}
+        return {"correoEnviado": False, "motivo": "El consultante no tiene un correo válido en sus datos."}
     acc = survey.account(db, user.id)
     if not survey.smtp_enabled(acc):
         return {"correoEnviado": False, "motivo": "Aún no ha configurado su correo de envío."}
@@ -1706,7 +1706,7 @@ def remote_mail(ref: str, request: Request, user: User = Depends(pro_user), db: 
 def remote_cancel(ref: str, user: User = Depends(pro_user), db: Session = Depends(get_db)):
     r = _my_request(db, user, ref)
     if r.signed_at:
-        raise HTTPException(409, "Ya fue firmado: si el paciente lo retira, registre una revocación")
+        raise HTTPException(409, "Ya fue firmado: si el consultante lo retira, registre una revocación")
     r.cancelled_at = r.cancelled_at or datetime.now(timezone.utc)
     db.commit()
     audit(db, user.id, "consent.remote.cancel", ref)
@@ -1727,7 +1727,7 @@ def _public_head(db: Session, r: ConsentRequest) -> dict:
 
 @app.get("/api/firma/{token}")
 def public_consent(token: str, request: Request, db: Session = Depends(get_db)):
-    """Encabezado del enlace: sin el documento de identidad no se muestra el texto ni datos del paciente."""
+    """Encabezado del enlace: sin el documento de identidad no se muestra el texto ni datos del consultante."""
     _public_throttle(request)
     return _public_head(db, _public_request(db, token))
 
@@ -1769,7 +1769,7 @@ def public_consent_open(token: str, body: RemoteOpenIn, request: Request, db: Se
 
 @app.post("/api/firma/{token}")
 def public_consent_sign(token: str, body: RemoteSignIn, request: Request, db: Session = Depends(get_db)):
-    """El paciente firma: el consentimiento se agrega a su historia con la hora del servidor."""
+    """El consultante firma: el consentimiento se agrega a su historia con la hora del servidor."""
     _public_throttle(request)
     r = _public_request(db, token)
     d = _unlock(db, r, body.documento)
@@ -1822,7 +1822,7 @@ def _reminder(db: Session, token: str):
 
 @app.get("/api/cita/{token}")
 def public_appt(token: str, request: Request, db: Session = Depends(get_db)):
-    """Página pública del recordatorio: solo fecha, hora, modalidad y el profesional."""
+    """Página pública del recordatorio: solo fecha, hora, modalidad y el terapeuta."""
     _public_throttle(request)
     r, row = _reminder(db, token)
     if not r:
@@ -1853,7 +1853,7 @@ def public_appt_answer(token: str, body: ApptAnswer, request: Request, bg: Backg
     if not start or start < datetime.now(timezone.utc) or a.get("estado") not in (None, "Programada"):
         raise HTTPException(409, "Esta cita ya no se puede confirmar ni cancelar desde aquí. Comuníquese con el consultorio.")
     now = datetime.now(timezone.utc).isoformat()
-    estado = "Confirmada" if body.accion == "confirmar" else "Cancelada por el paciente"
+    estado = "Confirmada" if body.accion == "confirmar" else "Cancelada por el consultante"
     a["confirmacion"] = {"estado": estado, "at": now}
     if body.accion == "cancelar":
         a["estado"] = "Cancelada"
@@ -1869,7 +1869,7 @@ def public_appt_answer(token: str, body: ApptAnswer, request: Request, bg: Backg
 
 
 # ---------- Comentarios de la versión beta ----------
-FB_TEMAS = ("Datos del paciente", "Consentimiento", "Firma a distancia", "Primera vez", "Evolución", "Impresión / motivo", "Escalas",
+FB_TEMAS = ("Datos del consultante", "Consentimiento", "Firma a distancia", "Primera vez", "Evolución", "Impresión / motivo", "Escalas",
             "Informes", "Cierre", "Archivo y adjuntos", "Agenda y calendario", "Recordatorios", "Mis formatos", "Resumen y pendientes",
             "Estadísticas", "Encuesta de satisfacción", "Mi perfil y firma", "Cuenta, equipo y acceso", "Celular", "Otro")
 FB_TIPOS = ("Error", "Sugerencia", "Duda")
@@ -2057,8 +2057,8 @@ def _demo_ids(db: Session, oid: int) -> tuple[list[Record], set[str]]:
 
 @app.post("/api/demo", status_code=201)
 def demo_load(body: DemoIn, user: User = Depends(pro_user), db: Session = Depends(get_db)):
-    """Guarda los pacientes ficticios que arma la app. Quedan marcados por el servidor para poder borrarlos
-    después, aunque tengan documentos firmados; solo se aceptan pacientes con documento «DEMO-…»."""
+    """Guarda los consultantes ficticios que arma la app. Quedan marcados por el servidor para poder borrarlos
+    después, aunque tengan documentos firmados; solo se aceptan consultantes con documento «DEMO-…»."""
     recs = body.records
     if not recs or len(recs) > 80:
         raise HTTPException(400, "Datos de ejemplo no válidos")
@@ -2074,10 +2074,10 @@ def demo_load(body: DemoIn, user: User = Depends(pro_user), db: Session = Depend
         if db.get(Record, (user.id, rid)) or len(json.dumps(r, ensure_ascii=False)) > MAX_RECORD_BYTES:
             raise HTTPException(400, "Registro de ejemplo no válido")
         if kind == "patient" and not str(r.get("documento") or "").startswith("DEMO-"):
-            raise HTTPException(400, "Los pacientes de ejemplo deben tener documento DEMO-")
+            raise HTTPException(400, "Los consultantes de ejemplo deben tener documento DEMO-")
         pid = rid if kind == "patient" else r.get("patientId") or None
         if kind != "patient" and pid not in pats and not (kind == "pnote" and pid is None):
-            raise HTTPException(400, "Los registros de ejemplo deben ser de pacientes de ejemplo")
+            raise HTTPException(400, "Los registros de ejemplo deben ser de consultantes de ejemplo")
         r = {k: v for k, v in r.items() if k not in SERVER_KEYS}
         if kind == "patient":
             r = _patient_rules(None, r, user, False, signer)
@@ -2091,7 +2091,7 @@ def demo_load(body: DemoIn, user: User = Depends(pro_user), db: Session = Depend
 
 @app.delete("/api/demo")
 def demo_delete(user: User = Depends(pro_user), db: Session = Depends(get_db)):
-    """Borra los datos de ejemplo (y lo que se haya agregado a esos pacientes ficticios)."""
+    """Borra los datos de ejemplo (y lo que se haya agregado a esos consultantes ficticios)."""
     rows, pats = _demo_ids(db, user.id)
     for r in rows:
         b = db.get(Blob, (user.id, r.id))
@@ -2128,8 +2128,8 @@ def access_log(body: AccessIn, request: Request, user: User = Depends(current_us
 
 
 AUDIT_TXT = {"history.view": "Abrió la historia", "record.put": "Guardó", "record.delete": "Eliminó", "history.export": "Descargó la historia completa",
-             "blob.put": "Subió un adjunto", "blob.get": "Abrió un adjunto", "verify": "Se verificó un informe con su código", "records.list": "Cargó la lista de pacientes",
-             "consent.remote.create": "Envió un consentimiento para firmar a distancia", "consent.remote.sign": "El paciente firmó a distancia",
+             "blob.put": "Subió un adjunto", "blob.get": "Abrió un adjunto", "verify": "Se verificó un informe con su código", "records.list": "Cargó la lista de consultantes",
+             "consent.remote.create": "Envió un consentimiento para firmar a distancia", "consent.remote.sign": "El consultante firmó a distancia",
              "login.ok": "Ingresó", "login.fail": "Intento de ingreso fallido", "login.2fa_fail": "Código de verificación equivocado",
              "access.denied": "Intento de acceso sin permiso", "password.change": "Cambió su contraseña", "record.import": "Importó",
              }
@@ -2138,7 +2138,7 @@ KIND_TXT = {"patient": "datos o documentos de la historia", "note": "una evoluci
 
 @app.get("/api/bitacora")
 def access_list(patientId: str = "", limit: int = 300, user: User = Depends(pro_user), db: Session = Depends(get_db)):
-    """Quién entró y qué hizo: el profesional y su equipo. Por historia (patientId) o en general (incluye ingresos)."""
+    """Quién entró y qué hizo: el terapeuta y su equipo. Por historia (patientId) o en general (incluye ingresos)."""
     team = {u.id: u for u in db.scalars(select(User).where((User.id == user.id) | (User.owner_id == user.id)))}
     q = select(Audit).where(Audit.user_id.in_(team)).order_by(Audit.id.desc()).limit(max(1, min(limit, 1000)))
     if patientId:

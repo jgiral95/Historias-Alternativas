@@ -1,6 +1,6 @@
 /* Notas de proceso y escritura a mano. Parte de app.html (scripts clásicos que comparten el ámbito global; el orden de carga importa). */
-/* ===== Notas de proceso: cuaderno del terapeuta, fuera de la historia clínica ===== */
-const PN_TIPOS = ['Hipótesis', 'Formulación de caso clínico', 'Notas de supervisión', 'Pendiente', 'Idea', 'Otra'];
+/* ===== Notas de proceso: cuaderno del terapeuta, fuera de la ficha ===== */
+const PN_TIPOS = ['Hipótesis', 'Formulación del caso', 'Notas de supervisión', 'Pendiente', 'Idea', 'Otra'];
 const PN_ESTADOS = ['Abierta', 'En seguimiento', 'Cerrada'];
 const fold = t => String(t || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
 const plainRich = t => String(t || '').replace(/^#\s+/gm, '').replace(/^[-•]\s+/gm, '• ').replace(/\*\*|__|\*/g, '');
@@ -39,11 +39,11 @@ function pnRowHTML(n, q, today) {
     <span class="mt"><span class="chip">${esc(n.tipo || 'Otra')}</span>${n.estado === 'Cerrada' ? '<span class="chip warn">Cerrada</span>' : n.estado === 'En seguimiento' ? '<span class="chip ok">En seguimiento</span>' : ''}${n.revisar && n.estado !== 'Cerrada' ? `<span class="chip ${due ? 'due' : ''}">Revisar ${esc(fmtD(n.revisar))}</span>` : ''}</span>
     <span class="ex">${pnExcerpt(n, q)}</span><span class="mt">${(n.manos || []).length ? `<span class="chip">✎ ${n.manos.length} a mano</span>` : ''}${(n.etiquetas || []).map(t => '#' + pnMark(t, q)).join(' ')}<span>· ${esc(fmtShort(n.updatedAt || n.createdAt))}</span></span></button>`;
 }
-/* Grupos: primero las notas generales y luego un grupo por paciente (orden alfabético). Cerrados por defecto. */
+/* Grupos: primero las notas generales y luego un grupo por consultante (orden alfabético). Cerrados por defecto. */
 function pnGroups(list) {
   const g = new Map();
   list.forEach(n => { const k = n.patientId || '_none'; if (!g.has(k)) g.set(k, []); g.get(k).push(n); });
-  const name = k => k === '_none' ? 'Notas generales' : (S.patients.find(p => p.id === k) ? fullName(S.patients.find(p => p.id === k)) : 'Paciente eliminado');
+  const name = k => k === '_none' ? 'Notas generales' : (S.patients.find(p => p.id === k) ? fullName(S.patients.find(p => p.id === k)) : 'Consultante eliminado');
   return [...g.entries()].map(([k, ns]) => ({ k, name: name(k), ns })).sort((a, b) => a.k === '_none' ? -1 : b.k === '_none' ? 1 : a.name.localeCompare(b.name, 'es'));
 }
 function pnListHTML() {
@@ -58,14 +58,14 @@ function pnListHTML() {
   }).join('');
 }
 function pnEditorHTML(n) {
-  if (!n) return `<div class="pned"><h3 style="margin:0">Notas de proceso</h3><div class="banner" style="margin:0"><b>Son sus notas de trabajo, no la historia clínica.</b> Aquí van hipótesis, formulaciones, lo que habló en supervisión e ideas para el caso. No se firman, no salen en la historia completa ni en copias o informes, y su equipo no las ve. Puede editarlas y borrarlas cuando quiera.</div>
-    <p class="stnote" style="margin:0">Lo que haga parte de la atención (lo ocurrido en la sesión, el diagnóstico, las decisiones del tratamiento) debe quedar en la evolución de la historia.</p>
+  if (!n) return `<div class="pned"><h3 style="margin:0">Notas de proceso</h3><div class="banner" style="margin:0"><b>Son sus notas de trabajo, no la ficha.</b> Aquí van hipótesis, formulaciones, lo que habló en supervisión e ideas para el caso. No se firman, no salen en la historia completa ni en copias o informes, y su equipo no las ve. Puede editarlas y borrarlas cuando quiera.</div>
+    <p class="stnote" style="margin:0">Lo que haga parte de la atención (lo ocurrido en la sesión, el impresión, las decisiones del proceso) debe quedar en la evolución de la historia.</p>
     <div class="row"><button class="btn pri" data-act="pnNew">+ Nueva nota</button></div></div>`;
   const pts = S.patients.slice().sort((a, b) => fullName(a).localeCompare(fullName(b), 'es'));
   const pp = pnPat(n), segs = (n.seguimiento || []).map((x, i) => [x, i]).reverse();
   return `<div class="pned" id="pnedit"><div class="row" style="justify-content:space-between"><button class="btn sm back" data-act="pnBack">← Notas</button><span class="pnstat" id="pn_stat" aria-live="polite">${S.pnotes.includes(n) ? 'Guardada' : 'Nueva: se guarda sola al escribir'}</span></div>
     <input id="pn_t" class="ttl" type="text" value="${esc(n.titulo || '')}" placeholder="Título (ej.: Hipótesis sobre la evitación)" aria-label="Título de la nota" maxlength="200">
-    <div class="grid"><div class="fld"><label for="pn_pac">Paciente</label><select id="pn_pac"><option value="">— Nota general (sin paciente) —</option>${pts.map(x => `<option value="${x.id}" ${x.id === n.patientId ? 'selected' : ''}>${esc(fullName(x))}</option>`).join('')}${n.patientId && !pp ? `<option value="${esc(n.patientId)}" selected>(paciente eliminado)</option>` : ''}</select></div>
+    <div class="grid"><div class="fld"><label for="pn_pac">Consultante</label><select id="pn_pac"><option value="">— Nota general (sin consultante) —</option>${pts.map(x => `<option value="${x.id}" ${x.id === n.patientId ? 'selected' : ''}>${esc(fullName(x))}</option>`).join('')}${n.patientId && !pp ? `<option value="${esc(n.patientId)}" selected>(consultante eliminado)</option>` : ''}</select></div>
       <div class="fld"><label for="pn_tipo">Tipo</label><select id="pn_tipo">${PN_TIPOS.map(t => `<option ${t === n.tipo ? 'selected' : ''}>${t}</option>`).join('')}</select></div>
       <div class="fld"><label for="pn_estado">Estado</label><select id="pn_estado">${PN_ESTADOS.map(t => `<option ${t === (n.estado || 'Abierta') ? 'selected' : ''}>${t}</option>`).join('')}</select></div>
       <div class="fld"><label for="pn_rev">Revisar el (opcional)</label><input id="pn_rev" type="date" value="${esc(n.revisar || '')}"></div></div>
@@ -86,7 +86,7 @@ function pnHTML() {
   if (F.pid && F.pid !== '_none' && !pts.some(p => p.id === F.pid)) { const x = S.patients.find(p => p.id === F.pid); if (x) pts.unshift(x); }
   return `<div class="layout pnl ${F.sel ? 'in-file' : ''}"><div class="plist-wrap"><div class="panel">
     <div class="pnfil"><input type="search" id="pn_q" value="${esc(F.q)}" placeholder="Buscar en mis notas" aria-label="Buscar en las notas de proceso">
-      <div class="row"><select id="pn_fpac" aria-label="Filtrar por paciente"><option value="">Todos los pacientes</option><option value="_none" ${F.pid === '_none' ? 'selected' : ''}>Notas generales</option>${pts.map(p => `<option value="${p.id}" ${p.id === F.pid ? 'selected' : ''}>${esc(fullName(p))}</option>`).join('')}</select></div>
+      <div class="row"><select id="pn_fpac" aria-label="Filtrar por consultante"><option value="">Todos los consultantes</option><option value="_none" ${F.pid === '_none' ? 'selected' : ''}>Notas generales</option>${pts.map(p => `<option value="${p.id}" ${p.id === F.pid ? 'selected' : ''}>${esc(fullName(p))}</option>`).join('')}</select></div>
       <div class="row"><select id="pn_ftipo" aria-label="Filtrar por tipo"><option value="">Todos los tipos</option>${PN_TIPOS.map(t => `<option ${t === F.tipo ? 'selected' : ''}>${t}</option>`).join('')}</select>
       <select id="pn_fest" aria-label="Filtrar por estado">${[['abiertas', 'Abiertas y en seguimiento'], ['revisar', 'Por revisar hoy'], ['Cerrada', 'Cerradas'], ['todas', 'Todas']].map(([v, l]) => `<option value="${v}" ${v === F.estado ? 'selected' : ''}>${l}</option>`).join('')}</select></div>
       <span class="ts" id="pn_count"></span></div>

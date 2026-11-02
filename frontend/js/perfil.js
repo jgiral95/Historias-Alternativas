@@ -3,8 +3,8 @@
 function accountModal() {
   const root = $('#modal-root');
   root.innerHTML = `<div class="modal" role="dialog" aria-modal="true" aria-label="Mi cuenta"><div class="box" id="profform"><div class="row" style="justify-content:space-between"><h3>Mi cuenta</h3><button class="btn sm" id="pcl">Cerrar</button></div>
-  <p class="stnote">${esc(S.user.name)} · ${esc(S.user.email)}<br>Cuenta de equipo de ${esc(S.user.ownerName || 'su profesional')}.</p>
-  <div class="sec" id="tpbox"><h3>Mis datos para el historial</h3><p class="stnote">Su documento y su firma aparecen en el historial de cada cambio que haga a los datos de un paciente.</p>
+  <p class="stnote">${esc(S.user.name)} · ${esc(S.user.email)}<br>Cuenta de equipo de ${esc(S.user.ownerName || 'su terapeuta')}.</p>
+  <div class="sec" id="tpbox"><h3>Mis datos para el historial</h3><p class="stnote">Su documento y su firma aparecen en el historial de cada cambio que haga a los datos de un consultante.</p>
   <div class="grid">${F('Documento de identidad', 'tpdoc', '')}</div><div class="fld"><span class="lbl">Su firma</span><div id="tpsigprev"></div><div class="sigbox" id="tpsig"></div><button class="btn sm" id="tpclear" type="button">Borrar trazo</button></div>
   <div class="row end"><button class="btn pri" id="tpsave" type="button">Guardar mis datos</button></div></div>
   <details class="sec" id="pwbox" open><summary class="sum">Cambiar contraseña</summary><form id="pwform" class="sec" autocomplete="on" onsubmit="return false">
@@ -36,12 +36,12 @@ function accountModal() {
     catch (e) { toast(e.message); } finally { setBusy($('#pwsave'), false); }
   };
 }
-/* ----- Mi equipo: subcuentas del profesional ----- */
+/* ----- Mi equipo: subcuentas del terapeuta ----- */
 ACT.team = async () => {
   const root = $('#modal-root');
   const draw = (list, msg) => {
     root.innerHTML = `<div class="modal" role="dialog" aria-modal="true" aria-label="Mi equipo"><div class="box" id="teamform"><div class="row" style="justify-content:space-between"><h3>Mi equipo</h3><button class="btn sm" data-tm2="close">Cerrar</button></div>
-    <p style="margin:0;font-size:13px;color:var(--muted)">Cuentas para su secretaría o asistentes. Cada persona entra con su propio correo y contraseña y trabaja sobre sus pacientes, pero <b>solo ve y edita los datos de los pacientes y la agenda</b>. No ve consentimientos, primera vez, evoluciones, diagnósticos, escalas, informes ni adjuntos. Sus cambios a los datos quedan en el historial con su nombre.</p>
+    <p style="margin:0;font-size:13px;color:var(--muted)">Cuentas para su secretaría o asistentes. Cada persona entra con su propio correo y contraseña y trabaja sobre sus consultantes, pero <b>solo ve y edita los datos de los consultantes y la agenda</b>. No ve consentimientos, primera vez, evoluciones, impresiones, escalas, informes ni adjuntos. Sus cambios a los datos quedan en el historial con su nombre.</p>
     ${msg ? `<div class="banner">${msg}</div>` : ''}
     ${list.length ? list.map(u => `<div class="card"><div class="row" style="justify-content:space-between"><span><b>${esc(u.name)}</b> <span class="chip ${u.active ? 'ok' : 'warn'}">${u.active ? 'Activa' : 'Inactiva'}</span>${u.totp ? ' <span class="chip">2 pasos</span>' : ''}<br><small style="color:var(--muted)">${esc(u.email)}</small></span>
       <span class="row"><button class="btn sm" data-tm2="pw" data-id="${u.id}">Nueva contraseña</button><button class="btn sm ${u.active ? 'warn' : ''}" data-tm2="${u.active ? 'off' : 'on'}" data-id="${u.id}">${u.active ? 'Desactivar' : 'Activar'}</button></span></div>
@@ -71,7 +71,7 @@ ACT.profile = () => {
   if (TEAM()) return accountModal();
   const pr = S.profile, root = $('#modal-root');
   root.innerHTML = `<div class="modal" role="dialog" aria-modal="true" aria-label="Mi perfil"><div class="box" id="profform"><div class="row" style="justify-content:space-between"><h3>Mi perfil y firma</h3><button class="btn sm" id="pcl">Cerrar</button></div>
-  <div class="grid">${F('Nombre completo', 'nombre', pr.nombre)}${F('Cédula (documento de identidad)', 'cedula', pr.cedula || '')}${F('Título', 'titulo', pr.titulo)}${F('Tarjeta profesional / registro', 'registro', pr.registro)}${F('Nombre del consultorio', 'consultorio', pr.consultorio)}${F('Plataforma habitual de telepsicología', 'plataforma', pr.plataforma || '', { ph: 'Ej.: Google Meet' })}${F('Ciudad', 'ciudad', pr.ciudad)}${F('Teléfono', 'telefono', pr.telefono, { type: 'tel' })}${F('Correo', 'correo', pr.correo, { type: 'email' })}</div>
+  <div class="grid">${F('Nombre completo', 'nombre', pr.nombre)}${F('Cédula (documento de identidad)', 'cedula', pr.cedula || '')}${F('Título', 'titulo', pr.titulo)}${F('Registro (si lo tiene)', 'registro', pr.registro)}${F('Nombre del consultorio', 'consultorio', pr.consultorio)}${F('Plataforma habitual de telepsicología', 'plataforma', pr.plataforma || '', { ph: 'Ej.: Google Meet' })}${F('Ciudad', 'ciudad', pr.ciudad)}${F('Teléfono', 'telefono', pr.telefono, { type: 'tel' })}${F('Correo', 'correo', pr.correo, { type: 'email' })}</div>
   <div class="fld"><span class="lbl">Logo para sus informes (opcional)</span>
   <div class="row" style="align-items:center"><span id="plogo">${pr.logo ? `<img class="logoprev" src="${pr.logo}" alt="Logo guardado">` : '<span style="font-size:13px;color:var(--muted)">Sin logo</span>'}</span>
   <input type="file" id="plogofile" accept="image/png,image/jpeg,image/webp,image/svg+xml" aria-label="Subir logo">${pr.logo ? '<button class="btn sm warn" id="plogodel" type="button">Quitar logo</button>' : ''}</div>
@@ -82,7 +82,7 @@ ACT.profile = () => {
   <label class="check"><input type="checkbox" id="psigbg" checked> <span>Quitar el fondo y recortar los bordes</span></label>
   <div id="psigprev" hidden><span class="lbl">Así quedará su firma</span><img class="sigimg" id="psigimg" alt="Vista previa de la firma subida"><div class="row"><button class="btn sm" id="psigdrop">Descartar imagen</button></div></div>
   <p style="margin:0;font-size:12px;color:var(--muted)">Para un mejor resultado, firme con tinta oscura sobre papel blanco y tome la foto con buena luz.</p></div></div>
-  <p style="margin:0;font-size:13px;color:var(--muted)">Sus modelos de consentimiento (adultos, familia, niños…) se administran en «Mis consentimientos», desde la pestaña Consentimiento de cualquier paciente.</p>
+  <p style="margin:0;font-size:13px;color:var(--muted)">Sus modelos de consentimiento (adultos, familia, niños…) se administran en «Mis consentimientos», desde la pestaña Consentimiento de cualquier consultante.</p>
   <div class="row end"><button class="btn pri" id="psave">Guardar perfil</button></div>
   ${S.mode === 'server' ? `<details class="sec" id="pwbox"><summary class="sum">Cambiar contraseña</summary><form id="pwform" class="sec" autocomplete="on" onsubmit="return false">
     <input type="email" autocomplete="username" value="${esc(S.user ? S.user.email : '')}" hidden aria-hidden="true" tabindex="-1">
@@ -214,7 +214,7 @@ async function draw2fa(step, data) {
     return;
   }
   if (!st.enabled) {
-    box.innerHTML = `<p style="margin:0">Al ingresar, además de la contraseña se pide un código que cambia cada 30 segundos en su teléfono. Así, aunque alguien conozca su contraseña, no puede entrar a sus historias clínicas.</p>
+    box.innerHTML = `<p style="margin:0">Al ingresar, además de la contraseña se pide un código que cambia cada 30 segundos en su teléfono. Así, aunque alguien conozca su contraseña, no puede entrar a sus fichas.</p>
       <div class="row end"><button class="btn pri" type="button" id="tfstart">Activar verificación en dos pasos</button></div>`;
     $('#tfstart').onclick = async () => { try { draw2fa('setup', await api('/auth/2fa/setup', { method: 'POST' })); } catch (e) { toast(e.message); } };
     return;
@@ -242,8 +242,8 @@ async function draw2fa(step, data) {
 }
 
 /* ----- Mis formatos: único lugar para estructuras, plantillas, modelos y frases ----- */
-/* Mismo orden que las pestañas de la ficha del paciente; luego lo que se usa en varias partes. */
-const HUB = [['datos', 'Datos del paciente'], ['consent', 'Consentimientos'], ['intake', 'Primera vez'], ['evol', 'Evolución'], ['escalas', 'Escalas'], ['informes', 'Informes'], ['frases', 'Frases']];
+/* Mismo orden que las pestañas de la ficha del consultante; luego lo que se usa en varias partes. */
+const HUB = [['datos', 'Datos del consultante'], ['consent', 'Consentimientos'], ['intake', 'Primera vez'], ['evol', 'Evolución'], ['escalas', 'Escalas'], ['informes', 'Informes'], ['frases', 'Frases']];
 const hubTabs = active => `<div class="tabs hubtabs" role="tablist" aria-label="Secciones de Mis formatos">${HUB.map(([k, l]) => `<button type="button" class="tab ${active === k ? 'on' : ''}" role="tab" aria-selected="${active === k}" data-hub="${k}">${l}</button>`).join('')}</div>`;
 function openHub(k) {
   if (ED && ['intake', 'evol', 'datos'].includes(k)) { ED.which = k; return drawFormats(); }  // conserva lo no guardado
@@ -284,7 +284,7 @@ function secCard(sc, si, isDatos) {
 function drawFormats() {
   const root = $('#modal-root'), prev = root.querySelector('.modal'), top = prev ? prev.scrollTop : 0, w = ED.which;
   const hasGeno = ED.intake.some(sc => sc.g);
-  const intro = { intake: 'Los cambios solo se aplican a las <b>nuevas</b> consultas de primera vez. Las ya firmadas conservan el formato con el que se firmaron.', evol: 'Los cambios solo se aplican a las <b>nuevas</b> evoluciones. Las ya firmadas conservan el formato con el que se firmaron.', datos: 'Agregue los datos sociodemográficos que usted toma y que no vienen en la pestaña Datos. Aparecen al final de esa pestaña para todos sus pacientes.' }[w];
+  const intro = { intake: 'Los cambios solo se aplican a las <b>nuevas</b> consultas de primera vez. Las ya firmadas conservan el formato con el que se firmaron.', evol: 'Los cambios solo se aplican a las <b>nuevas</b> evoluciones. Las ya firmadas conservan el formato con el que se firmaron.', datos: 'Agregue los datos sociodemográficos que usted toma y que no vienen en la pestaña Datos. Aparecen al final de esa pestaña para todos sus consultantes.' }[w];
   const body = w === 'evol'
     ? `<p class="stnote" style="margin:0">La fecha y hora, la modalidad, las personas presentes, el riesgo y las impresiones van siempre en la evolución: aquí arma el resto.</p><div class="card">${ED.evol.map((f, fi) => edField(f, String(fi))).join('') || '<p style="margin:0;color:var(--muted)">Aún no tiene campos. Agréguelos uno por uno o use el formato sugerido.</p>'}<div class="row"><button class="btn sm" data-fm="fadd:">+ Campo</button>${ED.evol.length ? '' : '<button class="btn sm" data-fm="reset">Usar el formato sugerido</button>'}</div></div>`
     : secList().map((sc, si) => secCard(sc, si, w === 'datos')).join('') + `<div class="row"><button class="btn" data-fm="sadd">+ Apartado</button>${w === 'intake' && !hasGeno ? '<button class="btn" data-fm="gadd">+ Genograma</button>' : ''}</div>`;

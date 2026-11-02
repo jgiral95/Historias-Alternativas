@@ -158,7 +158,7 @@ function tabIntake(p) {
     ${addendaHTML(i, 'intake', 'intake')}
     <div class="row"><button class="btn pri" data-act="viewIntake">Ver y descargar documento</button></div></div>`;
   }
-  const consentWarn = (p.consents || []).length ? '' : '<div class="banner">Este paciente aún no tiene consentimiento informado firmado.</div>';
+  const consentWarn = (p.consents || []).length ? '' : '<div class="banner">Este consultante aún no tiene consentimiento informado firmado.</div>';
   return `<div id="intakeform" class="sec">${consentWarn}${sigNeeded()}<div class="row" style="justify-content:space-between"><h3 style="flex:1">Primera vez</h3><button class="btn" data-act="saveIntake" data-sign="0">Guardar borrador</button><button class="btn pri" data-act="saveIntake" data-sign="1">Firmar y guardar</button></div>${phraseHint()}
   ${atencionBlock(i, 'intake', p)}
   <div id="teleslot">${isRemote(i.modalidad) ? teleBlock(i) : ''}</div>
@@ -193,7 +193,7 @@ ACT.saveIntake = async b => {
 
 /* ----- Atención a distancia ----- */
 const COMUNIC = ['Sincrónica: videollamada en vivo', 'Sincrónica: llamada telefónica', 'Asincrónica interactiva: mensajes'];
-const GRABA = ['No se grabó', 'Se grabó, con autorización del paciente y del profesional'];
+const GRABA = ['No se grabó', 'Se grabó, con autorización del consultante y del terapeuta'];
 const isRemote = m => m && m !== 'Presencial';
 const badPlatform = v => /whats\s*app|facebook|instagram|telegram|messenger|tiktok/i.test(v || '');
 function chk(key, label, val) { return `<label class="check"><input type="checkbox" id="f_${key}" data-f="${key}" ${val ? 'checked' : ''}> <span>${label}</span></label>`; }
@@ -202,24 +202,24 @@ function teleBlock(r) {
   return `<div class="sec" id="teleblock"><h3>Atención a distancia</h3><div class="grid">
   <div class="fld"><label for="f_tele_plataforma">Plataforma usada</label><input id="f_tele_plataforma" data-f="tele_plataforma" type="text" value="${esc(r.tele_plataforma || S.profile.plataforma || '')}" placeholder="Ej.: Google Meet, Zoom, Doxy.me"></div>
   ${F('Tipo de comunicación', 'tele_comunicacion', r.tele_comunicacion || COMUNIC[r.modalidad === 'Telefónica' ? 1 : 0], { type: 'select', opts: COMUNIC })}
-  ${F('Lugar desde donde se conectó el paciente', 'tele_ubicacion', r.tele_ubicacion || '', { ph: 'Ciudad y tipo de lugar (casa, oficina…)' })}
+  ${F('Lugar desde donde se conectó el consultante', 'tele_ubicacion', r.tele_ubicacion || '', { ph: 'Ciudad y tipo de lugar (casa, oficina…)' })}
   ${F('Grabación', 'tele_grabacion', r.tele_grabacion || GRABA[0], { type: 'select', opts: GRABA })}
   ${F('Fallas técnicas o incidencias (opcional)', 'tele_incidencias', r.tele_incidencias || '', { type: 'area', rows: 2, wide: true })}</div>
   <div class="banner" id="telewarn" ${badPlatform(r.tele_plataforma || S.profile.plataforma) ? '' : 'hidden'}>No se recomienda usar WhatsApp ni redes sociales para las sesiones. Use una plataforma con cifrado y control de acceso.</div>
-  ${chk('tele_idPaciente', 'Verifiqué la identidad del paciente al inicio de la sesión.', r.tele_idPaciente)}
-  ${chk('tele_idProfesional', 'Me identifiqué ante el paciente con mi nombre y profesión.', r.tele_idProfesional)}
-  ${chk('tele_privacidad', 'El paciente confirmó estar en un lugar privado y conoce el procedimiento ante fallas o emergencias.', r.tele_privacidad)}</div>`;
+  ${chk('tele_idPaciente', 'Verifiqué la identidad del consultante al inicio de la sesión.', r.tele_idPaciente)}
+  ${chk('tele_idProfesional', 'Me identifiqué ante el consultante con mi nombre y profesión.', r.tele_idProfesional)}
+  ${chk('tele_privacidad', 'El consultante confirmó estar en un lugar privado y conoce el procedimiento ante fallas o emergencias.', r.tele_privacidad)}</div>`;
 }
 function teleCheck(o) {
   if (!isRemote(o.modalidad)) { Object.keys(o).forEach(k => { if (k.startsWith('tele_')) delete o[k]; }); return true; }
-  if (!o.tele_plataforma || !o.tele_ubicacion) { toast('En atención a distancia indique la plataforma y el lugar desde donde se conectó el paciente.'); return false; }
-  if (!o.tele_idPaciente || !o.tele_idProfesional) { toast('Confirme la identificación del paciente y la suya al inicio de la sesión.'); return false; }
+  if (!o.tele_plataforma || !o.tele_ubicacion) { toast('En atención a distancia indique la plataforma y el lugar desde donde se conectó el consultante.'); return false; }
+  if (!o.tele_idPaciente || !o.tele_idProfesional) { toast('Confirme la identificación del consultante y la suya al inicio de la sesión.'); return false; }
   return true;
 }
 function teleDoc(r) {
   if (!isRemote(r.modalidad) || !r.tele_plataforma) return '';
   const yes = v => v ? 'Sí' : 'No registrado';
-  return `<h2>Atención a distancia</h2><table><tr><td><b>Plataforma</b></td><td>${esc(r.tele_plataforma)}</td></tr><tr><td><b>Comunicación</b></td><td>${esc(r.tele_comunicacion || '')}</td></tr><tr><td><b>Lugar del paciente</b></td><td>${esc(r.tele_ubicacion || '')}</td></tr><tr><td><b>Identidad del paciente verificada</b></td><td>${yes(r.tele_idPaciente)}</td></tr><tr><td><b>Profesional identificado</b></td><td>${yes(r.tele_idProfesional)}</td></tr><tr><td><b>Privacidad confirmada</b></td><td>${yes(r.tele_privacidad)}</td></tr><tr><td><b>Grabación</b></td><td>${esc(r.tele_grabacion || '')}</td></tr>${r.tele_incidencias ? `<tr><td><b>Incidencias</b></td><td>${esc(r.tele_incidencias)}</td></tr>` : ''}</table>`;
+  return `<h2>Atención a distancia</h2><table><tr><td><b>Plataforma</b></td><td>${esc(r.tele_plataforma)}</td></tr><tr><td><b>Comunicación</b></td><td>${esc(r.tele_comunicacion || '')}</td></tr><tr><td><b>Lugar del consultante</b></td><td>${esc(r.tele_ubicacion || '')}</td></tr><tr><td><b>Identidad del consultante verificada</b></td><td>${yes(r.tele_idPaciente)}</td></tr><tr><td><b>Terapeuta identificado</b></td><td>${yes(r.tele_idProfesional)}</td></tr><tr><td><b>Privacidad confirmada</b></td><td>${yes(r.tele_privacidad)}</td></tr><tr><td><b>Grabación</b></td><td>${esc(r.tele_grabacion || '')}</td></tr>${r.tele_incidencias ? `<tr><td><b>Incidencias</b></td><td>${esc(r.tele_incidencias)}</td></tr>` : ''}</table>`;
 }
 
 /* Datos que se agregan a un informe al firmarlo (código de verificación). */
@@ -251,14 +251,14 @@ function prevNoteHTML(p, n) {
   const prev = S.notes.filter(x => x.patientId === p.id && x.signedAt && x.id !== n.id).sort((a, b) => b.sessionAt.localeCompare(a.sessionAt))[0];
   const i = p.intake && p.intake.signedAt ? p.intake : null;
   if (!prev && !i) return '';
-  const body = prev ? kvHTML(prev, evolSchema(prev)) : intakeSchema(i).map(([t, fs]) => kvHTML(i, fs.filter(f => /objetiv|plan|impresi|motivo/i.test(f[1] + ' ' + t)))).join('') + ((i.diagnosticos || []).length ? `<dl class="kv"><dt>Diagnóstico</dt><dd>${i.diagnosticos.map(d => esc(d.codigo + ' ' + d.nombre)).join('<br>')}</dd></dl>` : '');
+  const body = prev ? kvHTML(prev, evolSchema(prev)) : intakeSchema(i).map(([t, fs]) => kvHTML(i, fs.filter(f => /objetiv|plan|impresi|motivo/i.test(f[1] + ' ' + t)))).join('') + ((i.diagnosticos || []).length ? `<dl class="kv"><dt>Impresión</dt><dd>${i.diagnosticos.map(d => esc(d.codigo + ' ' + d.nombre)).join('<br>')}</dd></dl>` : '');
   return `<details class="prevnote" open><summary>${prev ? 'Nota anterior · ' + esc(fmtShort(prev.sessionAt)) : 'Primera vez · ' + esc(fmtShort(i.sessionAt)) + ' (motivo, objetivos y plan)'}</summary><div class="prevbody">${body || '<p style="margin:0;color:var(--muted)">Sin contenido.</p>'}</div></details>`;
 }
 function noteCard(n) {
   return `<div class="card" id="rec-${n.id}"><div class="row" style="justify-content:space-between"><span class="ts">${esc(fmtDT(n.sessionAt))}</span><span class="row">${n.modalidad || n.duracion ? `<span class="chip">${esc([n.modalidad || '', n.duracion ? n.duracion + ' min' : ''].filter(Boolean).join(' · '))}</span>` : ''}${(() => { const rn = n.riesgoNivel || n.nivelRiesgo; return rn && rn !== RIESGO[0] ? `<span class="chip ${rn === 'Alto' ? 'danger' : 'warn'}">Riesgo ${esc(rn.toLowerCase())}</span>` : ''; })()}${n.signedAt ? `<span class="chip ok">Firmada${n.sesion ? ' · sesión n.º ' + n.sesion : ''}</span>` : '<span class="chip warn">Borrador</span>'}</span></div>
   ${n.folio || n.entorno ? `<span class="ts">${esc([folioTxt(n), n.entorno, n.causa, n.presentes ? 'Presentes: ' + n.presentes : '', n.destino].filter(Boolean).join(' · '))}</span>` : ''}
   ${kvHTML(n, evolSchema(n))}
-  ${(n.diagnosticos || []).length ? `<dl class="kv"><dt>Diagnóstico${n.dxCambio ? ' <span class="chip warn">Actualizado</span>' : ''}</dt><dd>${n.diagnosticos.map(d => dxNorm(d, n)).map((d, k) => esc(d.codigo + ' ' + d.nombre) + (k === 0 && n.diagnosticos.length > 1 ? ' (principal)' : '') + ' · ' + esc(d.tipo) + (d.estado !== 'Activo' ? ' · ' + esc(d.estado.toLowerCase()) : '')).join('<br>')}${n.dxCambio && n.dxObs ? '<br><i>Motivo: ' + esc(n.dxObs) + '</i>' : ''}</dd></dl>` : ''}
+  ${(n.diagnosticos || []).length ? `<dl class="kv"><dt>Impresión${n.dxCambio ? ' <span class="chip warn">Actualizado</span>' : ''}</dt><dd>${n.diagnosticos.map(d => dxNorm(d, n)).map((d, k) => esc(d.codigo + ' ' + d.nombre) + (k === 0 && n.diagnosticos.length > 1 ? ' (principal)' : '') + ' · ' + esc(d.tipo) + (d.estado !== 'Activo' ? ' · ' + esc(d.estado.toLowerCase()) : '')).join('<br>')}${n.dxCambio && n.dxObs ? '<br><i>Motivo: ' + esc(n.dxObs) + '</i>' : ''}</dd></dl>` : ''}
   ${n.signedAt ? `<div class="row"><img class="sigimg" style="max-width:140px" src="${n.therapistSig}" alt="Firma"><span class="ts">Firmada ${esc(fmtShort(n.signedAt))}<br>${esc(n.therapistName)}</span></div>${addendaHTML(n, 'note', n.id)}<div class="row"><button class="btn sm" data-act="viewNote" data-id="${n.id}">Ver y descargar</button></div>`
     : `<div class="row"><button class="btn sm pri" data-act="editNote" data-id="${n.id}">Continuar edición</button><button class="btn sm warn" data-act="delNote" data-id="${n.id}">Descartar borrador</button></div>`}</div>`;
 }

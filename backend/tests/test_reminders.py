@@ -55,9 +55,9 @@ def test_patient_confirms_or_cancels_from_link(monkeypatch):
     assert a["confirmacion"]["estado"] == "Confirmada" and a["estado"] == "Programada"
     assert pub.post(f"/api/cita/{tok}", json={"accion": "cancelar"}, headers=HEADERS).status_code == 200
     a = next(r for r in c.get("/api/records").json() if r["id"] == "a_3")
-    assert a["estado"] == "Cancelada" and a["confirmacion"]["estado"] == "Cancelada por el paciente"
+    assert a["estado"] == "Cancelada" and a["confirmacion"]["estado"] == "Cancelada por el consultante"
     assert pub.post(f"/api/cita/{tok}", json={"accion": "confirmar"}, headers=HEADERS).status_code == 409  # ya cancelada
-    assert c.get("/api/recordatorios").json()["items"]["a_3"]["respuesta"] == "Cancelada por el paciente"
+    assert c.get("/api/recordatorios").json()["items"]["a_3"]["respuesta"] == "Cancelada por el consultante"
     old = c.post("/api/recordatorios/a_4/enlace", headers=HEADERS).json()["enlace"]
     assert pub.post(f"/api/cita/{old}", json={"accion": "confirmar"}, headers=HEADERS).status_code == 409  # cita pasada
     assert pub.get("/api/cita/noexiste-noexiste-noexiste").status_code == 404

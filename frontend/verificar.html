@@ -63,11 +63,11 @@ async function check(code) {
     if (!r.ok) throw new Error();
     const d = await r.json();
     out.innerHTML = `<div class="res ok"><b>Documento auténtico.</b> Fue emitido y firmado en este sistema.</div>
-      <dl><dt>Documento</dt><dd>${esc(d.tipo)}</dd><dt>Paciente</dt><dd>${esc(d.paciente)}</dd><dt>Dirigido a</dt><dd>${esc(d.destinatario || 'A quien corresponda')}</dd>
+      <dl><dt>Documento</dt><dd>${esc(d.tipo)}</dd><dt>Consultante</dt><dd>${esc(d.paciente)}</dd><dt>Dirigido a</dt><dd>${esc(d.destinatario || 'A quien corresponda')}</dd>
       ${d.asunto ? `<dt>Asunto</dt><dd>${esc(d.asunto)}</dd>` : ''}<dt>Firmado por</dt><dd>${esc(d.profesional)}${d.registro ? ' · T.P. ' + esc(d.registro) : ''}</dd><dt>Fecha de firma</dt><dd>${esc(fmt(d.firmado))}</dd></dl>
       <p><b>Contenido firmado</b></p><div class="doc">${fmtRich(d.contenido)}</div>
       ${(d.adendas || []).length ? '<p><b>Adendas</b></p>' + d.adendas.map(a => `<div class="doc"><b>${esc(fmt(a.fecha))}:</b> ${esc(a.texto)}</div>`).join('') : ''}
-      <p class="muted">Si el documento que recibió dice algo distinto, fue alterado: comuníquese con el profesional.</p>`;
+      <p class="muted">Si el documento que recibió dice algo distinto, fue alterado: comuníquese con el terapeuta.</p>`;
   } catch (e) { out.innerHTML = '<div class="res bad">No se pudo consultar en este momento. Intente más tarde.</div>'; }
 }
 $('#f').onsubmit = e => { e.preventDefault(); check($('#c').value); };

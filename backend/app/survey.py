@@ -1,10 +1,10 @@
-"""Encuestas de satisfacción: sorteo periódico de pacientes, envío del enlace y respuestas anónimas.
+"""Encuestas de satisfacción: sorteo periódico de consultantes, envío del enlace y respuestas anónimas.
 
 Cada terapeuta configura su encuesta en su perfil (registro «profile», campo «encuesta»):
   activa, cadaDias, cantidad, intro, preguntas, incluirAnteriores.
-Cada sorteo elige al azar, entre los pacientes atendidos en el periodo, a quienes no se invitó
+Cada sorteo elige al azar, entre los consultantes atendidos en el periodo, a quienes no se invitó
 en los últimos SURVEY_MIN_GAP_DAYS días, no pidieron la baja y autorizaron el tratamiento de datos.
-Las respuestas se guardan sin el paciente ni la invitación: el terapeuta ve resultados agregados."""
+Las respuestas se guardan sin el consultante ni la invitación: el terapeuta ve resultados agregados."""
 import hashlib
 import json
 import random
@@ -24,7 +24,7 @@ from .config import (PUBLIC_URL, SMTP_FROM, SMTP_HOST, SMTP_PASSWORD, SMTP_PORT,
 from .db import MailAccount, Record, SessionLocal, SurveyInvite, SurveyOptOut, SurveyState, User
 from .security import decrypt, encrypt
 
-DATA_TIPO = "Autorización de tratamiento de datos personales"
+DATA_TIPO = "Autorización de uso de datos personales"
 EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 
 # Tipos de respuesta: opciones con su puntaje. «texto» es una respuesta abierta, sin puntaje.
@@ -36,7 +36,7 @@ TYPES = {
     "texto": [],
 }
 
-# Preguntas sugeridas: las del formato del consultorio y una dimensión sobre el profesional.
+# Preguntas sugeridas: las del formato del consultorio y una dimensión sobre el terapeuta.
 DEFAULT_QUESTIONS = [
     {"id": "op1", "dim": "Oportunidad de consulta", "texto": "Cuando solicitó su cita, se la asignaron en:", "tipo": "dias"},
     {"id": "op2", "dim": "Oportunidad de consulta", "texto": "La hora en que le asignaron su cita coincidió con el momento de la atención", "tipo": "sino"},
@@ -44,13 +44,13 @@ DEFAULT_QUESTIONS = [
     {"id": "pf2", "dim": "Planta física", "texto": "¿Cómo califica las comodidades del consultorio?", "tipo": "escala"},
     {"id": "pf3", "dim": "Planta física", "texto": "¿Cómo califica el ambiente de las instalaciones?", "tipo": "escala"},
     {"id": "at1", "dim": "Atención", "texto": "El trato que recibió en la recepción o al agendar fue:", "tipo": "escala"},
-    {"id": "cp1", "dim": "Características del profesional", "texto": "La puntualidad del profesional al iniciar las sesiones fue:", "tipo": "escala"},
-    {"id": "cp2", "dim": "Características del profesional", "texto": "La forma en que el profesional escuchó lo que usted quería expresar fue:", "tipo": "escala"},
-    {"id": "cp3", "dim": "Características del profesional", "texto": "La claridad con que le explicó su proceso y las actividades propuestas fue:", "tipo": "escala"},
-    {"id": "cp4", "dim": "Características del profesional", "texto": "El respeto y el trato digno que recibió del profesional fueron:", "tipo": "escala"},
-    {"id": "cp5", "dim": "Características del profesional", "texto": "La confianza y la confidencialidad que le transmitió el profesional fueron:", "tipo": "escala"},
-    {"id": "cp6", "dim": "Características del profesional", "texto": "La información que recibió sobre sus derechos, deberes y el consentimiento informado fue:", "tipo": "escala"},
-    {"id": "cp7", "dim": "Características del profesional", "texto": "La utilidad de las sesiones para su situación ha sido:", "tipo": "escala"},
+    {"id": "cp1", "dim": "Características del terapeuta", "texto": "La puntualidad del terapeuta al iniciar las sesiones fue:", "tipo": "escala"},
+    {"id": "cp2", "dim": "Características del terapeuta", "texto": "La forma en que el terapeuta escuchó lo que usted quería expresar fue:", "tipo": "escala"},
+    {"id": "cp3", "dim": "Características del terapeuta", "texto": "La claridad con que le explicó su proceso y las actividades propuestas fue:", "tipo": "escala"},
+    {"id": "cp4", "dim": "Características del terapeuta", "texto": "El respeto y el trato digno que recibió del terapeuta fueron:", "tipo": "escala"},
+    {"id": "cp5", "dim": "Características del terapeuta", "texto": "La confianza y la confidencialidad que le transmitió el terapeuta fueron:", "tipo": "escala"},
+    {"id": "cp6", "dim": "Características del terapeuta", "texto": "La información que recibió sobre sus derechos, deberes y el consentimiento informado fue:", "tipo": "escala"},
+    {"id": "cp7", "dim": "Características del terapeuta", "texto": "La utilidad de las sesiones para su situación ha sido:", "tipo": "escala"},
     {"id": "eg1", "dim": "Experiencia general", "texto": "En general, ¿cómo califica su experiencia con el servicio?", "tipo": "escala"},
     {"id": "eg2", "dim": "Experiencia general", "texto": "¿Recomendaría este servicio a sus familiares y amigos?", "tipo": "recomienda"},
     {"id": "com", "dim": "Comentarios", "texto": "¿Qué podríamos mejorar? (opcional)", "tipo": "texto"},
@@ -74,7 +74,7 @@ def token_hash(token: str) -> str:
     return hashlib.sha256(token.encode()).hexdigest()
 
 
-# Servidores de correo conocidos, según el dominio del correo del profesional.
+# Servidores de correo conocidos, según el dominio del correo del terapeuta.
 PRESETS = {
     ("gmail.com", "googlemail.com"): ("smtp.gmail.com", 587),
     ("outlook.com", "hotmail.com", "live.com", "msn.com", "outlook.es", "hotmail.es", "live.com.mx"): ("smtp-mail.outlook.com", 587),
@@ -98,7 +98,7 @@ def server_account() -> dict | None:
 
 
 def account(db, user_id: int) -> dict | None:
-    """Correo con el que se envían las encuestas de esta cuenta: el propio del profesional o, si no, el del servidor."""
+    """Correo con el que se envían las encuestas de esta cuenta: el propio del terapeuta o, si no, el del servidor."""
     row = db.get(MailAccount, user_id)
     if row:
         return {**decrypt(row.payload), "propio": True}
@@ -251,7 +251,7 @@ def link(token: str, base: str = "") -> str:
 
 def message(to: str, token: str, p: dict, prof: dict, acc: dict | None = None) -> EmailMessage:
     acc = acc or {}
-    who = prof.get("nombre") or "Su psicólogo(a)"
+    who = prof.get("nombre") or "Su terapeuta(a)"
     place = prof.get("consultorio") or who
     first = str(p.get("nombres") or "").split(" ")[0]
     url = link(token, acc.get("base") or "")

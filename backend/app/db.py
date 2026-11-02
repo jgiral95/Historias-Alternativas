@@ -36,7 +36,7 @@ class User(Base):
     # Cuenta creada (o contraseña restablecida) por otra persona: debe elegir su propia contraseña al entrar.
     must_change_password: Mapped[bool] = mapped_column(Boolean, default=False, server_default=sa_false())
     recovery_codes: Mapped[str | None] = mapped_column(Text, nullable=True)
-    # Subcuentas de equipo (secretaría, asistentes): trabajan sobre los datos del profesional dueño.
+    # Subcuentas de equipo (secretaría, asistentes): trabajan sobre los datos del terapeuta dueño.
     owner_id: Mapped[int | None] = mapped_column(Integer, nullable=True, index=True)
     # Datos de las personas del equipo para el historial de cambios (documento y firma), cifrados.
     profile: Mapped[bytes | None] = mapped_column(LargeBinary, nullable=True)
@@ -54,7 +54,7 @@ class TrustedDevice(Base):
 
 
 class Record(Base):
-    """Un registro clínico (paciente, nota, informe o perfil). El contenido va cifrado."""
+    """Un registro (consultante, nota, informe o perfil). El contenido va cifrado."""
     __tablename__ = "records"
     __table_args__ = (PrimaryKeyConstraint("user_id", "id"),)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
@@ -108,7 +108,7 @@ class Feed(Base):
 
 
 class Audit(Base):
-    """Bitácora de accesos y cambios. Nunca guarda contenido clínico."""
+    """Bitácora de accesos y cambios. Nunca guarda contenido de las sesiones."""
     __tablename__ = "audit"
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
@@ -135,7 +135,7 @@ class SurveyInvite(Base):
 
 
 class SurveyResponse(Base):
-    """Respuesta a la encuesta, sin vínculo con el paciente ni con la invitación (anónima). Solo el mes."""
+    """Respuesta a la encuesta, sin vínculo con el consultante ni con la invitación (anónima). Solo el mes."""
     __tablename__ = "survey_responses"
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
@@ -144,7 +144,7 @@ class SurveyResponse(Base):
 
 
 class SurveyOptOut(Base):
-    """Pacientes que pidieron no recibir más encuestas."""
+    """Consultantes que pidieron no recibir más encuestas."""
     __tablename__ = "survey_optouts"
     __table_args__ = (PrimaryKeyConstraint("user_id", "patient_id"),)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
@@ -160,7 +160,7 @@ class SurveyState(Base):
 
 
 class MailAccount(Base):
-    """Correo propio de cada profesional para enviar sus encuestas. Todo va cifrado (incluida la contraseña)."""
+    """Correo propio de cada terapeuta para enviar sus encuestas. Todo va cifrado (incluida la contraseña)."""
     __tablename__ = "mail_accounts"
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), primary_key=True)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
@@ -182,7 +182,7 @@ class ApptReminder(Base):
 
 class ConsentRequest(Base):
     """Consentimiento enviado para firmar a distancia. Del enlace solo se guarda su hash; el texto, el firmante
-    y la firma del profesional van cifrados. Al firmarse, el consentimiento se agrega a la historia del paciente."""
+    y la firma del terapeuta van cifrados. Al firmarse, el consentimiento se agrega a la historia del consultante."""
     __tablename__ = "consent_requests"
     id: Mapped[str] = mapped_column(String(64), primary_key=True)  # hash del enlace
     ref: Mapped[str] = mapped_column(String(32), unique=True)

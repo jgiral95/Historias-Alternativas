@@ -37,7 +37,7 @@ SMTP_PORT = int(os.environ.get("SMTP_PORT", "587") or 587)
 SMTP_USER = os.environ.get("SMTP_USER", "").strip()
 SMTP_PASSWORD = os.environ.get("SMTP_PASSWORD", "").strip()
 SMTP_FROM = os.environ.get("SMTP_FROM", "").strip() or SMTP_USER
-# Días que dura abierta una encuesta y días mínimos antes de volver a invitar al mismo paciente.
+# Días que dura abierta una encuesta y días mínimos antes de volver a invitar al mismo consultante.
 SURVEY_DAYS_OPEN = 14
 SURVEY_MIN_GAP_DAYS = 180
 # Sorteo automático en segundo plano (0 lo apaga; las pruebas lo apagan).

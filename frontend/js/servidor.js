@@ -8,7 +8,7 @@ async function startApp() {
   S.loading = false; render(); fbMount(); welcome();
   Promise.all([svLoad(), remLoad(), firmasSync()]).then(() => { if (S.view === 'patients' && !S.pid && !$('.modal') && !S.dirty && !$('#acmenu.open') && !(document.activeElement && /INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName))) render(); });
 }
-/* El servidor web responde pero la API no: nunca pasar a modo local con datos de pacientes. */
+/* El servidor web responde pero la API no: nunca pasar a modo local con datos de consultantes. */
 function renderDown() {
   $('#modal-root').innerHTML = '';
   $('#app').innerHTML = `<div class="panel" style="max-width:440px;margin:8vh auto 0"><div class="body">
@@ -22,7 +22,7 @@ function renderDown() {
 function renderLogin(msg, email) {
   $('#modal-root').innerHTML = ''; $('#fb-root').innerHTML = '';
   $('#app').innerHTML = `<div class="panel" style="max-width:400px;margin:8vh auto 0"><form class="body" id="loginform" autocomplete="on">
-    <div class="brand">${logoSVG(60)}<b>Alter-Karute</b></div><p style="margin:0;color:var(--muted)">Ingrese con su cuenta para ver sus historias clínicas.</p>
+    <div class="brand">${logoSVG(60)}<b>Alter-Karute</b></div><p style="margin:0;color:var(--muted)">Ingrese con su cuenta para ver sus fichas.</p>
     ${msg ? `<div class="banner" role="alert">${esc(msg)}</div>` : ''}
     <div class="fld"><label for="lg_email">Correo</label><input id="lg_email" type="email" autocomplete="username" value="${esc(email || '')}" required></div>
     <div class="fld"><label for="lg_pass">Contraseña</label><input id="lg_pass" type="password" autocomplete="current-password" required></div>
@@ -84,7 +84,7 @@ ACT.dropLocal = b => {
   try { localStorage.removeItem('archivo_clinico'); } catch (e) { /* nada */ }
   toast('Copia local borrada de este navegador.'); render();
 };
-/* Usuarios (administrador): buscador y, dentro de cada profesional, las cuentas de su equipo. */
+/* Usuarios (administrador): buscador y, dentro de cada terapeuta, las cuentas de su equipo. */
 function userCard(u, sub) {
   const role = u.role === 'admin' ? 'Administrador' : u.role === 'asistente' ? 'Equipo' : 'Terapeuta';
   return `<div class="card ${sub ? 'usub' : ''}"><div class="row" style="justify-content:space-between"><span><b>${esc(u.name)}</b><br><span class="ts">${esc(u.email)}</span></span><span class="row"><span class="chip ${u.role === 'admin' ? '' : 'warn'}">${role}</span><span class="chip ${u.active ? 'ok' : 'danger'}">${u.active ? 'Activa' : 'Inactiva'}</span>${u.totp ? '<span class="chip ok">2 pasos</span>' : ''}${u.cambiarClave ? '<span class="chip warn">Debe cambiar la contraseña</span>' : ''}</span></div>
@@ -104,9 +104,9 @@ ACT.users = async () => {
     const html = shown.map(p => {
       const t = (team[p.id] || []).sort((a, b) => a.name.localeCompare(b.name, 'es')), tm = q ? t.filter(hit) : t, showOpen = open.has(p.id) || (q && tm.length && !hit(p));
       return `<div class="ugroup">${userCard(p)}${t.length ? `<details class="uteam" data-owner="${p.id}" ${showOpen || (q && tm.length) ? 'open' : ''}><summary>Equipo de ${esc(p.name.split(' ')[0])} (${t.length})${q && tm.length !== t.length ? ` · ${tm.length} coincide${tm.length === 1 ? '' : 'n'}` : ''}</summary>${(q && !hit(p) ? tm : t).map(u => userCard(u, true)).join('')}</details>` : ''}</div>`;
-    }).join('') + (orphans.filter(hit).length ? `<div class="ugroup"><b class="ts">Cuentas de equipo sin profesional</b>${orphans.filter(hit).map(u => userCard(u, true)).join('')}</div>` : '');
+    }).join('') + (orphans.filter(hit).length ? `<div class="ugroup"><b class="ts">Cuentas de equipo sin terapeuta</b>${orphans.filter(hit).map(u => userCard(u, true)).join('')}</div>` : '');
     $('#u_list').innerHTML = html || '<p class="stnote">Ningún usuario coincide con la búsqueda.</p>';
-    $('#u_count').textContent = `${pros.length} profesional${pros.length === 1 ? '' : 'es'} · ${list.length - pros.length} cuenta${list.length - pros.length === 1 ? '' : 's'} de equipo`;
+    $('#u_count').textContent = `${pros.length} terapeuta${pros.length === 1 ? '' : 'es'} · ${list.length - pros.length} cuenta${list.length - pros.length === 1 ? '' : 's'} de equipo`;
   };
   const load = async () => { try { list = await api('/admin/users'); } catch (e) { toast(e.message); return false; } return true; };
   if (!(await load())) return;
@@ -114,7 +114,7 @@ ACT.users = async () => {
     <div class="row"><input type="search" id="u_q" placeholder="Buscar por nombre o correo (también en los equipos)" aria-label="Buscar usuarios" style="flex:1;min-width:220px"><span class="ts" id="u_count"></span></div>
     <div id="u_list" class="ulist"></div>
     <div class="card"><h3>Nuevo usuario</h3><div class="grid">${F('Nombre', 'uname', '')}${F('Correo', 'uemail', '', { type: 'email' })}${F('Contraseña inicial (mín. 10)', 'upass', '', { type: 'password' })}${F('Rol', 'urole', 'Terapeuta', { type: 'select', opts: ['Terapeuta', 'Administrador'] })}</div><div class="row end"><button class="btn pri" data-u="create">Crear usuario</button></div></div>
-    <p style="margin:0;font-size:13px;color:var(--muted)">Cada terapeuta ve únicamente sus propios pacientes. Las cuentas de equipo (asistentes, secretarias) las crea cada profesional y aparecen dentro de su usuario. Los usuarios no se eliminan: se desactivan, y sus registros se conservan.</p></div></div>`;
+    <p style="margin:0;font-size:13px;color:var(--muted)">Cada terapeuta ve únicamente sus propios consultantes. Las cuentas de equipo (asistentes, secretarias) las crea cada terapeuta y aparecen dentro de su usuario. Los usuarios no se eliminan: se desactivan, y sus registros se conservan.</p></div></div>`;
   $('#ucl').onclick = () => { root.innerHTML = ''; root.onclick = null; };
   $('#u_q').oninput = e => { q = e.target.value.trim(); drawList(); };
   $('#u_list').addEventListener('toggle', e => { const d = e.target; if (d.matches && d.matches('details.uteam') && !q) { if (d.open) open.add(+d.dataset.owner); else open.delete(+d.dataset.owner); } }, true);
@@ -134,7 +134,7 @@ ACT.users = async () => {
 };
 
 /* ----- Arranque ----- */
-/* Que el navegador no ofrezca guardar (ni llenar) los datos de los pacientes como si fueran los del usuario
+/* Que el navegador no ofrezca guardar (ni llenar) los datos de los consultantes como si fueran los del usuario
    («¿Guardar dirección?», «¿Guardar datos de contacto?»). Chrome ignora autocomplete="off", pero no llena ni ofrece guardar
    campos con un valor de autocomplete que no reconoce; los gestores de contraseñas respetan sus propias marcas.
    Se aplica a todo campo sin autocomplete propio (el ingreso y las contraseñas sí lo tienen); un «off» cuenta como sin

@@ -16,13 +16,13 @@ const SV_DEFAULT = [
   ['pf2', 'Planta física', '¿Cómo califica las comodidades del consultorio?', 'escala'],
   ['pf3', 'Planta física', '¿Cómo califica el ambiente de las instalaciones?', 'escala'],
   ['at1', 'Atención', 'El trato que recibió en la recepción o al agendar fue:', 'escala'],
-  ['cp1', 'Características del profesional', 'La puntualidad del profesional al iniciar las sesiones fue:', 'escala'],
-  ['cp2', 'Características del profesional', 'La forma en que el profesional escuchó lo que usted quería expresar fue:', 'escala'],
-  ['cp3', 'Características del profesional', 'La claridad con que le explicó su proceso y las actividades propuestas fue:', 'escala'],
-  ['cp4', 'Características del profesional', 'El respeto y el trato digno que recibió del profesional fueron:', 'escala'],
-  ['cp5', 'Características del profesional', 'La confianza y la confidencialidad que le transmitió el profesional fueron:', 'escala'],
-  ['cp6', 'Características del profesional', 'La información que recibió sobre sus derechos, deberes y el consentimiento informado fue:', 'escala'],
-  ['cp7', 'Características del profesional', 'La utilidad de las sesiones para su situación ha sido:', 'escala'],
+  ['cp1', 'Características del terapeuta', 'La puntualidad del terapeuta al iniciar las sesiones fue:', 'escala'],
+  ['cp2', 'Características del terapeuta', 'La forma en que el terapeuta escuchó lo que usted quería expresar fue:', 'escala'],
+  ['cp3', 'Características del terapeuta', 'La claridad con que le explicó su proceso y las actividades propuestas fue:', 'escala'],
+  ['cp4', 'Características del terapeuta', 'El respeto y el trato digno que recibió del terapeuta fueron:', 'escala'],
+  ['cp5', 'Características del terapeuta', 'La confianza y la confidencialidad que le transmitió el terapeuta fueron:', 'escala'],
+  ['cp6', 'Características del terapeuta', 'La información que recibió sobre sus derechos, deberes y el consentimiento informado fue:', 'escala'],
+  ['cp7', 'Características del terapeuta', 'La utilidad de las sesiones para su situación ha sido:', 'escala'],
   ['eg1', 'Experiencia general', 'En general, ¿cómo califica su experiencia con el servicio?', 'escala'],
   ['eg2', 'Experiencia general', '¿Recomendaría este servicio a sus familiares y amigos?', 'recomienda'],
   ['com', 'Comentarios', '¿Qué podríamos mejorar? (opcional)', 'texto']
@@ -47,14 +47,14 @@ ACT.survey = () => {
   const draw = () => {
     root.innerHTML = `<div class="modal" role="dialog" aria-modal="true" aria-label="Mi encuesta de satisfacción"><div class="box" id="svform" style="max-width:820px">
     <div class="row" style="justify-content:space-between"><h3>Mi encuesta de satisfacción</h3><button class="btn sm" data-sv="close">Cerrar</button></div>
-    <p style="margin:0;font-size:13px;color:var(--muted)">Cada cierto tiempo se sortean al azar pacientes atendidos en ese periodo y se les envía el enlace de la encuesta. Las respuestas son anónimas: aquí y en Estadísticas solo verá los resultados agregados. A un mismo paciente no se le vuelve a invitar antes de 6 meses, y puede pedir no recibir más encuestas.</p>
+    <p style="margin:0;font-size:13px;color:var(--muted)">Cada cierto tiempo se sortean al azar consultantes atendidos en ese periodo y se les envía el enlace de la encuesta. Las respuestas son anónimas: aquí y en Estadísticas solo verá los resultados agregados. A un mismo consultante no se le vuelve a invitar antes de 6 meses, y puede pedir no recibir más encuestas.</p>
     <div id="mailslot">${mailHTML(mailInfo)}</div>
     <label class="check"><input type="checkbox" id="sv_activa" ${cfg.activa ? 'checked' : ''}> <span><b>Enviar encuestas automáticamente</b></span></label>
     <div class="grid"><div class="fld"><label for="sv_cada">Hacer un sorteo cada</label><select id="sv_cada">${[15, 30, 60, 90, 180].map(d => `<option value="${d}" ${+cfg.cadaDias === d ? 'selected' : ''}>${d} días</option>`).join('')}</select></div>
-    <div class="fld"><label for="sv_cant">Pacientes por sorteo</label><input id="sv_cant" type="number" min="1" max="50" value="${cfg.cantidad}"></div></div>
-    <label class="check"><input type="checkbox" id="sv_old" ${cfg.incluirAnteriores ? 'checked' : ''}> <span>Incluir pacientes cuya autorización de datos es anterior y no menciona encuestas. <small style="color:var(--muted)">Por defecto solo se invita a quienes autorizaron las encuestas en su autorización de tratamiento de datos (el modelo nuevo ya lo incluye).</small></span></label>
+    <div class="fld"><label for="sv_cant">Consultantes por sorteo</label><input id="sv_cant" type="number" min="1" max="50" value="${cfg.cantidad}"></div></div>
+    <label class="check"><input type="checkbox" id="sv_old" ${cfg.incluirAnteriores ? 'checked' : ''}> <span>Incluir consultantes cuya autorización de datos es anterior y no menciona encuestas. <small style="color:var(--muted)">Por defecto solo se invita a quienes autorizaron las encuestas en su autorización de uso de datos (el modelo nuevo ya lo incluye).</small></span></label>
     <div class="fld"><label for="sv_intro">Texto de bienvenida</label><textarea id="sv_intro" rows="2">${esc(cfg.intro)}</textarea></div>
-    <div class="row" style="justify-content:space-between"><b>Preguntas (${cfg.preguntas.length})</b><span class="row"><button class="btn sm" data-sv="preview">${preview ? 'Editar preguntas' : 'Ver como paciente'}</button><button class="btn sm" data-sv="reset">Restaurar sugeridas</button></span></div>
+    <div class="row" style="justify-content:space-between"><b>Preguntas (${cfg.preguntas.length})</b><span class="row"><button class="btn sm" data-sv="preview">${preview ? 'Editar preguntas' : 'Ver como consultante'}</button><button class="btn sm" data-sv="reset">Restaurar sugeridas</button></span></div>
     ${preview ? svFormHTML(cfg.preguntas, true) : cfg.preguntas.map((q, k) => `<div class="card svq"><div class="grid"><div class="fld"><label>Dimensión</label><input data-q="dim" value="${esc(q.dim)}"></div><div class="fld"><label>Tipo de respuesta</label><select data-q="tipo">${Object.keys(SV_TYPES).map(t => `<option value="${t}" ${q.tipo === t ? 'selected' : ''}>${SV_TIPO_LBL[t]}</option>`).join('')}</select></div><div class="fld wide"><label>Pregunta ${k + 1}</label><input data-q="texto" value="${esc(q.texto)}"></div></div>
       <div class="row end">${k ? `<button class="btn sm" data-sv="up" data-k="${k}" aria-label="Subir pregunta ${k + 1}">↑</button>` : ''}${k < cfg.preguntas.length - 1 ? `<button class="btn sm" data-sv="down" data-k="${k}" aria-label="Bajar pregunta ${k + 1}">↓</button>` : ''}<button class="btn sm warn" data-sv="del" data-k="${k}">Quitar</button></div></div>`).join('') + '<div class="row"><button class="btn" data-sv="add">+ Pregunta</button></div>'}
     <p style="margin:0;font-size:13px;color:var(--muted)">Los cambios en las preguntas aplican a las encuestas que se envíen desde ahora. Último sorteo: ${st.ultimoSorteo ? esc(fmtDT(st.ultimoSorteo)) : 'ninguno'}.</p>
@@ -101,18 +101,18 @@ ACT.survey = () => {
       if (a === 'draw' && !cfg.activa) { toast('Active «Enviar encuestas automáticamente» para sortear.'); return; }
       const snap = clone(S.profile); S.profile.encuesta = clone(cfg);
       if (!(await persist([S.profile], b))) { restore(S.profile, snap); return; }
-      if (a === 'draw') { try { const r = await api('/encuestas/sortear', { method: 'POST' }); toast(r.creadas ? `Se sortearon ${r.creadas} paciente(s).` : 'No hay pacientes para invitar ahora: deben haber sido atendidos en el periodo, tener la autorización de datos y no haber sido invitados en los últimos 6 meses.'); } catch (err) { toast(err.message); } }
+      if (a === 'draw') { try { const r = await api('/encuestas/sortear', { method: 'POST' }); toast(r.creadas ? `Se sortearon ${r.creadas} consultante(s).` : 'No hay consultantes para invitar ahora: deben haber sido atendidos en el periodo, tener la autorización de datos y no haber sido invitados en los últimos 6 meses.'); } catch (err) { toast(err.message); } }
       else toast('Encuesta guardada.');
       await svLoad(); root.innerHTML = ''; root.onclick = null; render();
     }
   };
 };
-/* Correo de envío: cada profesional envía sus encuestas desde su propio correo. */
+/* Correo de envío: cada terapeuta envía sus encuestas desde su propio correo. */
 function mailHTML(m, okMsg) {
   if (!m) return '<p class="stnote">Cargando el correo de envío…</p>';
   const known = /@(gmail|googlemail|outlook|hotmail|live|msn|yahoo|ymail|icloud|me|mac|zoho)\./i;
   const head = `<b>Correo de envío</b> ${m.propio ? `<span class="chip ok">${esc(m.correo)}</span>` : '<span class="chip warn">Sin configurar</span>'}`;
-  if (m.propio && !m.editar) return `<div class="card">${head}${okMsg ? `<div class="banner" style="background:var(--ok-soft,#DDF0E4);color:var(--ok,#2B7A4B)">${esc(okMsg)}</div>` : ''}<p class="stnote">Las encuestas salen desde este correo, con su nombre, y las respuestas de los pacientes le llegan ahí. A los pacientes sin correo la encuesta les aparece en Pendientes para enviarla por WhatsApp.</p><div class="row"><button type="button" class="btn sm" data-sv="mailedit">Cambiar</button><button type="button" class="btn sm warn" data-sv="maildel">Quitar</button></div></div>`;
+  if (m.propio && !m.editar) return `<div class="card">${head}${okMsg ? `<div class="banner" style="background:var(--ok-soft,#DDF0E4);color:var(--ok,#2B7A4B)">${esc(okMsg)}</div>` : ''}<p class="stnote">Las encuestas salen desde este correo, con su nombre, y las respuestas de los consultantes le llegan ahí. A los consultantes sin correo la encuesta les aparece en Pendientes para enviarla por WhatsApp.</p><div class="row"><button type="button" class="btn sm" data-sv="mailedit">Cambiar</button><button type="button" class="btn sm warn" data-sv="maildel">Quitar</button></div></div>`;
   const mail = m.correo || S.profile.correo || (S.user && S.user.email) || '';
   return `<div class="card">${head}${okMsg ? `<p class="stnote">${esc(okMsg)}</p>` : ''}
   <p class="stnote">Las encuestas se envían desde su propio correo. ${m.servidor ? 'Mientras no lo configure, se usa el correo general del servidor.' : 'Mientras no lo configure, las encuestas sorteadas aparecen en Pendientes para enviarlas a mano.'}</p>
@@ -130,7 +130,7 @@ function svFormHTML(qs, disabled) {
 }
 ACT.svSend = b => {
   const i = ((S.sv && S.sv.invitaciones) || []).find(x => x.id === b.dataset.id); if (!i) return;
-  const p = S.patients.find(x => x.id === i.patientId) || {}, url = svUrl(i.enlace), who = S.profile.nombre || 'su psicólogo(a)';
+  const p = S.patients.find(x => x.id === i.patientId) || {}, url = svUrl(i.enlace), who = S.profile.nombre || 'su terapeuta';
   const text = `Hola ${(p.nombres || '').split(' ')[0]}, ${who} le invita a responder una encuesta corta y anónima sobre la atención que recibió (unos 2 minutos): ${url}`;
   const ph = waPhone(p.telefono, p.telInd), root = $('#modal-root');
   root.innerHTML = `<div class="modal" role="dialog" aria-modal="true" aria-label="Enviar encuesta"><div class="box" style="max-width:560px"><h3>Enviar encuesta a ${esc(fullName(p))}</h3>
@@ -185,7 +185,7 @@ function statsHTML(forDoc, part) {
     : [...S.notes.map(n => (n.sessionAt || '').slice(0, 4)), ...S.patients.map(p => ((p.intake || {}).sessionAt || '').slice(0, 4))]).filter(Boolean))].sort().reverse();
   const per = S.stPer && (S.stPer === 'todo' || years.includes(S.stPer)) ? S.stPer : 'todo';
   const pats = per === 'todo' ? S.patients : S.patients.filter(p => attendedIn(p, per));
-  const perTxt = per === 'todo' ? 'todos los pacientes registrados' : `pacientes atendidos en ${per}`;
+  const perTxt = per === 'todo' ? 'todos los consultantes registrados' : `consultantes atendidos en ${per}`;
   const group = (list, fn, labels) => { const m = new Map(labels.map(l => [l, 0])); list.forEach(p => { const k = fn(p); m.set(k, (m.get(k) || 0) + 1); }); return [...m.entries()].map(([label, n]) => ({ label, n })).filter(r => r.n || labels.includes(r.label)); };
   // Sexo
   const sexo = group(pats, p => ({ Femenino: 'Mujeres', Masculino: 'Hombres', Intersexual: 'Intersexual' })[p.sexo] || 'Sin registrar', ['Mujeres', 'Hombres']);
@@ -198,7 +198,7 @@ function statsHTML(forDoc, part) {
   // Razón de inactividad
   const inact = pats.filter(p => p.estado && p.estado !== 'Activo');
   const raz = group(inact, p => p.razonInactividad || 'Sin registrar', []).sort((a, b) => b.n - a.n);
-  // Prevalencia de diagnósticos (diagnóstico principal vigente)
+  // Impresiones frecuentes (impresión principal vigente)
   const withDx = pats.map(p => dxActive(currentDx(p).items)[0]).filter(Boolean);
   const dxc = new Map(); withDx.forEach(d => { const k = d.nombre; dxc.set(k, (dxc.get(k) || 0) + 1); });
   let dxRows = [...dxc.entries()].map(([label, n]) => ({ label, n })).sort((a, b) => b.n - a.n);
@@ -216,13 +216,13 @@ function statsHTML(forDoc, part) {
   const dimBars = ag.dims.length ? `<div class="bars">${ag.dims.map(d => `<div class="bar" title="${esc(d.dim)}: ${r1(d.pc)} %"><span class="bl">${esc(d.dim)}</span><span class="bt"><i style="width:${d.pc}%"></i></span><span class="bv">${r1(d.pc)} %</span></div>`).join('')}</div>` : '';
   const head = forDoc ? '' : `<div class="row" style="justify-content:space-between;align-items:flex-end"><h2 style="font-family:var(--f-doc);font-size:22px;margin:0">${enc_ ? 'Encuesta de satisfacción' : 'Estadísticas'}</h2><span class="row"><span class="fld" style="min-width:160px"><label for="st_per">Periodo</label><select id="st_per"><option value="todo" ${per === 'todo' ? 'selected' : ''}>Todo</option>${years.map(y => `<option ${per === y ? 'selected' : ''}>${y}</option>`).join('')}</select></span>${enc_ ? '<button class="btn" data-act="survey">Configurar encuesta</button>' : ''}<button class="btn" data-act="statsDoc" data-part="${enc_ ? 'enc' : 'stats'}">Imprimir o guardar PDF</button></span></div>`;
   if (!enc_) return `${head}
-  <div class="stats"><div class="stat"><b>${pats.length}</b><span>${per === 'todo' ? 'pacientes registrados' : 'pacientes atendidos en ' + per}</span></div><div class="stat"><b>${est[1].n}</b><span>casos activos</span></div><div class="stat"><b>${est[0].n}</b><span>casos finalizados</span></div><div class="stat"><b>${withDx.length}</b><span>con diagnóstico CIE-11</span></div></div>
+  <div class="stats"><div class="stat"><b>${pats.length}</b><span>${per === 'todo' ? 'consultantes registrados' : 'consultantes atendidos en ' + per}</span></div><div class="stat"><b>${est[1].n}</b><span>casos activos</span></div><div class="stat"><b>${est[0].n}</b><span>casos finalizados</span></div><div class="stat"><b>${withDx.length}</b><span>con impresión registrada</span></div></div>
   ${stBlock('Sexo', 'Sexo registrado en los datos de ' + perTxt + '.', sexo, pats.length)}
-  ${stBlock('Impresiones frecuentes', 'Impresión principal activa de ' + perTxt + '. Se muestran los 5 más frecuentes.' + (sinDx ? ` ${sinDx} paciente(s) sin impresión registrada no se cuentan.` : ''), dxRows, withDx.length)}
+  ${stBlock('Impresiones frecuentes', 'Impresión principal activa de ' + perTxt + '. Se muestran los 5 más frecuentes.' + (sinDx ? ` ${sinDx} consultante(s) sin impresión registrada no se cuentan.` : ''), dxRows, withDx.length)}
   ${stBlock('Tipo de servicio', 'Tipo de servicio registrado en los datos de ' + perTxt + '. En pareja, familia o grupo cada persona cuenta por separado.', serv, pats.length, '# Total')}
   ${stBlock('Modalidad de atención', 'Modalidad registrada en los datos de ' + perTxt + '.', moda, pats.length, '# Total')}
   ${stBlock('Estado de los casos', 'Finalizados: alta, cerrado o remitido. Otros: en pausa.', est, pats.length, '# Total')}
-  ${stBlock('Razón de inactividad de los pacientes', 'Pacientes que no están activos. La razón se registra en Datos → Estado del proceso.', raz, inact.length, '# Total')}`;
+  ${stBlock('Razón de inactividad de los consultantes', 'Consultantes que no están activos. La razón se registra en Datos → Estado del proceso.', raz, inact.length, '# Total')}`;
   if (S.mode !== 'server') return head + '<p class="stnote">La encuesta de satisfacción requiere el servidor.</p>';
   const sent = invs.length;
   return `${head}
@@ -232,7 +232,7 @@ function statsHTML(forDoc, part) {
   ${stBlock('Cantidad de personas encuestadas', `Encuestas enviadas en el periodo${pend ? `; además hay ${pend} pendiente(s) de respuesta, que no se cuentan aún` : ''}.`, enc, closedN)}
   <div class="sec stsec"><h3>Acciones de mejora</h3>${acciones.length ? `<ul class="stcom">${acciones.map(a => `<li><b>${esc(fmtD(a.fecha))}:</b> ${esc(a.texto)}${forDoc ? '' : ` <button class="btn sm warn" data-act="accDel" data-id="${esc(a.id)}">Quitar</button>`}</li>`).join('')}</ul>` : '<p class="stnote">Aún no ha registrado acciones de mejora.</p>'}${forDoc ? '' : `<div class="row" id="accform"><input id="acc_txt" style="flex:1;min-width:220px" placeholder="Ej.: Enviar recordatorio de cita el día anterior" aria-label="Nueva acción de mejora"><button class="btn" data-act="accAdd">Agregar</button></div>`}</div>`;
 }
-ACT.statsDoc = b => { const part = b.dataset.part, per = S.stPer && S.stPer !== 'todo' ? S.stPer : 'todo', t = part === 'enc' ? 'Encuesta de satisfacción' : 'Estadísticas'; showDoc(t, `<div class="docpage">${letterhead(S.profile)}<h2>${t} · ${per === 'todo' ? 'todo el periodo' : per}</h2><p style="font-size:13px">Generado el ${esc(fmtDT(nowISO()))}. Datos agregados, sin información de pacientes individuales.</p>${statsHTML(true, part)}</div>`, (part === 'enc' ? 'encuesta-' : 'estadisticas-') + per + '.html'); };
+ACT.statsDoc = b => { const part = b.dataset.part, per = S.stPer && S.stPer !== 'todo' ? S.stPer : 'todo', t = part === 'enc' ? 'Encuesta de satisfacción' : 'Estadísticas'; showDoc(t, `<div class="docpage">${letterhead(S.profile)}<h2>${t} · ${per === 'todo' ? 'todo el periodo' : per}</h2><p style="font-size:13px">Generado el ${esc(fmtDT(nowISO()))}. Datos agregados, sin información de consultantes individuales.</p>${statsHTML(true, part)}</div>`, (part === 'enc' ? 'encuesta-' : 'estadisticas-') + per + '.html'); };
 ACT.svDelTests = async b => {
   if (!b.dataset.sure) { b.dataset.sure = 1; b.textContent = 'Confirmar: borrar todas las pruebas'; return; }
   try { await api('/encuestas/borrar-pruebas', { method: 'POST' }); S.stTest = false; await svLoad(); S.svRes = await api('/encuestas/resultados'); toast('Encuestas de prueba borradas.'); render(); } catch (e) { toast(e.message); }

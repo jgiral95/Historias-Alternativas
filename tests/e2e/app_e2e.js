@@ -501,7 +501,7 @@ async function drawSig(page, sel) {
   ok(/Revocación del consentimiento/.test(await page.locator('#paper').textContent()), 'el documento incluye la revocación firmada'); await page.click('#cl');
   ok(/Falta la autorización de datos personales/.test(await page.locator('#tabbody').textContent()), 'avisa que falta la autorización de datos');
   await page.click('[data-act="reConsent"]'); await page.waitForSelector('#f_consentTipo');
-  await page.selectOption('#f_consentTipo', 'Autorización de tratamiento de datos personales');
+  await page.selectOption('#f_consentTipo', 'Autorización de uso de datos personales');
   ok((await page.inputValue('#f_consentText')).startsWith('AUTORIZACIÓN PARA EL TRATAMIENTO DE DATOS PERSONALES'), 'la autorización de datos es un documento aparte');
   await drawSig(page, '[data-pad="consentSig"] canvas'); await page.check('#c_ok'); await page.click('[data-act="signConsent"]'); await page.waitForSelector('[data-act="reConsent"]');
   ok(!/Falta la autorización de datos personales/.test(await page.locator('#tabbody').textContent()), 'con la autorización firmada el aviso desaparece');

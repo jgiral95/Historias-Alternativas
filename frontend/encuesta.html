@@ -8,7 +8,7 @@
 <link rel="stylesheet" href="css/fonts.css">
 <meta name="robots" content="noindex">
 <style>
-/* Página pública: el paciente responde la encuesta de satisfacción con el enlace que recibió. */
+/* Página pública: el consultante responde la encuesta de satisfacción con el enlace que recibió. */
 :root{--bg:#F6F1E7;--surface:#FBF8F2;--surface2:#F1ECDF;--ink:#2B2A25;--muted:#6A675C;--line:#E3DBCB;--accent:#4E6B58;--accent-ink:#FFFFFF;--accent-soft:#E4EBE2;
   --ok:#2B7A4B;--ok-soft:#DDF0E4;--danger:#B3261E;--danger-soft:#F8DEDC;color-scheme:light}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#1A211C;--surface:#222B25;--surface2:#2B362E;--ink:#ECE8DC;--muted:#A9B2A8;--line:#36423A;
@@ -58,11 +58,11 @@ async function start() {
     if (!r.ok) throw new Error();
     d = await r.json();
   } catch (e) { return card('<div class="res bad">No se pudo cargar la encuesta. Intente de nuevo en unos minutos.</div>'); }
-  const who = esc(d.consultorio || d.profesional || 'su psicólogo(a)');
+  const who = esc(d.consultorio || d.profesional || 'su terapeuta');
   if (q.get('baja') === '1') return optout(who);
   if (d.estado === 'respondida') return card(`<h1>${logo}Encuesta de satisfacción</h1><div class="res ok">Esta encuesta ya fue respondida. ¡Gracias!</div>`);
   if (d.estado === 'vencida') return card(`<h1>${logo}Encuesta de satisfacción</h1><div class="res bad">Esta encuesta ya cerró.</div>`);
-  let dim = '', html = `<div class="card"><h1>${logo}Encuesta de satisfacción</h1><p>Atención en <b>${who}</b>${d.profesional && d.consultorio ? ' con ' + esc(d.profesional) : ''}.</p><p class="muted">${esc(d.intro)}</p>${d.prueba ? '<div class="res ok">Esta es una <b>encuesta de prueba</b>: sus respuestas quedan marcadas como prueba y no se mezclan con las de los pacientes.</div>' : ''}</div><form id="f" novalidate>`;
+  let dim = '', html = `<div class="card"><h1>${logo}Encuesta de satisfacción</h1><p>Atención en <b>${who}</b>${d.profesional && d.consultorio ? ' con ' + esc(d.profesional) : ''}.</p><p class="muted">${esc(d.intro)}</p>${d.prueba ? '<div class="res ok">Esta es una <b>encuesta de prueba</b>: sus respuestas quedan marcadas como prueba y no se mezclan con las de los consultantes.</div>' : ''}</div><form id="f" novalidate>`;
   d.preguntas.forEach((p, k) => {
     if (p.dim !== dim) { dim = p.dim; html += `<h2>${esc(dim)}</h2>`; }
     html += `<fieldset id="q_${k}" data-id="${esc(p.id)}" data-tipo="${esc(p.tipo)}"><legend>${k + 1}. ${esc(p.texto)}${p.tipo === 'texto' ? '' : ' <span aria-hidden="true" style="color:var(--danger)">*</span>'}</legend>` +

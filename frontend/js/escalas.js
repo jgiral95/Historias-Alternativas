@@ -20,7 +20,7 @@ function scaleForm(p) {
   const sc = allScales().find(x => x.id === S.newScale) || SCALES_BASE[0];
   return `<div class="card" id="scaleform"><h3>Aplicar escala</h3>${sigNeeded()}
   <div class="grid"><div class="fld"><label for="f_escala">Escala</label><select id="f_escala">${allScales().map(x => `<option value="${esc(x.id)}" ${x.id === sc.id ? 'selected' : ''}>${esc(x.nombre)}</option>`).join('')}</select></div>
-  ${F('Fecha y hora de aplicación', 'aplicadaAt', localInput(), { type: 'datetime-local' })}${F('Forma de aplicación', 'modo', 'Autoaplicada', { type: 'select', opts: ['Autoaplicada', 'Heteroaplicada (la diligencia el profesional)', 'Aplicada a un informante'] })}</div>
+  ${F('Fecha y hora de aplicación', 'aplicadaAt', localInput(), { type: 'datetime-local' })}${F('Forma de aplicación', 'modo', 'Autoaplicada', { type: 'select', opts: ['Autoaplicada', 'Heteroaplicada (la diligencia el terapeuta)', 'Aplicada a un informante'] })}</div>
   ${sc.instruccion ? `<p style="margin:0;font-weight:500">${esc(sc.instruccion)}</p>` : ''}
   <div>${sc.items.map((it, i) => `<div class="scitem" role="radiogroup" aria-label="${esc(it)}"><p>${i + 1}. ${esc(it)}</p><div class="opts">${sc.opciones.map(([v, l]) => `<label><input type="radio" name="sc_${i}" value="${v}"> ${esc(l)}</label>`).join('')}</div></div>`).join('')}</div>
   ${sc.funcional ? `<div class="fld"><label for="f_funcional" style="text-transform:none;letter-spacing:0;font-size:14px;font-weight:500;color:var(--ink)">${esc(sc.funcional[0])}</label><select id="f_funcional" data-f="funcional">${[''].concat(sc.funcional[1]).map(x => `<option>${esc(x)}</option>`).join('')}</select></div>` : ''}
@@ -31,7 +31,7 @@ function scaleForm(p) {
   ${F('Resultados e interpretación', 'interpretacion', '', { type: 'area', rows: 3, wide: true, req: true })}
   <details class="sec"><summary class="sum">Protocolo adjunto y entrega del informe (opcional)</summary><div class="grid">
     ${F('Protocolo o planilla de respuestas (de la pestaña Archivo)', 'protocolo', '', { type: 'select', opts: [''].concat(S.files.filter(f => f.patientId === p.id).map(f => f.nombre)) })}
-    ${F('Informe entregado a', 'entregaA', '', { ph: 'Ej.: el paciente; colegio, con autorización' })}${F('Fecha de entrega', 'entregaFecha', '', { type: 'date' })}</div></details>
+    ${F('Informe entregado a', 'entregaA', '', { ph: 'Ej.: el consultante; colegio, con autorización' })}${F('Fecha de entrega', 'entregaFecha', '', { type: 'date' })}</div></details>
   ${sc.fuente ? `<p style="margin:0;font-size:12px;color:var(--muted)">${esc(sc.fuente)}</p>` : ''}
   <p class="lock-note">La aplicación queda firmada con fecha y hora y no podrá modificarse.</p>
   <div class="row end"><button class="btn" data-act="cancelScale">Cancelar</button><button class="btn pri" data-act="saveScale">Firmar y guardar</button></div></div>`;
@@ -101,7 +101,7 @@ ACT.scaleManage = () => {
   const draw = (edit) => {
     const list = myScales();
     root.innerHTML = `<div class="modal" role="dialog" aria-modal="true" aria-label="Mis escalas"><div class="box" id="smform"><div class="row" style="justify-content:space-between"><h3>Mis formatos</h3><button class="btn sm" data-sm="close">Cerrar</button></div>${hubTabs('escalas')}<b>Escalas propias</b>
-    ${edit ? `<div class="grid">${F('Nombre', 'nombre', edit.nombre || '')}${F('Instrucción para el paciente', 'instruccion', edit.instruccion || '', { wide: true })}
+    ${edit ? `<div class="grid">${F('Nombre', 'nombre', edit.nombre || '')}${F('Instrucción para el consultante', 'instruccion', edit.instruccion || '', { wide: true })}
       ${F('Opciones de respuesta (una por línea: puntaje = texto)', 'opciones', (edit.opciones || FREQ4).map(o => o[0] + ' = ' + o[1]).join('\n'), { type: 'area', rows: 4 })}
       ${F('Rangos de interpretación (una por línea: mínimo-máximo = nivel)', 'rangos', (edit.rangos || []).map(r => r[0] + '-' + r[1] + ' = ' + r[2]).join('\n'), { type: 'area', rows: 4 })}
       ${F('Ítems (uno por línea)', 'items', (edit.items || []).join('\n'), { type: 'area', rows: 8, wide: true })}

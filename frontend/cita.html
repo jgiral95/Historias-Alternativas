@@ -8,7 +8,7 @@
 <link rel="stylesheet" href="css/fonts.css">
 <meta name="robots" content="noindex">
 <style>
-/* Página pública: el paciente confirma o cancela su cita con el enlace del recordatorio. */
+/* Página pública: el consultante confirma o cancela su cita con el enlace del recordatorio. */
 :root{--bg:#F6F1E7;--surface:#FBF8F2;--surface2:#F1ECDF;--ink:#2B2A25;--muted:#6A675C;--line:#E3DBCB;--accent:#4E6B58;--accent-ink:#FFFFFF;--accent-soft:#E4EBE2;
   --ok:#2B7A4B;--ok-soft:#DDF0E4;--danger:#B3261E;--danger-soft:#F8DEDC;color-scheme:light}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#1A211C;--surface:#222B25;--surface2:#2B362E;--ink:#ECE8DC;--muted:#A9B2A8;--line:#36423A;
@@ -40,7 +40,7 @@ const logo = '<svg width="28" height="28" viewBox="0 0 120 120" aria-hidden="tru
 const card = h => { $('#m').innerHTML = `<div class="card">${h}</div>`; };
 let d;
 function draw(msg) {
-  const who = esc(d.profesional || 'su psicólogo(a)'), head = `<h1>${logo}Su cita</h1><p class="when">${esc(d.cuando)}</p><p>Con <b>${who}</b>${d.consultorio ? ' · ' + esc(d.consultorio) : ''} · ${esc(d.modalidad)}</p>`;
+  const who = esc(d.profesional || 'su terapeuta'), head = `<h1>${logo}Su cita</h1><p class="when">${esc(d.cuando)}</p><p>Con <b>${who}</b>${d.consultorio ? ' · ' + esc(d.consultorio) : ''} · ${esc(d.modalidad)}</p>`;
   if (d.estado === 'Cancelada') return card(head + `<div class="res bad">Esta cita está cancelada.</div>${msg || ''}<p class="muted">Si quiere reprogramarla, comuníquese con el consultorio.</p>`);
   if (d.pasada) return card(head + '<div class="res bad">Esta cita ya pasó.</div>');
   card(head + (d.respuesta === 'Confirmada' ? '<div class="res ok">Su asistencia está confirmada. ¡Lo esperamos!</div>' : '') + (msg || '') +

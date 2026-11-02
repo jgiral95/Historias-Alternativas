@@ -8,7 +8,7 @@
 <link rel="stylesheet" href="css/fonts.css">
 <meta name="robots" content="noindex">
 <style>
-/* Página pública: el paciente lee y firma a distancia el consentimiento que le envió su profesional. */
+/* Página pública: el consultante lee y firma a distancia el consentimiento que le envió su terapeuta. */
 :root{--bg:#F6F1E7;--surface:#FBF8F2;--surface2:#F1ECDF;--ink:#2B2A25;--muted:#6A675C;--line:#E3DBCB;--accent:#4E6B58;--accent-ink:#FFFFFF;--accent-soft:#E4EBE2;
   --ok:#2B7A4B;--ok-soft:#DDF0E4;--danger:#B3261E;--danger-soft:#F8DEDC;color-scheme:light}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#1A211C;--surface:#222B25;--surface2:#2B362E;--ink:#ECE8DC;--muted:#A9B2A8;--line:#36423A;
@@ -64,11 +64,11 @@ function therBlock() {
   const t = d.terapeuta || {};
   return `<div class="sg">${t.firma ? `<img src="${t.firma}" alt="Firma de ${esc(t.nombre)}">` : '<div class="ph">Sin firma</div>'}<div class="ln"><b>${esc(t.nombre)}</b><br>Terapeuta tratante${t.cedula || t.registro ? '<br>' + [t.cedula ? 'C.C. ' + esc(t.cedula) : '', t.registro ? 'T.P. ' + esc(t.registro) : ''].filter(Boolean).join(' · ') : ''}${t.enviado ? '<br><span class="muted">Firmado: ' + esc(fmt(t.enviado)) + '</span>' : ''}</div></div>`;
 }
-const head = () => `<h1>${logo}${esc(d.tipo || 'Consentimiento informado')}</h1><p>Enviado por <b>${esc(d.profesional || 'su psicólogo(a)')}</b>${d.consultorio ? ' · ' + esc(d.consultorio) : ''}</p>`;
+const head = () => `<h1>${logo}${esc(d.tipo || 'Consentimiento informado')}</h1><p>Enviado por <b>${esc(d.profesional || 'su terapeuta')}</b>${d.consultorio ? ' · ' + esc(d.consultorio) : ''}</p>`;
 const STATES = { firmado: ['ok', 'Este documento ya fue firmado. Gracias.'], vencido: ['bad', 'El enlace venció. Pida uno nuevo al consultorio.'], anulado: ['bad', 'Este enlace fue anulado por el consultorio.'], bloqueado: ['bad', 'Se superó el número de intentos. Pida un enlace nuevo al consultorio.'] };
 function ask(msg) {
   if (d.estado !== 'pendiente') { const [k, t] = STATES[d.estado] || ['bad', 'Este enlace ya no está disponible.']; return card(head() + `<div class="res ${k}">${t}</div>`); }
-  card(head() + (msg || '') + `<p>Para ver el documento, escriba el número de documento de identidad de ${d.quien === 'Acudiente' ? 'la persona que firma como acudiente o representante' : 'usted (paciente)'}.</p>
+  card(head() + (msg || '') + `<p>Para ver el documento, escriba el número de documento de identidad de ${d.quien === 'Acudiente' ? 'la persona que firma como acudiente o representante' : 'usted (consultante)'}.</p>
     <form id="f" class="btns" autocomplete="off"><label for="doc">Número de documento</label><input type="text" id="doc" inputmode="text" autocomplete="off" required><button type="submit">Ver el documento</button></form>
     <p class="muted">El enlace vence el ${esc(fmt(d.vence))}. Es personal: no lo reenvíe.</p>`);
   $('#doc').focus();
@@ -97,9 +97,9 @@ function makePad(host) {
     data() { const t = document.createElement('canvas'), tw = 360, th = Math.round(h * tw / w); t.width = tw; t.height = th; t.getContext('2d').drawImage(c, 0, 0, tw, th); return t.toDataURL('image/png'); } };
 }
 function read(msg) {
-  card(head() + `<p>Firma: <b>${esc(d.firmante)}</b> · documento ${esc(d.documento)}</p><p class="muted noprint">Lea el documento completo. Si tiene preguntas, escríbale a su psicólogo(a) antes de firmar.</p>
+  card(head() + `<p>Firma: <b>${esc(d.firmante)}</b> · documento ${esc(d.documento)}</p><p class="muted noprint">Lea el documento completo. Si tiene preguntas, escríbale a su terapeuta antes de firmar.</p>
     <div class="doc" id="txt" tabindex="0">${rich(d.texto)}</div>
-    <div class="sigs">${therBlock()}<div class="sg"><div class="ph">Aquí irá su firma</div><div class="ln"><b>${esc(d.firmante)}</b><br>${d.quien === 'Acudiente' ? 'Acudiente / representante legal' : 'Paciente'} · Doc. ${esc(d.documento)}</div></div></div>
+    <div class="sigs">${therBlock()}<div class="sg"><div class="ph">Aquí irá su firma</div><div class="ln"><b>${esc(d.firmante)}</b><br>${d.quien === 'Acudiente' ? 'Acudiente / representante legal' : 'Consultante'} · Doc. ${esc(d.documento)}</div></div></div>
     <div class="noprint btns">${msg || ''}
       <label class="check"><input type="checkbox" id="ok"> <span>Leí el documento, pude hacer preguntas y acepto de forma libre y voluntaria.</span></label>
       <div><label>Su firma</label><div class="pad" id="pad"></div><div class="row" style="margin-top:6px"><button type="button" class="ghost" id="clr">Borrar firma</button></div></div>
@@ -116,8 +116,8 @@ async function sign() {
     const r = await fetch('/api/firma/' + encodeURIComponent(token), { method: 'POST', headers: H, body: JSON.stringify({ documento: doc, firma, acepto: true, sha256: d.sha256 }) });
     const j = await r.json().catch(() => ({}));
     if (!r.ok) { $('#sign').disabled = false; $('#sign').textContent = 'Firmar el documento'; return showErr(j.detail || 'No se pudo guardar. Intente de nuevo.'); }
-    card(head() + `<div class="res ok">Documento firmado el ${esc(fmt(j.firmado))}: quedó guardado en su historia clínica. Gracias.</div>
-      <div class="doc">${rich(d.texto)}</div><div class="sigs">${therBlock()}<div class="sg"><img src="${firma}" alt="Su firma"><div class="ln"><b>${esc(d.firmante)}</b><br>${d.quien === 'Acudiente' ? 'Acudiente / representante legal' : 'Paciente'} · Doc. ${esc(d.documento)}<br><span class="muted">Firmado: ${esc(fmt(j.firmado))}</span></div></div></div><p class="muted" style="word-break:break-all">Huella SHA-256 del texto: ${esc(j.sha256)}</p>
+    card(head() + `<div class="res ok">Documento firmado el ${esc(fmt(j.firmado))}: quedó guardado en su ficha. Gracias.</div>
+      <div class="doc">${rich(d.texto)}</div><div class="sigs">${therBlock()}<div class="sg"><img src="${firma}" alt="Su firma"><div class="ln"><b>${esc(d.firmante)}</b><br>${d.quien === 'Acudiente' ? 'Acudiente / representante legal' : 'Consultante'} · Doc. ${esc(d.documento)}<br><span class="muted">Firmado: ${esc(fmt(j.firmado))}</span></div></div></div><p class="muted" style="word-break:break-all">Huella SHA-256 del texto: ${esc(j.sha256)}</p>
       <button class="noprint" id="pr">Guardar o imprimir una copia</button><p class="muted noprint">También puede pedir una copia del documento firmado al consultorio.</p>`);
     $('#pr').onclick = () => print();
   } catch (e) { $('#sign').disabled = false; $('#sign').textContent = 'Firmar el documento'; showErr('No hay conexión. Intente de nuevo.'); }
