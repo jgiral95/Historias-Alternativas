@@ -18,7 +18,7 @@ function fbGuess() {
 function fbContext() {
   const m = $('#modal-root .modal'), ua = navigator.userAgent;
   const nav = (/Edg\//.test(ua) ? 'Edge' : /Chrome\//.test(ua) ? 'Chrome' : /Firefox\//.test(ua) ? 'Firefox' : /Safari\//.test(ua) ? 'Safari' : 'Otro') + ' · ' + (/iPhone|iPad/.test(ua) ? 'iOS' : /Android/.test(ua) ? 'Android' : /Mac OS/.test(ua) ? 'Mac' : /Windows/.test(ua) ? 'Windows' : /Linux/.test(ua) ? 'Linux' : 'otro');
-  const tabs = Object.fromEntries(TABS);
+  const tabs = Object.fromEntries(tabsList());
   return { vista: S.view === 'agenda' ? 'Agenda' : S.pid ? (S.draft ? 'Consultante nuevo' : 'Ficha del consultante') : 'Inicio', 'pestaña': S.view === 'agenda' ? '' : S.pid ? tabs[S.tab] || S.tab : ({ stats: 'Estadísticas', enc: 'Encuesta de satisfacción' }[S.homeTab] || 'Resumen'),
     ventana: m ? m.getAttribute('aria-label') || '' : '', pantalla: innerWidth + '×' + innerHeight, navegador: nav, rol: TEAM() ? 'Equipo' : 'Terapeuta', modo: document.documentElement.getAttribute('data-theme') === 'dark' || (!document.documentElement.getAttribute('data-theme') && matchMedia('(prefers-color-scheme: dark)').matches) ? 'oscuro' : 'claro' };
 }

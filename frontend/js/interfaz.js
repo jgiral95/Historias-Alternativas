@@ -11,6 +11,10 @@ const curPatient = () => S.draft ? S.draftObj : S.patients.find(x => x.id === S.
 const therSnap = () => ({ therapistName: S.profile.nombre, therapistDocId: S.profile.cedula || undefined, therapistReg: S.profile.registro, therapistSig: S.profile.firma, consultorio: S.profile.consultorio });
 const canSign = () => S.profile.nombre && S.profile.firma;
 const TABS = [['datos', 'Datos'], ['consent', 'Consentimiento'], ['intake', 'Primera vez'], ['evol', 'Sesión'], ['escalas', 'Chequeos'], ['informes', 'Informes'], ['cierre', 'Cierre'], ['archivo', 'Archivo']];
+/* Pestañas de la ficha según «Mis formatos»: se pueden renombrar, ocultar (menos Datos) y agregar propias (id «x_…»). */
+const tabsConf = () => (S.profile && S.profile.formatos && S.profile.formatos.pestanas) || {};
+const tabsList = () => { const c = tabsConf(), ex = c.extra || [];
+  return TABS.filter(([k]) => k === 'datos' || !(c.ocultas || []).includes(k)).map(([k, l]) => [k, (c.nombres || {})[k] || l]).concat(ex.map(x => [x.id, x.nombre])); };
 const OPT = {
   tipoDoc: ['CC', 'TI', 'CE', 'Registro civil', 'Pasaporte', 'Permiso por protección temporal (PPT)', 'Permiso especial de permanencia (PEP)', 'Menor sin documento', 'Otro'],
   zona: ['', 'Urbana', 'Rural', 'No responde'],
@@ -265,11 +269,12 @@ function fileHTML(p) {
   return `<div class="panel file"><div class="file-head"><div><button class="btn sm back" data-act="back">← Consultantes</button><h2>${esc(S.draft ? 'Nuevo consultante' : fullName(p))}</h2>
   <div class="meta"><span class="mono">${esc([p.tipoDoc, p.documento].filter(Boolean).join(' ') || 'sin documento')}</span>${!S.draft && openedAt(p) ? `<span>Historia abierta el ${esc(fmtD(openedAt(p)))}</span>` : ''}${a !== null ? `<span>${a} años</span>` : ''}${p.estado ? `<span class="chip ${p.estado === 'Activo' ? 'ok' : 'warn'}">${esc(p.estado)}</span>` : ''}${p.servicio && p.servicio !== 'Individual' ? `<span class="chip">${esc(p.servicio)}${linked(p).length ? ' · con ' + esc(linked(p).map(x => x.nombres || fullName(x)).join(', ')) : ''}</span>` : ''}${S.draft ? '' : nextApptHTML(p)}</div></div>
   ${S.draft || TEAM() ? '' : `<span class="row" style="gap:6px"><button class="btn sm" data-act="pnFor" data-id="${p.id}" title="Ideas, consejos de colegas y seguimiento: no forman parte de la ficha">Notas de proceso${S.pnotes.filter(n => n.patientId === p.id).length ? ' (' + S.pnotes.filter(n => n.patientId === p.id).length + ')' : ''}</button><button class="btn sm" data-act="accessLog" title="Quién abrió esta historia y qué hizo">Accesos</button><button class="btn sm" data-act="fullDoc">Historia completa</button></span>`}</div>
-  <div class="tabs" role="tablist">${(TEAM() ? TABS.slice(0, 1) : TABS).map(([k, l]) => `<button class="tab ${S.tab === k ? 'on' : ''}" role="tab" data-act="tab" data-tab="${k}" ${S.draft && k !== 'datos' ? 'disabled style="opacity:.4;cursor:not-allowed"' : ''}>${l}</button>`).join('')}</div>
+  <div class="tabs" role="tablist">${(TEAM() ? TABS.slice(0, 1) : tabsList()).map(([k, l]) => `<button class="tab ${S.tab === k ? 'on' : ''}" role="tab" data-act="tab" data-tab="${k}" ${S.draft && k !== 'datos' ? 'disabled style="opacity:.4;cursor:not-allowed"' : ''}>${l}</button>`).join('')}</div>
   <div class="body" id="tabbody">${tabHTML(p)}</div></div>`;
 }
 function tabHTML(p) {
   if (S.tab === 'datos' || TEAM()) return tabDatos(p);
+  if (S.tab.startsWith('x_')) return tabExtra(p);
   if (S.tab === 'consent') return tabConsent(p);
   if (S.tab === 'intake') return tabIntake(p);
   if (S.tab === 'evol') return tabEvol(p);

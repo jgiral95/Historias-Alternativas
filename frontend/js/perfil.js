@@ -243,12 +243,13 @@ async function draw2fa(step, data) {
 
 /* ----- Mis formatos: único lugar para estructuras, plantillas, modelos y frases ----- */
 /* Mismo orden que las pestañas de la ficha del consultante; luego lo que se usa en varias partes. */
-const HUB = [['datos', 'Datos del consultante'], ['consent', 'Consentimientos'], ['intake', 'Primera vez'], ['evol', 'Sesión'], ['escalas', 'Chequeos'], ['informes', 'Informes'], ['frases', 'Frases']];
+const HUB = [['pestanas', 'Pestañas'], ['datos', 'Datos del consultante'], ['consent', 'Consentimientos'], ['intake', 'Primera vez'], ['evol', 'Sesión'], ['escalas', 'Chequeos'], ['informes', 'Informes'], ['frases', 'Frases']];
 const hubTabs = active => `<div class="tabs hubtabs" role="tablist" aria-label="Secciones de Mis formatos">${HUB.map(([k, l]) => `<button type="button" class="tab ${active === k ? 'on' : ''}" role="tab" aria-selected="${active === k}" data-hub="${k}">${l}</button>`).join('')}</div>`;
 function openHub(k) {
   if (ED && ['intake', 'evol', 'datos'].includes(k)) { ED.which = k; return drawFormats(); }  // conserva lo no guardado
   const root = $('#modal-root'); root.onclick = root.oninput = root.onchange = null; ED = null;
   if (['intake', 'evol', 'datos'].includes(k)) return ACT.formats({ dataset: { hub: k } });
+  if (k === 'pestanas') return tabsManage();
   if (k === 'consent') return ACT.consentManage();
   if (k === 'informes') return ACT.tplManage();
   if (k === 'escalas') return ACT.scaleManage();
@@ -358,9 +359,50 @@ function saveFormats() {
   if (evol.some(f => !f[1])) return bad('Cada campo de la sesión necesita un nombre.');
   if (intake.filter(sc => sc[2] === 'genograma').length > 1) return bad('Solo puede haber un genograma.');
   const snap = clone(S.profile);
-  S.profile.formatos = { intake, evol, datos, ocultos: ED.ocultos || [] };
+  S.profile.formatos = Object.assign({}, S.profile.formatos, { intake, evol, datos, ocultos: ED.ocultos || [] });
   persist([S.profile], $('[data-fm="save"]')).then(ok => { if (!ok) { restore(S.profile, snap); return; } finishFormats(); });
 }
+/* Pestañas de la ficha: renombrar, ocultar y crear propias (texto libre por consultante). */
+let TM = null;
+const tabsDraw = () => {
+  const root = $('#modal-root'), row = (id, n, hid, ex) => `<div class="edf"><input type="text" data-tm-n="${id}" value="${esc(n)}" maxlength="60" aria-label="Nombre de la pestaña">${id === 'datos' ? '<span class="chip">Siempre visible</span>' : ex ? `<button class="btn sm warn" data-tm="del:${id}">Borrar</button>` : `<button class="btn sm ${hid ? '' : 'pri'}" data-tm="hid:${id}">${hid ? 'Oculta · mostrar' : 'Visible · ocultar'}</button>`}</div>`;
+  root.innerHTML = `<div class="modal" role="dialog" aria-modal="true" aria-label="Mis formatos"><div class="box"><div class="row" style="justify-content:space-between"><h3>Mis formatos</h3><button class="btn sm" data-tm="close">Cerrar</button></div>${hubTabs('pestanas')}
+  <p style="margin:0;font-size:13px;color:var(--muted)">Cambie el nombre, oculte o cree las pestañas de la ficha del consultante. Ocultar no borra lo ya escrito. Las pestañas nuevas son de texto libre.</p>
+  <div class="card">${TABS.map(([k, l]) => row(k, TM.nombres[k] || l, TM.ocultas.includes(k), false)).join('')}${TM.extra.map(x => row(x.id, x.nombre, false, true)).join('')}<div class="row"><button class="btn" data-tm="add">+ Pestaña nueva</button></div></div>
+  <div class="row end"><button class="btn pri" data-tm="save">Guardar</button></div></div></div>`;
+};
+function tabsManage() {
+  const c = tabsConf(), root = $('#modal-root'); ED = null;
+  TM = { nombres: { ...(c.nombres || {}) }, ocultas: [...(c.ocultas || [])], extra: clone(c.extra || []) };
+  tabsDraw();
+  root.oninput = e => { const id = e.target.dataset.tmN; if (!id || !TM) return; const x = TM.extra.find(y => y.id === id); if (x) x.nombre = e.target.value; else TM.nombres[id] = e.target.value; };
+  root.onclick = e => {
+    const h = e.target.closest('[data-hub]'); if (h) return openHub(h.dataset.hub);
+    const b = e.target.closest('[data-tm]'); if (!b || !TM) return;
+    const [op, arg = ''] = b.dataset.tm.split(':');
+    if (op === 'close') { TM = null; root.innerHTML = ''; root.onclick = root.oninput = null; return; }
+    if (op === 'hid') { const i = TM.ocultas.indexOf(arg); if (i < 0) TM.ocultas.push(arg); else TM.ocultas.splice(i, 1); }
+    else if (op === 'del') TM.extra = TM.extra.filter(x => x.id !== arg);
+    else if (op === 'add') { if (TM.extra.length >= 10) return toast('Máximo 10 pestañas nuevas.'); TM.extra.push({ id: 'x_' + newKey(), nombre: 'Nueva pestaña' }); }
+    else if (op === 'save') {
+      const nombres = Object.fromEntries(Object.entries(TM.nombres).map(([k, v]) => [k, v.trim()]).filter(([, v]) => v));
+      if (TM.extra.some(x => !x.nombre.trim())) return toast('Cada pestaña necesita un nombre.');
+      const snap = clone(S.profile); S.profile.formatos = Object.assign({}, S.profile.formatos, { pestanas: { nombres, ocultas: TM.ocultas, extra: TM.extra.map(x => ({ id: x.id, nombre: x.nombre.trim() })) } });
+      const t = tabsList().map(x => x[0]); if (!t.includes(S.tab)) S.tab = 'datos';
+      return persist([S.profile], b).then(ok => { if (!ok) { restore(S.profile, snap); return; } TM = null; root.innerHTML = ''; root.onclick = root.oninput = null; toast('Pestañas guardadas.'); render(); });
+    }
+    tabsDraw();
+  };
+}
+/* Pestaña propia: texto libre guardado en la ficha. */
+function tabExtra(p) {
+  const x = (tabsConf().extra || []).find(y => y.id === S.tab); if (!x) return '';
+  return `<div class="sec"><h3>${esc(x.nombre)}</h3><div class="fld"><textarea id="f_extra" data-f="extra" rows="12" aria-label="${esc(x.nombre)}">${esc((p.extras || {})[x.id] || '')}</textarea></div><div class="row end"><button class="btn pri" data-act="saveExtra">Guardar</button></div></div>`;
+}
+ACT.saveExtra = async b => {
+  const p = curPatient(), snap = clone(p); p.extras = Object.assign({}, p.extras, { [S.tab]: $('#f_extra').value });
+  if (!(await persist([p], b))) { restore(p, snap); return; } toast('Guardado.');
+};
 function finishFormats() {
   ED = null; const root = $('#modal-root'); root.innerHTML = ''; root.onclick = root.oninput = root.onchange = null;
   toast('Formato guardado.'); if (!S.dirty) render(); else hubClosed();

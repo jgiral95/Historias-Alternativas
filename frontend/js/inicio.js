@@ -121,7 +121,7 @@ ACT.demoDel = async b => {
 const LOGGED = {};
 function logView() {
   if (S.mode !== 'server' || !S.pid || S.draft) return;
-  const vista = (Object.fromEntries(TABS)[S.tab] || ''), k = S.pid + '|' + vista;
+  const vista = (Object.fromEntries(tabsList())[S.tab] || ''), k = S.pid + '|' + vista;
   if (LOGGED[k] && Date.now() - LOGGED[k] < 110000) return;
   LOGGED[k] = Date.now();
   api('/acceso', { method: 'POST', body: { patientId: S.pid, vista } }).catch(() => { /* no interrumpe el trabajo */ });

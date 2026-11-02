@@ -568,3 +568,11 @@ def test_consents_are_optional():
     assert c.put("/api/records/r_1", json=rep).status_code in (200, 204)
     con = {"text": "t", "signerName": "Laura", "sinFirma2": "Padre fallecido", "signedAt": NOW}
     assert c.put("/api/records/p_1", json=patient("p_1", consents=[con])).status_code == 200
+
+
+def test_custom_tab_text_and_tab_config_are_saved():
+    make_user("tabs@x.co")
+    c = client_for("tabs@x.co")
+    c.put("/api/records/p_1", json=patient("p_1", extras={"x_a": "texto libre"}))
+    p = next(x for x in c.get("/api/records").json() if x["id"] == "p_1")
+    assert p["extras"] == {"x_a": "texto libre"}
