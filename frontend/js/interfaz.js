@@ -300,7 +300,6 @@ document.addEventListener('click', e => {
   const b = e.target.closest('[data-nafill]'); if (!b) return;
   const box = b.closest('.card, .sec'), v = b.dataset.nafill, el = naLast;
   if (!el || !el.isConnected || !box.contains(el) || !visibleField(el)) { toast('Primero haga clic en el campo de este apartado que no aplica o que la persona no responde.'); return; }
-  if (MIN_ID.includes(el.dataset.f)) { toast(`«${plabel(el.dataset.f)}» es un dato de identidad: escriba el dato real.`); return; }
   if (el.tagName === 'SELECT') {
     const o = [...el.options].find(x => x.value === v || (v === 'No responde' && /no respond/i.test(x.value)) || (v === 'No aplica' && /^No aplica/.test(x.value)));
     if (!o) { toast('Esta lista no tiene la opción «' + v + '»: elija una de la lista.'); return; }
@@ -325,8 +324,7 @@ function tabDatos(p) {
   ${minor ? `<div class="sec"><h3>Cuidadores o acudientes</h3>${cuid}</div>` : `<div class="sec"><h3>Cuidadores o acudientes</h3><p class="stnote">En adultos sin cuidador, marque «No aplica».</p>${cuid}</div>`}
   <div class="sec"><h3>Contacto de emergencia</h3><div class="grid">${F('Nombre', 'emergNombre', p.emergNombre)}${F('Parentesco', 'emergParentesco', p.emergParentesco)}${telF('Teléfono', 'emergTelefono', 'emergInd', p)}</div>${naRow()}</div>
   ${datosSchema().map(([t, fs]) => `<div class="sec"><h3>${esc(t)}</h3><div class="grid">${fs.map(f => F(f[1], f[0], p[f[0]], f[1] ? {} : { wide: true, aria: t })).join('')}</div>${naRow()}</div>`).join('')}
-  ${!S.draft && MIN_ID.some(k => !String(p[k] || '').trim()) ? `<div class="banner">Faltan datos mínimos de identificación: ${MIN_ID.filter(k => !String(p[k] || '').trim()).map(plabel).join(', ')}. Complételos cuando pueda.</div>` : ''}
-  <p class="stnote">Todos los datos son obligatorios. Si alguno no aplica o la persona no quiere responder, use los botones «No aplica» o «No responde» de cada apartado.</p>
+  <p class="stnote">Solo el nombre es necesario; los demás datos son opcionales y puede completarlos cuando quiera.</p>
   <div id="dupslot"></div>${p.tipoDoc === 'Menor sin documento' || S.draft ? '<p class="stnote">Menor sin documento: elija «Menor sin documento» y escriba la cédula de la madre (o del padre) seguida del número de orden del menor en el grupo familiar, por ejemplo 52123456-2 (Res. 1995, art. 6).</p>' : ''}
   <div id="lkslot">${linksHTML(p)}</div>
   <div class="row end">${S.draft ? '<button class="btn" data-act="cancelDraft">Cancelar</button>' : ''}<button class="btn pri" data-act="savePatient">Guardar datos</button></div>
@@ -436,11 +434,8 @@ ACT.lkDel = async b => {
 };
 ACT.savePatient = async b => {
   const p = curPatient(), o = readForm($('#tabbody'), {});
-  // Ningún dato queda en blanco: se llena o se marca «No aplica» / «No responde» (los de identidad deben ser reales).
-  const bad = MIN_ID.find(k => NA_VALUES.includes(String(o[k] || '').trim()));
-  if (bad) { toast(`«${plabel(bad)}» es un dato de identidad: escriba el dato real.`); const f = $('#f_' + bad); if (f) { f.closest('.fld').classList.add('miss'); f.focus(); } return; }
-  const need = $$('#tabbody [data-f]').filter(visibleField).map(el => el.dataset.f);
-  if (!reqCheck($('#tabbody'), Object.assign({}, p, o), need, Object.fromEntries(MIN_ID.map(k => [k, plabel(k)])))) return;
+  // Solo el nombre es necesario para identificar la ficha; los demás datos son opcionales.
+  if (!String(o.nombres || '').trim()) { toast('Escriba al menos el nombre del consultante.'); const f = $('#f_nombres'); if (f) { f.closest('.fld').classList.add('miss'); f.focus(); } return; }
   if (S.draft && dupOf(o.documento, p.id)) { dupWarn(o.documento, p.id); return; }
   const snap = clone(p); Object.assign(p, o);
   if (!(await persist([p], b))) { restore(p, snap); return; }
