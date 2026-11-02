@@ -31,9 +31,9 @@ async function stepDone(k) {
 function stepsList() {
   const real = S.patients.filter(x => !x.demo), ps = (S.profile && S.profile.pasos) || {}, demo = S.patients.some(x => x.demo);
   return [
-    ['perfil', !!(S.profile.nombre && S.profile.firma), 'Complete su perfil y dibuje su firma', 'Con ella se firman los consentimientos, las sesiones y los informes.', '<button class="btn sm pri" data-act="profile">Mi perfil y firma</button>'],
-    ['ejemplo', demo || !!ps.ejemplo, 'Explore con consultantes de ejemplo', 'Cargamos 3 consultantes ficticios con consentimientos, primera vez, sesiones, citas y notas de proceso. Los borra con un clic.', demo ? '<button class="btn sm" data-act="demoDel">Borrar los ejemplos</button>' : '<button class="btn sm pri" data-act="demoLoad">Cargar ejemplos</button>'],
-    ['formatos', !!ps.formatos, 'Revise sus formatos', 'Consentimiento, primera vez y sesión: ajústelos a su forma de trabajo.', '<button class="btn sm" data-act="formats">Mis formatos</button>'],
+    ['perfil', !!(S.profile.nombre && S.profile.firma), 'Complete su perfil y dibuje su firma (opcional)', 'Con ella puede firmar acuerdos, sesiones e informes.', '<button class="btn sm pri" data-act="profile">Mi perfil y firma</button>'],
+    ['ejemplo', demo || !!ps.ejemplo, 'Explore con consultantes de ejemplo', 'Cargamos 3 consultantes ficticios con acuerdos, primera vez, sesiones, citas y notas de proceso. Los borra con un clic.', demo ? '<button class="btn sm" data-act="demoDel">Borrar los ejemplos</button>' : '<button class="btn sm pri" data-act="demoLoad">Cargar ejemplos</button>'],
+    ['formatos', !!ps.formatos, 'Revise sus formatos', 'Acuerdo, primera vez, sesión y datos del consultante: cambie, oculte o cree los apartados que necesite.', '<button class="btn sm" data-act="formats">Mis formatos</button>'],
     ['paciente', real.length > 0, 'Cree su primer consultante', 'Con datos ficticios mientras sea una prueba.', '<button class="btn sm" data-act="newPatient">Nuevo consultante</button>'],
     ['cita', S.appts.some(a => !a.demo), 'Agende una cita', 'Desde la agenda; puede conectarla con Google Calendar.', '<button class="btn sm" data-act="view" data-v="agenda">Ir a la agenda</button>'],
     ['comentario', !!ps.comentario, 'Cuéntenos qué mejorar', 'Use el botón «Comentarios», abajo a la derecha: elija el apartado del programa y cuéntenos qué falla, qué no entiende o qué le gustaría.', '<button class="btn sm" data-act="fbOpenStep">Escribir un comentario</button>']
@@ -46,7 +46,8 @@ function stepsHTML() {
   const hello = (S.profile.pasos || {}).bienvenida ? '' : `<div class="card" style="background:var(--surface)"><b style="font-size:16px">Bienvenido(a) a Alter-Karute · versión de prueba</b>
     <p style="margin:0;font-size:15px"><b>¡Gracias por hacer parte de nuestro equipo de prueba!</b> Su colaboración es muy valiosa: como agradecimiento, contará con <b>tres meses gratis</b> cuando el software se lance oficialmente. Le pedimos que haga todos los comentarios que necesite, para que juntos lleguemos a un software completo, intuitivo e integral para sus fichas.</p>
     <ul style="margin:0;padding-left:20px;display:flex;flex-direction:column;gap:4px;font-size:14px"><li><b>Use solo datos inventados</b> mientras dure la prueba: puede cargar consultantes de ejemplo para ver la app «llena».</li>
-    <li>Lo que firma (consentimientos, primera vez, sesiones, informes) <b>no se puede modificar</b>, como en papel: solo se agregan adendas.</li>
+    <li><b>Todo es opcional:</b> solo el nombre del consultante es necesario. Alter-Karute acompaña el bienestar con terapias alternativas; no es una herramienta clínica ni la usan profesionales de la salud.</li>
+    <li>Lo que firma (acuerdos, primera vez, sesiones, informes) <b>no se puede modificar</b>, como en papel: solo se agregan adendas.</li>
     <li>Si algo falla o no se entiende, use el botón <b>Comentarios</b>, abajo a la derecha. Por favor <b>elija el apartado del programa</b> al que se refiere (Agenda, Sesión, Consentimiento…): así podemos ubicar y corregir más rápido.</li></ul>
     <div class="row end"><button class="btn sm" data-act="welcomeOk">Entendido</button></div></div>`;
   return `<section class="steps" aria-label="Primeros pasos">${hello}<div class="row" style="justify-content:space-between"><h3>Primeros pasos · ${done} de ${L.length}</h3><button class="btn sm" data-act="stepsHide">Ocultar</button></div>
