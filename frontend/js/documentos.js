@@ -42,7 +42,7 @@ const DEFAULT_CONSENT = `ACUERDO DE ACOMPAÑAMIENTO
 
 Yo, {paciente}, identificado/a con documento {documento}, declaro que {terapeuta} me ha explicado lo siguiente y que he podido hacer preguntas:
 
-1. Qué es este servicio. Son sesiones de acompañamiento y bienestar con prácticas de terapias alternativas o complementarias. No es atención médica ni psicológica, no la presta un profesional de la salud, no hace diagnósticos, no trata enfermedades y no reemplaza la consulta, el tratamiento ni los medicamentos que me indique un médico u otro profesional de la salud.
+1. Qué es este servicio. Son sesiones de acompañamiento para mejorar mi bienestar y mi salud con terapias alternativas o complementarias. No es atención clínica, médica ni psicológica, no la presta un profesional de la salud, no hace diagnósticos, no trata enfermedades y no reemplaza la consulta, el tratamiento ni los medicamentos que me indique un médico u otro profesional de la salud.
 
 2. Beneficios y límites. Estas prácticas pueden ayudarme a relajarme y a cuidar mi bienestar, pero no se me garantizan resultados específicos. Si tengo una condición de salud o cambia mi estado, debo consultar a un profesional de la salud.
 
@@ -139,7 +139,7 @@ function tplValues(p, pr) {
 }
 const fillVars = (text, p, pr) => { const v = tplValues(p, pr); return text.replace(/\{([a-z_]+)\}/g, (m, k) => (k in v ? v[k] : m)); };
 const ATT = 'Por medio de la presente certifico que {paciente}, identificado/a con {documento}, ha asistido a sesiones de acompañamiento conmigo, con {resumen_asistencia}.';
-const CLOSE = '\n\nSe expide a solicitud del interesado/a y con su autorización. Este documento no es un certificado médico ni de salud; el contenido de las sesiones es reservado.';
+const CLOSE = '\n\nSe expide a solicitud del interesado/a y con su autorización. Este documento no es un certificado médico; el contenido de las sesiones es reservado.';
 const BASE_TPL = {
   'Colegio o institución educativa': ATT + '\n\nLo que el consultante o su acudiente autorizan compartir:\n[Describa solo lo necesario: asistencia y que el proceso sigue en curso.]' + CLOSE,
   'Empleador o trabajo': ATT + '\n\nLo autorizado para compartir con el empleador:\n[Asistencia y horarios. Evite contar el contenido de las sesiones salvo autorización expresa.]' + CLOSE,
@@ -304,7 +304,7 @@ h1{font-size:20px;text-align:center;margin:0 0 4px}h2{font-size:15px;text-transf
 .lh{text-align:center;font-size:13px;color:#4a5a5e;margin-bottom:14px}p{margin:6px 0;white-space:pre-wrap}table{border-collapse:collapse;width:100%;font-size:14px}td{padding:3px 8px 3px 0;vertical-align:top}
 .sigs{display:flex;gap:30px;flex-wrap:wrap;margin-top:22px}.sg{min-width:200px;flex:1}.sg img{height:64px;display:block}.sg .ln{border-top:1px solid #1B2326;margin-top:2px;padding-top:3px;font-size:13px}
 img.geno{max-width:100%;height:auto;border:1px solid #c9d2d4}.stats{display:flex;gap:10px;flex-wrap:wrap}.stat{border:1px solid #c9d2d4;padding:6px 10px;min-width:130px}.stat b{display:block;font-size:20px}.stat span{font-size:12px}.sec h3{font-size:15px;text-transform:uppercase;letter-spacing:.06em;margin:18px 0 4px;border-bottom:1px solid #c9d2d4}.stnote{font-size:13px;color:#4a5a5e}.stgrid{display:block}table.sttab th,table.sttab td{text-align:left;padding:4px 8px 4px 0;border-bottom:1px solid #c9d2d4;vertical-align:top}table.sttab th{font-size:12px;color:#4a5a5e}tr.tot td{font-weight:bold}.bars{margin:8px 0}.bar{display:grid;grid-template-columns:38% 1fr auto;gap:8px;align-items:center;font-size:13px;margin:3px 0}.bar .bt{height:10px;background:#eef0f1}.bar .bt i{display:block;height:100%;background:#4E6B58;-webkit-print-color-adjust:exact;print-color-adjust:exact}.btn{display:none}table.dxt th,table.dxt td{text-align:left;padding:4px 8px 4px 0;border-bottom:1px solid #c9d2d4}table.dxt th{font-size:12px;color:#4a5a5e}.pb{page-break-after:always;height:1px}@media print{body{margin:0}}`;
-function standalone(title, body) { return `<!doctype html><html lang="es"><head><meta charset="utf-8"><title>${esc(title)}</title><meta name="viewport" content="width=device-width,initial-scale=1"><style>${DOC_CSS}</style></head><body>${body}<p style="margin-top:28px;border-top:1px solid #ccc;padding-top:8px;font-size:11px;color:#777;text-align:center">Acompañamiento de bienestar con terapias alternativas o complementarias. No es atención médica, psicológica ni de salud, ni la presta un profesional de la salud.</p></body></html>`; }
+function standalone(title, body) { return `<!doctype html><html lang="es"><head><meta charset="utf-8"><title>${esc(title)}</title><meta name="viewport" content="width=device-width,initial-scale=1"><style>${DOC_CSS}</style></head><body>${body}<p style="margin-top:28px;border-top:1px solid #ccc;padding-top:8px;font-size:11px;color:#777;text-align:center">Acompañamiento de bienestar con terapias alternativas o complementarias. No es atención clínica, médica ni psicológica, ni la presta un profesional de la salud.</p></body></html>`; }
 const slug = s => String(s).normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-zA-Z0-9]+/g, '-').replace(/^-|-$/g, '').toLowerCase() || 'documento';
 
 async function downloadFile(filename, data) {
