@@ -272,6 +272,79 @@ def login(body: LoginIn, request: Request, response: Response, db: Session = Dep
             "comentarios": BETA_COMENTARIOS}
 
 
+class RegisterIn(BaseModel):
+    name: str
+    email: str
+    password: str
+
+
+SIGNUPS_POR_IP = 3  # cuentas nuevas por IP cada 24 horas
+_signups: dict[str, list[float]] = {}
+
+
+def _signup_limit(ip: str) -> bool:
+    """True si esta IP ya creó demasiadas cuentas hoy; si no, cuenta esta."""
+    with _lock:
+        cutoff = time.time() - 86400
+        hits = [t for t in _signups.get(ip, []) if t > cutoff]
+        if len(hits) >= SIGNUPS_POR_IP:
+            _signups[ip] = hits
+            return True
+        hits.append(time.time())
+        _signups[ip] = hits
+        return False
+
+
+@app.post("/api/auth/register", status_code=202)
+def register(body: RegisterIn, request: Request, db: Session = Depends(get_db)):
+    """Cuenta nueva con correo: los datos viajan firmados en el enlace y la cuenta se crea al confirmar el correo."""
+    email, name, ip = body.email.strip().lower(), body.name.strip()[:200], client_ip(request)
+    if not name:
+        raise HTTPException(400, "Escriba su nombre")
+    if not EMAIL_RE.match(email):
+        raise HTTPException(400, "Correo no válido")
+    if len(body.password) < MIN_PASSWORD:
+        raise HTTPException(400, f"La contraseña debe tener al menos {MIN_PASSWORD} caracteres")
+    acc = survey.server_account()
+    if not survey.smtp_enabled(acc):
+        raise HTTPException(503, "El envío de correos no está disponible por ahora. Intente más tarde.")
+    if _locked(email, ip):
+        raise HTTPException(429, "Demasiados intentos. Espere unos minutos e intente de nuevo.")
+    _register_fail(email, ip)
+    if not db.scalar(select(User).where(User.email == email)):  # si ya existe no se revela: la respuesta es la misma
+        tok = jwt.encode({"p": "reg", "e": email, "n": name, "h": hash_password(body.password), "exp": int(time.time()) + 86400},
+                         SESSION_SECRET, algorithm="HS256")
+        try:
+            survey.send_verify(email, name, f"{acc.get('base') or PUBLIC_URL}/app?verificar={tok}", acc)
+        except Exception:
+            raise HTTPException(502, "No se pudo enviar el correo. Revise la dirección e intente de nuevo.")
+    return {"ok": True}
+
+
+class VerifyIn(BaseModel):
+    token: str
+
+
+@app.post("/api/auth/verify")
+def verify_email(body: VerifyIn, request: Request, response: Response, db: Session = Depends(get_db)):
+    try:
+        t = jwt.decode(body.token, SESSION_SECRET, algorithms=["HS256"])
+        assert t.get("p") == "reg"
+    except Exception:
+        raise HTTPException(400, "El enlace venció o no es válido. Cree la cuenta de nuevo.")
+    if db.scalar(select(User).where(User.email == t["e"])):  # el enlace sirve una sola vez: no vuelve a abrir sesión
+        raise HTTPException(409, "Su cuenta ya está activa: ingrese con su correo y contraseña.")
+    if _signup_limit(client_ip(request) or "?"):
+        raise HTTPException(429, "Se crearon demasiadas cuentas desde esta conexión hoy. Intente de nuevo mañana.")
+    user = User(email=t["e"], name=t["n"], password_hash=t["h"], role="user")
+    db.add(user)
+    db.commit()
+    audit(db, user.id, "user.create", f"{user.email} (correo verificado)", ip=client_ip(request))
+    set_session(request, response, user.id)
+    audit(db, user.id, "login.ok", "verificación de correo", ip=client_ip(request))
+    return {**user_out(user, None), "idle_minutes": IDLE_MINUTES, "comentarios": BETA_COMENTARIOS}
+
+
 def _second_factor(db: Session, user: User, code: str) -> bool:
     """Acepta un código de la app autenticadora (una sola vez) o un código de recuperación (se gasta)."""
     secret = decrypt(user.totp_secret)["s"] if user.totp_secret else None

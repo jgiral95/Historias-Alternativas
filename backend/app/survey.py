@@ -271,6 +271,21 @@ def message(to: str, token: str, p: dict, prof: dict, acc: dict | None = None) -
     return m
 
 
+def send_verify(to: str, name: str, url: str, acc: dict) -> None:
+    """Correo con el enlace para activar una cuenta nueva. Se reemplaza en las pruebas."""
+    m = EmailMessage()
+    m["Subject"] = "Bienvenido(a) a Alter-Karute: confirme su correo para activar su cuenta"
+    m["From"] = formataddr(("Alter-Karute", acc.get("from") or SMTP_FROM))
+    m["To"] = to
+    nombre = (name or "").strip()
+    m.set_content(
+        f"Bienvenido(a) a Alter-Karute{(', ' + nombre) if nombre else ''}.\n\n"
+        f"Para activar su cuenta, confirme su correo con este enlace (vigente durante 24 horas):\n\n{url}\n\n"
+        "Si usted no solicitó esta cuenta, ignore este mensaje: no se creará ningún registro.\n\nAtentamente,\nAlter-Karute\n")
+    with smtp_open(acc) as s:
+        s.send_message(m)
+
+
 def send_mail(to: str, token: str, p: dict, prof: dict, acc: dict | None) -> None:
     """Envía el correo con el enlace desde el correo de la cuenta. Se reemplaza en las pruebas."""
     m = message(to, token, p, prof, acc)
