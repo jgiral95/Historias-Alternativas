@@ -11,7 +11,7 @@ from datetime import timedelta
 from email.message import EmailMessage
 from email.utils import formataddr
 
-from . import survey
+from . import correo, survey
 from .config import PUBLIC_URL
 
 DAYS = 7
@@ -62,5 +62,8 @@ def send_mail(to: str, body: str, prof: dict, acc: dict) -> None:
     if reply:
         m["Reply-To"] = reply
     m.set_content(body + "\n\nSi no esperaba este mensaje, ignórelo o comuníquese con el consultorio.\n")
+    antes, url, despues = correo.separar_enlace(body)
+    correo.agregar(m, correo.layout("Tiene un documento para firmar", [antes, despues], boton=("Leer y firmar el documento", url) if url else None,
+                                    notas=["Si no esperaba este mensaje, ignórelo o comuníquese con el consultorio."], firma=("Atentamente,", prof.get("nombre") or place)))
     with survey.smtp_open(acc) as s:
         s.send_message(m)

@@ -19,6 +19,7 @@ from email.utils import formataddr
 
 from sqlalchemy import select
 
+from . import correo
 from .config import (PUBLIC_URL, SMTP_FROM, SMTP_HOST, SMTP_PASSWORD, SMTP_PORT, SMTP_USER,
                      SURVEY_DAYS_OPEN, SURVEY_MIN_GAP_DAYS)
 from .db import MailAccount, Record, SessionLocal, SurveyInvite, SurveyOptOut, SurveyState, User
@@ -268,6 +269,10 @@ def message(to: str, token: str, p: dict, prof: dict, acc: dict | None = None) -
         f"Toma unos 2 minutos y sus respuestas se guardan sin su nombre.\n\n{url}\n\n"
         f"El enlace estará abierto {SURVEY_DAYS_OPEN} días. Responder es voluntario.\n"
         f"Si no desea recibir más encuestas: {out}\n\nGracias por su tiempo.\n")
+    correo.agregar(m, correo.layout("¿Cómo le pareció la atención?",
+                                    [f"Hola{(' ' + first) if first else ''}. {who} le invita a responder una encuesta corta sobre la atención que recibió. Toma unos 2 minutos y sus respuestas se guardan sin su nombre."],
+                                    cierre=[f"El enlace estará abierto {SURVEY_DAYS_OPEN} días. Responder es voluntario."], boton=("Responder la encuesta", url),
+                                    notas=[("Si no desea recibir más encuestas,", "haga clic aquí", out)], firma=("Gracias por su tiempo,", who)))
     return m
 
 
@@ -282,6 +287,9 @@ def send_verify(to: str, name: str, url: str, acc: dict) -> None:
         f"Bienvenido(a) a Alter-Karute{(', ' + nombre) if nombre else ''}.\n\n"
         f"Para activar su cuenta, confirme su correo con este enlace (vigente durante 24 horas):\n\n{url}\n\n"
         "Si usted no solicitó esta cuenta, ignore este mensaje: no se creará ningún registro.\n\nAtentamente,\nAlter-Karute\n")
+    correo.agregar(m, correo.layout(f"Bienvenido(a) a Alter-Karute{(', ' + nombre) if nombre else ''}",
+                                    ["Para activar su cuenta, confirme su correo con el siguiente botón. El enlace estará vigente durante 24 horas."],
+                                    boton=("Confirmar mi correo", url), notas=["Si usted no solicitó esta cuenta, ignore este mensaje: no se creará ningún registro."]))
     with smtp_open(acc) as s:
         s.send_message(m)
 

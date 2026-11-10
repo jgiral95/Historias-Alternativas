@@ -64,7 +64,7 @@ def test_email_is_sent_and_failures_fall_back_to_manual(monkeypatch):
     inv = c.get("/api/encuestas").json()["invitaciones"][0]
     assert sent[0][0] == "a@pac.co" and inv["canal"] == "correo" and inv["enviada"] and "enlace" not in inv
     m = survey.message("a@pac.co", "tok", {"nombres": "María José"}, {"nombre": "Ana Psicóloga", "consultorio": "Consultorio Ana", "correo": "ana@x.co"})
-    body = m.get_content()
+    body = m.get_body(preferencelist=('plain',)).get_content()
     assert "Hola María" in body and "/encuesta?t=tok" in body and "baja=1" in body and m["Reply-To"] == "ana@x.co"
     assert "x" not in m["Subject"].replace("Consultorio", "")  # el asunto no lleva datos clínicos
     # si el correo falla, queda para envío manual con el error
@@ -207,7 +207,7 @@ def test_each_professional_sends_from_own_email(monkeypatch):
     c.post("/api/encuestas/sortear", headers=HEADERS)
     m = used[0]
     assert m["From"] == "Ana Psicóloga <ana@miconsultorio.co>" or "ana@miconsultorio.co" in m["From"]
-    assert m["Reply-To"] == "ana@miconsultorio.co" and "/encuesta?t=" in m.get_content()
+    assert m["Reply-To"] == "ana@miconsultorio.co" and "/encuesta?t=" in m.get_body(preferencelist=('plain',)).get_content()
     # otra cuenta no usa ese correo
     make_user("otro@x.co")
     assert client_for("otro@x.co").get("/api/correo").json()["propio"] is False
