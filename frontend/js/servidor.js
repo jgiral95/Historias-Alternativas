@@ -12,7 +12,7 @@ async function startApp() {
 function renderDown() {
   $('#modal-root').innerHTML = '';
   $('#app').innerHTML = `<div class="panel" style="max-width:440px;margin:8vh auto 0"><div class="body">
-    <div class="brand">${logoSVG(60)}<b>Alter-Karute</b></div>
+    <a class="brand" href="/" aria-label="Alter-Karute: ir a la página principal" style="text-decoration:none;color:inherit">${logoSVG(60)}<b>Alter-Karute</b></a>
     <div class="banner" role="alert"><b>El servidor no responde.</b> La página cargó, pero el servicio de la aplicación no está disponible en este momento. Puede estar reiniciándose después de una actualización.</div>
     <p style="margin:0;color:var(--muted);font-size:14px">Espere un minuto y pulse «Reintentar». Si sigue igual, avise al administrador.</p>
     <button class="btn pri" id="dn_retry">Reintentar</button></div></div>`;
@@ -23,7 +23,7 @@ function renderDown() {
 function renderRegistro(msg, v) {
   v = v || {};
   $('#app').innerHTML = `<div class="panel" style="width:100%;max-width:400px;box-sizing:border-box;margin:8vh auto 0"><form class="body" id="regform" autocomplete="on">
-    <div class="brand">${logoSVG(60)}<b>Alter-Karute</b></div><p style="margin:0;color:var(--muted)">Cree su cuenta para empezar.</p>
+    <a class="brand" href="/" aria-label="Alter-Karute: ir a la página principal" style="text-decoration:none;color:inherit">${logoSVG(60)}<b>Alter-Karute</b></a><p style="margin:0;color:var(--muted)">Cree su cuenta para empezar.</p>
     ${msg ? `<div class="banner" role="alert">${esc(msg)}</div>` : ''}
     <div class="fld"><label for="rg_name">Nombre completo</label><input id="rg_name" autocomplete="name" value="${esc(v.name || '')}" required></div>
     <div class="fld"><label for="rg_email">Correo</label><input id="rg_email" type="email" autocomplete="username" value="${esc(v.email || '')}" required></div>
@@ -40,7 +40,7 @@ function renderRegistro(msg, v) {
     try {
       await api('/auth/register', { method: 'POST', body: b, noRedirect: true });
       $('#app').innerHTML = `<div class="panel" style="width:100%;max-width:400px;box-sizing:border-box;margin:8vh auto 0"><div class="body">
-        <div class="brand">${logoSVG(60)}<b>Alter-Karute</b></div><h2 style="margin:0">Revise su correo</h2>
+        <a class="brand" href="/" aria-label="Alter-Karute: ir a la página principal" style="text-decoration:none;color:inherit">${logoSVG(60)}<b>Alter-Karute</b></a><h2 style="margin:0">Revise su correo</h2>
         <p style="margin:0">Enviamos un enlace de confirmación a <b>${esc(b.email)}</b>. Ábralo para activar su cuenta (vale 24 horas). Si no lo ve, revise la carpeta de spam.</p>
         <button class="btn" id="rg_ok">Volver al ingreso</button></div></div>`;
       $('#rg_ok').onclick = () => renderLogin('', b.email);
@@ -50,7 +50,7 @@ function renderRegistro(msg, v) {
 function renderLogin(msg, email) {
   $('#modal-root').innerHTML = ''; $('#fb-root').innerHTML = '';
   $('#app').innerHTML = `<div class="panel" style="width:100%;max-width:400px;box-sizing:border-box;margin:8vh auto 0"><form class="body" id="loginform" autocomplete="on">
-    <div class="brand">${logoSVG(60)}<b>Alter-Karute</b></div><p style="margin:0;color:var(--muted)">Ingrese con su cuenta para ver sus fichas.</p><p style="margin:6px 0 0;color:var(--muted);font-size:12px">Seguimiento de bienestar con terapias alternativas: no es una herramienta clínica ni sus usuarios son profesionales de la salud.</p>
+    <a class="brand" href="/" aria-label="Alter-Karute: ir a la página principal" style="text-decoration:none;color:inherit">${logoSVG(60)}<b>Alter-Karute</b></a><p style="margin:0;color:var(--muted)">Ingrese con su cuenta para ver sus fichas.</p><p style="margin:6px 0 0;color:var(--muted);font-size:12px">Seguimiento de bienestar con terapias alternativas: no es una herramienta clínica ni sus usuarios son profesionales de la salud.</p>
     ${msg ? `<div class="banner" role="alert">${esc(msg)}</div>` : ''}
     <div class="fld"><label for="lg_email">Correo</label><input id="lg_email" type="email" autocomplete="username" value="${esc(email || '')}" required></div>
     <div class="fld"><label for="lg_pass">Contraseña</label><input id="lg_pass" type="password" autocomplete="current-password" required></div>
@@ -71,7 +71,7 @@ function renderLogin(msg, email) {
 const CODE_INPUT = id => `<input id="${id}" type="text" inputmode="text" autocomplete="one-time-code" maxlength="12" placeholder="123456" required style="font-family:var(--f-mono);font-size:20px;letter-spacing:.15em;text-align:center">`;
 function renderCode(ticket, email, msg, days, keep) {
   $('#app').innerHTML = `<div class="panel" style="width:100%;max-width:400px;box-sizing:border-box;margin:8vh auto 0"><form class="body" id="codeform" autocomplete="off">
-    <div class="brand">${logoSVG(60)}<b>Alter-Karute</b></div>
+    <a class="brand" href="/" aria-label="Alter-Karute: ir a la página principal" style="text-decoration:none;color:inherit">${logoSVG(60)}<b>Alter-Karute</b></a>
     <p style="margin:0"><b>Verificación en dos pasos.</b> Escriba el código de 6 dígitos que muestra su app autenticadora para ${esc(email)}.</p>
     ${msg ? `<div class="banner" role="alert">${esc(msg)}</div>` : ''}
     <div class="fld"><label for="lg_code">Código</label>${CODE_INPUT('lg_code')}</div>
