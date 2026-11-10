@@ -89,14 +89,19 @@ header.top .nav a.nl{color:var(--tinta);text-decoration:none;padding:8px 2px}hea
 .demo-side{background:#EFE9DB;padding:22px;border-right:1px solid var(--linea)}
 .demo-side b.k,.demo-main b.k{display:block;font-size:12px;letter-spacing:1.6px;text-transform:uppercase;color:var(--terracota);margin-bottom:12px}
 .demo-side ul{list-style:none;margin:0;padding:0;display:grid;gap:8px}
-.demo-side li{background:var(--crema);border:1px solid var(--linea);border-radius:12px;padding:10px 12px;display:flex;justify-content:space-between;gap:8px;font-size:14.5px}
+.demo-side li button{all:unset;box-sizing:border-box;width:100%;cursor:pointer;display:flex;justify-content:space-between;gap:8px;padding:10px 12px;border-radius:12px}
+.demo-side li button:focus-visible,.demo-tabs button:focus-visible{outline:3px solid var(--terracota);outline-offset:2px}
+.demo-hint{font-size:12.5px;color:var(--suave);margin-top:14px}
+.barra{height:10px;background:#E4EBE2;border-radius:99px;overflow:hidden;margin-top:6px}.barra i{display:block;height:100%;background:var(--salvia);border-radius:99px;transition:width .4s}
+.demo-field .row2{display:flex;justify-content:space-between;font-size:14px}
+.demo-side li{background:var(--crema);border:1px solid var(--linea);border-radius:12px;font-size:14.5px}
 .demo-side li.on{border-color:var(--salvia);box-shadow:inset 3px 0 0 var(--salvia)}
 .demo-side li i{font-style:normal;font-size:12px;color:var(--musgo)}
 .demo-main{padding:24px 28px;text-align:left}
 .demo-main h3{font-size:24px;margin-bottom:2px}.demo-main .meta{color:var(--suave);font-size:14px;margin-bottom:16px}
 .demo-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px}
-.demo-tabs span{padding:7px 14px;border-radius:99px;border:1px solid var(--linea);font-size:14px;color:var(--suave)}
-.demo-tabs span.on{background:var(--bosque);border-color:var(--bosque);color:#fff}
+.demo-tabs button{font:inherit;cursor:pointer;background:none;padding:7px 14px;border-radius:99px;border:1px solid var(--linea);font-size:14px;color:var(--suave)}
+.demo-tabs button[aria-selected="true"]{background:var(--bosque);border-color:var(--bosque);color:#fff}
 .demo-field{background:#fff;border:1px solid var(--linea);border-radius:12px;padding:12px 14px;margin-bottom:10px}
 .demo-field b{display:block;font-size:13px;color:var(--bosque);margin-bottom:2px}.demo-field p{font-size:15px;color:var(--suave)}
 @media(max-width:760px){.demo{grid-template-columns:1fr}.demo-side{border-right:0;border-bottom:1px solid var(--linea)}}
@@ -138,16 +143,14 @@ header.top .nav a.nl{color:var(--tinta);text-decoration:none;padding:8px 2px}hea
 </section>
 
 <section class="demo-wrap" aria-label="Vista previa de la app" style="padding-top:0"><div class="wrap">
-  <div class="demo" role="img" aria-label="Ejemplo de agenda y ficha de un consultante, con datos inventados">
-    <div class="demo-side"><b class="k">Hoy</b><ul>
-      <li><span>8:00 · Marta L.</span><i>Confirmó</i></li><li class="on"><span>10:00 · Daniel R.</span><i>Primera vez</i></li>
-      <li><span>11:30 · Inés P.</span><i>En línea</i></li><li><span>15:00 · Pablo S.</span><i>Firma pendiente</i></li></ul></div>
-    <div class="demo-main"><b class="k">Ficha del consultante</b><h3>Daniel R.</h3><p class="meta">10:00 · Presencial · Sesión 1 · datos de ejemplo</p>
-      <div class="demo-tabs"><span class="on">Sesión</span><span>Datos</span><span>Chequeos</span><span>Informes</span></div>
-      <div class="demo-field"><b>Motivo</b><p>Busca calmar el ritmo del día y dormir mejor.</p></div>
-      <div class="demo-field"><b>Lo trabajado</b><p>Respiración consciente y una pausa corta antes de dormir.</p></div>
-      <div class="demo-field"><b>Para la próxima</b><p>Registrar cómo se siente al despertar durante una semana.</p></div></div>
+  <div class="demo">
+    <div class="demo-side"><b class="k" id="d-hoy">Hoy</b><ul aria-labelledby="d-hoy" id="d-citas"></ul><p class="demo-hint">Datos de ejemplo: pulse una cita o una pestaña.</p></div>
+    <div class="demo-main"><b class="k">Ficha del consultante</b><h3 id="d-nombre"></h3><p class="meta" id="d-meta"></p>
+      <div class="demo-tabs" role="tablist" aria-label="Secciones de la ficha" id="d-tabs"></div>
+      <div id="d-panel" role="tabpanel" aria-live="polite"></div></div>
   </div></div></section>
+<script src="portada.js" defer></script>
+
 
 <section id="para-quien" style="background:var(--crema)">
   <div class="wrap centro">
