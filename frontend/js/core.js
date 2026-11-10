@@ -32,7 +32,7 @@ function toast(msg) {
 }
 
 /* Logotipo: una hoja dentro de un círculo. */
-const logoSVG = (px = 32) => `<svg class="logo" width="${px}" height="${px}" viewBox="0 0 120 120" role="img" aria-label="Alter-Karute"><circle cx="60" cy="60" r="56" fill="#E4EBE2"/><path d="M60 94C37 85 27 66 30 40c23 0 39 9 45 28 4 11 0 21-15 26z" fill="#7C9A83"/><path d="M60 94c0-22 3-35 19-48" stroke="#2F4A3A" stroke-width="4.5" fill="none" stroke-linecap="round"/><circle cx="60" cy="60" r="56" fill="none" stroke="#2F4A3A" stroke-width="3"/></svg>`;
+const logoSVG = (px = 32) => `<svg class="logo" width="${px}" height="${px}" viewBox="0 0 120 120" role="img" aria-label="Alter-Karute"><circle cx="60" cy="60" r="56" fill="#E4EBE2"/><path d="M35 91L60 29L85 91" stroke="#2F4A3A" stroke-width="6.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="M60 84C45.6 84 40.8 72 43.2 61.2C55.2 61.2 63.6 69.6 60 84Z" fill="#7C9A83"/><circle cx="60" cy="60" r="56" fill="none" stroke="#2F4A3A" stroke-width="3"/></svg>`;
 
 /* ===== Estado ===== */
 const S = { user: null, profile: null, patients: [], notes: [], reports: [], pnotes: [], pn: { q: '', pid: '', tipo: '', estado: 'abiertas', sel: null, draft: null, open: new Set() }, appts: [], files: [], scales: [], view: 'patients', newSol: false, newIncorp: false, newScale: null, week: null, noteSeed: null, pid: null, draft: false, tab: 'datos', q: '', mode: 'local', loading: true, newNote: false, newReport: false };
