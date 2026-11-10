@@ -22,7 +22,7 @@ function renderDown() {
 /* Cuenta nueva con correo: se envía un enlace para confirmarlo y la cuenta se crea al abrirlo. */
 function renderRegistro(msg, v) {
   v = v || {};
-  $('#app').innerHTML = `<div class="panel" style="max-width:400px;margin:8vh auto 0"><form class="body" id="regform" autocomplete="on">
+  $('#app').innerHTML = `<div class="panel" style="width:100%;max-width:400px;box-sizing:border-box;margin:8vh auto 0"><form class="body" id="regform" autocomplete="on">
     <div class="brand">${logoSVG(60)}<b>Alter-Karute</b></div><p style="margin:0;color:var(--muted)">Cree su cuenta para empezar.</p>
     ${msg ? `<div class="banner" role="alert">${esc(msg)}</div>` : ''}
     <div class="fld"><label for="rg_name">Nombre completo</label><input id="rg_name" autocomplete="name" value="${esc(v.name || '')}" required></div>
@@ -31,7 +31,7 @@ function renderRegistro(msg, v) {
     <div class="fld"><label for="rg_pass2">Confirmar contraseña</label><input id="rg_pass2" type="password" autocomplete="new-password" minlength="10" required></div>
     <button class="btn pri" type="submit">Crear cuenta</button>
     <button class="btn" type="button" id="rg_back">Ya tengo cuenta</button>
-    <a class="btn" href="/" style="display:flex;align-items:center;justify-content:center;text-decoration:none">← Volver al inicio</a></form></div>`;
+    <a class="btn" href="/" style="display:flex;align-items:center;justify-content:center;text-decoration:none;color:inherit">← Volver al inicio</a></form></div>`;
   $('#rg_back').onclick = () => renderLogin();
   $('#regform').onsubmit = async ev => {
     ev.preventDefault();
@@ -39,7 +39,7 @@ function renderRegistro(msg, v) {
     if (b.password !== $('#rg_pass2').value) { renderRegistro('Las contraseñas no coinciden.', b); return; }
     try {
       await api('/auth/register', { method: 'POST', body: b, noRedirect: true });
-      $('#app').innerHTML = `<div class="panel" style="max-width:400px;margin:8vh auto 0"><div class="body">
+      $('#app').innerHTML = `<div class="panel" style="width:100%;max-width:400px;box-sizing:border-box;margin:8vh auto 0"><div class="body">
         <div class="brand">${logoSVG(60)}<b>Alter-Karute</b></div><h2 style="margin:0">Revise su correo</h2>
         <p style="margin:0">Enviamos un enlace de confirmación a <b>${esc(b.email)}</b>. Ábralo para activar su cuenta (vale 24 horas). Si no lo ve, revise la carpeta de spam.</p>
         <button class="btn" id="rg_ok">Volver al ingreso</button></div></div>`;
@@ -49,7 +49,7 @@ function renderRegistro(msg, v) {
 }
 function renderLogin(msg, email) {
   $('#modal-root').innerHTML = ''; $('#fb-root').innerHTML = '';
-  $('#app').innerHTML = `<div class="panel" style="max-width:400px;margin:8vh auto 0"><form class="body" id="loginform" autocomplete="on">
+  $('#app').innerHTML = `<div class="panel" style="width:100%;max-width:400px;box-sizing:border-box;margin:8vh auto 0"><form class="body" id="loginform" autocomplete="on">
     <div class="brand">${logoSVG(60)}<b>Alter-Karute</b></div><p style="margin:0;color:var(--muted)">Ingrese con su cuenta para ver sus fichas.</p><p style="margin:6px 0 0;color:var(--muted);font-size:12px">Seguimiento de bienestar con terapias alternativas: no es una herramienta clínica ni sus usuarios son profesionales de la salud.</p>
     ${msg ? `<div class="banner" role="alert">${esc(msg)}</div>` : ''}
     <div class="fld"><label for="lg_email">Correo</label><input id="lg_email" type="email" autocomplete="username" value="${esc(email || '')}" required></div>
@@ -70,7 +70,7 @@ function renderLogin(msg, email) {
 /* Segundo paso del ingreso: código de la app autenticadora o un código de recuperación. */
 const CODE_INPUT = id => `<input id="${id}" type="text" inputmode="text" autocomplete="one-time-code" maxlength="12" placeholder="123456" required style="font-family:var(--f-mono);font-size:20px;letter-spacing:.15em;text-align:center">`;
 function renderCode(ticket, email, msg, days, keep) {
-  $('#app').innerHTML = `<div class="panel" style="max-width:400px;margin:8vh auto 0"><form class="body" id="codeform" autocomplete="off">
+  $('#app').innerHTML = `<div class="panel" style="width:100%;max-width:400px;box-sizing:border-box;margin:8vh auto 0"><form class="body" id="codeform" autocomplete="off">
     <div class="brand">${logoSVG(60)}<b>Alter-Karute</b></div>
     <p style="margin:0"><b>Verificación en dos pasos.</b> Escriba el código de 6 dígitos que muestra su app autenticadora para ${esc(email)}.</p>
     ${msg ? `<div class="banner" role="alert">${esc(msg)}</div>` : ''}
