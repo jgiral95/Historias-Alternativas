@@ -1537,6 +1537,9 @@ class TeamPatch(BaseModel):
     name: str | None = None
 
 
+MAX_EQUIPO = 2  # cuentas de ayudantes por terapeuta
+
+
 @app.get("/api/equipo")
 def team_list(user: User = Depends(pro_user), db: Session = Depends(get_db)):
     return [user_out(u) for u in db.scalars(select(User).where(User.owner_id == user.id).order_by(User.name))]
@@ -1553,8 +1556,8 @@ def team_create(body: TeamIn, user: User = Depends(pro_user), db: Session = Depe
         raise HTTPException(400, f"La contraseña debe tener al menos {MIN_PASSWORD} caracteres")
     if db.scalar(select(User).where(User.email == email)):
         raise HTTPException(409, "Ya existe un usuario con ese correo")
-    if db.scalar(select(func.count()).select_from(User).where(User.owner_id == user.id)) >= 10:
-        raise HTTPException(400, "Máximo 10 personas en el equipo")
+    if db.scalar(select(func.count()).select_from(User).where(User.owner_id == user.id)) >= MAX_EQUIPO:
+        raise HTTPException(400, f"Máximo {MAX_EQUIPO} cuentas de ayudantes")
     u = User(email=email, name=body.name.strip()[:200], password_hash=hash_password(body.password), role="asistente", owner_id=user.id,
              must_change_password=True)
     db.add(u)

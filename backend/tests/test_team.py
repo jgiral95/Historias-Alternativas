@@ -146,3 +146,12 @@ def test_first_login_requires_own_password():
     assert client_for("secre@x.co", keep_first=True).get("/api/auth/me").json()["cambiarClave"] is True
     # quien se registra con su propia contraseña (creada por consola) no
     assert pro.get("/api/auth/me").json()["cambiarClave"] is False
+
+
+def test_team_is_limited_to_two_helpers():
+    make_user("pro@x.co")
+    c = client_for("pro@x.co")
+    for i in range(2):
+        assert c.post("/api/equipo", json={"email": f"a{i}@x.co", "name": "Ayuda", "password": PASSWORD}, headers=HEADERS).status_code == 201
+    r = c.post("/api/equipo", json={"email": "a3@x.co", "name": "Ayuda", "password": PASSWORD}, headers=HEADERS)
+    assert r.status_code == 400 and "Máximo 2" in r.json()["detail"]
