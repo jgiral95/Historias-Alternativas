@@ -105,6 +105,11 @@ header.top .nav a.nl{color:var(--tinta);text-decoration:none;padding:8px 2px}hea
 .demo-field{background:#fff;border:1px solid var(--linea);border-radius:12px;padding:12px 14px;margin-bottom:10px}
 .demo-field b{display:block;font-size:13px;color:var(--bosque);margin-bottom:2px}.demo-field p{font-size:15px;color:var(--suave)}
 @media(max-width:760px){.demo{grid-template-columns:1fr}.demo-side{border-right:0;border-bottom:1px solid var(--linea)}}
+.planes{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:24px;max-width:760px;margin:44px auto 0;text-align:left}
+.pcard{background:var(--crema);border:1px solid var(--linea);border-radius:28px 28px 28px 8px;padding:30px;display:flex;flex-direction:column;gap:14px}
+.pcard.f{border:2px solid var(--bosque)}.pcard h3{font-size:24px}
+.pcard ul{list-style:none;margin:0;padding:0;display:grid;gap:8px;color:var(--suave);font-size:15.5px;flex:1}.pcard li{padding-left:24px;position:relative}.pcard li::before{content:"";position:absolute;left:2px;top:.55em;width:10px;height:6px;border-left:2px solid var(--salvia);border-bottom:2px solid var(--salvia);transform:rotate(-45deg)}
+.pcard .btn{text-align:center}
 </style>
 </head>
 <body>
@@ -115,7 +120,7 @@ header.top .nav a.nl{color:var(--tinta);text-decoration:none;padding:8px 2px}hea
       Alter-Karute
     </a>
     <nav class="nav" aria-label="Principal">
-      <a href="#para-quien" class="nl">Para quién</a><a href="#camino" class="nl">Funciones</a><a href="#preguntas" class="nl">Preguntas</a>
+      <a href="#para-quien" class="nl">Para quién</a><a href="#camino" class="nl">Funciones</a><a href="#planes" class="nl">Planes</a><a href="#preguntas" class="nl">Preguntas</a>
       <a class="btn sec" href="/app" style="padding:10px 22px;min-height:44px">Ingresar</a>
       <a class="btn pri" href="/app?registro=1" style="padding:10px 22px;min-height:44px">Crear cuenta</a>
     </nav>
@@ -247,6 +252,22 @@ header.top .nav a.nl{color:var(--tinta);text-decoration:none;padding:8px 2px}hea
         <blockquote>«No se debe intentar curar el cuerpo sin curar el alma.»</blockquote>
         <cite>Platón<span><i>Cármides</i>, 156e · palabras que Sócrates atribuye a los médicos tracios</span></cite>
       </figure>
+    </div>
+  </div>
+</section>
+
+<section id="planes">
+  <div class="wrap centro">
+    <p class="kicker">Planes</p>
+    <h2>Elija cómo suscribirse</h2>
+    <p class="sub">Todas las funciones en cualquier plan: cobro automático, 5 días de prueba y cancelación cuando quiera.</p>
+    <div class="planes">
+      <div class="pcard"><h3>Plan mensual</h3>
+        <ul><li>Acceso completo a la plataforma</li><li>Fichas cifradas y notas de sesión</li><li>Acuerdos, consentimientos e informes</li><li>Agenda con recordatorios</li><li>5 días de prueba</li></ul>
+        <a class="btn sec" href="https://subscription-landing.epayco.co/plan/af3adcdcbfee6b0cd0c2e43" target="_blank" rel="noopener">Suscribirme al plan mensual</a></div>
+      <div class="pcard f"><h3>Plan anual</h3>
+        <ul><li>Acceso completo a la plataforma</li><li>Fichas cifradas y notas de sesión</li><li>Acuerdos, consentimientos e informes</li><li>Agenda con recordatorios</li><li>5 días de prueba</li></ul>
+        <a class="btn pri" href="https://subscription-landing.epayco.co/plan/af3ae2d02ea12f18a0c9403" target="_blank" rel="noopener">Suscribirme al plan anual</a></div>
     </div>
   </div>
 </section>
