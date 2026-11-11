@@ -171,7 +171,6 @@ function todoHTML() {
   active.forEach(p => {
     const cs = p.consents || [];
     if (!cs.some(c => c.tipo !== DATA_TIPO && !(c.revocacion && c.revocacion.alcance === 'Total'))) items.push({ k: 'Sin consentimiento', t: fullName(p), d: 'No tiene consentimiento de atención vigente', act: `data-act="open" data-id="${p.id}" data-tab="consent"`, btn: 'Abrir', w: 1 });
-    else if (!cs.some(c => c.tipo === DATA_TIPO && !c.revocacion)) items.push({ k: 'Sin autorización de datos', t: fullName(p), d: 'Falta la autorización de uso de datos', act: `data-act="open" data-id="${p.id}" data-tab="consent"`, btn: 'Abrir', w: 2 });
     if (!(p.intake && p.intake.signedAt) && !(p.incorporaciones || []).length && (cs.length || S.notes.some(n => n.patientId === p.id))) items.push({ k: 'Primera vez sin firmar', t: fullName(p), d: 'Aún no tiene la consulta de primera vez', act: `data-act="open" data-id="${p.id}" data-tab="intake"`, btn: 'Abrir', w: 3 });
     const last = lastAttention(p), next = S.appts.some(a => a.patientId === p.id && a.estado === 'Programada' && a.startAt >= nowI);
     if (last && !next && now - new Date(last).getTime() > 28 * 864e5) items.push({ k: 'Sin cita', t: fullName(p), d: 'Última atención ' + fmtD(last) + '; no tiene próxima cita', act: `data-act="apptEdit" data-patient="${p.id}"`, btn: 'Agendar', w: 5 });
@@ -480,8 +479,7 @@ function repBlock(n, name, doc, par) {
 }
 function tabConsent(p) {
   const cs = p.consents || [];
-  const hasData = cs.some(c => c.tipo === DATA_TIPO && !c.revocacion);
-  const dataBanner = hasData ? '' : `<div class="banner"><b>Falta la autorización de datos personales.</b> Es un documento corto, distinto del consentimiento, en el que el consultante (o su representante) autoriza que usted guarde y use sus datos para acompañarlo. Se firma una sola vez. <div class="row" style="margin-top:6px"><button class="btn sm pri" data-act="newDataAuth">Firmar autorización de datos</button></div></div>`;
+  const dataBanner = '';
   if (cs.length && !S.reconsent) {
     const hasCare = cs.some(c => c.tipo !== DATA_TIPO && !(c.revocacion && c.revocacion.alcance === 'Total'));
     const remote = /Virtual|Mixta/.test(p.modalidadAt || ''), hasTele = cs.some(c => (/tele/i.test(c.tipo || '') || /TELETERAPIA/i.test(c.text || '')) && !(c.revocacion && c.revocacion.alcance === 'Total'));
