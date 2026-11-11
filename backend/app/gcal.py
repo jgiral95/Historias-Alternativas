@@ -113,7 +113,9 @@ def event_id(user_id: int, appt_id: str) -> str:
     return "hc" + hashlib.sha1(f"{user_id}:{appt_id}".encode()).hexdigest()
 
 
-def label(p: dict | None, detail: str) -> str:
+def label(p: dict | None, detail: str, a: dict | None = None) -> str:
+    if a and a.get("evento"):  # bloqueo de tiempo sin consultante
+        return "Ocupado" if detail == "oculto" else (str(a["evento"]).strip()[:200] or "Evento")
     if detail == "oculto" or not p:
         return "Cita de terapia"
     if detail == "nombre":
@@ -130,7 +132,7 @@ def event_body(eid: str, a: dict, p: dict | None, detail: str) -> dict | None:
     if start.tzinfo is None:
         start = start.replace(tzinfo=timezone.utc)
     end = start + timedelta(minutes=int(a.get("duracion") or 50))
-    return {"id": eid, "summary": label(p, detail), "location": a.get("modalidad") or "",
+    return {"id": eid, "summary": label(p, detail, a), "location": a.get("modalidad") or "",
             "description": "Cita registrada en Alter-Karute.",
             "start": {"dateTime": start.isoformat(), "timeZone": TZ}, "end": {"dateTime": end.isoformat(), "timeZone": TZ},
             "status": "confirmed", "transparency": "opaque"}
@@ -183,7 +185,7 @@ def sync(user_id: int, appt_ids: list[str] | None = None, everything: bool = Fal
                 pid = (a or {}).get("patientId")
                 if pid not in pats:
                     pats[pid] = _record(db, user_id, pid)
-                _sync_one(token, link, aid, a, pats[pid])
+                _sync_one(token, link, aid, a, pats[pid] or (a or {}).get("nuevo"))  # consultante nuevo: aún sin ficha, sus datos van en la cita
                 n += 1
             link.last_error = ""
             link.last_sync = datetime.now(timezone.utc)

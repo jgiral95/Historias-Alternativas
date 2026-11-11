@@ -22,9 +22,9 @@ import jwt
 
 from .config import (FILE_UNDO_MINUTES, IDLE_MINUTES, MAX_FILE_BYTES, MAX_RECORD_BYTES,
                      MIN_PASSWORD, SESSION_HOURS, SESSION_SECRET)
-from . import billing, compress, firmas, gcal, reminders, survey
+from . import billing, booking, compress, firmas, gcal, reminders, survey
 from .config import (BETA_COMENTARIOS, BILLING_ENFORCE, EPAYCO_PLAN_URL_ANUAL, EPAYCO_PLAN_URL_MENSUAL, EPAYCO_PRIVATE_KEY, PUBLIC_URL, RECIFRAR_AL_ARRANCAR, SURVEY_SCHEDULER, TRUSTED_DEVICE_DAYS)
-from .db import (TrustedDevice, ApptReminder, Audit, ConsentRequest, Feedback, Blob, Feed, GoogleLink, MailAccount, Record, SessionLocal, Subscription, SurveyInvite, SurveyOptOut, SurveyResponse,
+from .db import (Booking, TrustedDevice, ApptReminder, Audit, ConsentRequest, Feedback, Blob, Feed, GoogleLink, MailAccount, Record, SessionLocal, Subscription, SurveyInvite, SurveyOptOut, SurveyResponse,
                  User, Verification, init_db)
 from .security import (DUMMY_HASH, check_password, decrypt, decrypt_bytes, encrypt, encrypt_bytes,
                        recovery_hash, recovery_new, totp_check, totp_new_secret,
@@ -844,6 +844,47 @@ def _check_immutable(kind: str, old: dict | None, new: dict) -> None:
             _append_only(oi, ni, "El documento de primera vez")
 
 
+def _avisar_cita_paciente(db: Session, oid: int, ap: dict, bg: BackgroundTasks) -> None:
+    """Confirmación de la cita al correo del consultante (con botón para Google Calendar). Sin correo válido o sin correo de envío configurado, no sale."""
+    prow = db.get(Record, (oid, ap["patientId"])) if ID_RE.match(str(ap.get("patientId"))) else None
+    if not prow or prow.kind != "patient":
+        return
+    pat = decrypt(prow.payload)
+    correo = str(pat.get("correo") or "").strip().lower()
+    _avisar_cita(db, oid, ap, bg, " ".join(x for x in (pat.get("nombres"), pat.get("apellidos")) if x).strip(), correo, None)
+
+
+def _avisar_cita(db: Session, oid: int, ap: dict, bg: BackgroundTasks, who: str, correo: str, nuevo: dict | None) -> None:
+    acc = survey.account(db, oid)
+    if not EMAIL_RE.match(correo) or not survey.smtp_enabled(acc):
+        return
+    try:
+        start = datetime.fromisoformat(str(ap.get("startAt", "")).replace("Z", "+00:00"))
+    except ValueError:
+        return
+    profrow = db.get(Record, (oid, "profile"))
+    prof = decrypt(profrow.payload) if profrow else {}
+    bg.add_task(booking.notify, prof, acc, start, int(ap.get("duracion") or 50), ap.get("modalidad") or "", who, correo, "", nuevo, "", "", str(ap.get("enlace") or ""))
+
+
+def _avisar_cita_nueva(db: Session, oid: int, ap: dict, bg: BackgroundTasks) -> None:
+    """Cita creada por el profesional: si marcó «Enviar la cita por correo» (consultante con ficha) o es un consultante nuevo con correo, se le confirma.
+    En una serie semanal solo sale para la primera cita que se guarda."""
+    if ap.get("evento") or ap.get("origen") == "enlace" or (ap.get("estado") or "Programada") != "Programada":
+        return
+    if ap.get("patientId"):
+        if ap.get("avisarCorreo"):
+            _avisar_cita_paciente(db, oid, ap, bg)
+        return
+    nu = ap.get("nuevo")
+    if not isinstance(nu, dict):
+        return
+    serie = ap.get("nuevoSerie")
+    if serie and any(decrypt(r.payload).get("nuevoSerie") == serie for r in db.scalars(select(Record).where(Record.user_id == oid, Record.kind == "appt", Record.id != ap.get("id")))):
+        return
+    _avisar_cita(db, oid, ap, bg, " ".join(x for x in (nu.get("nombres"), nu.get("apellidos")) if x).strip(), str(nu.get("correo") or "").strip().lower(), nu)
+
+
 @app.get("/api/records")
 def list_records(request: Request, user: User = Depends(current_user), db: Session = Depends(get_db)):
     ensure_acceso(user, db)
@@ -886,6 +927,8 @@ def put_record(rid: str, request: Request, bg: BackgroundTasks, payload: dict = 
     if len(json.dumps(payload, ensure_ascii=False)) > MAX_RECORD_BYTES:
         raise HTTPException(413, "El registro es demasiado grande")
     oid, team = owner_id(user), user.role == "asistente"
+    if kind == "appt" and not (patient_id or (isinstance(payload.get("nuevo"), dict) and str(payload["nuevo"].get("nombres") or "").strip()) or (isinstance(payload.get("evento"), str) and payload["evento"].strip())):
+        raise HTTPException(400, "Elija un consultante, escriba los datos de uno nuevo o el título del evento")
     ensure_acceso(user, db, True)
     ensure_writable(user, db, kind == "patient" and db.get(Record, (oid, rid)) is None)
     payload.pop("demo", None)  # la marca de «datos de ejemplo» solo la pone el servidor (POST /api/demo)
@@ -931,6 +974,8 @@ def put_record(rid: str, request: Request, bg: BackgroundTasks, payload: dict = 
     audit(db, user.id, "record.import" if restoring else "record.put", f"{kind}:{rid}", patient_id=patient_id)
     if kind == "appt":
         bg.add_task(gcal.sync, oid, [rid])
+        if not old:
+            _avisar_cita_nueva(db, oid, payload, bg)
     elif kind == "patient" and old and (old.get("nombres"), old.get("apellidos")) != (payload.get("nombres"), payload.get("apellidos")):
         bg.add_task(lambda: gcal.sync(oid, gcal.patient_appts(oid, rid)))
     if kind == "patient":  # devuelve lo que calculó el servidor (fecha de apertura y registro de cambios)
@@ -1079,7 +1124,9 @@ def _ics_time(dt: datetime) -> str:
     return dt.astimezone(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
 
 
-def _label(p: dict | None, detail: str) -> str:
+def _label(p: dict | None, detail: str, a: dict | None = None) -> str:
+    if a and a.get("evento"):
+        return "Ocupado" if detail == "oculto" else (str(a["evento"]).strip()[:200] or "Evento")
     if detail == "oculto" or not p:
         return "Cita de terapia"
     if detail == "nombre":
@@ -1115,7 +1162,7 @@ def feed_ics(token: str, db: Session = Depends(get_db)):
         end = start + timedelta(minutes=int(a.get("duracion") or 50))
         lines += ["BEGIN:VEVENT", f"UID:{r.id}@historia-clinica", f"DTSTAMP:{stamp}",
                   f"DTSTART:{_ics_time(start)}", f"DTEND:{_ics_time(end)}",
-                  "SUMMARY:" + _ics_text(_label(pats.get(a.get("patientId")), f.detail)),
+                  "SUMMARY:" + _ics_text(_label(pats.get(a.get("patientId")) or a.get("nuevo"), f.detail, a)),
                   "LOCATION:" + _ics_text(a.get("modalidad") or ""), "END:VEVENT"]
     lines.append("END:VCALENDAR")
     body = "\r\n".join(_fold(x) for x in lines) + "\r\n"
@@ -2032,6 +2079,134 @@ def _reminder(db: Session, token: str):
     r = db.get(ApptReminder, reminders.token_hash(token))
     row = db.get(Record, (r.user_id, r.appt_id)) if r else None
     return (r, row) if row else (None, None)
+
+
+# ---------- Reservas por enlace público ----------
+_book_lock = threading.Lock()
+
+
+class BookCfgIn(BaseModel):
+    activo: bool = False
+    renovar: bool = False
+    dias: dict = {}
+    fechas: dict | None = None
+    duracion: int = 60
+    descanso: int = 0
+    aviso: int = 12
+    cancelacion: int = 0
+    horizonte: int = 30
+    modalidades: list[str] = ["Presencial"]
+
+
+@app.get("/api/reserva")
+def booking_get(user: User = Depends(pro_user), db: Session = Depends(get_db)):
+    b = db.get(Booking, user.id)
+    return {"activo": bool(b and b.active), "slug": b.slug if b else None, "config": decrypt(b.payload) if b else booking.DEFAULT,
+            "correo": survey.smtp_enabled(survey.account(db, user.id))}
+
+
+@app.put("/api/reserva")
+def booking_put(body: BookCfgIn, user: User = Depends(pro_user), db: Session = Depends(get_db)):
+    try:
+        cfg = booking.clean(body.model_dump(exclude={"activo", "renovar"}))
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+    b = db.get(Booking, user.id) or Booking(user_id=user.id, slug=secrets.token_urlsafe(12))
+    if body.renovar:
+        b.slug = secrets.token_urlsafe(12)
+    b.active, b.payload = body.activo, encrypt(cfg)
+    db.add(b)
+    db.commit()
+    audit(db, user.id, "booking.config", "activo" if b.active else "inactivo")
+    return booking_get(user, db)
+
+
+def _booking_link(db: Session, slug: str) -> tuple[Booking, User, dict, dict]:
+    """El enlace público activo, su profesional (con suscripción vigente), su perfil y el correo de envío."""
+    b = db.scalar(select(Booking).where(Booking.slug == slug, Booking.active.is_(True))) if re.match(r"^[A-Za-z0-9_-]{10,64}$", slug or "") else None
+    u = db.get(User, b.user_id) if b else None
+    if not b or not u or not u.active or not suscrito(u, db):
+        raise HTTPException(404, "Este enlace no está disponible")
+    acc = survey.account(db, u.id)
+    if not survey.smtp_enabled(acc):
+        raise HTTPException(503, "Las reservas no están disponibles por ahora")
+    row = db.get(Record, (u.id, "profile"))
+    return b, u, (decrypt(row.payload) if row else {}), acc
+
+
+def _appts_of(db: Session, oid: int) -> list[dict]:
+    return [decrypt(r.payload) for r in db.scalars(select(Record).where(Record.user_id == oid, Record.kind == "appt"))]
+
+
+@app.get("/api/reservar/{slug}")
+def public_booking(slug: str, request: Request, db: Session = Depends(get_db)):
+    _public_throttle(request)
+    b, u, prof, _acc = _booking_link(db, slug)
+    cfg = decrypt(b.payload)
+    return {"profesional": prof.get("nombre") or u.name, "consultorio": prof.get("consultorio") or "", "modalidades": cfg["modalidades"], "modalidadDia": booking.modalidades_por_dia(cfg),
+            "duracion": cfg["duracion"], "dias": booking.slots(cfg, booking.busy_of(_appts_of(db, u.id)))}
+
+
+class BookIn(BaseModel):
+    inicio: str
+    modalidad: str
+    nuevo: bool = False
+    nombres: str = ""
+    apellidos: str = ""
+    documento: str = ""
+    correo: str = ""
+    telefono: str = ""
+
+
+def _norm(v) -> str:
+    return re.sub(r"\W", "", str(v or "")).lower()
+
+
+@app.post("/api/reservar/{slug}")
+def public_booking_create(slug: str, body: BookIn, request: Request, bg: BackgroundTasks, db: Session = Depends(get_db)):
+    _public_throttle(request, 10)
+    b, u, prof, acc = _booking_link(db, slug)
+    cfg = decrypt(b.payload)
+    nombres, apellidos, correo, tel = body.nombres.strip()[:80], body.apellidos.strip()[:80], body.correo.strip().lower()[:120], body.telefono.strip()[:20]
+    if not nombres or not apellidos or not EMAIL_RE.match(correo):
+        raise HTTPException(400, "Escriba nombres, apellidos y un correo válido")
+    if not booking.modalidad_ok(cfg, body.inicio[:10], body.modalidad):
+        raise HTTPException(400, "Modalidad no válida")
+    if body.nuevo and len(_norm(tel)) < 7:
+        raise HTTPException(400, "Escriba un teléfono de contacto")
+    if not body.nuevo and not _norm(body.documento):
+        raise HTTPException(400, "Escriba su número de documento")
+    try:
+        start = datetime.strptime(body.inicio, "%Y-%m-%dT%H:%M").replace(tzinfo=booking.TZ)
+    except ValueError:
+        raise HTTPException(400, "Horario no válido")
+    pid, nuevo = None, None
+    if body.nuevo:
+        nuevo = {"nombres": nombres, "apellidos": apellidos, "correo": correo, "telefono": tel}
+    else:
+        for r in db.scalars(select(Record).where(Record.user_id == u.id, Record.kind == "patient")):
+            p = decrypt(r.payload)
+            if _norm(p.get("documento")) == _norm(body.documento) and str(p.get("correo") or "").strip().lower() == correo:
+                pid, pat = r.id, p
+                break
+        if not pid:
+            raise HTTPException(404, "No encontramos su ficha con esos datos. Si es su primera vez, marque «Soy consultante nuevo».")
+    with _book_lock:
+        if body.inicio[11:] not in booking.slots(cfg, booking.busy_of(_appts_of(db, u.id))).get(body.inicio[:10], []):
+            raise HTTPException(409, "Ese horario ya no está disponible. Elija otro.")
+        aid, now_iso = "a_" + secrets.token_hex(8), datetime.now(timezone.utc).isoformat()
+        payload = {"id": aid, "kind": "appt", "createdAt": now_iso, "updatedAt": now_iso, "startAt": start.astimezone(timezone.utc).isoformat(),
+                   "duracion": cfg["duracion"], "modalidad": body.modalidad, "estado": "Programada", "origen": "enlace",
+                   **({"patientId": pid} if pid else {"nuevo": nuevo})}
+        db.add(Record(user_id=u.id, id=aid, kind="appt", patient_id=pid, payload=encrypt(payload)))
+        _rem, tok = reminders.make(db, u.id, payload, "correo")  # enlace para ver o cancelar la cita (el mismo de los recordatorios)
+        db.commit()
+    audit(db, u.id, "booking.create", f"appt:{aid}", patient_id=pid, ip=client_ip(request))
+    bg.add_task(gcal.sync, u.id, [aid])
+    base = acc.get("base") or PUBLIC_URL or ""
+    bg.add_task(booking.notify, prof, acc, start, cfg["duracion"], body.modalidad, f"{nombres} {apellidos}", correo, prof.get("correo") or u.email, nuevo,
+                reminders.link(tok, base), f"{base}/reservar?c={slug}")
+    return {"cuando": reminders.when_text(start), "modalidad": body.modalidad}
 
 
 @app.get("/api/cita/{token}")

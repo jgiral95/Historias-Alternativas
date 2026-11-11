@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Agendar cita</title>
+<meta name="description" content="Elija el día y la hora que le convenga. Recibirá la confirmación por correo.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Alter-Karute">
+<meta property="og:locale" content="es_CO">
+<meta property="og:title" content="Agende su cita · Alter-Karute">
+<meta property="og:description" content="Elija el día y la hora que le convenga. Recibirá la confirmación por correo.">
+<meta property="og:image" content="__ORIGIN__/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="stylesheet" href="css/fonts.css">
+<meta name="robots" content="noindex">
+<style>
+/* Página pública: el consultante agenda su cita con el enlace de su terapeuta. */
+:root{--bg:#F6F1E7;--surface:#FBF8F2;--surface2:#F1ECDF;--ink:#2B2A25;--muted:#6A675C;--line:#E3DBCB;--accent:#4E6B58;--accent-ink:#FFFFFF;--accent-soft:#E4EBE2;
+  --ok:#2B7A4B;--ok-soft:#DDF0E4;--danger:#B3261E;--danger-soft:#F8DEDC;color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#1A211C;--surface:#222B25;--surface2:#2B362E;--ink:#ECE8DC;--muted:#A9B2A8;--line:#36423A;
+  --accent:#8FB09A;--accent-ink:#1A211C;--accent-soft:#2C3A31;--ok:#6CCB92;--ok-soft:#183324;--danger:#F08A82;--danger-soft:#3B1E1C;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#1A211C;--surface:#222B25;--surface2:#2B362E;--ink:#ECE8DC;--muted:#A9B2A8;--line:#36423A;
+  --accent:#8FB09A;--accent-ink:#1A211C;--accent-soft:#2C3A31;--ok:#6CCB92;--ok-soft:#183324;--danger:#F08A82;--danger-soft:#3B1E1C;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 "IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;padding:24px 16px}
+main{max-width:520px;margin:0 auto}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:20px;display:flex;flex-direction:column;gap:14px}
+h1{margin:0;font-size:21px;display:flex;gap:10px;align-items:center;line-height:1.25}
+p{margin:0}.muted{color:var(--muted);font-size:14px}
+.when{font-size:19px;font-weight:600}
+.hours{display:flex;flex-wrap:wrap;gap:8px}
+.cal{display:flex;flex-direction:column;gap:8px}
+.calhd{display:flex;justify-content:space-between;align-items:center}.calhd b{text-transform:capitalize;font-weight:500}
+.calhd button{width:40px;height:40px;padding:0;border-radius:50%;font-size:20px;line-height:1}
+.grid7{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;text-align:center}
+.grid7 .wd{font-size:12px;color:var(--muted);padding:4px 0}
+.grid7 .cd{aspect-ratio:1;max-width:48px;width:100%;margin:0 auto;display:flex;align-items:center;justify-content:center;border-radius:50%;font-size:15px;color:var(--muted);opacity:.55}
+.grid7 button.cd{padding:0;background:var(--accent-soft);color:var(--accent);border:1px solid transparent;font-weight:600;opacity:1}
+.grid7 button.cd.on{background:var(--accent);color:var(--accent-ink)}
+.fld{display:flex;flex-direction:column;gap:4px}.fld label{font-size:14px;color:var(--muted)}
+input,select{font:inherit;padding:10px 12px;border-radius:8px;border:1px solid var(--line);background:var(--surface2);color:var(--ink);width:100%}
+.chk{display:flex;gap:10px;align-items:center;font-size:15px}.chk input{width:auto}
+button{font:inherit;font-weight:500;padding:10px 14px;border-radius:8px;border:1px solid var(--accent);background:var(--accent);color:var(--accent-ink);cursor:pointer}
+button.opt{background:var(--surface2);color:var(--ink);border-color:var(--line)}button.opt.on{background:var(--accent-soft);border-color:var(--accent);color:var(--accent);font-weight:600}
+button:disabled{opacity:.6;cursor:wait}
+.res{padding:12px 14px;border-radius:8px}.res.ok{background:var(--ok-soft);color:var(--ok)}.res.bad{background:var(--danger-soft);color:var(--danger)}
+/* Pantalla de carga */
+.splash{min-height:56vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;color:var(--muted)}
+.splash-logo{width:72px;height:72px;animation:splashpulse 1.6s ease-in-out infinite}
+.splash-name{font-size:22px;font-weight:600;color:var(--ink);letter-spacing:.01em}
+.splash-bar{width:132px;height:4px;border-radius:2px;background:var(--line);overflow:hidden}
+.splash-bar i{display:block;width:40%;height:100%;border-radius:2px;background:var(--accent);animation:splashbar 1.3s ease-in-out infinite}
+.splash-txt{font-size:14px}
+@keyframes splashpulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(.94);opacity:.8}}
+@keyframes splashbar{0%{transform:translateX(-100%)}100%{transform:translateX(330%)}}
+@media (prefers-reduced-motion:reduce){.splash-logo,.splash-bar i{animation:none}}
+</style>
+</head>
+<body>
+<main id="m"><div class="splash" role="status" aria-live="polite">
+  <svg class="splash-logo" viewBox="0 0 120 120" aria-hidden="true"><rect x="6" y="6" width="108" height="108" rx="16" style="fill:var(--accent)"/><rect x="34" y="22" width="52" height="64" rx="6" style="fill:var(--surface)"/><rect x="46" y="14" width="28" height="16" rx="4" style="fill:var(--surface);stroke:var(--accent)" stroke-width="4"/><rect x="42" y="46" width="36" height="6" rx="3" style="fill:var(--accent)"/><rect x="42" y="58" width="36" height="6" rx="3" style="fill:var(--accent)"/><rect x="42" y="70" width="22" height="6" rx="3" style="fill:var(--accent)"/></svg>
+  <b class="splash-name">Alter-Karute</b>
+  <div class="splash-bar" aria-hidden="true"><i></i></div>
+  <span class="splash-txt">Cargando…</span>
+</div></main>
+<script>
+const $ = s => document.querySelector(s);
+const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const H = { 'Content-Type': 'application/json', 'X-Requested-With': 'archivo-clinico' };
+const slug = new URLSearchParams(location.search).get('c') || '';
+const logo = '<svg width="28" height="28" viewBox="0 0 120 120" aria-hidden="true"><rect x="6" y="6" width="108" height="108" rx="16" fill="#4E6B58"/><rect x="34" y="22" width="52" height="64" rx="6" fill="#FFFFFF"/><rect x="46" y="14" width="28" height="16" rx="4" fill="#FFFFFF" stroke="#4E6B58" stroke-width="4"/><rect x="42" y="46" width="36" height="6" rx="3" fill="#4E6B58"/><rect x="42" y="58" width="36" height="6" rx="3" fill="#4E6B58"/><rect x="42" y="70" width="22" height="6" rx="3" fill="#4E6B58"/></svg>';
+const card = h => { $('#m').innerHTML = `<div class="card">${h}</div>`; };
+const dayTxt = k => new Date(k + 'T12:00:00').toLocaleDateString('es-CO', { weekday: 'short', day: 'numeric', month: 'short' });
+let d, month = '', day = '', hour = '', nuevo = false, vals = {};
+/* Los horarios llegan en la zona del consultorio (d.zona). Aquí se pasan a la zona horaria del navegador de quien reserva. */
+const pad = n => String(n).padStart(2, '0');
+const tzOff = (tz, ms) => { const p = Object.fromEntries(new Intl.DateTimeFormat('en-US', { timeZone: tz, hourCycle: 'h23', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' }).formatToParts(new Date(ms)).map(x => [x.type, x.value])); return (Date.UTC(p.year, p.month - 1, p.day, p.hour, p.minute, p.second) - ms) / 60000; };
+function toMs(date, hm, tz) { const [y, m, dd] = date.split('-').map(Number), [h, mi] = hm.split(':').map(Number), g = Date.UTC(y, m - 1, dd, h, mi); let r = g - tzOff(tz, g) * 60000; r = g - tzOff(tz, r) * 60000; return r; }
+const myTz = Intl.DateTimeFormat().resolvedOptions().timeZone || '';
+const tzShort = (tz, ms) => { try { return new Intl.DateTimeFormat('es-CO', { timeZone: tz, timeZoneName: 'short' }).formatToParts(new Date(ms)).find(x => x.type === 'timeZoneName').value; } catch (e) { return ''; } };
+const tzLabel = ms => (myTz || 'su zona horaria') + (tzShort(myTz || undefined, ms) ? ' (' + tzShort(myTz || undefined, ms) + ')' : '');
+function conv() {
+  const loc = {}, zona = d.zona || 'America/Bogota';
+  Object.keys(d.dias).forEach(k => d.dias[k].forEach(h => { const ms = toMs(k, h, zona), t = new Date(ms), key = t.getFullYear() + '-' + pad(t.getMonth() + 1) + '-' + pad(t.getDate()); (loc[key] = loc[key] || []).push({ ms, h: pad(t.getHours()) + ':' + pad(t.getMinutes()), i: k + 'T' + h }); }));
+  Object.values(loc).forEach(a => a.sort((x, y) => x.ms - y.ms));
+  d.dias = loc;
+}
+function tzNote() {
+  const ms = Date.now(), zona = d.zona || 'America/Bogota', same = tzOff(zona, ms) === tzOff(myTz || undefined, ms);
+  return 'Los horarios están en la zona horaria ' + esc(tzLabel(ms)) + (same ? '' : '; el consultorio atiende en la zona horaria ' + esc(zona + ' (' + tzShort(zona, ms) + ')')) + '.';
+}
+function draw(msg) {
+  const days = Object.keys(d.dias).sort();
+  if (!days.length) return card(`<h1>${logo}Agendar cita</h1><p>Con <b>${esc(d.profesional)}</b>${d.consultorio ? ' · ' + esc(d.consultorio) : ''}</p><div class="res bad">No hay horarios disponibles por ahora. Intente más adelante o comuníquese con el consultorio.</div>`);
+  if (!month) month = (day || days[0]).slice(0, 7);
+  const [Y, M] = month.split('-').map(Number);
+  const f = (id, label, type = 'text', ac = '') => `<div class="fld"><label for="${id}">${label}</label><input id="${id}" type="${type}" autocomplete="${ac}" value="${esc(vals[id] || '')}"></div>`;
+  card(`<h1>${logo}Agendar cita</h1><p>Con <b>${esc(d.profesional)}</b>${d.consultorio ? ' · ' + esc(d.consultorio) : ''} · ${d.duracion} min</p>
+    <div class="cal"><p class="muted">Elija el día</p><div class="calhd"><b>${esc(new Date(Y, M - 1, 1).toLocaleDateString('es-CO', { month: 'long' }) + ' ' + Y)}</b><div style="display:flex;gap:8px"><button type="button" class="opt" data-mv="-1" aria-label="Mes anterior" ${month <= days[0].slice(0, 7) ? 'disabled' : ''}>‹</button><button type="button" class="opt" data-mv="1" aria-label="Mes siguiente" ${month >= days[days.length - 1].slice(0, 7) ? 'disabled' : ''}>›</button></div></div>
+      <div class="grid7">${['DOM', 'LUN', 'MAR', 'MIÉ', 'JUE', 'VIE', 'SÁB'].map(w => `<span class="wd">${w}</span>`).join('')}${Array(new Date(Y, M - 1, 1).getDay()).fill('<span></span>').join('')}${Array.from({ length: new Date(Y, M, 0).getDate() }, (_, i) => { const k = month + '-' + String(i + 1).padStart(2, '0'); return d.dias[k] ? `<button type="button" class="cd ${k === day ? 'on' : ''}" data-day="${k}" aria-label="${esc(dayTxt(k))}">${i + 1}</button>` : `<span class="cd">${i + 1}</span>`; }).join('')}</div></div>
+    ${day ? `<div><p class="muted">Elija la hora</p>${Object.keys(d.modalidadDia || {}).length ? `<p class="muted">Tipos de consulta ese día: ${esc(modsOf(d.dias[day][0].i).join(', ').toLowerCase())}.</p>` : ''}<div class="hours">${d.dias[day].map(h => `<button type="button" class="opt ${h.i === hour ? 'on' : ''}" data-hour="${esc(h.i)}">${h.h}</button>`).join('')}</div></div>` : ''}
+    <p class="muted">${tzNote()}</p>
+    ${hour ? `${modsOf(hour).length > 1 ? `<div class="fld"><label for="mod">Modalidad</label><select id="mod">${modsOf(hour).map(m => `<option ${m === pickMod(hour) ? 'selected' : ''}>${esc(m)}</option>`).join('')}</select></div>` : ''}
+    <label class="chk"><input type="checkbox" id="nuevo" ${nuevo ? 'checked' : ''}> Soy consultante nuevo</label>
+    ${f('nombres', 'Nombres', 'text', 'given-name')}${f('apellidos', 'Apellidos', 'text', 'family-name')}${f('correo', 'Correo electrónico', 'email', 'email')}
+    ${nuevo ? f('telefono', 'Teléfono de contacto', 'tel', 'tel') : f('documento', 'Número de documento')}
+    ${msg || ''}<button id="go" type="button">Agendar cita</button>
+    <p class="muted">${nuevo ? 'Su cita queda agendada; el terapeuta abrirá su ficha más adelante.' : 'Debemos encontrar su ficha con el documento y el correo registrados.'} Recibirá una confirmación por correo.</p>` : (msg || '')}`);
+  document.querySelectorAll('[data-day]').forEach(b => b.onclick = () => { keep(); day = b.dataset.day; hour = ''; draw(); });
+  document.querySelectorAll('[data-mv]').forEach(b => b.onclick = () => { keep(); const [y, m] = month.split('-').map(Number), n = new Date(y, m - 1 + +b.dataset.mv, 1); month = n.getFullYear() + '-' + String(n.getMonth() + 1).padStart(2, '0'); draw(); });
+  document.querySelectorAll('[data-hour]').forEach(b => b.onclick = () => { keep(); hour = b.dataset.hour; draw(); });
+  if ($('#nuevo')) $('#nuevo').onchange = () => { keep(); nuevo = $('#nuevo').checked; draw(); };
+  if ($('#go')) $('#go').onclick = send;
+}
+const modsOf = h => (d.modalidadDia || {})[(h || '').slice(0, 10)] || d.modalidades;  // tipos de consulta que el terapeuta marcó para ese día
+const pickMod = h => { const ms = modsOf(h); return ms.includes(vals.mod) ? vals.mod : ms[0]; };
+function keep() { document.querySelectorAll('input[type=text],input[type=email],input[type=tel],select').forEach(i => { vals[i.id] = i.value; }); }
+async function send() {
+  keep(); $('#go').disabled = true;
+  const body = { inicio: hour, modalidad: pickMod(hour), nuevo, nombres: vals.nombres || '', apellidos: vals.apellidos || '', correo: vals.correo || '', documento: vals.documento || '', telefono: vals.telefono || '' };
+  try {
+    const r = await fetch('/api/reservar/' + encodeURIComponent(slug), { method: 'POST', headers: H, body: JSON.stringify(body) });
+    const j = await r.json().catch(() => ({}));
+    if (r.status === 409) { await load(); hour = ''; return draw('<div class="res bad">' + esc(j.detail) + '</div>'); }
+    if (!r.ok) return draw('<div class="res bad">' + esc(j.detail || 'No se pudo agendar. Intente de nuevo.') + '</div>');
+    const it = (d.dias[day] || []).find(x => x.i === hour), cuando = it ? new Date(it.ms).toLocaleString('es-CO', { weekday: 'long', day: 'numeric', month: 'long', hour: 'numeric', minute: '2-digit' }) + ' · zona horaria ' + tzLabel(it.ms) : j.cuando;
+    card(`<h1>${logo}Cita confirmada</h1><div class="res ok">Su cita quedó agendada para el ${esc(cuando)} (${esc(j.modalidad).toLowerCase()}).</div><p class="muted">Le enviamos la confirmación a su correo. Si no la ve, revise la carpeta de spam.</p>`);
+  } catch (e) { draw('<div class="res bad">No hay conexión. Intente de nuevo.</div>'); }
+}
+async function load() { const r = await fetch('/api/reservar/' + encodeURIComponent(slug), { headers: H }); if (!r.ok) throw r; d = await r.json(); conv(); }
+(async () => {
+  if (!slug) return card('<div class="res bad">El enlace está incompleto. Ábralo de nuevo desde el mensaje que recibió.</div>');
+  try { await load(); draw(); } catch (r) {
+    const j = r.json ? await r.json().catch(() => ({})) : {};
+    card('<div class="res bad">' + esc(r.status === 404 ? 'Este enlace no está disponible.' : j.detail || 'No se pudo cargar. Intente en unos minutos.') + '</div>');
+  }
+})();
+</script>
+</body>
+</html>

@@ -25,7 +25,7 @@ def separar_enlace(texto: str) -> tuple[str, str, str]:
 
 
 def layout(titulo: str, intro=(), filas=(), cierre=(), boton: tuple[str, str] | None = None, notas=(), firma: tuple[str, str] = ("Atentamente,", "El equipo de Alter-Karute"),
-           codigo: str = "", bloque: str = "") -> str:
+           codigo: str = "", bloque: str = "", boton2: tuple[str, str] | None = None) -> str:
     """intro/cierre: párrafos; filas: [(etiqueta, valor)] en la tarjeta; notas: textos pequeños (o (texto, etiqueta, enlace));
     bloque: texto largo en recuadro (por ejemplo, un consentimiento); codigo: código grande."""
     par = lambda ts: "".join(f"<tr><td {_P}>{e(t)}</td></tr>" for t in ts if t)
@@ -40,6 +40,9 @@ def layout(titulo: str, intro=(), filas=(), cierre=(), boton: tuple[str, str] | 
         u = e(boton[1], quote=True)
         btn = (f'<tr><td style="padding:24px 32px 0"><a href="{u}" style="background:{BOSQUE};color:#FFFFFF;text-decoration:none;padding:14px 28px;border-radius:99px;font-weight:bold;font-size:15px;display:inline-block">{e(boton[0])}</a></td></tr>'
                f'<tr><td style="padding:16px 32px 0;font-size:13px;line-height:1.6;color:{SUAVE}">Si el botón no funciona, copie y pegue esta dirección en su navegador:<br><a href="{u}" style="color:{BOSQUE};word-break:break-all">{e(boton[1])}</a></td></tr>')
+    if boton2:
+        u2 = e(boton2[1], quote=True)
+        btn += (f'<tr><td style="padding:12px 32px 0"><a href="{u2}" style="background:#FFFFFF;color:{BOSQUE};border:2px solid {BOSQUE};text-decoration:none;padding:12px 26px;border-radius:99px;font-weight:bold;font-size:15px;display:inline-block">{e(boton2[0])}</a></td></tr>')
     nts = ""
     for n in notas:
         if not n:

@@ -110,12 +110,12 @@ def due(user_id: int, now: datetime | None = None) -> int:
         pats = {r["id"]: r for r in recs if r.get("kind") == "patient"}
         done = {r.appt_id for r in db.scalars(select(ApptReminder).where(ApptReminder.user_id == user_id)) if r.sent_at or r.error}
         for a in recs:
-            if a.get("kind") != "appt" or a.get("estado", "Programada") != "Programada" or a["id"] in done:
+            if a.get("kind") != "appt" or a.get("evento") or a.get("estado", "Programada") != "Programada" or a["id"] in done:
                 continue
             start = parse(a.get("startAt"))
             if not start or not (now < start <= now + timedelta(hours=cfg["horas"])):
                 continue
-            p = pats.get(a.get("patientId")) or {}
+            p = pats.get(a.get("patientId")) or a.get("nuevo") or {}
             if p.get("demo") or a.get("demo"):
                 continue  # datos de ejemplo: nunca se envía nada
             mail = str(p.get("correo") or "").strip()

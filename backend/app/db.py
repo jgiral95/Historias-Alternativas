@@ -116,6 +116,16 @@ class Feed(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
 
 
+class Booking(Base):
+    """Enlace público para que los consultantes agenden solos. El horario va cifrado; el código del enlace es público."""
+    __tablename__ = "booking_links"
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), primary_key=True)
+    slug: Mapped[str] = mapped_column(String(64), unique=True, index=True)
+    active: Mapped[bool] = mapped_column(Boolean, default=False, server_default=false())
+    payload: Mapped[bytes] = mapped_column(LargeBinary)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+
+
 class Audit(Base):
     """Bitácora de accesos y cambios. Nunca guarda contenido de las sesiones."""
     __tablename__ = "audit"

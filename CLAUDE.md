@@ -17,14 +17,14 @@ App de seguimiento de consultantes para profesionales de terapias alternativas (
 | `js/notas-proceso.js` | notas de proceso y escritura a mano |
 | `js/inicio.js` | primer ingreso, datos de ejemplo, bitácora |
 | `js/perfil.js` | perfil, equipo, «Mis formatos» |
-| `js/agenda.js` | agenda, citas, cierre, inactividad |
+| `js/agenda.js` | agenda, citas (consultante nuevo, evento, enlace de videollamada, enviar por correo), panel «Reservas», cierre, inactividad |
 | `js/archivo.js` | adjuntos, copias, exportar, historia en papel |
 | `js/escalas.js` | escalas y frases frecuentes |
 | `js/encuesta.js` | encuesta de satisfacción y estadísticas |
 | `js/servidor.js` | ingreso, cuenta, usuarios (admin) y arranque (`boot`) — va de último |
 
 ## Backend (`backend/app/`)
-FastAPI + SQLAlchemy. `main.py` (endpoints; registros cifrados por tipo: profile, patient, note, report, appt, file, scale, pnote), `firmas.py`, `reminders.py`, `survey.py`, `gcal.py`, `security.py` (AES-256-GCM). Datos estáticos en `app/data/`.
+FastAPI + SQLAlchemy. `main.py` (endpoints; registros cifrados por tipo: profile, patient, note, report, appt, file, scale, pnote), `firmas.py`, `booking.py` (reservas por enlace público; página `reservar.html`), `reminders.py`, `survey.py`, `gcal.py`, `security.py` (AES-256-GCM). Datos estáticos en `app/data/`.
 
 ## Pruebas
 - Servidor: `cd backend && /tmp/venv-hc/bin/python -m pytest -q tests/test_X.py`
@@ -39,6 +39,7 @@ FastAPI + SQLAlchemy. `main.py` (endpoints; registros cifrados por tipo: profile
 | Celular / diseño | `movil_e2e.js` |
 | Navegación «Atrás» | `navegacion_e2e.js` |
 | Notas de proceso / a mano | `notas_proceso_e2e.js`, `mano_e2e.js` |
+| Reservas por enlace | `test_booking.py` |
 | Recordatorios / firma a distancia / encuesta / bitácora / comentarios / inicio / caída / Google | `<nombre>_e2e.js` |
 
 ## Reglas que no cambian
