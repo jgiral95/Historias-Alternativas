@@ -36,7 +36,7 @@ const CAUSAS = ['Enfermedad general', 'Evento relacionado con violencia o maltra
 const DESTINOS = ['Continúa en proceso', 'Alta del proceso', 'Remitido a otro terapeuta o servicio', 'Se sugirió buscar ayuda de urgencias', 'No continúa (abandono o retiro voluntario)'];
 const COPIA = ['Sí, en papel', 'Sí, por correo o medio digital', 'Se le ofreció y no la quiso'];
 const folioTxt = r => r && r.folio ? 'Folio n.º ' + r.folio : '';
-const REPORT_TYPES = ['Colegio o institución educativa', 'Empleador o trabajo', 'Remisión a otro terapeuta', 'Constancia de asistencia', 'Otro'];
+const REPORT_TYPES = ['Remisión a otro terapeuta', 'Constancia de asistencia', 'Otro'];
 
 const DEFAULT_CONSENT = `ACUERDO DE ACOMPAÑAMIENTO
 
@@ -141,8 +141,6 @@ const fillVars = (text, p, pr) => { const v = tplValues(p, pr); return text.repl
 const ATT = 'Por medio de la presente certifico que {paciente}, identificado/a con {documento}, ha asistido a sesiones de acompañamiento conmigo, con {resumen_asistencia}.';
 const CLOSE = '\n\nSe expide a solicitud del interesado/a y con su autorización. Este documento no es un certificado médico; el contenido de las sesiones es reservado.';
 const BASE_TPL = {
-  'Colegio o institución educativa': ATT + '\n\nLo que el consultante o su acudiente autorizan compartir:\n[Describa solo lo necesario: asistencia y que el proceso sigue en curso.]' + CLOSE,
-  'Empleador o trabajo': ATT + '\n\nLo autorizado para compartir con el empleador:\n[Asistencia y horarios. Evite contar el contenido de las sesiones salvo autorización expresa.]' + CLOSE,
   'Remisión a otro terapeuta': 'Recomiendo a {paciente}, identificado/a con {documento}, continuar su proceso con [terapeuta o servicio].\n\nMotivo:\n[Describa el motivo.]\n\nResumen de lo trabajado (autorizado por el consultante):\n[Prácticas realizadas y tiempo de acompañamiento.]\n\nQuedo atento/a a cualquier consulta.' + CLOSE,
   'Constancia de asistencia': ATT + '\n\nLa asistencia a las sesiones se anota en mi ficha.' + CLOSE,
   'Otro': ATT + '\n\n[Escriba el contenido del documento.]' + CLOSE

@@ -7,7 +7,7 @@ function reportForm(p, r) {
   return `<div class="card" id="reportform"><h3>${r.id ? 'Editar borrador' : 'Nuevo informe'}</h3>${sigNeeded()}
   <div class="grid"><div class="fld"><label for="f_plantilla">Plantilla</label><select id="f_plantilla" data-f="plantilla">${tplOptions(sel)}</select></div>
   <div class="fld"><label for="f_tipo">Título del informe</label><input id="f_tipo" data-f="tipo" type="text" value="${esc(tipo)}" data-auto="${esc(r.tipo ? '' : tipo)}"></div>
-  ${F('Dirigido a', 'destinatario', r.destinatario, { ph: 'Ej.: Coordinación académica, Colegio…' })}${F('Asunto', 'asunto', r.asunto, { wide: true })}</div>
+  ${F('Dirigido a', 'destinatario', r.destinatario, { ph: 'Ej.: el consultante; otro terapeuta' })}${F('Asunto', 'asunto', r.asunto, { wide: true })}</div>
   <div class="fld"><label for="f_contenido">Contenido (revíselo y ajústelo: comparta solo lo necesario)</label>${richBar('f_contenido')}<textarea id="f_contenido" data-f="contenido" data-tpl="${esc(r.contenido ? '' : tpl)}" rows="14">${esc(r.contenido || tpl)}</textarea></div>
   <div class="row"><button class="btn sm" data-act="regenReport">Regenerar desde plantilla</button><button class="btn sm" data-act="formats" data-hub="informes">Editar plantillas</button><button class="btn sm" data-act="tplManage">Mis plantillas</button></div>
   <div class="grid">${F('Divulgación autorizada por', 'autorizaPor', r.autorizaPor || (ageOf(p.nacimiento) !== null && ageOf(p.nacimiento) < 18 && p.acudNombre ? 'Acudiente: ' + p.acudNombre : 'El consultante'))}</div>
@@ -31,7 +31,7 @@ function tabInformes(p) {
   if (blk.length) S.newReport = false;
   const blkHTML = blk.length ? `<div class="banner" id="reportblock"><b>Aún no puede emitir informes para este consultante.</b> Falta ${blk.map(b => b[1]).join(' y ')}.<div class="row" style="margin-top:6px">${blk.map(([t, l]) => `<button class="btn sm" data-act="tab" data-tab="${t}">${t === 'consent' ? 'Ir a Consentimiento' : 'Ir a Primera vez'}</button>`).join('')}</div></div>` : '';
   return `<div class="sec">${blkHTML}<div class="row" style="justify-content:space-between"><h3 style="flex:1">Informes y certificados (${rs.filter(r => r.signedAt).length})</h3>${S.newReport ? '' : `<span class="row"><button class="btn pri" data-act="newReport" ${blk.length ? 'disabled title="Falta consentimiento o primera vez"' : ''}>Nuevo informe</button></span>`}</div>
-  ${S.newReport ? reportForm(p, editing) : ''}${rs.filter(r => r.id !== S.newReport).map(reportCard).join('') || (S.newReport ? '' : '<div class="empty">Aún no hay informes. Genere constancias para colegios, empleadores, adopción de mascotas o remisiones.</div>')}</div>`;
+  ${S.newReport ? reportForm(p, editing) : ''}${rs.filter(r => r.id !== S.newReport).map(reportCard).join('') || (S.newReport ? '' : '<div class="empty">Aún no hay informes. Cree aquí sus informes, constancias o remisiones.</div>')}</div>`;
 }
 ACT.newReport = () => { const blk = reportBlockers(curPatient()); if (blk.length) { toast('Falta ' + blk.map(b => b[1]).join(' y ') + '.'); return; } S.newReport = 'new'; render(); };
 ACT.cancelReport = () => { S.newReport = false; render(); };
@@ -85,7 +85,7 @@ function openTplEditor({ id, nombre = '', contenido = '', from, notice }) {
   if (cur) { nombre = cur.nombre; contenido = cur.contenido; }
   root.innerHTML = `<div class="modal" role="dialog" aria-modal="true" aria-label="Plantilla de informe"><div class="box" id="tplform"><div class="row" style="justify-content:space-between"><h3>${cur ? 'Editar plantilla' : 'Nueva plantilla'}</h3><button class="btn sm" id="tplx">Cancelar</button></div>
   ${notice ? `<div class="banner" role="alert">${esc(notice)}</div>` : ''}
-  ${F('Nombre de la plantilla', 'tnombre', nombre, { ph: 'Ej.: Certificado para el colegio' })}
+  ${F('Nombre de la plantilla', 'tnombre', nombre, { ph: 'Ej.: Constancia de asistencia' })}
   <div class="fld"><label for="f_tcontenido">Texto</label>${richBar('f_tcontenido')}<textarea id="f_tcontenido" data-f="tcontenido" rows="14">${esc(contenido)}</textarea></div>
   <div class="fld"><span class="lbl">Insertar variable en el cursor</span><div class="row">${TPL_VARS.map(([k, l]) => `<button type="button" class="btn sm" data-var="${k}" title="{${k}}">${esc(l)}</button>`).join('')}</div></div>
   <div class="row end"><button class="btn pri" id="tplsave">Guardar plantilla</button></div></div></div>`;

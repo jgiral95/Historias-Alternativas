@@ -28,7 +28,7 @@ function scaleForm(p) {
   ${F('Resultados e interpretación', 'interpretacion', '', { type: 'area', rows: 3, wide: true, req: true })}
   <details class="sec"><summary class="sum">Protocolo adjunto y entrega del informe (opcional)</summary><div class="grid">
     ${F('Protocolo o planilla de respuestas (de la pestaña Archivo)', 'protocolo', '', { type: 'select', opts: [''].concat(S.files.filter(f => f.patientId === p.id).map(f => f.nombre)) })}
-    ${F('Informe entregado a', 'entregaA', '', { ph: 'Ej.: el consultante; colegio, con autorización' })}${F('Fecha de entrega', 'entregaFecha', '', { type: 'date' })}</div></details>
+    ${F('Informe entregado a', 'entregaA', '', { ph: 'Ej.: el consultante; otro terapeuta, con autorización' })}${F('Fecha de entrega', 'entregaFecha', '', { type: 'date' })}</div></details>
   ${sc.fuente ? `<p style="margin:0;font-size:12px;color:var(--muted)">${esc(sc.fuente)}</p>` : ''}
   <p class="lock-note">La aplicación queda firmada con fecha y hora y no podrá modificarse.</p>
   <div class="row end"><button class="btn" data-act="cancelScale">Cancelar</button><button class="btn pri" data-act="saveScale">Firmar y guardar</button></div></div>`;
