@@ -1,5 +1,6 @@
 /* Mi suscripción: estado, planes (ePayco) y cancelación. Parte de app.html (scripts clásicos; se usa al hacer clic, no al cargar). */
 const fmtFecha = iso => iso ? new Date(iso).toLocaleDateString('es-CO', { day: 'numeric', month: 'long', year: 'numeric' }) : '';
+const SUB_INFO = { mensual: { precio: '$80.000', per: 'COP / mes', prueba: '5 días' }, anual: { precio: '$800.000', per: 'COP / año', prueba: '15 días' } };
 async function subDraw(msg) {
   const root = $('#modal-root'); let st;
   try { st = await api('/billing'); } catch (e) { toast(e.message); return; }
@@ -11,8 +12,8 @@ async function subDraw(msg) {
   else estado = 'Sin suscripción puede probar con <b>un consultante</b>. Suscríbase para tener todos los que necesite y crear cuentas de ayudantes.';
   root.innerHTML = `<div class="modal" role="dialog" aria-modal="true" aria-label="Mi suscripción"><div class="box"><div class="row" style="justify-content:space-between"><h3>Mi suscripción</h3><button class="btn sm" data-sub="close">Cerrar</button></div>
     ${msg ? `<div class="banner" role="alert">${esc(msg)}</div>` : ''}<p style="margin:0">${estado}</p>
-    ${st.exigido && !st.activa ? `<div class="grid">${st.planes.map(p => `<a class="btn ${p.id === 'anual' ? 'pri' : ''}" href="${esc(p.url)}" target="_blank" rel="noopener" style="text-align:center;text-decoration:none">${esc(p.nombre)}</a>`).join('')}</div>
-    <p class="stnote">Tiene prueba gratis (5 días en el mensual, 15 en el anual). Para que se active sola, pague con <b>el mismo correo de esta cuenta</b>. Luego vuelva aquí y pulse «Ya me suscribí».</p><div class="row end"><button class="btn" data-sub="refresh">Ya me suscribí</button></div>` : ''}
+    ${st.exigido && !st.activa ? `<div class="subplanes">${st.planes.map(p => { const an = p.id === 'anual', d = SUB_INFO[p.id] || {}; return `<div class="subcard ${an ? 'f' : ''}">${an ? '<span class="subahorro">Ahorre 2 meses</span>' : ''}<h4>${esc(p.nombre)}</h4><div class="subprecio">${esc(d.precio || '')} <small>${esc(d.per || '')}</small></div><ul><li>Acceso completo a la plataforma</li><li>Fichas cifradas y notas de sesión</li><li>Acuerdos, consentimientos e informes</li><li>Agenda con recordatorios</li><li>${esc(d.prueba || '')} de prueba gratis</li></ul><a class="btn ${an ? 'pri' : ''}" href="${esc(p.url)}" target="_blank" rel="noopener">Suscribirme</a></div>`; }).join('')}</div>
+    <p class="stnote">Para que se active sola, pague con <b>el mismo correo de esta cuenta</b>. Luego vuelva aquí y pulse «Ya me suscribí».</p><div class="row end"><button class="btn" data-sub="refresh">Ya me suscribí</button></div>` : ''}
     ${st.activa && st.puedeCancelar && st.exigido ? '<div class="row end"><button class="btn warn" data-sub="cancel">Cancelar mi suscripción</button></div><p class="stnote">Al cancelar, conserva el acceso hasta el fin del periodo pagado.</p>' : ''}</div></div>`;
   root.onclick = async e => {
     const b = e.target.closest('[data-sub]'); if (!b) return;
