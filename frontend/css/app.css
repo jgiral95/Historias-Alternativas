@@ -8,13 +8,13 @@
   --f-mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
 }
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
-  --bg:#1A211C; --surface:#222B25; --surface2:#2B362E; --ink:#ECE8DC; --muted:#A9B2A8; --line:#36423A;
-  --accent:#8FB09A; --accent-ink:#1A211C; --accent-soft:#2C3A31; --accent-fg:#A9CDB4; --warn:#E59A64; --warn-soft:#3A2A1D;
-  --ok:#6CCB92; --ok-soft:#18332438; --danger:#F08A82; --danger-soft:#3B1E1C; color-scheme:dark}}
+  --bg:#121815; --surface:#1A221D; --surface2:#222C26; --ink:#E8E5DA; --muted:#9AA69C; --line:#2E3A32;
+  --accent:#7FA58B; --accent-ink:#0F1612; --accent-soft:#243229; --accent-fg:#B4D3BE; --warn:#E3A26C; --warn-soft:#33271C;
+  --ok:#6CCB92; --ok-soft:#183324; --danger:#F08A82; --danger-soft:#3A201E; color-scheme:dark}}
 :root[data-theme="dark"]{
-  --bg:#1A211C; --surface:#222B25; --surface2:#2B362E; --ink:#ECE8DC; --muted:#A9B2A8; --line:#36423A;
-  --accent:#8FB09A; --accent-ink:#1A211C; --accent-soft:#2C3A31; --accent-fg:#A9CDB4; --warn:#E59A64; --warn-soft:#3A2A1D;
-  --ok:#6CCB92; --ok-soft:#18332438; --danger:#F08A82; --danger-soft:#3B1E1C; color-scheme:dark}
+  --bg:#121815; --surface:#1A221D; --surface2:#222C26; --ink:#E8E5DA; --muted:#9AA69C; --line:#2E3A32;
+  --accent:#7FA58B; --accent-ink:#0F1612; --accent-soft:#243229; --accent-fg:#B4D3BE; --warn:#E3A26C; --warn-soft:#33271C;
+  --ok:#6CCB92; --ok-soft:#183324; --danger:#F08A82; --danger-soft:#3A201E; color-scheme:dark}
 *{box-sizing:border-box}
 body{background:var(--bg);color:var(--ink);font-family:var(--f-ui);font-size:15px;line-height:1.5;
   padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:16px}
@@ -406,3 +406,5 @@ body:has(#fb-root .fbbtn) .modal{padding-bottom:84px}
 @media(prefers-reduced-motion:reduce){.subcard{transition:none}.subcard:hover,.subcard:focus-within{transform:none}}
 .modal:has(.subplanes)>.box{border-radius:16px}
 .subcard .btn{color:var(--accent-fg);border-color:var(--accent)}.subcard .btn.pri{color:var(--accent-ink)}
+.iconbtn{display:flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:50%;border:1px solid var(--line);background:none;color:var(--muted);cursor:pointer;flex:none}
+.iconbtn:hover{background:var(--accent-soft);color:var(--accent-fg)}
