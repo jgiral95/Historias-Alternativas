@@ -1,0 +1,11 @@
+User-agent: *
+Allow: /
+Disallow: /app
+Disallow: /api/
+Disallow: /cita
+Disallow: /firmar
+Disallow: /encuesta
+Disallow: /reservar
+Disallow: /verificar
+
+Sitemap: __ORIGIN__/sitemap.xml
