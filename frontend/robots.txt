@@ -8,4 +8,4 @@ Disallow: /encuesta
 Disallow: /reservar
 Disallow: /verificar
 
-Sitemap: __ORIGIN__/sitemap.xml
+Sitemap: https://alter.karute.systems/sitemap.xml
