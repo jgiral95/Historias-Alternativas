@@ -97,7 +97,7 @@ ACT.scaleManage = () => {
   const root = $('#modal-root');
   const draw = (edit) => {
     const list = myScales();
-    root.innerHTML = `<div class="modal" role="dialog" aria-modal="true" aria-label="Mis chequeos"><div class="box" id="smform"><div class="row" style="justify-content:space-between"><h3>Mis formatos</h3><button class="btn sm" data-sm="close">Cerrar</button></div>${hubTabs('escalas')}<b>Escalas propias</b>
+    root.innerHTML = `<div class="modal" role="dialog" aria-modal="true" aria-label="Mis chequeos"><div class="box" id="smform"><div class="row mfhead" style="justify-content:space-between"><h3 style="flex:1">Mis formatos</h3><button class="btn sm" data-sm="close">Cerrar</button></div>${hubTabs('escalas')}<b>Escalas propias</b>
     ${edit ? `<div class="grid">${F('Nombre', 'nombre', edit.nombre || '')}${F('Instrucción para el consultante', 'instruccion', edit.instruccion || '', { wide: true })}
       ${F('Opciones de respuesta (una por línea: puntaje = texto)', 'opciones', (edit.opciones || FREQ4).map(o => o[0] + ' = ' + o[1]).join('\n'), { type: 'area', rows: 4 })}
       ${F('Rangos de interpretación (una por línea: mínimo-máximo = nivel)', 'rangos', (edit.rangos || []).map(r => r[0] + '-' + r[1] + ' = ' + r[2]).join('\n'), { type: 'area', rows: 4 })}
@@ -177,7 +177,7 @@ ACT.phrases = () => {
   const root = $('#modal-root');
   const draw = () => {
     const list = myPhrases();
-    root.innerHTML = `<div class="modal" role="dialog" aria-modal="true" aria-label="Mis frases"><div class="box" id="phform"><div class="row" style="justify-content:space-between"><h3>Mis formatos</h3><button class="btn sm" data-ph="close">Cerrar</button></div>${hubTabs('frases')}<b>Frases frecuentes</b>
+    root.innerHTML = `<div class="modal" role="dialog" aria-modal="true" aria-label="Mis frases"><div class="box" id="phform"><div class="row mfhead" style="justify-content:space-between"><h3 style="flex:1">Mis formatos</h3><button class="btn sm" data-ph="close">Cerrar</button></div>${hubTabs('frases')}<b>Frases frecuentes</b>
     <p style="margin:0;font-size:13px;color:var(--muted)">En cualquier campo de texto de una nota, escriba <b>/</b> y el atajo (por ejemplo <b>/psico</b>) y pulse Enter: se inserta la frase completa.</p>
     ${list.map((f, i) => `<div class="card"><div class="row" style="justify-content:space-between"><b>/${esc(f.a)}</b><button class="btn sm warn" data-ph="del" data-i="${i}">Quitar</button></div><p>${esc(f.t)}</p></div>`).join('') || '<p style="margin:0;color:var(--muted)">Aún no tiene frases.</p>'}
     <div class="card"><div class="grid">${F('Atajo (una palabra)', 'a', '', { ph: 'Ej.: psico' })}${F('Frase', 't', '', { type: 'area', rows: 3, wide: true })}</div><div class="row end"><button class="btn pri" data-ph="add">Agregar frase</button></div></div></div></div>`;

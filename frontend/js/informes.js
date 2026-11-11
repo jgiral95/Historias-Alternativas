@@ -65,7 +65,7 @@ ACT.saveReport = async b => {
 function refreshTplSelect(key) { const s = $('#f_plantilla'); if (s) s.innerHTML = tplOptions(key || s.value); }
 ACT.tplManage = () => {
   const root = $('#modal-root'), list = myTemplates();
-  root.innerHTML = `<div class="modal" role="dialog" aria-modal="true" aria-label="Mis plantillas"><div class="box"><div class="row" style="justify-content:space-between"><h3>Mis formatos</h3><button class="btn sm" data-tm="close">Cerrar</button></div>${hubTabs('informes')}<b>Plantillas de informe</b>
+  root.innerHTML = `<div class="modal" role="dialog" aria-modal="true" aria-label="Mis plantillas"><div class="box"><div class="row mfhead" style="justify-content:space-between"><h3 style="flex:1">Mis formatos</h3><button class="btn sm" data-tm="close">Cerrar</button></div>${hubTabs('informes')}<b>Plantillas de informe</b>
   <p style="margin:0;font-size:13px;color:var(--muted)">Son solo suyas: ningún otro terapeuta las ve. Use variables como {paciente} para que se llenen solas con cada consultante. Nunca escriba datos de un consultante concreto en una plantilla.</p>
   ${list.length ? list.map(m => `<div class="card"><b>${esc(m.nombre)}</b><span class="ts">${esc((m.contenido || '').replace(/\s+/g, ' ').slice(0, 110))}…</span><div class="row"><button class="btn sm" data-tm="edit" data-id="${esc(m.id)}">Editar</button><button class="btn sm warn" data-tm="del" data-id="${esc(m.id)}">Eliminar</button></div></div>`).join('') : '<div class="empty">Aún no tiene plantillas propias. Cree la primera o guarde el texto de un informe como plantilla.</div>'}
   <div class="row end"><button class="btn pri" data-tm="new">Nueva plantilla</button></div></div></div>`;

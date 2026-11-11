@@ -127,7 +127,7 @@ ACT.consentManage = () => {
   const root = $('#modal-root');
   const draw = edit => {
     const list = myConsents();
-    root.innerHTML = `<div class="modal" role="dialog" aria-modal="true" aria-label="Mis consentimientos"><div class="box" id="cmform"><div class="row" style="justify-content:space-between"><h3>Mis formatos</h3><button class="btn sm" data-cm="close">Cerrar</button></div>${hubTabs('consent')}
+    root.innerHTML = `<div class="modal" role="dialog" aria-modal="true" aria-label="Mis consentimientos"><div class="box" id="cmform"><div class="row mfhead" style="justify-content:space-between"><h3 style="flex:1">Mis formatos</h3><button class="btn sm" data-cm="close">Cerrar</button></div>${hubTabs('consent')}
     ${edit ? `${F('Nombre del modelo', 'nombre', edit.nombre || '', { ph: 'Ej.: Consentimiento para niños' })}
       <div class="fld"><label for="f_texto">Texto</label>${richBar('f_texto')}<textarea id="f_texto" data-f="texto" rows="16" style="font-family:var(--f-doc);font-size:15px">${esc(edit.texto || '')}</textarea></div>
       <div class="fld"><span class="lbl">Insertar dato en el cursor (se llena solo con los datos de cada consultante)</span><div class="row">${CONSENT_VARS.map(([k, l]) => `<button type="button" class="btn sm" data-var="${k}" title="{${k}}">${esc(l)}</button>`).join('')}</div></div>

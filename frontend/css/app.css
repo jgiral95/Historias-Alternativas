@@ -381,3 +381,5 @@ body:has(#fb-root .fbbtn) .modal{padding-bottom:84px}
 @media (max-width:640px){.fbbtn .fbl,.fbbtn .beta{display:none}.fbbtn{padding:13px}}
 @media print{#fb-root{display:none!important}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+
+.mfhead{position:sticky;top:0;z-index:5;background:var(--surface);margin:-18px -18px 0;padding:14px 18px;border-bottom:1px solid var(--line);border-radius:10px 10px 0 0;align-items:center}
