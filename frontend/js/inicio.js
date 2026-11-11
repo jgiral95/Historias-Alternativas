@@ -46,7 +46,7 @@ function stepsHTML() {
   const hello = (S.profile.pasos || {}).bienvenida ? '' : `<div class="card" style="background:var(--surface)"><b style="font-size:16px">Bienvenido(a) a Alter-Karute · versión de prueba</b>
     <p style="margin:0;font-size:15px"><b>¡Gracias por hacer parte de nuestro equipo de prueba!</b> Su colaboración es muy valiosa: como agradecimiento, contará con <b>tres meses gratis</b> cuando el software se lance oficialmente. Le pedimos que haga todos los comentarios que necesite, para que juntos lleguemos a un software completo, intuitivo e integral para sus fichas.</p>
     <ul style="margin:0;padding-left:20px;display:flex;flex-direction:column;gap:4px;font-size:14px"><li><b>Use solo datos inventados</b> mientras dure la prueba: puede cargar consultantes de ejemplo para ver la app «llena».</li>
-    <li><b>Todo es opcional:</b> solo el nombre del consultante es necesario. Alter-Karute acompaña el bienestar con terapias alternativas; no es una herramienta clínica ni la usan profesionales de la salud.</li>
+    <li><b>Todo es opcional:</b> solo el nombre del consultante es necesario. Alter-Karute acompaña el bienestar con terapias alternativas; no es una herramienta clínica.</li>
     <li>Lo que firma (acuerdos, primera vez, sesiones, informes) <b>no se puede modificar</b>, como en papel: solo se agregan adendas.</li>
     <li>Si algo falla o no se entiende, use el botón <b>Comentarios</b>, abajo a la derecha. Por favor <b>elija el apartado del programa</b> al que se refiere (Agenda, Sesión, Consentimiento…): así podemos ubicar y corregir más rápido.</li></ul>
     <div class="row end"><button class="btn sm" data-act="welcomeOk">Entendido</button></div></div>`;

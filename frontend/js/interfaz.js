@@ -86,7 +86,7 @@ async function navRestore(st) {
   if (p) logView();
 }
 window.addEventListener('popstate', e => { navRestore(e.state); });
-function render() { renderMain(); navSync(); const sh = $('#app'); if (sh && !$('#aviso-alcance')) sh.insertAdjacentHTML('beforeend', '<div id="aviso-alcance" style="text-align:center;font-size:12px;color:var(--muted);padding:10px 0">Alter-Karute acompaña el bienestar y la salud con terapias alternativas: no realiza procesos clínicos ni sus usuarios son profesionales de la salud.</div>'); }
+function render() { renderMain(); navSync(); const sh = $('#app'); if (sh && !$('#aviso-alcance')) sh.insertAdjacentHTML('beforeend', '<div id="aviso-alcance" style="text-align:center;font-size:12px;color:var(--muted);padding:10px 0">Alter-Karute acompaña el bienestar y la salud con terapias alternativas: no realiza procesos clínicos.</div>'); }
 function renderMain() {
   S.dirty = false;
   const p = curPatient(), pr = S.profile;

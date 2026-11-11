@@ -50,7 +50,7 @@ function renderRegistro(msg, v) {
 function renderLogin(msg, email) {
   $('#modal-root').innerHTML = ''; $('#fb-root').innerHTML = '';
   $('#app').innerHTML = `<div class="panel" style="width:100%;max-width:400px;box-sizing:border-box;margin:8vh auto 0"><form class="body" id="loginform" autocomplete="on">
-    <a class="brand" href="/" aria-label="Alter-Karute: ir a la página principal" style="text-decoration:none;color:inherit">${logoSVG(60)}<b>Alter-Karute</b></a><p style="margin:0;color:var(--muted)">Ingrese con su cuenta para ver sus fichas.</p><p style="margin:6px 0 0;color:var(--muted);font-size:12px">Seguimiento de bienestar con terapias alternativas: no es una herramienta clínica ni sus usuarios son profesionales de la salud.</p>
+    <a class="brand" href="/" aria-label="Alter-Karute: ir a la página principal" style="text-decoration:none;color:inherit">${logoSVG(60)}<b>Alter-Karute</b></a><p style="margin:0;color:var(--muted)">Ingrese con su cuenta para ver sus fichas.</p><p style="margin:6px 0 0;color:var(--muted);font-size:12px">Seguimiento de bienestar con terapias alternativas: no es una herramienta clínica.</p>
     ${msg ? `<div class="banner" role="alert">${esc(msg)}</div>` : ''}
     <div class="fld"><label for="lg_email">Correo</label><input id="lg_email" type="email" autocomplete="username" value="${esc(email || '')}" required></div>
     <div class="fld"><label for="lg_pass">Contraseña</label><input id="lg_pass" type="password" autocomplete="current-password" required></div>
