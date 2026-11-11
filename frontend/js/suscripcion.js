@@ -12,7 +12,7 @@ async function subDraw(msg) {
   root.innerHTML = `<div class="modal" role="dialog" aria-modal="true" aria-label="Mi suscripción"><div class="box"><div class="row" style="justify-content:space-between"><h3>Mi suscripción</h3><button class="btn sm" data-sub="close">Cerrar</button></div>
     ${msg ? `<div class="banner" role="alert">${esc(msg)}</div>` : ''}<p style="margin:0">${estado}</p>
     ${st.exigido && !st.activa ? `<div class="grid">${st.planes.map(p => `<a class="btn ${p.id === 'anual' ? 'pri' : ''}" href="${esc(p.url)}" target="_blank" rel="noopener" style="text-align:center;text-decoration:none">${esc(p.nombre)}</a>`).join('')}</div>
-    <p class="stnote">Tiene 5 días de prueba. Para que se active sola, pague con <b>el mismo correo de esta cuenta</b>. Luego vuelva aquí y pulse «Ya me suscribí».</p><div class="row end"><button class="btn" data-sub="refresh">Ya me suscribí</button></div>` : ''}
+    <p class="stnote">Tiene prueba gratis (5 días en el mensual, 15 en el anual). Para que se active sola, pague con <b>el mismo correo de esta cuenta</b>. Luego vuelva aquí y pulse «Ya me suscribí».</p><div class="row end"><button class="btn" data-sub="refresh">Ya me suscribí</button></div>` : ''}
     ${st.activa && st.puedeCancelar && st.exigido ? '<div class="row end"><button class="btn warn" data-sub="cancel">Cancelar mi suscripción</button></div><p class="stnote">Al cancelar, conserva el acceso hasta el fin del periodo pagado.</p>' : ''}</div></div>`;
   root.onclick = async e => {
     const b = e.target.closest('[data-sub]'); if (!b) return;
