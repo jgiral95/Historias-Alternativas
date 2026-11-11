@@ -2,48 +2,77 @@
 <html lang="es">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Blog para terapeutas holísticos · Alter-Karute</title>
 <meta name="description" content="Guías prácticas para terapeutas de terapias alternativas: fichas de consultantes, consentimientos, agenda y protección de datos.">
 <link rel="canonical" href="__ORIGIN__/blog/">
+<meta name="theme-color" content="#2F4A3A">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Alter-Karute">
 <meta property="og:locale" content="es_CO">
 <meta property="og:url" content="__ORIGIN__/blog/">
-<meta property="og:title" content="Blog para terapeutas holísticos · Alter-Karute">
-<meta property="og:description" content="Guías prácticas para terapeutas de terapias alternativas.">
+<meta property="og:title" content="Blog para terapeutas holísticos">
+<meta property="og:description" content="Guías prácticas para terapeutas de terapias alternativas: fichas de consultantes, consentimientos, agenda y protección de datos.">
 <meta property="og:image" content="__ORIGIN__/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="__ORIGIN__/og.png">
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <link rel="stylesheet" href="/css/fonts.css">
-<style>
-
-:root{--bg:#F6F1E7;--surface:#FBF8F2;--ink:#2B2A25;--muted:#6A675C;--line:#E3DBCB;--accent:#4E6B58;--accent-soft:#E4EBE2;--accent-fg:#2F4A3A;--head:#2F4A3A;color-scheme:light}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#1A211C;--surface:#222B25;--ink:#ECE8DC;--muted:#A9B2A8;--line:#36423A;--accent:#8FB09A;--accent-soft:#2C3A31;--accent-fg:#A9CDB4;--head:#CFE3D4;color-scheme:dark}}
-:root[data-theme="dark"]{--bg:#1A211C;--surface:#222B25;--ink:#ECE8DC;--muted:#A9B2A8;--line:#36423A;--accent:#8FB09A;--accent-soft:#2C3A31;--accent-fg:#A9CDB4;--head:#CFE3D4;color-scheme:dark}
+<style>:root{--arena:#F6F1E7;--crema:#FBF8F2;--salvia:#7C9A83;--bosque:#2F4A3A;--musgo:#4E6B58;--terracota:#C47A56;--tierra:#6B4F3A;--tinta:#2B2A25;--suave:#6A675C;--linea:#E3DBCB}
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.65 "IBM Plex Sans",system-ui,sans-serif;padding:24px 16px}
-main{max-width:760px;margin:0 auto;background:var(--surface);border:1px solid var(--line);border-radius:24px;padding:32px clamp(18px,4vw,40px)}
-header{display:flex;gap:12px;align-items:center;margin-bottom:6px}header svg{flex:none}
-h1{margin:0;font:600 32px/1.2 "Source Serif 4",Georgia,serif;color:var(--head)}
-h2{font:600 22px/1.3 "Source Serif 4",Georgia,serif;color:var(--head);margin:28px 0 8px;padding-bottom:6px;border-bottom:1px solid var(--line)}
-p,li{margin:0 0 10px}ul{padding-left:22px;margin:0 0 10px}
-a{color:var(--accent-fg)}
-.meta{font:14px/1.5 "IBM Plex Sans",system-ui,sans-serif;color:var(--muted);margin:0 0 18px}
-a:focus-visible{outline:3px solid #C47A56;outline-offset:2px}
-.volver{display:inline-block;margin-bottom:14px;font:14px "IBM Plex Sans",system-ui,sans-serif}
-.box{background:var(--accent-soft);border-radius:8px;padding:12px 16px;margin:12px 0}
-nav{font:14px "IBM Plex Sans",system-ui,sans-serif;margin:0 0 10px}
-@media print{body{background:#fff}main{border:0}}
-.cta{background:var(--accent-soft);border-radius:12px;padding:18px 20px;margin:28px 0 8px;text-align:center}.cta a.b{display:inline-block;background:#2F4A3A;color:#fff;text-decoration:none;padding:12px 26px;border-radius:99px;font-weight:600;margin-top:8px}.lista a.t{font:600 20px "Source Serif 4",Georgia,serif}.lista p{margin:2px 0 18px;color:var(--muted)}.crumbs{font:14px "IBM Plex Sans",system-ui,sans-serif;color:var(--muted);margin-bottom:10px}</style>
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--arena);color:var(--tinta);font-family:"IBM Plex Sans",system-ui,sans-serif;line-height:1.6;font-size:17px}
+h1,h2,h3{font-family:"Source Serif 4",Georgia,serif;font-weight:600;margin:0;line-height:1.15;color:var(--bosque)}
+p{margin:0}
+a{color:var(--musgo)}a:hover{color:var(--bosque)}
+a:focus-visible,summary:focus-visible{outline:3px solid var(--terracota);outline-offset:3px;border-radius:6px}
+.wrap{max-width:1080px;margin:0 auto;padding:0 24px}
+section{padding:88px 0}
+.btn{display:inline-block;text-decoration:none;padding:14px 28px;border-radius:99px;font-weight:600;font-size:16px;min-height:48px}
+.btn.pri{background:var(--bosque);color:#fff}.btn.pri:hover{background:var(--musgo);color:#fff}
+.btn.sec{border:1.5px solid var(--bosque);color:var(--bosque)}.btn.sec:hover{background:var(--crema)}
+header.top{display:flex;justify-content:space-between;align-items:center;padding:22px 0}
+.marca{display:flex;align-items:center;gap:10px;font-family:"Source Serif 4",serif;font-size:24px;font-weight:600;color:var(--bosque);text-decoration:none}
+.kicker{font-size:13px;letter-spacing:2px;text-transform:uppercase;color:var(--terracota);font-weight:600;margin-bottom:14px}
+.tarjeta{background:var(--crema);border:1px solid var(--linea);border-radius:28px 28px 28px 8px;padding:30px}
+.tarjeta .ico{width:48px;height:48px;border-radius:50%;background:#E4EBE2;display:grid;place-items:center;margin-bottom:18px}
+.tarjeta h3{font-size:23px;margin-bottom:8px}.tarjeta p{color:var(--suave);font-size:16px}
+.cierre{text-align:center;background:linear-gradient(180deg,var(--arena),#E9E2D0)}
+.cierre h2{max-width:16em;margin:0 auto 18px}.cierre p{color:var(--suave);max-width:34em;margin:0 auto 32px}
+footer{padding:36px 0 48px;font-size:14px;color:var(--suave)}
+footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px}
+footer a{color:var(--suave)}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+header.top .nav{display:flex;align-items:center;gap:8px 22px;flex-wrap:wrap;font-size:15px}
+header.top .nav a.nl{color:var(--tinta);text-decoration:none;padding:8px 2px}header.top .nav a.nl:hover{color:var(--terracota)}
+@media(max-width:760px){header.top .nav a.nl{display:none}}
+.hero-b{text-align:center;padding:48px 0 36px}.hero-b h1{font-size:clamp(32px,5vw,54px);letter-spacing:-.5px;max-width:18em;margin:0 auto 14px}
+.hero-b p.lead{max-width:36em;margin:0 auto;font-size:18px;color:var(--suave)}
+.crumbs{font-size:14px;color:var(--suave);margin-bottom:14px}
+article{max-width:740px;margin:0 auto;padding:0 0 56px}
+article h2{font-size:clamp(24px,3vw,32px);margin:38px 0 12px}
+article p,article li{color:var(--tinta)}article p{margin:0 0 14px}
+article ul,article ol{margin:0 0 14px;padding-left:0;list-style:none;display:grid;gap:10px}
+article ul li{padding-left:30px;position:relative}
+article ul li::before{content:"";position:absolute;left:0;top:9px;width:14px;height:14px;border-radius:0 80% 0 80%;background:var(--salvia)}
+article ol{counter-reset:n}article ol li{padding-left:40px;position:relative;counter-increment:n}
+article ol li::before{content:counter(n);position:absolute;left:0;top:0;width:28px;height:28px;border-radius:50%;border:1.5px solid var(--terracota);color:var(--terracota);display:grid;place-items:center;font-family:"Source Serif 4",serif;font-size:15px}
+.box{background:var(--crema);border:1px solid var(--linea);border-left:5px solid var(--salvia);border-radius:6px 24px 24px 6px;padding:18px 22px;margin:34px 0 0;color:var(--suave);font-size:15.5px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:22px;padding-bottom:72px}
+.grid a.tarjeta{text-decoration:none;color:inherit;display:block;transition:transform .25s ease,box-shadow .25s ease,border-color .25s ease}
+.grid a.tarjeta:hover,.grid a.tarjeta:focus-visible{transform:translateY(-6px);border-color:var(--salvia);box-shadow:0 26px 50px -24px rgba(47,74,58,.45)}
+.grid .tarjeta h2{font-size:23px;margin:0 0 8px;letter-spacing:0}.grid .tarjeta .mas{display:inline-block;margin-top:14px;color:var(--terracota);font-weight:600;font-size:15px}
+@media(prefers-reduced-motion:reduce){.grid a.tarjeta{transition:none}.grid a.tarjeta:hover{transform:none}}
+section.cierre{padding:72px 0}
+</style>
 </head>
 <body>
-<main>
-<p class="crumbs"><a href="/">Inicio</a> › Blog</p>
-<header><svg width="42" height="42" viewBox="0 0 120 120" aria-hidden="true"><circle cx="60" cy="60" r="56" fill="#E4EBE2"/><path d="M60 24C88.8 39.6 88.8 75.6 60 96C31.2 75.6 31.2 39.6 60 24Z" fill="#7C9A83"/><path d="M60 98V43" stroke="#2F4A3A" stroke-width="4.2" fill="none" stroke-linecap="round"/></svg><h1>Blog para terapeutas</h1></header>
-<p class="meta">Guías prácticas para llevar su consulta con orden y calma.</p>
-<div class="lista"><a class="t" href="/blog/ficha-consultante-terapias-alternativas">Cómo llevar la ficha de un consultante en terapias alternativas</a><p>Qué datos registrar, cómo escribir cada sesión y cómo mantener ordenada la ficha de sus consultantes de forma simple y respetuosa.</p><a class="t" href="/blog/consentimiento-informado-terapeutas-holisticos">Consentimiento informado para terapeutas holísticos: qué incluir</a><p>Qué debe contener un consentimiento informado en terapias alternativas, cuándo pedirlo y cómo conservarlo firmado.</p><a class="t" href="/blog/agenda-recordatorios-citas-consulta">Cómo organizar la agenda y los recordatorios de citas en su consulta</a><p>Ideas simples para ordenar su agenda, reducir inasistencias con recordatorios y permitir que sus consultantes reserven por enlace.</p><a class="t" href="/blog/proteccion-datos-consultantes-habeas-data">Protección de datos de sus consultantes en Colombia (Habeas Data)</a><p>Qué debe tener en cuenta un terapeuta al guardar datos personales de sus consultantes según la Ley 1581 de 2012. Información general, no asesoría jurídica.</p><a class="t" href="/blog/seguimiento-proceso-consultante-cierre">Cómo hacer seguimiento del proceso de un consultante y cerrarlo con calma</a><p>Cómo medir el avance con el consultante, cuándo conviene cerrar un proceso y cómo hacerlo de forma respetuosa.</p></div>
-<div class="cta"><b>Lleve sus fichas, agenda y consentimientos en un solo lugar.</b><br><a class="b" href="/app?registro=1">Crear cuenta</a></div>
-</main>
+<div class="wrap"><header class="top"><a class="marca" href="/" aria-label="Alter-Karute, inicio"><svg width="34" height="34" viewBox="0 0 120 120" aria-hidden="true"><circle cx="60" cy="60" r="56" fill="#E4EBE2"/><path d="M60 24C88.8 39.6 88.8 75.6 60 96C31.2 75.6 31.2 39.6 60 24Z" fill="#7C9A83"/><path d="M60 98V43" stroke="#2F4A3A" stroke-width="4.2" fill="none" stroke-linecap="round"/><path d="M60 67L45.6 55M60 77L74.4 62" stroke="#2F4A3A" stroke-width="3" fill="none" stroke-linecap="round"/></svg> Alter-Karute</a>
+<nav class="nav" aria-label="Principal"><a href="/blog/" class="nl">Blog</a><a class="btn sec" href="/app" style="padding:10px 22px;min-height:44px">Ingresar</a> <a class="btn pri" href="/app?registro=1" style="padding:10px 22px;min-height:44px">Crear cuenta</a></nav></header></div>
+<main><div class="wrap"><div class="hero-b"><p class="kicker">Blog</p><h1>Guías para llevar su consulta con calma</h1><p class="lead">Guías prácticas para terapeutas de terapias alternativas: fichas de consultantes, consentimientos, agenda y protección de datos.</p></div>
+<div class="grid"><a class="tarjeta" href="/blog/ficha-consultante-terapias-alternativas"><h2>Cómo llevar la ficha de un consultante en terapias alternativas</h2><p>Qué datos registrar, cómo escribir cada sesión y cómo mantener ordenada la ficha de sus consultantes de forma simple y respetuosa.</p><span class="mas">Leer artículo →</span></a><a class="tarjeta" href="/blog/consentimiento-informado-terapeutas-holisticos"><h2>Consentimiento informado para terapeutas holísticos: qué incluir</h2><p>Qué debe contener un consentimiento informado en terapias alternativas, cuándo pedirlo y cómo conservarlo firmado.</p><span class="mas">Leer artículo →</span></a><a class="tarjeta" href="/blog/agenda-recordatorios-citas-consulta"><h2>Cómo organizar la agenda y los recordatorios de citas en su consulta</h2><p>Ideas simples para ordenar su agenda, reducir inasistencias con recordatorios y permitir que sus consultantes reserven por enlace.</p><span class="mas">Leer artículo →</span></a><a class="tarjeta" href="/blog/proteccion-datos-consultantes-habeas-data"><h2>Protección de datos de sus consultantes en Colombia (Habeas Data)</h2><p>Qué debe tener en cuenta un terapeuta al guardar datos personales de sus consultantes según la Ley 1581 de 2012. Información general, no asesoría jurídica.</p><span class="mas">Leer artículo →</span></a><a class="tarjeta" href="/blog/seguimiento-proceso-consultante-cierre"><h2>Cómo hacer seguimiento del proceso de un consultante y cerrarlo con calma</h2><p>Cómo medir el avance con el consultante, cuándo conviene cerrar un proceso y cómo hacerlo de forma respetuosa.</p><span class="mas">Leer artículo →</span></a></div></div></main>
+<section class="cierre"><div class="wrap"><h2>Su práctica, en equilibrio</h2><p>Lleve sus fichas, agenda y consentimientos en un solo lugar.</p><a class="btn pri" href="/app?registro=1">Crear cuenta</a></div></section><footer><div class="wrap" style="flex-wrap:wrap;gap:10px"><span style="flex-basis:100%;font-size:13px;opacity:.85">Alter-Karute acompaña la salud con terapias alternativas, pero no realiza procesos clínicos.</span><span>© Alter-Karute</span><span><a href="/blog/">Blog</a> · <a href="/privacidad">Privacidad</a> · <a href="mailto:alterkarute.systems@gmail.com">alterkarute.systems@gmail.com</a></span></div></footer>
 </body>
 </html>
