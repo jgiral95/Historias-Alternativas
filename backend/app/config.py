@@ -29,6 +29,17 @@ MAX_FILE_BYTES = 8 * 1024 * 1024
 GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID", "").strip()
 GOOGLE_CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET", "").strip()
 PUBLIC_URL = os.environ.get("PUBLIC_URL", "").strip().rstrip("/")
+# Suscripciones con ePayco (opcional). BILLING_ENFORCE=1 exige suscripción: sin ella solo se puede probar con un consultante.
+# EPAYCO_PUBLIC_KEY / EPAYCO_PRIVATE_KEY: llaves del panel de ePayco (API de suscripciones). EPAYCO_TEST=0 en producción.
+# EPAYCO_PLAN_MENSUAL / EPAYCO_PLAN_ANUAL: el id_plan de cada plan en ePayco (así no se confunden con otros planes de la misma cuenta).
+BILLING_ENFORCE = os.environ.get("BILLING_ENFORCE", "0").strip() == "1"
+EPAYCO_PUBLIC_KEY = os.environ.get("EPAYCO_PUBLIC_KEY", "").strip()
+EPAYCO_PRIVATE_KEY = os.environ.get("EPAYCO_PRIVATE_KEY", "").strip()
+EPAYCO_TEST = os.environ.get("EPAYCO_TEST", "1").strip() != "0"
+EPAYCO_PLAN_MENSUAL = os.environ.get("EPAYCO_PLAN_MENSUAL", "").strip()
+EPAYCO_PLAN_ANUAL = os.environ.get("EPAYCO_PLAN_ANUAL", "").strip()
+EPAYCO_PLAN_URL_MENSUAL = os.environ.get("EPAYCO_PLAN_URL_MENSUAL", "https://subscription-landing.epayco.co/plan/af3adcdcbfee6b0cd0c2e43").strip()
+EPAYCO_PLAN_URL_ANUAL = os.environ.get("EPAYCO_PLAN_URL_ANUAL", "https://subscription-landing.epayco.co/plan/af3ae2d02ea12f18a0c9403").strip()
 # Minutos durante los cuales un adjunto recién subido se puede quitar (error de carga).
 FILE_UNDO_MINUTES = 15
 # Correo saliente para las encuestas de satisfacción (opcional; vea «Encuestas de satisfacción» en el README).

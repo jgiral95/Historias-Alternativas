@@ -1,6 +1,8 @@
 import base64
 import hashlib
 import json
+import logging
+import math
 import re
 import secrets
 import threading
@@ -20,9 +22,9 @@ import jwt
 
 from .config import (FILE_UNDO_MINUTES, IDLE_MINUTES, MAX_FILE_BYTES, MAX_RECORD_BYTES,
                      MIN_PASSWORD, SESSION_HOURS, SESSION_SECRET)
-from . import compress, firmas, gcal, reminders, survey
-from .config import BETA_COMENTARIOS, PUBLIC_URL, RECIFRAR_AL_ARRANCAR, SURVEY_SCHEDULER, TRUSTED_DEVICE_DAYS
-from .db import (TrustedDevice, ApptReminder, Audit, ConsentRequest, Feedback, Blob, Feed, GoogleLink, MailAccount, Record, SessionLocal, SurveyInvite, SurveyOptOut, SurveyResponse,
+from . import billing, compress, firmas, gcal, reminders, survey
+from .config import (BETA_COMENTARIOS, BILLING_ENFORCE, EPAYCO_PLAN_URL_ANUAL, EPAYCO_PLAN_URL_MENSUAL, EPAYCO_PRIVATE_KEY, PUBLIC_URL, RECIFRAR_AL_ARRANCAR, SURVEY_SCHEDULER, TRUSTED_DEVICE_DAYS)
+from .db import (TrustedDevice, ApptReminder, Audit, ConsentRequest, Feedback, Blob, Feed, GoogleLink, MailAccount, Record, SessionLocal, Subscription, SurveyInvite, SurveyOptOut, SurveyResponse,
                  User, Verification, init_db)
 from .security import (DUMMY_HASH, check_password, decrypt, decrypt_bytes, encrypt, encrypt_bytes,
                        recovery_hash, recovery_new, totp_check, totp_new_secret,
@@ -137,6 +139,49 @@ def pro_user(request: Request, user: User = Depends(current_user), db: Session =
 
 def owner_id(user: User) -> int:
     return user.owner_id or user.id
+
+
+# ---------- Suscripción ----------
+GRACIA_DIAS = 30  # tras vencer la suscripción: se pueden ver y descargar las fichas (sin modificarlas)
+
+
+def suscrito(user: User, db: Session) -> bool:
+    """Suscripción vigente. Sin BILLING_ENFORCE=1 no se exige, y los administradores siempre pasan."""
+    if not BILLING_ENFORCE or user.role == "admin":
+        return True
+    sub = db.get(Subscription, owner_id(user))
+    return billing.vigente(sub.paid_until if sub else None, datetime.now(timezone.utc))
+
+
+def ensure_acceso(user: User, db: Session, escritura: bool = False) -> None:
+    """Quien tuvo suscripción y la dejó vencer: 30 días solo para ver y descargar; después no accede (los datos no se borran) hasta renovar."""
+    sub = None if suscrito(user, db) else db.get(Subscription, owner_id(user))
+    if sub is None:
+        return
+    hasta = billing.aware(sub.paid_until)
+    if hasta and datetime.now(timezone.utc) - hasta <= timedelta(days=GRACIA_DIAS):
+        if escritura:
+            raise HTTPException(402, "Su suscripción venció: por 30 días puede ver y descargar sus fichas, pero no modificarlas. Renueve en «Mi suscripción».")
+        return
+    raise HTTPException(402, "Su suscripción venció hace más de 30 días. Sus fichas están guardadas: vuelva a suscribirse en «Mi suscripción» para verlas y descargarlas.")
+
+
+def ensure_writable(user: User, db: Session, nuevo_consultante: bool = False) -> None:
+    """Sin suscripción vigente solo se puede probar con un consultante; los de ejemplo no cuentan."""
+    if suscrito(user, db):
+        return
+    n = sum(1 for r in db.scalars(select(Record).where(Record.user_id == owner_id(user), Record.kind == "patient")) if not decrypt(r.payload).get("demo"))
+    if nuevo_consultante and n >= 1:
+        raise HTTPException(402, "Sin suscripción solo puede probar con un consultante. Suscríbase en «Mi suscripción» para tener más.")
+    if n > 1:
+        raise HTTPException(402, "Su suscripción no está activa: puede consultar sus fichas, pero no modificarlas. Renueve en «Mi suscripción».")
+
+
+def sub_user(user: User = Depends(pro_user), db: Session = Depends(get_db)) -> User:
+    """Funciones solo para suscriptores (cuentas de ayudantes)."""
+    if not suscrito(user, db):
+        raise HTTPException(402, "Esta función requiere una suscripción activa. Suscríbase en «Mi suscripción».")
+    return user
 
 
 def require_admin(request: Request, user: User = Depends(current_user), db: Session = Depends(get_db)) -> User:
@@ -795,6 +840,7 @@ def _check_immutable(kind: str, old: dict | None, new: dict) -> None:
 
 @app.get("/api/records")
 def list_records(request: Request, user: User = Depends(current_user), db: Session = Depends(get_db)):
+    ensure_acceso(user, db)
     audit(db, user.id, "records.list", ip=client_ip(request))
     rows = db.scalars(select(Record).where(Record.user_id == owner_id(user)))
     if user.role != "asistente":
@@ -834,6 +880,8 @@ def put_record(rid: str, request: Request, bg: BackgroundTasks, payload: dict = 
     if len(json.dumps(payload, ensure_ascii=False)) > MAX_RECORD_BYTES:
         raise HTTPException(413, "El registro es demasiado grande")
     oid, team = owner_id(user), user.role == "asistente"
+    ensure_acceso(user, db, True)
+    ensure_writable(user, db, kind == "patient" and db.get(Record, (oid, rid)) is None)
     payload.pop("demo", None)  # la marca de «datos de ejemplo» solo la pone el servidor (POST /api/demo)
     if team and kind not in ("patient", "appt"):
         raise HTTPException(403, "Su cuenta de equipo solo puede modificar datos de consultantes y la agenda")
@@ -897,6 +945,7 @@ def put_record(rid: str, request: Request, bg: BackgroundTasks, payload: dict = 
 def delete_record(rid: str, bg: BackgroundTasks, user: User = Depends(current_user), db: Session = Depends(get_db)):
     if not ID_RE.match(rid):
         raise HTTPException(400, "Identificador no válido")
+    ensure_acceso(user, db, True)
     oid = owner_id(user)
     row = db.get(Record, (oid, rid))
     if row and user.role == "asistente" and row.kind != "appt":
@@ -1546,7 +1595,7 @@ def team_list(user: User = Depends(pro_user), db: Session = Depends(get_db)):
 
 
 @app.post("/api/equipo", status_code=201)
-def team_create(body: TeamIn, user: User = Depends(pro_user), db: Session = Depends(get_db)):
+def team_create(body: TeamIn, user: User = Depends(sub_user), db: Session = Depends(get_db)):
     email = body.email.strip().lower()
     if not EMAIL_RE.match(email):
         raise HTTPException(400, "Correo no válido")
@@ -1564,6 +1613,67 @@ def team_create(body: TeamIn, user: User = Depends(pro_user), db: Session = Depe
     db.commit()
     audit(db, user.id, "team.create", email)
     return user_out(u)
+
+
+def _sincronizar_epayco(user: User, db: Session) -> None:
+    """Da acceso mientras ePayco tenga activa la suscripción del correo de la cuenta, también durante la prueba gratis. Nunca acorta el acceso ya concedido."""
+    if user.owner_id or user.role == "admin" or not EPAYCO_PRIVATE_KEY or not billing.PLAN_IDS:
+        return
+    ahora = time.monotonic()
+    if ahora - billing.ultima.get(user.id, -1e9) < 60:
+        return
+    billing.ultima[user.id] = ahora
+    try:
+        subs = billing.suscripciones_de(user.email, billing.cliente())
+    except Exception as e:  # ePayco caído o sin SDK: se sigue con lo que ya hay
+        logging.getLogger("uvicorn.error").warning("ePayco: no se pudo consultar la suscripción (%s)", type(e).__name__)
+        return
+    fines = [(billing.fin_periodo(s), s) for s in subs if billing.fin_periodo(s)]
+    if not fines:
+        return
+    hasta, s = max(fines, key=lambda x: x[0])
+    sub = db.get(Subscription, user.id) or Subscription(user_id=user.id)
+    if not sub.paid_until or billing.aware(sub.paid_until) < hasta:
+        sub.plan, sub.paid_until = billing.PLAN_IDS[s["idPlan"]], hasta
+        db.add(sub)
+        db.commit()
+        audit(db, user.id, "billing.sincronizada", f"{sub.plan} hasta {hasta.date()}")
+
+
+@app.get("/api/billing")
+def billing_status(user: User = Depends(pro_user), db: Session = Depends(get_db)):
+    sub = db.get(Subscription, user.id)
+    now = datetime.now(timezone.utc)
+    if not billing.vigente(sub.paid_until if sub else None, now):
+        _sincronizar_epayco(user, db)
+        sub = db.get(Subscription, user.id)
+    hasta = billing.aware(sub.paid_until) if sub else None
+    gracia = None  # días que faltan para perder el acceso a las fichas (solo si la suscripción ya venció)
+    if hasta and not billing.vigente(hasta, now):
+        gracia = max(0, math.ceil(GRACIA_DIAS - (now - hasta).total_seconds() / 86400))
+    return {"exigido": BILLING_ENFORCE, "activa": user.role == "admin" or billing.vigente(hasta, now), "plan": sub.plan if sub else "",
+            "hasta": hasta.isoformat() if hasta else None, "gracia": gracia, "puedeCancelar": bool(EPAYCO_PRIVATE_KEY and billing.PLAN_IDS),
+            "planes": [{"id": "mensual", "nombre": billing.PLANES["mensual"], "url": EPAYCO_PLAN_URL_MENSUAL},
+                       {"id": "anual", "nombre": billing.PLANES["anual"], "url": EPAYCO_PLAN_URL_ANUAL}]}
+
+
+@app.post("/api/billing/cancelar")
+def billing_cancelar(user: User = Depends(pro_user), db: Session = Depends(get_db)):
+    """Cancela en ePayco la suscripción recurrente del correo de la cuenta. El acceso sigue hasta el fin del periodo."""
+    if not (EPAYCO_PRIVATE_KEY and billing.PLAN_IDS):
+        raise HTTPException(503, "La cancelación aún no está configurada")
+    try:
+        cli = billing.cliente()
+        subs = billing.suscripciones_de(user.email, cli)
+        for s in subs:
+            billing.cancelar(s["_id"], cli)
+    except Exception as e:
+        logging.getLogger("uvicorn.error").warning("ePayco: no se pudo cancelar (%s)", type(e).__name__)
+        raise HTTPException(502, "No se pudo cancelar en ePayco. Intente de nuevo en unos minutos.")
+    if not subs:
+        raise HTTPException(404, "No encontramos una suscripción recurrente con el correo de su cuenta. Si pagó con otro correo, cancélela desde el enlace del correo de ePayco.")
+    audit(db, user.id, "billing.cancelada", f"{len(subs)} suscripción(es)")
+    return {"canceladas": len(subs)}
 
 
 @app.patch("/api/equipo/{uid}")

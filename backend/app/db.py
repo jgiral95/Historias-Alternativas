@@ -42,6 +42,15 @@ class User(Base):
     profile: Mapped[bytes | None] = mapped_column(LargeBinary, nullable=True)
 
 
+class Subscription(Base):
+    """Suscripción del terapeuta (las subcuentas de equipo usan la de su dueño)."""
+    __tablename__ = "subscriptions"
+    user_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    plan: Mapped[str] = mapped_column(String(10), default="")
+    paid_until: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now, onupdate=now)
+
+
 class TrustedDevice(Base):
     """Dispositivo donde ya se verificó el segundo paso. Solo se guarda el hash del token de la cookie."""
     __tablename__ = "trusted_devices"

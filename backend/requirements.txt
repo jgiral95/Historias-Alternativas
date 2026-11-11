@@ -7,3 +7,4 @@ cryptography==44.0.0
 pyjwt==2.10.1
 pydantic==2.10.4
 alembic==1.14.0
+epaycosdk==3.3.2
