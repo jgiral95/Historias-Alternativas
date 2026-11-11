@@ -177,6 +177,12 @@ def ensure_writable(user: User, db: Session, nuevo_consultante: bool = False) ->
         raise HTTPException(402, "Su suscripción no está activa: puede consultar sus fichas, pero no modificarlas. Renueve en «Mi suscripción».")
 
 
+def ensure_puede_eliminar(user: User, db: Session, pat: dict) -> None:
+    """Eliminar consultantes solo con suscripción vigente (los de ejemplo se pueden borrar siempre): evita abusar de la prueba gratuita."""
+    if not pat.get("demo") and not suscrito(user, db):
+        raise HTTPException(402, "Eliminar consultantes es una función de la suscripción. Suscríbase en «Mi suscripción».")
+
+
 def sub_user(user: User = Depends(pro_user), db: Session = Depends(get_db)) -> User:
     """Funciones solo para suscriptores (cuentas de ayudantes)."""
     if not suscrito(user, db):
@@ -961,6 +967,8 @@ def delete_record(rid: str, bg: BackgroundTasks, user: User = Depends(current_us
             blob = db.get(Blob, (oid, rid))
             if blob:
                 db.delete(blob)
+        if row.kind == "patient":
+            ensure_puede_eliminar(user, db, old)
         if row.kind == "patient" and (old.get("consents") or old.get("cierres") or old.get("solicitudes") or old.get("incorporaciones") or (old.get("intake") or {}).get("signedAt")):
             raise HTTPException(409, "Un consultante con documentos firmados no se puede eliminar")
         if row.kind == "patient" and db.scalar(select(func.count()).select_from(Record).where(
@@ -985,6 +993,7 @@ def delete_patient(pid: str, bg: BackgroundTasks, user: User = Depends(current_u
     prow = db.get(Record, (oid, pid))
     if not prow or prow.kind != "patient":
         raise HTTPException(404, "Consultante no encontrado")
+    ensure_puede_eliminar(user, db, decrypt(prow.payload))
     rows = db.scalars(select(Record).where(Record.user_id == oid, Record.patient_id == pid)).all()
     ids = [r.id for r in rows if r.id != pid]
     appts = [r.id for r in rows if r.kind == "appt"]

@@ -76,3 +76,13 @@ def test_sin_exigir_no_limita(monkeypatch):
     c = client_for("ana@x.co")
     assert c.put("/api/records/p_1", json=patient("p_1")).status_code == 200
     assert c.put("/api/records/p_2", json=patient("p_2", documento="999")).status_code == 200
+
+
+def test_eliminar_consultante_solo_con_suscripcion():
+    make_user("ana@x.co")
+    c = client_for("ana@x.co")
+    assert c.put("/api/records/p_1", json=patient("p_1")).status_code == 200
+    assert c.delete("/api/patients/p_1").status_code == 402
+    assert c.delete("/api/records/p_1").status_code == 402
+    _dar("ana@x.co", 20)
+    assert c.delete("/api/patients/p_1").status_code == 204
