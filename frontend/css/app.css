@@ -383,3 +383,6 @@ body:has(#fb-root .fbbtn) .modal{padding-bottom:84px}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 
 .mfhead{position:sticky;top:0;z-index:5;background:var(--surface);margin:-18px -18px 0;padding:14px 18px;border-bottom:1px solid var(--line);border-radius:10px 10px 0 0;align-items:center}
+
+.tabs{background:linear-gradient(to right,var(--accent-soft) 30%,transparent) left center/32px 100% no-repeat local,linear-gradient(to left,var(--accent-soft) 30%,transparent) right center/32px 100% no-repeat local,radial-gradient(farthest-side at 0 50%,rgba(0,0,0,.28),transparent) left center/12px 70% no-repeat scroll,radial-gradient(farthest-side at 100% 50%,rgba(0,0,0,.28),transparent) right center/12px 70% no-repeat scroll,var(--accent-soft);scrollbar-width:thin;scrollbar-color:var(--muted) transparent}
+.tabs::-webkit-scrollbar{height:6px}.tabs::-webkit-scrollbar-thumb{background:var(--muted);border-radius:3px}
