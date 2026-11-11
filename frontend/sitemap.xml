@@ -2,4 +2,10 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url><loc>__ORIGIN__/</loc><changefreq>monthly</changefreq><priority>1.0</priority></url>
   <url><loc>__ORIGIN__/privacidad</loc><changefreq>yearly</changefreq><priority>0.3</priority></url>
+  <url><loc>__ORIGIN__/blog/</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>__ORIGIN__/blog/ficha-consultante-terapias-alternativas</loc><lastmod>2026-11-11</lastmod><priority>0.7</priority></url>
+  <url><loc>__ORIGIN__/blog/consentimiento-informado-terapeutas-holisticos</loc><lastmod>2026-11-11</lastmod><priority>0.7</priority></url>
+  <url><loc>__ORIGIN__/blog/agenda-recordatorios-citas-consulta</loc><lastmod>2026-11-11</lastmod><priority>0.7</priority></url>
+  <url><loc>__ORIGIN__/blog/proteccion-datos-consultantes-habeas-data</loc><lastmod>2026-11-11</lastmod><priority>0.7</priority></url>
+  <url><loc>__ORIGIN__/blog/seguimiento-proceso-consultante-cierre</loc><lastmod>2026-11-11</lastmod><priority>0.7</priority></url>
 </urlset>
