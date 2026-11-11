@@ -386,3 +386,6 @@ body:has(#fb-root .fbbtn) .modal{padding-bottom:84px}
 
 .tabs{background:linear-gradient(to right,var(--accent-soft) 30%,transparent) left center/32px 100% no-repeat local,linear-gradient(to left,var(--accent-soft) 30%,transparent) right center/32px 100% no-repeat local,radial-gradient(farthest-side at 0 50%,rgba(0,0,0,.28),transparent) left center/12px 70% no-repeat scroll,radial-gradient(farthest-side at 100% 50%,rgba(0,0,0,.28),transparent) right center/12px 70% no-repeat scroll,var(--accent-soft);scrollbar-width:thin;scrollbar-color:var(--muted) transparent}
 .tabs::-webkit-scrollbar{height:6px}.tabs::-webkit-scrollbar-thumb{background:var(--muted);border-radius:3px}
+.modal:has(.mfhead){padding-top:0}
+.modal:has(.mfhead)>.box{margin-top:0;border-top-left-radius:0;border-top-right-radius:0}
+.mfhead{border-radius:0}
