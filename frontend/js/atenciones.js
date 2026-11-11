@@ -146,7 +146,7 @@ function tabIntake(p) {
     ${addendaHTML(i, 'intake', 'intake')}
     <div class="row"><button class="btn pri" data-act="viewIntake">Ver y descargar documento</button></div></div>`;
   }
-  const consentWarn = (p.consents || []).length ? '' : '<div class="banner">Este consultante aún no tiene consentimiento informado firmado.</div>';
+  const consentWarn = '';
   return `<div id="intakeform" class="sec">${consentWarn}${sigNeeded()}<div class="row" style="justify-content:space-between"><h3 style="flex:1">Primera vez</h3><button class="btn" data-act="saveIntake" data-sign="0">Guardar borrador</button><button class="btn pri" data-act="saveIntake" data-sign="1">Firmar y guardar</button></div>${phraseHint()}
   ${atencionBlock(i, 'intake', p)}
   <div id="teleslot">${isRemote(i.modalidad) ? teleBlock(i) : ''}</div>

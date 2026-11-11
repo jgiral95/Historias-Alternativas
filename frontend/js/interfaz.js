@@ -170,7 +170,6 @@ function todoHTML() {
   const active = S.patients.filter(p => !p.estado || p.estado === 'Activo');
   active.forEach(p => {
     const cs = p.consents || [];
-    if (!cs.some(c => c.tipo !== DATA_TIPO && !(c.revocacion && c.revocacion.alcance === 'Total'))) items.push({ k: 'Sin consentimiento', t: fullName(p), d: 'No tiene consentimiento de atención vigente', act: `data-act="open" data-id="${p.id}" data-tab="consent"`, btn: 'Abrir', w: 1 });
     if (!(p.intake && p.intake.signedAt) && !(p.incorporaciones || []).length && (cs.length || S.notes.some(n => n.patientId === p.id))) items.push({ k: 'Primera vez sin firmar', t: fullName(p), d: 'Aún no tiene la consulta de primera vez', act: `data-act="open" data-id="${p.id}" data-tab="intake"`, btn: 'Abrir', w: 3 });
     const last = lastAttention(p), next = S.appts.some(a => a.patientId === p.id && a.estado === 'Programada' && a.startAt >= nowI);
     if (last && !next && now - new Date(last).getTime() > 28 * 864e5) items.push({ k: 'Sin cita', t: fullName(p), d: 'Última atención ' + fmtD(last) + '; no tiene próxima cita', act: `data-act="apptEdit" data-patient="${p.id}"`, btn: 'Agendar', w: 5 });
@@ -248,7 +247,7 @@ function teamHomeHTML() {
 }
 function homeHTML() {
   const month = new Date().toISOString().slice(0, 7);
-  const act = S.patients.filter(p => !p.estado || p.estado === 'Activo').length, noC = S.patients.filter(p => !(p.consents || []).length).length, noI = S.patients.filter(p => !(p.intake && p.intake.signedAt)).length;
+  const act = S.patients.filter(p => !p.estado || p.estado === 'Activo').length, noI = S.patients.filter(p => !(p.intake && p.intake.signedAt)).length;
   const nm = S.notes.filter(n => n.signedAt && (n.sessionAt || '').startsWith(month)).length;
   if (TEAM()) return teamHomeHTML();
   const ht = ['stats', 'enc'].includes(S.homeTab) ? S.homeTab : 'resumen';
@@ -256,7 +255,7 @@ function homeHTML() {
   const back = '<button class="btn sm back" data-act="back">← Consultantes</button>';
   if (ht !== 'resumen') return `<div class="panel"><div class="body">${back}${tabs}${statsHTML(false, ht)}</div></div>`;
   return `<div class="panel"><div class="body">${back}${tabs}${stepsHTML()}<h2 style="font-family:var(--f-doc);font-size:22px">Resumen</h2>
-  <div class="stats"><div class="stat"><b>${act}</b><span>consultantes activos</span></div><div class="stat"><b>${noC}</b><span>sin consentimiento firmado</span></div><div class="stat"><b>${noI}</b><span>sin primera vez firmada</span></div><div class="stat"><b>${nm}</b><span>notas firmadas este mes</span></div></div>
+  <div class="stats"><div class="stat"><b>${act}</b><span>consultantes activos</span></div><div class="stat"><b>${noI}</b><span>sin primera vez firmada</span></div><div class="stat"><b>${nm}</b><span>notas firmadas este mes</span></div></div>
   ${todoHTML()}
   ${todayHTML()}
   ${notesListHTML()}
