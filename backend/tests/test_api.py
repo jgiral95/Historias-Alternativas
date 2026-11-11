@@ -576,3 +576,21 @@ def test_custom_tab_text_and_tab_config_are_saved():
     c.put("/api/records/p_1", json=patient("p_1", extras={"x_a": "texto libre"}))
     p = next(x for x in c.get("/api/records").json() if x["id"] == "p_1")
     assert p["extras"] == {"x_a": "texto libre"}
+
+
+def test_delete_patient_cascade():
+    make_user("ana@x.co")
+    make_user("beto@x.co")
+    c = client_for("ana@x.co")
+    o = client_for("beto@x.co")
+    assert c.put("/api/records/p_1", json=patient("p_1")).status_code == 200
+    assert o.put("/api/records/p_9", json=patient("p_9")).status_code == 200
+    note = {"id": "n_1", "kind": "note", "patientId": "p_1", "tema": "x", "signedAt": NOW, "addenda": []}
+    assert c.put("/api/records/n_1", json=note).status_code in (200, 204)
+    assert c.delete("/api/records/p_1").status_code == 409  # el borrado suelto sigue protegido
+    assert o.delete("/api/patients/p_1").status_code == 404  # otro usuario no puede
+    assert c.delete("/api/patients/p_1").status_code == 204
+    ids = {r["id"] for r in c.get("/api/records").json()}
+    assert "p_1" not in ids and "n_1" not in ids
+    assert any(r["id"] == "p_9" for r in o.get("/api/records").json())
+    assert c.delete("/api/patients/p_1").status_code == 404

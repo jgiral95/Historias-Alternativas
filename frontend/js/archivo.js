@@ -45,7 +45,7 @@ function tabArchivo(p) {
   <div class="sec"><h3>Exportación</h3><dl class="kv"><dt>Última atención</dt><dd>${last ? esc(fmtD(last)) : 'Sin atenciones firmadas'}</dd></dl>
   <p style="margin:0;font-size:13px;color:var(--muted)">La copia completa incluye consentimientos, primera vez, sesiones, informes, cierres y adjuntos. Sirve para entregar copia al consultante o para trasladar la historia si deja de usar esta plataforma.</p>
   <div class="row"><button class="btn pri" data-act="exportZip">Descargar historia completa (ZIP)</button></div></div>
-  <details class="sec"><summary class="sum">Eliminar el expediente</summary>${hasDocs(p) ? '<p style="margin:0;font-size:13px;color:var(--muted)">Este expediente tiene documentos firmados, así que no se puede eliminar: conviene conservar el expediente. Si el proceso terminó, use la pestaña «Cierre».</p>' : '<p style="margin:0;font-size:13px;color:var(--muted)">Como este consultante aún no tiene documentos firmados, puede eliminar su registro (por ejemplo, si lo creó por error). Se borra del servidor y no se puede recuperar.</p><div class="row"><button class="btn warn" data-act="delPatient">Eliminar consultante</button></div>'}</details>`;
+  <div class="sec"><h3>Eliminar consultante</h3><p style="margin:0;font-size:13px;color:var(--muted)">Borra del servidor a este consultante con todo lo suyo: notas, informes, citas, adjuntos y consentimientos. No se puede deshacer.</p><div class="row"><button class="btn warn" data-act="delPatient">Eliminar consultante</button></div></div>`;
 }
 ACT.uploadFile = async b => {
   const p = curPatient(), inp = $('#f_upfile'), f = inp && inp.files[0], o = readForm($('#fileform'), {});

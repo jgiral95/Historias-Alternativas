@@ -973,6 +973,41 @@ def delete_record(rid: str, bg: BackgroundTasks, user: User = Depends(current_us
             bg.add_task(gcal.sync, oid, [rid])
 
 
+@app.delete("/api/patients/{pid}", status_code=204)
+def delete_patient(pid: str, bg: BackgroundTasks, user: User = Depends(current_user), db: Session = Depends(get_db)):
+    """Elimina un consultante con todo lo suyo (notas, informes, citas, adjuntos, recordatorios y enlaces)."""
+    if not ID_RE.match(pid):
+        raise HTTPException(400, "Identificador no válido")
+    ensure_acceso(user, db, True)
+    if user.role == "asistente":
+        raise HTTPException(403, "Su cuenta de equipo no puede eliminar consultantes")
+    oid = owner_id(user)
+    prow = db.get(Record, (oid, pid))
+    if not prow or prow.kind != "patient":
+        raise HTTPException(404, "Consultante no encontrado")
+    rows = db.scalars(select(Record).where(Record.user_id == oid, Record.patient_id == pid)).all()
+    ids = [r.id for r in rows if r.id != pid]
+    appts = [r.id for r in rows if r.kind == "appt"]
+    for rid in ids:
+        blob = db.get(Blob, (oid, rid))
+        if blob:
+            db.delete(blob)
+    if appts:
+        db.execute(delete(ApptReminder).where(ApptReminder.user_id == oid, ApptReminder.appt_id.in_(appts)))
+    db.execute(delete(ConsentRequest).where(ConsentRequest.user_id == oid, ConsentRequest.patient_id == pid))
+    db.execute(delete(SurveyInvite).where(SurveyInvite.user_id == oid, SurveyInvite.patient_id == pid))
+    db.execute(delete(SurveyOptOut).where(SurveyOptOut.user_id == oid, SurveyOptOut.patient_id == pid))
+    for r in rows:
+        if r.id != pid:
+            db.delete(r)
+    db.delete(prow)
+    db.commit()
+    audit(db, user.id, "patient.delete", f"{len(ids)} registros", patient_id=pid)
+    if appts:
+        bg.add_task(gcal.sync, oid, appts)
+    return Response(status_code=204)
+
+
 # ---------- Calendario (enlace iCal para Google Calendar u otros) ----------
 FEED_DETAILS = ("iniciales", "nombre", "oculto")
 

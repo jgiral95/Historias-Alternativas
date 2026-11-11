@@ -42,7 +42,7 @@ FastAPI + SQLAlchemy. `main.py` (endpoints; registros cifrados por tipo: profile
 | Recordatorios / firma a distancia / encuesta / bitácora / comentarios / inicio / caída / Google | `<nombre>_e2e.js` |
 
 ## Reglas que no cambian
-Nada de exportaciones masivas; documentos firmados inmutables (solo adendas); el equipo nunca recibe datos clínicos; commits a `main` con las líneas Co-Authored-By y Claude-Session.
+Nada de exportaciones masivas; documentos firmados inmutables (solo adendas; única excepción: eliminar un consultante completo desde Archivo); el equipo nunca recibe datos clínicos; commits a `main` con las líneas Co-Authored-By y Claude-Session.
 
 ## Pendientes
 - Los e2e `app_e2e.js`, `formularios_e2e.js` y otros aún asumen CIE/RIPS/EPS: hay que actualizarlos. `test_migrations.py` (2 pruebas) falla desde el origen.

@@ -452,11 +452,18 @@ ACT.savePatient = async b => {
   if (S.draft) { if (!S.patients.some(x => x.id === p.id)) S.patients.push(p); S.draft = false; S.draftObj = null; S.pid = p.id; }
   toast('Datos guardados.'); render();
 };
-ACT.delPatient = b => {
-  if (!b.dataset.sure) { b.dataset.sure = 1; b.textContent = 'Confirmar: eliminar todo el expediente'; return; }
-  const p = curPatient(), ids = [p.id, ...S.notes.filter(n => n.patientId === p.id).map(n => n.id), ...S.reports.filter(r => r.patientId === p.id).map(r => r.id)];
-  S.patients = S.patients.filter(x => x.id !== p.id); S.notes = S.notes.filter(n => n.patientId !== p.id); S.reports = S.reports.filter(r => r.patientId !== p.id);
-  S.pid = null; ids.forEach(id => Store.remove(id)); toast('Expediente eliminado.'); render();
+ACT.delPatient = () => {
+  const p = curPatient(), root = $('#modal-root'); if (!p) return;
+  root.innerHTML = `<div class="modal" role="dialog" aria-modal="true" aria-label="Eliminar consultante"><div class="box" style="width:min(460px,100%)"><h3>Eliminar a ${esc(fullName(p))}</h3>
+  <p style="margin:0">Se borrarán su ficha, notas, informes, citas, adjuntos y consentimientos. Esta acción no se puede deshacer.</p>
+  <div class="row end"><button class="btn" id="dp_no">Cancelar</button><button class="btn warn" id="dp_si">Eliminar definitivamente</button></div></div></div>`;
+  const close = () => { root.innerHTML = ''; };
+  $('#dp_no').onclick = close;
+  $('#dp_si').onclick = async e => {
+    setBusy(e.target, true);
+    try { await api('/patients/' + encodeURIComponent(p.id), { method: 'DELETE' }); await Store.load(); S.pid = null; close(); toast('Consultante eliminado.'); render(); }
+    catch (err) { toast(err.message); setBusy(e.target, false); }
+  };
 };
 /* Antes de generar la historia completa se elige qué incluir. */
 function chooseParts(p, title, go) {
