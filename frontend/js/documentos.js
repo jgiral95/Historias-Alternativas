@@ -110,7 +110,7 @@ const apptConsentMissing = (p, modalidad) => { const r = REMOTE_MODS.includes(mo
 /* Variables de los consentimientos: datos del consultante, de sus acudientes y del terapeuta. */
 const CONSENT_VARS = [['paciente', 'Nombre del consultante'], ['documento', 'Documento'], ['edad', 'Edad'], ['nacimiento', 'Fecha de nacimiento'], ['paciente_direccion', 'Dirección del consultante'], ['paciente_telefono', 'Teléfono del consultante'], ['paciente_correo', 'Correo del consultante'],
   ['acudiente', 'Acudiente 1'], ['acudiente_documento', 'Documento acudiente 1'], ['acudiente_parentesco', 'Parentesco acudiente 1'], ['acudiente2', 'Acudiente 2'], ['acudiente2_documento', 'Documento acudiente 2'], ['acudiente2_parentesco', 'Parentesco acudiente 2'],
-  ['terapeuta', 'Su nombre'], ['cedula', 'Su cédula'], ['registro', 'Su registro'], ['consultorio', 'Consultorio'], ['ciudad', 'Su ciudad'], ['telefono', 'Su teléfono'], ['correo', 'Su correo'], ['fecha', 'Fecha de hoy']];
+  ['terapeuta', 'Su nombre'], ['cedula', 'Su cédula'], ['registro', 'Su registro'], ['consultorio', 'Lugar de práctica'], ['ciudad', 'Su ciudad'], ['telefono', 'Su teléfono'], ['correo', 'Su correo'], ['fecha', 'Fecha de hoy']];
 function fillTpl(t, p, pr) {
   const b = v => v || '________', v = Object.assign(tplValues(p, pr), {
     nacimiento: p.nacimiento ? fmtD(p.nacimiento + 'T12:00:00') : '________', paciente_direccion: b([p.direccion, p.localidad, p.ciudad].filter(Boolean).join(', ')), paciente_telefono: b(telOf(p.telefono, p.telInd)), paciente_correo: b(p.correo),
