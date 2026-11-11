@@ -102,7 +102,30 @@ function demoRecords() {
   pn({ patientId: A.id, tipo: 'Idea', titulo: 'La preocupación como forma de control', texto: 'Idea: la preocupación le da sensación de control ante la enfermedad de su madre (pérdida temprana del padre). Explorar qué la hace sentir segura.', etiquetas: ['calma', 'duelo'] }, [{ at: iso, texto: 'En la sesión 3 cuenta: «si no me preocupo, algo malo puede pasar».' }]);
   pn({ patientId: B.id, tipo: 'Recordatorio', titulo: 'Ritmo de la rutina', texto: 'Sugerencia de una colega: empezar por actividades de poco esfuerzo y preguntar cómo se siente en cada sesión.', revisar: at(7).slice(0, 10), etiquetas: ['rutina'] });
   pn({ patientId: null, tipo: 'Idea', titulo: 'Lecturas pendientes', texto: 'Libro sobre respiración y manejo del estrés.\nCurso de atención plena.' });
+  demoExtras([A, B, C], at);
   return recs;
+}
+/* Rellena con texto de muestra todas las pestañas propias (coaching, crianza o las suyas) de los consultantes de ejemplo. */
+function demoExtras(ps, at) {
+  const ex = tabsConf().extra || [], dia = d => at(d).slice(0, 10);
+  const muestra = (label, k) => {
+    const l = label.toLowerCase(), op = (label.match(/\(([^()]*·[^()]*)\)/) || [])[1];
+    if (op) { const o = op.split('·').map(x => x.trim()).filter(Boolean); return o[k % o.length].replace(/^[A-Za-zÁÉÍÓÚáéíóúñ ]+:\s*/, ''); }
+    if (/de 1 a 10|1 a 10/.test(l)) return String(6 + (k % 3));
+    if (/fecha|hasta cuándo/.test(l) && !/fechas/.test(l)) return dia(7 + k);
+    if (/hora de fin/.test(l)) return '11:00';
+    if (/inicio \(fecha y hora\)/.test(l)) return dia(-7 - k) + ' 10:00';
+    if (/(sesión|sesiones)(?!.*pactad)/.test(l) && l.length < 40) return `${k + 2} de 8`;
+    return 'Ejemplo: texto de muestra para «' + label.replace(/\s*\(.*$/, '').replace(/[:?]+$/, '') + '». Reemplácelo con sus propias palabras.';
+  };
+  ps.forEach((p, pi) => {
+    p.extras = p.extras || {};
+    ex.forEach(x => {
+      const vals = k => { const v = {}; (x.secs || []).forEach(([, fs]) => fs.forEach(f => { v[f[0]] = muestra(f[1], k + pi); })); return (x.secs || []).length ? v : { extra: 'Ejemplo: texto de muestra para esta pestaña.' }; };
+      if (x.modo === 'sesion') p.extras[x.id] = [1, 0].map(k => ({ id: newId('e'), at: dia(-14 * (k + 1)), hora: '10:00', lugar: 'Consultorio', v: vals(k) }));
+      else p.extras[x.id] = vals(0);
+    });
+  });
 }
 ACT.demoLoad = async b => {
   if (S.patients.some(x => x.demo)) { toast('Ya tiene los consultantes de ejemplo.'); return; }
