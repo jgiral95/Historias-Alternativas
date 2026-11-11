@@ -152,8 +152,6 @@ function tabIntake(p) {
   <div id="teleslot">${isRemote(i.modalidad) ? teleBlock(i) : ''}</div>
   <p class="stnote">Todos los campos son opcionales: llene lo que le sirva.</p>
   ${intakeSchema(i).map(([t, fs, g]) => `<div class="sec"><h3>${esc(t)}</h3><div class="grid">${fs.map(f => F(f[1], f[0], i[f[0]] !== undefined ? i[f[0]] : (f[3] || ''), { type: 'area', rows: f[2], wide: true, aria: t, req: true })).join('')}</div>${g === 'genograma' ? genoBlock() : ''}</div>`).join('')}
-  <div class="sec" id="riskblock"><h3>Señales de alerta</h3><div class="grid">${riesgoSel(i)}</div>${F('Qué se observó y qué se hizo', 'riesgoAcciones', i.riesgoAcciones || '', { type: 'area', rows: 2, wide: true, req: true })}</div>
-  ${dxBlock(i)}
   ${legacyOf(i).length ? `<div class="sec"><h3>Datos de la versión anterior</h3><p style="margin:0;font-size:13px;color:var(--muted)">Estos campos ya no están en el formulario. Pase lo que necesite a los apartados nuevos y vacíe el campo, o déjelo como está.</p><div class="grid">${legacyOf(i).map(([k, l]) => F(l, k, i[k], { type: 'area', rows: 2, wide: true })).join('')}</div></div>` : ''}
   <div class="fld"><span class="lbl">Firma del terapeuta (de su perfil)</span>${therPreview()}</div>
   <p class="lock-note">Al guardar, el documento queda firmado con su firma, la fecha y la hora, y <b>no podrá modificarse</b>. Solo podrá agregar adendas.</p><div class="row end"><button class="btn" data-act="saveIntake" data-sign="0">Guardar borrador</button><button class="btn pri" data-act="saveIntake" data-sign="1">Firmar y guardar</button></div></div>`;
@@ -166,10 +164,9 @@ ACT.saveIntake = async b => {
   if (sign) {
     if (!canSign()) { toast('Primero guarde su nombre y firma en «Mi perfil y firma».'); return; }
     const sc = intakeSchema(p.intake || {});
-    if (!reqCheck($('#intakeform'), o, intakeKeys(sc).concat(['riesgoAcciones', 'presentes']))) return;
+    if (!reqCheck($('#intakeform'), o, intakeKeys(sc).concat(['presentes']))) return;
     if (!atencionChecks(o)) return;
     if (!teleCheck(o)) return;
-    o.diagnosticos = clone(Dx.items);
     Object.assign(o, therSnap(), { signedAt: nowISO(), addenda: [], schema: clone(sc) });
   }
   const snap = clone(p);
@@ -230,8 +227,6 @@ function noteForm(p, n) {
   <div id="teleslot">${isRemote(n.modalidad) ? teleBlock(n) : ''}</div>
   ${evolSchema(n).length ? `${phraseHint()}<p class="stnote">Todos los campos son opcionales: llene lo que le sirva.</p><div class="grid">${evolSchema(n).map(f => F(f[1], f[0], n[f[0]] !== undefined ? n[f[0]] : (f[3] || ''), { type: 'area', rows: f[2], wide: true, req: true })).join('')}</div>`
     : `<div class="banner" id="noformat">Aún no ha creado su formato de sesión. Créelo en «Mis formatos» con los campos que usted usa (puede partir del formato sugerido). <div class="row" style="margin-top:6px"><button class="btn sm pri" data-act="formats" data-hub="evol">Crear mi formato</button></div></div>`}
-  <div class="grid">${riesgoSel(n)}</div>
-  ${(() => { const cur = currentDx(p, n.id); return dxBlock(n, { note: true, ctx: 'note:' + p.id + ':' + (S.newNote || 'new'), seed: cur.items, from: cur.items.length ? cur.from : '' }); })()}
   <div class="fld"><span class="lbl">Firma del terapeuta (de su perfil)</span>${therPreview()}</div>
   <p class="lock-note">Al guardar, el documento queda firmado con su firma, la fecha y la hora, y <b>no podrá modificarse</b>. Solo podrá agregar adendas.</p><div class="row end"><button class="btn" data-act="cancelNote">Cancelar</button><button class="btn" data-act="saveNote" data-sign="0">Guardar borrador</button><button class="btn pri" data-act="saveNote" data-sign="1">Firmar y guardar</button></div></div>`;
 }
@@ -269,8 +264,6 @@ ACT.saveNote = async b => {
     if (!reqCheck($('#noteform'), o, evolSchema({}).map(f => f[0]).concat(['presentes']))) return;
     if (!atencionChecks(o)) return;
     if (!teleCheck(o)) return;
-    const chg = dxChanged();
-    o.diagnosticos = clone(Dx.items); o.dxCambio = chg;
   }
   let n = S.newNote && S.newNote !== 'new' ? S.notes.find(x => x.id === S.newNote) : null;
   const fresh = !n, snap = n ? clone(n) : null;

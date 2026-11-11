@@ -37,7 +37,7 @@ function readScale() {
   const sc = allScales().find(x => x.id === $('#f_escala').value);
   const resp = sc.items.map((_, i) => { const r = $(`#scaleform input[name="sc_${i}"]:checked`); return r ? +r.value : null; });
   const done = resp.filter(v => v !== null).length, total = resp.reduce((a, v) => a + (v || 0), 0);
-  const alertas = (sc.alertas || []).filter(i => (resp[i] || 0) > 0);
+  const alertas = [];
   return { sc, resp, done, total, nivel: done === sc.items.length ? levelOf(sc, total) : '', alertas };
 }
 function updateScaleTotal() {
@@ -66,7 +66,7 @@ function tabEscalas(p) {
   ${groups.map(g => { const sc = g[g.length - 1].escala, last = g[g.length - 1];
     return `<div class="card"><div class="row" style="justify-content:space-between"><b>${esc(sc.nombre)}</b><span>Último: <b style="font-family:var(--f-mono)">${last.total}</b>${last.nivel ? ` <span class="chip">${esc(last.nivel)}</span>` : ''}</span></div>
     ${scaleChart(sc, g)}
-    <dl class="kv">${g.slice().reverse().map(e => `<dt>${esc(fmtShort(e.aplicadaAt))}</dt><dd>${e.total} puntos${e.nivel ? ' · ' + esc(e.nivel) : ''}${(e.alertas || []).length ? ` <span class="chip danger">Ítem ${e.alertas.map(i => i + 1).join(', ')} positivo</span>` : ''} · <button class="btn sm" data-act="viewScale" data-id="${e.id}">Ver</button></dd>`).join('')}</dl></div>`; }).join('') || (S.newScale ? '' : '<div class="empty">Aún no hay escalas aplicadas. Incluye PHQ-9 (depresión) y GAD-7 (ansiedad); puede agregar las suyas en «Mis chequeos».</div>')}</div>`;
+    <dl class="kv">${g.slice().reverse().map(e => `<dt>${esc(fmtShort(e.aplicadaAt))}</dt><dd>${e.total} puntos${e.nivel ? ' · ' + esc(e.nivel) : ''} · <button class="btn sm" data-act="viewScale" data-id="${e.id}">Ver</button></dd>`).join('')}</dl></div>`; }).join('') || (S.newScale ? '' : '<div class="empty">Aún no hay escalas aplicadas. Incluye PHQ-9 (depresión) y GAD-7 (ansiedad); puede agregar las suyas en «Mis chequeos».</div>')}</div>`;
 }
 ACT.newScale = () => { S.newScale = SCALES_BASE[0].id; render(); updateScaleTotal(); };
 ACT.cancelScale = () => { S.newScale = null; render(); };
@@ -80,7 +80,7 @@ ACT.saveScale = async b => {
     version: o.version || '', motivo: o.motivo, interpretacion: o.interpretacion, protocolo: fileRef ? { id: fileRef.id, nombre: fileRef.nombre, sha256: fileRef.sha256 } : undefined, entregaA: o.entregaA || '', entregaFecha: o.entregaFecha || '', ...therSnap(), signedAt: nowISO(), addenda: [] };
   if (!(await persist([e], b))) return;
   S.scales.push(e); S.newScale = null;
-  toast(r.alertas.length ? 'Escala guardada. Hay una respuesta que conviene conversar con el consultante.' : 'Escala guardada.'); render();
+  toast('Escala guardada.'); render();
 };
 function docScale(e, p) {
   const sc = e.escala, pr = { nombre: e.therapistName, registro: e.therapistReg, consultorio: e.consultorio };
@@ -101,8 +101,7 @@ ACT.scaleManage = () => {
     ${edit ? `<div class="grid">${F('Nombre', 'nombre', edit.nombre || '')}${F('Instrucción para el consultante', 'instruccion', edit.instruccion || '', { wide: true })}
       ${F('Opciones de respuesta (una por línea: puntaje = texto)', 'opciones', (edit.opciones || FREQ4).map(o => o[0] + ' = ' + o[1]).join('\n'), { type: 'area', rows: 4 })}
       ${F('Rangos de interpretación (una por línea: mínimo-máximo = nivel)', 'rangos', (edit.rangos || []).map(r => r[0] + '-' + r[1] + ' = ' + r[2]).join('\n'), { type: 'area', rows: 4 })}
-      ${F('Ítems (uno por línea)', 'items', (edit.items || []).join('\n'), { type: 'area', rows: 8, wide: true })}
-      ${F('Ítems para destacar (números separados por coma; se marcan si la respuesta es mayor que 0)', 'alertas', (edit.alertas || []).map(i => i + 1).join(', '), { wide: true })}</div>
+      ${F('Ítems (uno por línea)', 'items', (edit.items || []).join('\n'), { type: 'area', rows: 8, wide: true })}</div>
       <p style="margin:0;font-size:13px;color:var(--muted)">Si la escala tiene derechos de autor (por ejemplo BDI-II o BAI), úsela solo si tiene la licencia. Cada aplicación guarda una copia de la escala tal como estaba, así que editarla después no cambia lo ya aplicado.</p>
       <div class="row end"><button class="btn" data-sm="list">Volver</button><button class="btn pri" data-sm="save" data-id="${esc(edit.id || '')}">Guardar escala</button></div>`
     : `${list.map(x => `<div class="card"><div class="row" style="justify-content:space-between"><b>${esc(x.nombre)}</b><span class="row"><button class="btn sm" data-sm="edit" data-id="${x.id}">Editar</button><button class="btn sm warn" data-sm="del" data-id="${x.id}">Quitar</button></span></div><span class="ts">${x.items.length} ítems · puntaje ${scaleMin(x)} a ${scaleMax(x)}</span></div>`).join('') || '<p style="margin:0;color:var(--muted)">Aún no tiene escalas propias. PHQ-9 y GAD-7 ya vienen incluidas.</p>'}
@@ -128,10 +127,9 @@ ACT.scaleManage = () => {
       const opciones = o.opciones.split('\n').map(l => l.match(/^\s*(-?\d+)\s*=\s*(.+)$/)).filter(Boolean).map(m => [+m[1], m[2].trim()]);
       const rangos = o.rangos.split('\n').map(l => l.match(/^\s*(-?\d+)\s*-\s*(-?\d+)\s*=\s*(.+)$/)).filter(Boolean).map(m => [+m[1], +m[2], m[3].trim()]);
       const items = o.items.split('\n').map(x => x.trim()).filter(Boolean);
-      const alertas = o.alertas.split(',').map(x => parseInt(x, 10) - 1).filter(i => i >= 0 && i < items.length);
       if (!o.nombre || items.length < 1 || opciones.length < 2) { toast('Escriba el nombre, al menos un ítem y al menos dos opciones con su puntaje («0 = Nunca»).'); return; }
       if (items.length > 120) { toast('Máximo 120 ítems.'); return; }
-      const sc = { id: b.dataset.id || 'mi_' + Math.random().toString(36).slice(2, 9), nombre: o.nombre.slice(0, 120), instruccion: o.instruccion, opciones, rangos, items, alertas, propia: true };
+      const sc = { id: b.dataset.id || 'mi_' + Math.random().toString(36).slice(2, 9), nombre: o.nombre.slice(0, 120), instruccion: o.instruccion, opciones, rangos, items, propia: true };
       S.profile.escalas = b.dataset.id ? list.map(x => x.id === sc.id ? sc : x) : list.concat([sc]);
       if (!(await persist([S.profile], b))) { restore(S.profile, snap); return; }
       toast('Escala guardada.'); draw(null);
