@@ -405,3 +405,4 @@ body:has(#fb-root .fbbtn) .modal{padding-bottom:84px}
 .subahorro{align-self:flex-start;background:var(--warn);color:#fff;font-size:11px;font-weight:600;letter-spacing:.5px;padding:2px 10px;border-radius:99px}
 @media(prefers-reduced-motion:reduce){.subcard{transition:none}.subcard:hover,.subcard:focus-within{transform:none}}
 .modal:has(.subplanes)>.box{border-radius:16px}
+.subcard .btn{color:var(--accent-fg);border-color:var(--accent)}.subcard .btn.pri{color:var(--accent-ink)}
