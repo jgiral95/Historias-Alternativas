@@ -305,7 +305,8 @@ const edMove = (arr, i, d) => { const j = i + d; if (j < 0 || j >= arr.length) r
 ACT.formats = b => {
   stepDone('formatos');
   const hub = b && b.dataset && b.dataset.hub;
-  if (hub && !isFmt(hub)) return openHub(hub);
+  if (!hub) return openHub('pestanas');
+  if (!isFmt(hub)) return openHub(hub);
   const pf = S.profile.formatos || {};
   ED = Object.assign({ which: hub || 'datos', ocultos: [...(pf.ocultos || [])] }, Object.fromEntries(((pf.pestanas || {}).extra || []).map(x => [x.id, (x.secs || []).map(secFrom)])), edFrom(clone(pf.intake || INTAKE), clone(pf.evol || []), clone(pf.datos || [])));
   drawFormats();

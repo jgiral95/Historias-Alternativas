@@ -391,3 +391,4 @@ body:has(#fb-root .fbbtn) .modal{padding-bottom:84px}
 .mfhead{border-radius:0}
 .tabs::-webkit-scrollbar{height:3px}.tabs::-webkit-scrollbar-thumb{background:var(--line);border-radius:2px}.tabs{scrollbar-color:var(--line) transparent}
 .tabs::-webkit-scrollbar-thumb{background:var(--muted)}.tabs{scrollbar-color:var(--muted) transparent}
+.modal:has(.mfhead)>.box{border-radius:16px;overflow:clip}.mfhead{border-radius:0}
