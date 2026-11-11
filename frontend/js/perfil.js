@@ -377,7 +377,7 @@ const tabsDraw = () => {
   <h4 style="margin:12px 0 4px">Pestañas de la ficha</h4><div class="card">${TABS.filter(t => t[0] !== 'archivo').map(([k, l]) => row(k, TM.nombres[k] || l, TM.ocultas.includes(k), false)).join('')}</div>
   <div class="row" style="justify-content:space-between;margin:12px 0 4px"><h4 style="margin:0">Mis pestañas</h4><button class="btn sm" data-tm="add:">+ Pestaña nueva</button></div><div class="card">${TM.extra.filter(x => !grp(x)).map(x => row(x.id, x.nombre, false, true)).join('') || '<p style="margin:0;color:var(--muted);font-size:13px">Sin pestañas en este grupo.</p>'}</div>
   ${TM.grupos.map(g => `<div class="row" style="justify-content:space-between;margin:12px 0 4px"><input type="text" data-tm-g="${esc(g.id)}" value="${esc(g.nombre)}" maxlength="60" aria-label="Nombre del grupo" style="flex:1;font-weight:600"><button class="btn sm" data-tm="add:${esc(g.id)}">+ Pestaña nueva</button><button class="btn sm warn" data-tm="delg:${esc(g.id)}" title="Las pestañas pasan a «Mis pestañas»">Quitar grupo</button></div><div class="card">${TM.extra.filter(x => grp(x) === g.id).map(x => row(x.id, x.nombre, false, true)).join('') || '<p style="margin:0;color:var(--muted);font-size:13px">Sin pestañas en este grupo.</p>'}</div>`).join('')}
-  <div class="row"><button class="btn" data-tm="addg">+ Grupo nuevo</button><button class="btn" data-tm="coach:base">+ Coaching: modelos base (4)</button><button class="btn" data-tm="coach:escuelas">+ Coaching: escuelas (5)</button></div>
+  <div class="row"><button class="btn" data-tm="addg">+ Grupo nuevo</button><button class="btn" data-tm="coach:base">+ Coaching: modelos base (4)</button><button class="btn" data-tm="coach:escuelas">+ Coaching: escuelas (5)</button><button class="btn" data-tm="cria:base">+ Crianza: modelos base (5)</button><button class="btn" data-tm="cria:enfoques">+ Crianza: enfoques y temas (5)</button></div>
   <h4 style="margin:12px 0 4px">Al final</h4><div class="card">${TABS.filter(t => t[0] === 'archivo').map(([k, l]) => row(k, TM.nombres[k] || l, TM.ocultas.includes(k), false)).join('')}</div>
   <div class="row end"><button class="btn pri" data-tm="save">Guardar</button></div></div></div>`;
 };
@@ -395,8 +395,9 @@ function tabsManage() {
     if (op === 'hid') { const i = TM.ocultas.indexOf(arg); if (i < 0) TM.ocultas.push(arg); else TM.ocultas.splice(i, 1); }
     else if (op === 'mod') { const x = TM.extra.find(y => y.id === arg); if (x) x.modo = x.modo === 'sesion' ? 'unica' : 'sesion'; }
     else if (op === 'coach') coachAdd(arg);
+    else if (op === 'cria') crianzaAdd(arg);
     else if (op === 'del') TM.extra = TM.extra.filter(x => x.id !== arg);
-    else if (op === 'add') { if (TM.extra.length >= 20) return toast('Máximo 20 pestañas nuevas.'); TM.extra.push({ id: 'x_' + newKey(), nombre: 'Nueva pestaña', modo: 'unica', secs: [], gid: arg }); }
+    else if (op === 'add') { if (TM.extra.length >= 30) return toast('Máximo 30 pestañas nuevas.'); TM.extra.push({ id: 'x_' + newKey(), nombre: 'Nueva pestaña', modo: 'unica', secs: [], gid: arg }); }
     else if (op === 'addg') { if (TM.grupos.length >= 10) return toast('Máximo 10 grupos.'); TM.grupos.push({ id: 'g_' + newKey(), nombre: 'Grupo nuevo' }); }
     else if (op === 'delg') { TM.extra.forEach(x => { if (x.gid === arg) x.gid = ''; }); TM.grupos = TM.grupos.filter(g => g.id !== arg); }
     else if (op === 'save') {
