@@ -110,6 +110,8 @@ header.top .nav a.nl{color:var(--tinta);text-decoration:none;padding:8px 2px}hea
 .pcard.f{border:2px solid var(--bosque)}.pcard h3{font-size:24px}
 .pcard ul{list-style:none;margin:0;padding:0;display:grid;gap:8px;color:var(--suave);font-size:15.5px;flex:1}.pcard li{padding-left:24px;position:relative}.pcard li::before{content:"";position:absolute;left:2px;top:.55em;width:10px;height:6px;border-left:2px solid var(--salvia);border-bottom:2px solid var(--salvia);transform:rotate(-45deg)}
 .pcard .btn{text-align:center}
+.pcard .precio{font-family:"Source Serif 4",Georgia,serif;font-size:40px;font-weight:600;color:var(--bosque);line-height:1.1}.pcard .precio small{font-family:"IBM Plex Sans",sans-serif;font-size:15px;font-weight:400;color:var(--suave)}
+.pcard .ahorro{align-self:flex-start;background:var(--terracota);color:#fff;font-size:12px;font-weight:600;letter-spacing:.5px;padding:3px 12px;border-radius:99px}
 </style>
 </head>
 <body>
@@ -264,9 +266,11 @@ header.top .nav a.nl{color:var(--tinta);text-decoration:none;padding:8px 2px}hea
     <p class="sub" style="margin-top:8px;font-size:15px">Cree primero su cuenta y pague con el mismo correo: así su suscripción se activa sola.</p>
     <div class="planes">
       <div class="pcard"><h3>Plan mensual</h3>
+        <div class="precio">$80.000 <small>COP / mes</small></div>
         <ul><li>Acceso completo a la plataforma</li><li>Fichas cifradas y notas de sesión</li><li>Acuerdos, consentimientos e informes</li><li>Agenda con recordatorios</li><li>5 días de prueba</li></ul>
         <a class="btn sec" href="https://subscription-landing.epayco.co/plan/af3adcdcbfee6b0cd0c2e43" target="_blank" rel="noopener">Suscribirme al plan mensual</a></div>
-      <div class="pcard f"><h3>Plan anual</h3>
+      <div class="pcard f"><span class="ahorro">Ahorre 2 meses</span><h3>Plan anual</h3>
+        <div class="precio">$800.000 <small>COP / año</small></div>
         <ul><li>Acceso completo a la plataforma</li><li>Fichas cifradas y notas de sesión</li><li>Acuerdos, consentimientos e informes</li><li>Agenda con recordatorios</li><li>5 días de prueba</li></ul>
         <a class="btn pri" href="https://subscription-landing.epayco.co/plan/af3ae2d02ea12f18a0c9403" target="_blank" rel="noopener">Suscribirme al plan anual</a></div>
     </div>
