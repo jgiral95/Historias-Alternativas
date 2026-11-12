@@ -182,7 +182,7 @@ function genoBlock(k = '') {
   return `<div class="genowrap" id="genoblock${sfx}" data-gk="${k}"><span class="lbl">${img ? 'Imagen' : 'Genograma'}</span>
   <div class="row" id="genotools${sfx}">${tools.map(([k, l]) => `<button type="button" class="btn sm${k === 'pen' ? ' on' : ''}" data-gt="${k}" aria-pressed="${k === 'pen'}">${l}</button>`).join('')}
   <input type="text" id="geno_text${sfx}" placeholder="Nombre o texto a colocar" aria-label="Texto para colocar en el genograma" style="max-width:210px">
-  <button type="button" class="btn sm" data-gt="undo" title="Deshacer (Ctrl+Z)" aria-label="Deshacer" disabled>↶ Deshacer</button><button type="button" class="btn sm" data-gt="redo" title="Rehacer (Ctrl+Y)" aria-label="Rehacer" disabled>↷ Rehacer</button><button type="button" class="btn sm" data-gt="clear">Limpiar</button><label class="check" style="font-size:13px"><input type="checkbox" id="geno_straight${sfx}" checked> <span>Enderezar líneas</span></label><label class="check" style="font-size:13px"><input type="checkbox" id="geno_grid${sfx}" checked> <span>Cuadrícula</span></label><button type="button" class="btn sm" data-gt="upload">Subir imagen</button><input type="file" id="geno_file${sfx}" accept="image/*" style="display:none"></div>
+  <button type="button" class="btn sm" data-gt="undo" title="Deshacer (Ctrl+Z)" aria-label="Deshacer" disabled>↶ Deshacer</button><button type="button" class="btn sm" data-gt="redo" title="Rehacer (Ctrl+Y)" aria-label="Rehacer" disabled>↷ Rehacer</button><button type="button" class="btn sm" data-gt="clear">Limpiar</button>${img ? '' : `<label class="check" style="font-size:13px"><input type="checkbox" id="geno_straight${sfx}" checked> <span>Enderezar líneas</span></label><label class="check" style="font-size:13px"><input type="checkbox" id="geno_grid${sfx}" checked> <span>Cuadrícula</span></label>`}<button type="button" class="btn sm" data-gt="upload">Subir imagen</button><input type="file" id="geno_file${sfx}" accept="image/*" style="display:none"></div>
   <div class="genobox"><canvas id="genocv${sfx}" aria-label="${img ? 'Lienzo de la imagen' : 'Lienzo del genograma'}"></canvas></div>
   <span style="font-size:12px;color:var(--muted)">${img ? 'Suba una imagen de su computador y escriba o dibuje encima. Para escribir, ponga el texto en la casilla, elija «Texto» y toque el lugar.' : 'Dibuje con el dedo o el mouse, o suba la foto de un genograma hecho a mano y complételo encima. Hombre es un cuadrado, mujer un círculo y fallecido una X que se coloca sobre el símbolo. Para un nombre, escríbalo en la casilla, elija «Texto» y toque el lugar.'}</span></div>`;
 }
@@ -198,7 +198,7 @@ function mountOneGeno(gk) {
   const cv = $('#genocv'); if (!cv) return;
   const W = 1200, H = 720; cv.width = W; cv.height = H;
   const x = cv.getContext('2d');
-  const st = { ops: [], bg: null, tool: 'pen', cur: null, dirty: false, png: true, saved: genoSaved(gk), grid: true };
+  const st = { ops: [], bg: null, tool: 'pen', cur: null, dirty: false, png: true, saved: genoSaved(gk), grid: !gk };
   const G = 40; // separación de la cuadrícula (unidades del lienzo)
   const style = o => { x.strokeStyle = o.t === 'erase' ? '#fff' : '#10222a'; x.fillStyle = '#10222a'; x.lineCap = 'round'; x.lineJoin = 'round'; x.lineWidth = o.t === 'erase' ? 28 : 3; };
   const drawOp = o => {
@@ -293,7 +293,7 @@ function mountOneGeno(gk) {
     else if (k === 'upload') $('#geno_file').click();
     else { st.tool = k; $$('#genotools [data-gt]').forEach(t => { const on = t.dataset.gt === k; t.classList.toggle('on', on); t.setAttribute('aria-pressed', String(on)); }); }
   });
-  $('#geno_grid').addEventListener('change', e => { st.grid = e.target.checked; redraw(); });
+  if ($('#geno_grid')) $('#geno_grid').addEventListener('change', e => { st.grid = e.target.checked; redraw(); });
   $('#geno_file').addEventListener('change', e => {
     const f = e.target.files[0]; e.target.value = ''; if (!f) return;
     if (!/^image\//.test(f.type)) { toast('Elija un archivo de imagen.'); return; }
