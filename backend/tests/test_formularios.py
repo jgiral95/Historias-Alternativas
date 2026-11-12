@@ -9,8 +9,8 @@ OK = {"nombres": "Luisa", "xdoc": "123456", "xciudad": "Bogotá", "xcorreo": "lu
 DATOS = [["Contacto", [["xdoc", "Documento", 1], ["xciudad", "Ciudad", 1], ["xcorreo", "Correo", 1]]]]
 
 
-def elegir(c, datos):
-    c.put("/api/records/profile", json={"id": "profile", "kind": "profile", "nombre": "Ana", "formatos": {"datos": datos}})
+def elegir(c, datos, formulario=None):
+    c.put("/api/records/profile", json={"id": "profile", "kind": "profile", "nombre": "Ana", "formatos": {"datos": datos, **({"formulario": formulario} if formulario is not None else {})}})
 
 
 def tok(c, **kw):
@@ -99,3 +99,6 @@ def test_el_formulario_sale_de_los_datos_del_terapeuta():
     assert anon().post(f"/api/formulario/{t}", json={"datos": {"xig": "@luisa"}}).status_code == 400  # falta el nombre
     assert anon().post(f"/api/formulario/{t}", json={"datos": {"nombres": "Luisa", "xig": "@luisa", "apellidos": "Mora"}}).status_code == 200
     assert c.get("/api/formularios").json()[0]["datos"] == {"nombres": "Luisa", "xig": "@luisa"}
+    elegir(c, [["Redes", [["xig", "Instagram", 1], ["xno", "Otro", 1]]]], ["xig"])  # el terapeuta marcó solo uno
+    t = tok(c)
+    assert [x["k"] for x in anon().get(f"/api/formulario/{t}").json()["campos"]] == ["nombres", "xig"]
