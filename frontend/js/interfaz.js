@@ -19,7 +19,7 @@ const TABS = [['datos', 'Datos'], ['consent', 'Consentimiento'], ['intake', 'Pri
 /* Pestañas de la ficha según «Mis formatos»: se pueden renombrar, ocultar (menos Datos) y agregar propias (id «x_…»). */
 const tabsConf = () => (S.profile && S.profile.formatos && S.profile.formatos.pestanas) || {};
 const tabsList = () => { const c = tabsConf(), ex = c.extra || [];
-  return TABS.filter(([k]) => k === 'datos' || !(c.ocultas || []).includes(k)).map(([k, l]) => [k, (c.nombres || {})[k] || l]).concat(ex.map(x => [x.id, x.nombre])).sort((a, b) => (a[0] === 'archivo') - (b[0] === 'archivo')); };
+  return TABS.filter(([k]) => ['datos', 'consent', 'archivo'].includes(k)).map(([k, l]) => [k, (c.nombres || {})[k] || l]).concat(ex.map(x => [x.id, x.nombre])).sort((a, b) => (a[0] === 'archivo') - (b[0] === 'archivo')); };
 const OPT = {
   tipoDoc: ['CC', 'TI', 'CE', 'Registro civil', 'Pasaporte', 'Permiso por protección temporal (PPT)', 'Permiso especial de permanencia (PEP)', 'Menor sin documento', 'Otro'],
   zona: ['', 'Urbana', 'Rural', 'No responde'],

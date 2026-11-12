@@ -6,7 +6,7 @@ from conftest import anon, client_for, make_user, patient
 OK = {"nombres": "Luisa", "apellidos": "Mora", "tipoDoc": "CC", "documento": "123456", "nacimiento": "1990-05-04", "paisNac": "Colombia", "ciudad": "Bogotá", "telInd": "+57", "sexo": "Femenino", "telefono": "3001234567"}
 
 
-TODOS = list(formularios.DEFAULT) + ["tipoDoc", "documento", "nacimiento", "paisNac", "ciudad", "telInd", "sexo", "etnia", "emergTelefono"]
+TODOS = list(formularios.DEFAULT) + ["telefono", "correo", "tipoDoc", "documento", "nacimiento", "paisNac", "ciudad", "telInd", "sexo", "etnia", "emergTelefono"]
 
 
 def elegir(c, campos, datos=None):
@@ -92,7 +92,7 @@ def test_el_terapeuta_elige_los_campos_del_formulario():
     make_user("ana@x.co")
     c = client_for("ana@x.co")
     t = tok(c)  # sin elección: solo lo básico
-    assert [x["k"] for x in anon().get(f"/api/formulario/{t}").json()["campos"]] == ["nombres", "apellidos", "telefono", "correo"]
+    assert [x["k"] for x in anon().get(f"/api/formulario/{t}").json()["campos"]] == ["nombres", "apellidos"]
     elegir(c, ["apellidos", "xig"], [["Redes", [["xig", "Instagram", 1], ["xno", "Otro", 1]]]])  # el nombre siempre va; xno no se eligió
     t = tok(c)
     campos = anon().get(f"/api/formulario/{t}").json()["campos"]

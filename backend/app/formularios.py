@@ -45,7 +45,7 @@ FIELDS = [
 ]
 CONTACTO = {"paisRes", "ciudad", "zona", "localidad", "direccion", "telInd", "telefono", "correo"}
 EMERGENCIA = {"emergNombre", "emergParentesco", "emergInd", "emergTelefono"}
-DEFAULT = ["nombres", "apellidos", "telefono", "correo"]  # sin elección del terapeuta; el nombre siempre va
+DEFAULT = ["nombres", "apellidos"]  # sin elección del terapeuta; el nombre siempre va
 EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 
 
