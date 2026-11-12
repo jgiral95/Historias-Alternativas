@@ -318,7 +318,7 @@ document.addEventListener('click', e => {
   el.focus();
 });
 const BASE_SECS = [['contacto', 'Contacto'], ['cuidadores', 'Cuidadores o acudientes'], ['emergencia', 'Contacto de emergencia']];
-const secOculta = id => ((S.profile.formatos || {}).ocultos || []).includes(id);
+const secOculta = id => { const o = (S.profile.formatos || {}).ocultos; return !o || o.includes(id); };  // sin preestablecidos: ocultos hasta que el terapeuta los muestre
 const datosSchema = () => (S.profile.formatos && S.profile.formatos.datos) || [];
 /* Datos de identidad: una vez guardados no se pueden cambiar (el servidor también lo exige). */
 const IDENT = ['nombres', 'apellidos', 'tipoDoc', 'documento', 'nacimiento', 'paisNac'];
@@ -363,13 +363,17 @@ const MIN_ID = ['nombres', 'apellidos', 'tipoDoc', 'documento', 'nacimiento', 's
 const NA_VALUES = ['No aplica', 'No responde', 'No refiere', 'No se indagó'];
 /* Una sola ficha por persona: aviso si ya hay un consultante con ese documento. */
 const normDoc = v => String(v || '').replace(/[^0-9A-Za-z]/g, '').toUpperCase();
-const dupOf = (doc, id) => normDoc(doc).length >= 3 ? S.patients.find(x => x.id !== id && normDoc(x.documento) === normDoc(doc)) : null;
-function dupWarn(doc, id) {
-  const d = dupOf(doc, id), slot = $('#dupslot'); if (!slot) return;
-  slot.innerHTML = d ? `<div class="banner" role="alert"><b>Ya existe la historia de ${esc(fullName(d))}</b> con el documento ${esc(d.documento)}. Debe haber una sola historia por persona. <button class="btn sm" data-act="open" data-id="${d.id}">Abrir esa historia</button></div>` : '';
-  if (d) slot.scrollIntoView({ block: 'center' });
+/* Datos que identifican a la persona: documento, correo, teléfono y los campos propios de contacto o redes (Instagram, etc.). */
+const DUP_LBL = /instagram|facebook|tiktok|correo|mail|tel[eé]fono|celular|whats|usuario|c[eé]dula|documento/i;
+const dupKeys = () => [['documento', 'documento'], ['correo', 'correo'], ['telefono', 'teléfono']].concat(datosSchema().flatMap(([t, fs]) => fs.filter(f => DUP_LBL.test(f[1] || '')).map(f => [f[0], f[1]])));
+const normDup = (k, v) => k === 'documento' ? normDoc(v) : String(v || '').trim().toLowerCase().replace(/^@/, '').replace(k === 'telefono' ? /\D/g : /\s/g, '');
+const dupOf = (o, id) => { for (const [k, l] of dupKeys()) { const v = normDup(k, o[k]); if (v.length < 3) continue; const d = S.patients.find(x => x.id !== id && normDup(k, x[k]) === v); if (d) return { d, l, v: o[k] }; } return null; };
+function dupWarn(o, id) {
+  const r = dupOf(o, id), slot = $('#dupslot'); if (!slot) return;
+  slot.innerHTML = r ? `<div class="banner" role="alert"><b>Ya existe la ficha de ${esc(fullName(r.d))}</b> con el mismo dato de ${esc(r.l)} (${esc(r.v)}). Debe haber una sola ficha por persona. <button class="btn sm" data-act="open" data-id="${r.d.id}">Abrir esa ficha</button></div>` : '';
+  if (r) slot.scrollIntoView({ block: 'center' });
 }
-document.addEventListener('change', e => { if (e.target && e.target.id === 'f_documento' && S.draft) dupWarn(e.target.value, S.pid); });
+document.addEventListener('change', e => { const k = e.target && e.target.dataset && e.target.dataset.f; if (k && S.draft && dupKeys().some(x => x[0] === k)) dupWarn(readForm($('#tabbody'), {}), S.pid); });
 /* Documento y teléfono del paciente: al escribir o pegar solo entran números. Excepciones: los textos «No aplica» / «No responde»
    (los botones de cada apartado los ponen en el campo) y los documentos que pueden llevar letras (pasaporte, menor sin documento, otro).
    El indicativo del país admite además el «+». */
@@ -446,7 +450,7 @@ ACT.savePatient = async b => {
   const p = curPatient(), o = readForm($('#tabbody'), {});
   // Solo el nombre es necesario para identificar la ficha; los demás datos son opcionales.
   if (!String(o.nombres || '').trim()) { toast('Escriba al menos el nombre del consultante.'); const f = $('#f_nombres'); if (f) { f.closest('.fld').classList.add('miss'); f.focus(); } return; }
-  if (S.draft && dupOf(o.documento, p.id)) { dupWarn(o.documento, p.id); return; }
+  if (S.draft && dupOf(o, p.id)) { dupWarn(o, p.id); return; }
   const snap = clone(p); Object.assign(p, o);
   if (!(await persist([p], b))) { restore(p, snap); return; }
   if (S.draft) { if (!S.patients.some(x => x.id === p.id)) S.patients.push(p); S.draft = false; S.draftObj = null; S.pid = p.id; }
