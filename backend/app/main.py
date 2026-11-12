@@ -2401,7 +2401,7 @@ def public_form(token: str, request: Request, db: Session = Depends(get_db)):
     r = _public_form(db, token)
     row = db.get(Record, (r.user_id, "profile"))
     prof = decrypt(row.payload) if row else {}
-    return {"profesional": prof.get("nombre") or "su terapeuta", "consultorio": prof.get("consultorio") or "", "nombre": decrypt(r.payload).get("nombre"), "campos": formularios.spec()}
+    return {"profesional": prof.get("nombre") or "su terapeuta", "consultorio": prof.get("consultorio") or "", "nombre": decrypt(r.payload).get("nombre"), "campos": formularios.spec((prof.get("formatos") or {}))}
 
 
 class FormSubmitIn(BaseModel):
@@ -2411,12 +2411,13 @@ class FormSubmitIn(BaseModel):
 @app.post("/api/formulario/{token}")
 def public_form_submit(token: str, body: FormSubmitIn, request: Request, db: Session = Depends(get_db)):
     _public_throttle(request, 20)
-    try:
-        datos = formularios.clean(body.datos)
-    except ValueError as e:
-        raise HTTPException(400, str(e))
     with _lock:  # el enlace sirve una sola vez
         r = _public_form(db, token)
+        prow = db.get(Record, (r.user_id, "profile"))
+        try:
+            datos = formularios.clean(body.datos, (decrypt(prow.payload).get("formatos") or {}) if prow else {})
+        except ValueError as e:
+            raise HTTPException(400, str(e))
         d = decrypt(r.payload)
         d["datos"], d["ip"] = datos, client_ip(request)
         r.payload, r.submitted_at = encrypt(d), datetime.now(timezone.utc)

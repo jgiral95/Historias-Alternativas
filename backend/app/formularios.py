@@ -43,18 +43,44 @@ FIELDS = [
     ("emergNombre", "Contacto de emergencia: nombre", "text", None, False), ("emergParentesco", "Contacto de emergencia: parentesco", "text", None, False),
     ("emergInd", "Contacto de emergencia: indicativo", "text", None, False), ("emergTelefono", "Contacto de emergencia: teléfono", "text", None, False),
 ]
-SECCIONES = {"nombres": "Identificación", "paisRes": "Contacto", "emergNombre": "Contacto de emergencia"}  # título que se muestra antes de ese campo
+CONTACTO = {"paisRes", "ciudad", "zona", "localidad", "direccion", "telInd", "telefono", "correo"}
+EMERGENCIA = {"emergNombre", "emergParentesco", "emergInd", "emergTelefono"}
+DEFAULT = ["nombres", "apellidos", "telefono", "correo"]  # sin elección del terapeuta; el nombre siempre va
 EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 
 
-def spec() -> list[dict]:
-    return [{"k": k, "l": l, "t": t, "o": o, "r": r, **({"s": SECCIONES[k]} if k in SECCIONES else {})} for k, l, t, o, r in FIELDS]
+def _sec(k: str) -> str:
+    return "Contacto de emergencia" if k in EMERGENCIA else "Contacto" if k in CONTACTO else "Identificación"
 
 
-def clean(raw: dict) -> dict:
+def fields(fmt: dict | None) -> list[tuple]:
+    """Campos del formulario según lo que el terapeuta eligió en Mis formatos (formatos.formulario): los de la ficha base
+    y los campos propios de «Datos del consultante». (clave, etiqueta, tipo, opciones, obligatorio, sección)."""
+    fmt = fmt or {}
+    sel = fmt.get("formulario")
+    sel = set(sel if isinstance(sel, list) else DEFAULT) | {"nombres"}
+    out = [(k, l, t, o, r, _sec(k)) for k, l, t, o, r in FIELDS if k in sel]
+    for sc in fmt.get("datos") or []:
+        try:
+            titulo, fs = str(sc[0]), sc[1]
+            out += [(str(x[0]), str(x[1] or titulo)[:120], "text", None, False, titulo[:120]) for x in fs if str(x[0]) in sel and re.match(r"^[A-Za-z0-9_-]{1,40}$", str(x[0]))]
+        except (IndexError, TypeError):
+            continue
+    return out
+
+
+def spec(fmt: dict | None = None) -> list[dict]:
+    res, last = [], None
+    for k, l, t, o, r, s in fields(fmt):
+        res.append({"k": k, "l": l, "t": t, "o": o, "r": r, **({"s": s} if s != last else {})})
+        last = s
+    return res
+
+
+def clean(raw: dict, fmt: dict | None = None) -> dict:
     """Valida lo que el consultante envió: solo los campos del formulario, con su tipo y límites. ValueError con el motivo."""
     out = {}
-    for k, l, t, opts, req in FIELDS:
+    for k, l, t, opts, req, _s in fields(fmt):
         v = str((raw or {}).get(k) or "").strip()
         label = l.split(" (")[0]
         if not v:

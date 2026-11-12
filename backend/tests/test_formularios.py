@@ -6,6 +6,13 @@ from conftest import anon, client_for, make_user, patient
 OK = {"nombres": "Luisa", "apellidos": "Mora", "tipoDoc": "CC", "documento": "123456", "nacimiento": "1990-05-04", "paisNac": "Colombia", "ciudad": "Bogotá", "telInd": "+57", "sexo": "Femenino", "telefono": "3001234567"}
 
 
+TODOS = list(formularios.DEFAULT) + ["tipoDoc", "documento", "nacimiento", "paisNac", "ciudad", "telInd", "sexo", "etnia", "emergTelefono"]
+
+
+def elegir(c, campos, datos=None):
+    c.put("/api/records/profile", json={"id": "profile", "kind": "profile", "nombre": "Ana", "formatos": {"formulario": campos, "datos": datos or []}})
+
+
 def tok(c, **kw):
     return c.post("/api/formularios", json=kw).json()["enlace"]
 
@@ -13,6 +20,7 @@ def tok(c, **kw):
 def test_flujo_recibir_revisar_y_crear_paciente():
     make_user("ana@x.co")
     c = client_for("ana@x.co")
+    elegir(c, TODOS)
     f = c.post("/api/formularios", json={"nombre": "Luisa"}).json()
     assert f["estado"] == "pendiente" and f["enlace"]
     p = anon().get(f"/api/formulario/{f['enlace']}").json()
@@ -31,7 +39,9 @@ def test_flujo_recibir_revisar_y_crear_paciente():
 
 def test_validacion_de_lo_que_envia_el_paciente():
     make_user("ana@x.co")
-    t = tok(client_for("ana@x.co"))
+    c = client_for("ana@x.co")
+    elegir(c, TODOS)
+    t = tok(c)
     for malo in ({**OK, "nombres": ""}, {**OK, "sexo": "X"}, {**OK, "nacimiento": "2999-01-01"}, {**OK, "correo": "no-es-correo"}, {**OK, "documento": "9" * 300}):
         assert anon().post(f"/api/formulario/{t}", json={"datos": malo}).status_code == 400
     ok = anon().post(f"/api/formulario/{t}", json={"datos": {**OK, "extra": "ignorado", "estado": "Activo"}})
@@ -76,3 +86,18 @@ def test_envio_por_correo(monkeypatch):
     f = c.post("/api/formularios", json={"nombre": "Luisa", "correo": "luisa@x.co", "enviar": True}).json()
     assert f["correoEnviado"] is True and sent[0][0] == "luisa@x.co" and "https://h.co/formulario?t=" + f["enlace"] in sent[0][1]
     assert c.post(f"/api/formularios/{f['ref']}/correo").json()["correoEnviado"] is True and len(sent) == 2
+
+
+def test_el_terapeuta_elige_los_campos_del_formulario():
+    make_user("ana@x.co")
+    c = client_for("ana@x.co")
+    t = tok(c)  # sin elección: solo lo básico
+    assert [x["k"] for x in anon().get(f"/api/formulario/{t}").json()["campos"]] == ["nombres", "apellidos", "telefono", "correo"]
+    elegir(c, ["apellidos", "xig"], [["Redes", [["xig", "Instagram", 1], ["xno", "Otro", 1]]]])  # el nombre siempre va; xno no se eligió
+    t = tok(c)
+    campos = anon().get(f"/api/formulario/{t}").json()["campos"]
+    assert [x["k"] for x in campos] == ["nombres", "apellidos", "xig"] and campos[2]["l"] == "Instagram" and campos[2]["s"] == "Redes"
+    assert anon().post(f"/api/formulario/{t}", json={"datos": {"apellidos": "Mora"}}).status_code == 400  # falta el nombre
+    assert anon().post(f"/api/formulario/{t}", json={"datos": {"nombres": "Luisa", "apellidos": "Mora", "xig": "@luisa", "xno": "no", "documento": "1"}}).status_code == 200
+    d = c.get("/api/formularios").json()[0]["datos"]
+    assert d == {"nombres": "Luisa", "apellidos": "Mora", "xig": "@luisa"}
