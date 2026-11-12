@@ -260,3 +260,51 @@ async function buildZip(b, p, sin) {
   b.disabled = false; b.textContent = old;
 };
 
+
+
+/* Exportar todos los datos del terapeuta (para migrar a otra plataforma): JSON con todo, una ficha legible por consultante y los adjuntos. */
+ACT.exportAll = async () => {
+  if (TEAM()) return;
+  const root = $('#modal-root'), close = () => { root.innerHTML = ''; root.onclick = null; };
+  const dos = S.mode === 'server' && S.user && S.user.totp;   // con dos pasos activos se pide un código
+  root.innerHTML = `<div class="modal" role="dialog" aria-modal="true" aria-label="Exportar todos mis datos"><div class="box" style="width:min(520px,100%)"><h3>Exportar todos mis datos</h3>
+    <p style="margin:0">Se descargará un archivo ZIP con todos sus datos de Alter-Karute: perfil, consultantes, fichas, notas de proceso, citas, escalas, informes y adjuntos. Puede tardar si tiene muchos adjuntos.</p>
+    <div class="banner" role="alert" style="margin:0"><b>Usted es la persona responsable de estos datos.</b> Son datos de sus consultantes: guarde la copia en un lugar seguro (dispositivo suyo, protegido con contraseña o cifrado) y no la envíe por canales abiertos. Esta descarga queda registrada en su bitácora de accesos.</div>
+    ${dos ? `<div class="fld"><label for="xa_code">Para continuar, escriba su código de verificación en dos pasos (de la app o de recuperación)</label>${CODE_INPUT('xa_code')}</div>` : ''}
+    <label class="check"><input type="checkbox" id="xa_ok"> <span>Entiendo que soy responsable de proteger esta copia y de los datos de mis consultantes.</span></label>
+    <p class="merr" id="xa_err" role="alert" hidden></p>
+    <div class="row end"><button class="btn" data-xa="no">Cancelar</button><button class="btn pri" data-xa="si" disabled>Exportar</button></div></div></div>`;
+  const go = $('[data-xa="si"]'), ok = $('#xa_ok'), code = $('#xa_code');
+  const upd = () => { go.disabled = !ok.checked || (dos && !code.value.trim()); };
+  ok.onchange = upd; if (code) { code.oninput = upd; code.focus(); }
+  root.onclick = async e => {
+    const k = e.target.closest('[data-xa]'); if (!k) return;
+    if (k.dataset.xa === 'no') { close(); return; }
+    if (dos) {
+      const err = $('#xa_err'); err.hidden = true; setBusy(go, true);
+      try { await api('/auth/2fa/confirm', { method: 'POST', body: { code: code.value.trim() } }); }
+      catch (x) { setBusy(go, false); err.textContent = x.message; err.hidden = false; return; }
+    }
+    close(); doExportAll();
+  };
+};
+async function doExportAll() {
+  const stamp = dayKey(new Date()), used = new Set(), clean = x => String(x).replace(/[\\/:*?"<>|]+/g, '_');
+  toast('Preparando la exportación… puede tardar si hay muchos adjuntos.');
+  try {
+    const data = { exportadoEn: nowISO(), exportadoPor: S.profile.nombre || '', perfil: S.profile, consultantes: S.patients, atenciones: S.notes, informes: S.reports, notasProceso: S.pnotes, citas: S.appts, escalas: S.scales, adjuntos: S.files };
+    const files = [{ name: 'datos-alter-karute.json', data: JSON.stringify(data, null, 1) }];
+    S.patients.forEach(p => files.push({ name: 'fichas/' + clean(slug(fullName(p))) + '-' + p.id + '.html', data: standalone('Ficha · ' + fullName(p), docFull(p, [])) }));
+    for (const f of S.files) {
+      const p = S.patients.find(x => x.id === f.patientId);
+      let fn = 'anexos/' + clean(p ? slug(fullName(p)) : 'sin-consultante') + '/' + dayKey(new Date(f.uploadedAt)) + '-' + clean(f.nombre);
+      while (used.has(fn)) fn = fn.replace(/(\.[^.]*)?$/, '-1$1'); used.add(fn);
+      files.push({ name: fn, data: new Uint8Array(await (await fetchBlob(f.id)).arrayBuffer()) });
+    }
+    files.push({ name: 'LEAME.txt', data: `Exportación de todos los datos de ${S.profile.nombre || 'su cuenta'} en Alter-Karute\nGenerada el ${fmtDT(nowISO())}.\n\ndatos-alter-karute.json: todos los registros (perfil, consultantes, atenciones, informes, notas de proceso, citas, escalas y lista de adjuntos).\nfichas/: una ficha legible por consultante (ábrala en un navegador; puede imprimirla o guardarla como PDF).\nanexos/: los documentos adjuntos, por consultante.\n\nInformación reservada de sus consultantes. Guárdela cifrada y solo en dispositivos de su control.\n` });
+    const url = URL.createObjectURL(makeZip(files)), a = document.createElement('a');
+    a.href = url; a.download = 'alter-karute-mis-datos-' + stamp + '.zip'; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 10000);
+    if (S.mode === 'server') api('/audit/export-all', { method: 'POST' }).catch(() => { });
+    toast('Exportación descargada.');
+  } catch (e) { toast('No se pudo exportar: ' + e.message); }
+};

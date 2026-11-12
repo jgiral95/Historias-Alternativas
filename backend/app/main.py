@@ -1389,6 +1389,23 @@ def twofa_enable(body: CodeIn, user: User = Depends(current_user), db: Session =
     return {"recovery_codes": codes}
 
 
+@app.post("/api/auth/2fa/confirm", status_code=204)
+def twofa_confirm(body: CodeIn, request: Request, user: User = Depends(current_user), db: Session = Depends(get_db)):
+    """Confirma una acción delicada (exportar todos los datos) con un código de dos pasos; no cambia nada."""
+    ip = client_ip(request) or "?"
+    if _locked(user.email, ip):
+        raise HTTPException(429, "Demasiados intentos. Espere unos minutos e intente de nuevo.")
+    if not user.totp_enabled or not _second_factor(db, user, body.code):
+        _register_fail(user.email, ip)
+        raise HTTPException(400, "El código no es válido o ya se usó")
+
+
+@app.post("/api/audit/export-all", status_code=204)
+def audit_export_all(user: User = Depends(pro_user), db: Session = Depends(get_db)):
+    """Constancia (sin contenido de las fichas) de que el terapeuta exportó todos sus datos."""
+    audit(db, user.id, "account.export", "Exportó sus datos")
+
+
 @app.post("/api/auth/2fa/recovery")
 def twofa_new_recovery(body: CodeIn, user: User = Depends(current_user), db: Session = Depends(get_db)):
     if not user.totp_enabled or not _second_factor(db, user, body.code):
@@ -2685,7 +2702,7 @@ def access_log(body: AccessIn, request: Request, user: User = Depends(current_us
     audit(db, user.id, "history.view", vista, patient_id=body.patientId, ip=client_ip(request))
 
 
-AUDIT_TXT = {"history.view": "Abrió la historia", "record.put": "Guardó", "record.delete": "Eliminó", "history.export": "Descargó la historia completa",
+AUDIT_TXT = {"account.export": "Exportó todos sus datos", "history.view": "Abrió la historia", "record.put": "Guardó", "record.delete": "Eliminó", "history.export": "Descargó la historia completa",
              "blob.put": "Subió un adjunto", "blob.get": "Abrió un adjunto", "verify": "Se verificó un informe con su código", "records.list": "Cargó la lista de consultantes",
              "consent.remote.create": "Envió un consentimiento para firmar a distancia", "consent.remote.sign": "El consultante firmó a distancia",
              "login.ok": "Ingresó", "login.fail": "Intento de ingreso fallido", "login.2fa_fail": "Código de verificación equivocado",

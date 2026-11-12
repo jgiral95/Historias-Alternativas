@@ -594,3 +594,10 @@ def test_delete_patient_cascade():
     assert "p_1" not in ids and "n_1" not in ids
     assert any(r["id"] == "p_9" for r in o.get("/api/records").json())
     assert c.delete("/api/patients/p_1").status_code == 404
+
+
+def test_exportar_todo_pide_dos_pasos_y_deja_constancia():
+    make_user("ana@x.co")
+    c = client_for("ana@x.co")
+    assert c.post("/api/auth/2fa/confirm", json={"code": "123456"}).status_code == 400  # sin dos pasos activos
+    assert c.post("/api/audit/export-all").status_code == 204
