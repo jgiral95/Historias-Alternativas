@@ -429,23 +429,8 @@ function tabsManage() {
   };
 }
 /* Pestaña propia: texto libre guardado en la ficha. */
-/* Apartado de imagen: se sube desde el computador, se reduce y queda guardada en la ficha. */
-const imgField = (k, v) => `<div class="fld imgf"><input type="hidden" id="f_${k}" data-f="${k}" value="${esc(v || '')}"><div class="row"><input type="file" accept="image/*" data-img="${k}" aria-label="Subir imagen"><button type="button" class="btn sm warn" data-imgdel="${k}" ${v ? '' : 'hidden'}>Quitar imagen</button></div><img class="geno" id="imgp_${k}" alt="Imagen de la ficha" ${v ? `src="${esc(v)}"` : 'hidden'}></div>`;
-document.addEventListener('change', e => {
-  const t = e.target, k = t.dataset && t.dataset.img; if (!k || !t.files || !t.files[0]) return;
-  const url = URL.createObjectURL(t.files[0]), im = new Image();
-  im.onload = () => {
-    const r = Math.min(1, 1280 / Math.max(im.width, im.height)), cv = document.createElement('canvas'); cv.width = Math.round(im.width * r); cv.height = Math.round(im.height * r);
-    const cx = cv.getContext('2d'); cx.fillStyle = '#fff'; cx.fillRect(0, 0, cv.width, cv.height); cx.drawImage(im, 0, 0, cv.width, cv.height); URL.revokeObjectURL(url);
-    let q = 0.82, d = cv.toDataURL('image/jpeg', q); while (d.length > 700000 && q > 0.4) { q -= 0.1; d = cv.toDataURL('image/jpeg', q); }
-    $('#f_' + k).value = d; const p = $('#imgp_' + k); p.src = d; p.hidden = false; $('[data-imgdel="' + k + '"]').hidden = false; S.dirty = true;
-  };
-  im.onerror = () => { URL.revokeObjectURL(url); toast('No se pudo leer la imagen.'); };
-  im.src = url;
-});
-document.addEventListener('click', e => { const b = e.target.closest && e.target.closest('[data-imgdel]'); if (!b) return; const k = b.dataset.imgdel; $('#f_' + k).value = ''; const p = $('#imgp_' + k); p.hidden = true; p.removeAttribute('src'); b.hidden = true; S.dirty = true; });
 const extraFields = (x, vo) => (x.secs || []).length
-  ? x.secs.map(([t, fs, g]) => g === 'genograma' ? `<div class="sec"><h3>${esc(t)}</h3>${genoBlock()}</div>` : g === 'imagen' ? `<div class="sec"><h3>${esc(t)}</h3>${imgField(fs[0][0], vo[fs[0][0]])}</div>` : `<div class="sec"><h3>${esc(t)}</h3><div class="grid">${fs.map(f => F(f[1], f[0], vo[f[0]] || f[3] || '', { type: 'area', rows: f[2] || 3, wide: true, aria: t })).join('')}</div></div>`).join('')
+  ? x.secs.map(([t, fs, g]) => g === 'genograma' ? `<div class="sec"><h3>${esc(t)}</h3>${genoBlock()}</div>` : g === 'imagen' ? `<div class="sec"><h3>${esc(t)}</h3>${genoBlock(fs[0][0])}</div>` : `<div class="sec"><h3>${esc(t)}</h3><div class="grid">${fs.map(f => F(f[1], f[0], vo[f[0]] || f[3] || '', { type: 'area', rows: f[2] || 3, wide: true, aria: t })).join('')}</div></div>`).join('')
   : `<div class="sec"><div class="fld"><textarea id="f_extra" data-f="extra" rows="10" aria-label="${esc(x.nombre)}">${esc(typeof vo === 'string' ? vo : (vo.extra || ''))}</textarea></div></div>`;
 const extraOf = x => (x.secs || []).length ? (o => o) : (o => ({ extra: o.extra || '' }));
 function tabExtra(p) {
@@ -469,6 +454,7 @@ const extraCur = () => (tabsConf().extra || []).find(y => y.id === S.tab);
 ACT.saveExtra = async b => {
   const p = curPatient(), snap = clone(p), o = readForm($('#tabbody'), {}), x = extraCur();
   if (geno) o.genograma = geno.data();
+  Object.keys(genos).filter(Boolean).forEach(k => { o[k] = genos[k].data(); });
   p.extras = Object.assign({}, p.extras, { [S.tab]: extraOf(x)(o) });
   if (!(await persist([p], b))) { restore(p, snap); return; } toast('Guardado.');
 };
@@ -478,6 +464,7 @@ ACT.extraCancel = () => { S.extraEd = null; render(); };
 ACT.extraSave = async b => {
   const p = curPatient(), snap = clone(p), x = extraCur(), o = readForm($('#tabbody'), {}), id = S.extraEd && S.extraEd.id;
   if (geno) o.genograma = geno.data();
+  Object.keys(genos).filter(Boolean).forEach(k => { o[k] = genos[k].data(); });
   const at = o.extraAt || nowISO().slice(0, 10), hora = o.extraHora || '', lugar = (o.extraLugar || '').trim(); delete o.extraAt; delete o.extraHora; delete o.extraLugar;
   const list = Array.isArray((p.extras || {})[S.tab]) ? clone(p.extras[S.tab]) : [], v = extraOf(x)(o);
   if (id && id !== 'new' && list.some(e => e.id === id)) Object.assign(list.find(e => e.id === id), { at, hora, lugar, v }); else list.push({ id: newId('e'), at, hora, lugar, v });
