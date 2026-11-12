@@ -22,6 +22,7 @@ App de seguimiento de consultantes para profesionales de terapias alternativas (
 | `js/escalas.js` | escalas y frases frecuentes |
 | `js/encuesta.js` | encuesta de satisfacción y estadísticas |
 | `js/formularios.js` | formularios de datos que el consultante llena antes de la primera atención (`formulario.html` pública; `formularios.py` y `/api/formularios*` en el servidor) |
+| `js/simbolos.js` | banco de símbolos (zodiaco, planetas, aspectos) que se inserta en el campo de texto activo |
 | `js/servidor.js` | ingreso, cuenta, usuarios (admin) y arranque (`boot`) — va de último |
 
 ## Backend (`backend/app/`)

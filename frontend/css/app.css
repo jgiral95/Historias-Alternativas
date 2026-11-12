@@ -424,3 +424,10 @@ body:has(#fb-root .fbbtn) .modal{padding-bottom:84px}
 .apsum{background:var(--surface2);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:4px}.apwhen{font-size:19px;font-weight:600}.apwhen::first-letter{text-transform:uppercase}
 .apnew{background:var(--accent-soft);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:10px;font-size:14px}
 .k2{margin:4px 0 -4px;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);border-top:1px solid var(--line);padding-top:12px}
+#simbtn{position:fixed;left:16px;bottom:16px;z-index:70;box-shadow:0 2px 8px rgba(0,0,0,.18)}
+#simpanel{position:fixed;left:16px;bottom:64px;z-index:70;width:min(340px,calc(100vw - 32px));max-height:60vh;overflow:auto;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 12px;box-shadow:0 6px 20px rgba(0,0,0,.22)}
+#simpanel .simt{font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin:8px 0 4px}
+#simpanel .simg{display:flex;flex-wrap:wrap;gap:4px}
+#simpanel .simb{width:36px;height:36px;font-size:20px;line-height:1;border:1px solid var(--line);background:var(--surface2);color:var(--ink);border-radius:6px;cursor:pointer}
+#simpanel .simb:hover,#simpanel .simb:focus-visible{border-color:var(--accent);background:var(--accent-soft)}
+@media print{#simbtn,#simpanel{display:none!important}}
