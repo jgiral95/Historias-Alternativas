@@ -170,6 +170,12 @@ function F(label, key, val, o = {}) {
 }
 /* ===== Genograma: lienzo con trazos vectoriales sobre una imagen opcional ===== */
 let geno = null;
+/* Genograma ya guardado de la pantalla abierta: en la primera vez, el de la ficha; en una pestaña propia, el de su entrada. */
+function genoSaved() {
+  const p = curPatient(); if (!p) return '';
+  if (String(S.tab).startsWith('x_')) { const v = (p.extras || {})[S.tab], e = Array.isArray(v) ? (v.find(z => S.extraEd && z.id === S.extraEd.id) || {}).v : v; return (e && e.genograma) || ''; }
+  return (p.intake || {}).genograma || '';
+}
 function genoBlock() {
   const tools = [['pen', 'Lápiz'], ['erase', 'Borrador'], ['sq', 'Hombre'], ['ci', 'Mujer'], ['x', 'Fallecido'], ['tx', 'Texto']];
   return `<div class="genowrap" id="genoblock"><span class="lbl">Genograma</span>
@@ -183,8 +189,7 @@ function mountGeno() {
   const cv = $('#genocv'); if (!cv) { geno = null; return; }
   const W = 1200, H = 720; cv.width = W; cv.height = H;
   const x = cv.getContext('2d');
-  const prev = (curPatient() && curPatient().intake) || {};
-  const st = { ops: [], bg: null, tool: 'pen', cur: null, dirty: false, png: true, saved: prev.genograma || '', grid: true };
+  const st = { ops: [], bg: null, tool: 'pen', cur: null, dirty: false, png: true, saved: genoSaved(), grid: true };
   const G = 40; // separación de la cuadrícula (unidades del lienzo)
   const style = o => { x.strokeStyle = o.t === 'erase' ? '#fff' : '#10222a'; x.fillStyle = '#10222a'; x.lineCap = 'round'; x.lineJoin = 'round'; x.lineWidth = o.t === 'erase' ? 28 : 3; };
   const drawOp = o => {

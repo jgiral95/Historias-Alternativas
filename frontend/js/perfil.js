@@ -267,7 +267,7 @@ function hubClosed() {
 /* ----- Mis formatos de primera vez y sesión ----- */
 let ED = null;
 /* Un apartado sin campos es «solo título»: se guarda como un único campo sin nombre (no repite subtítulo). */
-const secFrom = ([t, fs, g]) => { const solo = fs.length === 1 && !fs[0][1]; return { t, g: g === 'genograma', soloKey: solo ? fs[0][0] : null, soloR: solo ? fs[0][2] : 4, soloD: solo ? fs[0][3] || '' : '', fs: solo ? [] : fs.map(([k, l, r, d]) => ({ k, l, r, d: d || '' })) }; };
+const secFrom = ([t, fs, g]) => { const solo = fs.length === 1 && !fs[0][1]; return { t, g: g === 'genograma', img: g === 'imagen', soloKey: solo ? fs[0][0] : null, soloR: solo ? fs[0][2] : 4, soloD: solo ? fs[0][3] || '' : '', fs: solo ? [] : fs.map(([k, l, r, d]) => ({ k, l, r, d: d || '' })) }; };
 const edFrom = (intake, evol, datos) => ({ intake: intake.map(secFrom), evol: evol.map(([k, l, r, d]) => ({ k, l, r, d: d || '' })), datos: (datos || []).map(secFrom) });
 const newKey = () => 'c' + Math.random().toString(36).slice(2, 8);
 const ROWS = [[2, 'Corto'], [3, 'Medio'], [5, 'Largo']];
@@ -280,6 +280,7 @@ function edField(f, path, noSize) {
 }
 function secCard(sc, si, isDatos) {
   const head = `<div class="edf"><input type="text" data-fm-t="${si}" value="${esc(sc.t)}" maxlength="120" aria-label="Título del apartado" style="font-weight:600"><button class="btn sm" data-fm="sup:${si}" aria-label="Subir apartado">↑</button><button class="btn sm" data-fm="sdn:${si}" aria-label="Bajar apartado">↓</button><button class="btn sm warn" data-fm="sdel:${si}" aria-label="Quitar apartado">✕</button></div>`;
+  if (sc.img) return `<div class="card">${head}<p style="margin:0;font-size:13px;color:var(--muted)">Apartado de imagen: el terapeuta sube una imagen de su computador en cada ficha. Quítelo con ✕ si no lo usa.</p></div>`;
   if (sc.g && !sc.fs.length) return `<div class="card">${head}<p style="margin:0;font-size:13px;color:var(--muted)">Apartado de genograma: espacio para dibujarlo o subir una imagen. Quítelo con ✕ si no lo usa.</p></div>`;
   const body = sc.fs.length ? sc.fs.map((f, fi) => edField(f, si + '.' + fi, isDatos)).join('') : `<p style="margin:0;font-size:13px;color:var(--muted)">Solo título: se escribe en un único espacio, sin subtítulos. Use «+ Campo» si quiere dividirlo.</p>${isDatos ? '' : edInit(sc.soloD, `data-fm-sd="${si}"`, sc.t)}`;
   const geno = sc.g ? `<div class="row"><span class="chip">Incluye el genograma al final</span><button class="btn sm warn" data-fm="gdel:${si}">Quitar genograma</button></div>` : '';
@@ -296,11 +297,11 @@ function formCard() {
 }
 function drawFormats() {
   const root = $('#modal-root'), prev = root.querySelector('.modal'), top = prev ? prev.scrollTop : 0, w = ED.which;
-  const hasGeno = ED.intake.some(sc => sc.g);
+  const isX = String(w).startsWith('x_'), hasGeno = (isX ? ED[w] : ED.intake).some(sc => sc.g);
   const intro = {  intake: 'Los cambios solo se aplican a las <b>nuevas</b> consultas de primera vez. Las ya firmadas conservan el formato con el que se firmaron.', evol: 'Los cambios solo se aplican a las <b>nuevas</b> sesiones. Las ya firmadas conservan el formato con el que se firmaron.', datos: 'Agregue los datos sociodemográficos que usted toma y que no vienen en la pestaña Datos. Aparecen al final de esa pestaña para todos sus consultantes.' }[w] || 'Arme los apartados y campos de esta pestaña. Los cambios se aplican a todas las fichas; lo ya escrito se conserva.';
   const body = w === 'evol'
     ? `<p class="stnote" style="margin:0">La fecha y hora, la modalidad, las personas presentes van siempre en la sesión: aquí arma el resto.</p><div class="card">${ED.evol.map((f, fi) => edField(f, String(fi))).join('') || '<p style="margin:0;color:var(--muted)">Aún no tiene campos. Agréguelos uno por uno o use el formato sugerido.</p>'}<div class="row"><button class="btn sm" data-fm="fadd:">+ Campo</button>${ED.evol.length ? '' : '<button class="btn sm" data-fm="reset">Usar el formato sugerido</button>'}</div></div>`
-    : (w === 'datos' ? `<div class="card"><b>Apartados de la ficha</b><p class="stnote" style="margin:4px 0">Identificación siempre se muestra. Muestre solo los que quiera usar; los datos ya escritos no se borran.</p>${BASE_SECS.map(([id, n]) => `<div class="row"><span style="flex:1">${n}</span><button class="btn sm ${ED.ocultos.includes(id) ? '' : 'pri'}" data-fm="oc:${id}">${ED.ocultos.includes(id) ? 'Mostrar' : 'Visible · ocultar'}</button></div>`).join('')}</div>` : '') + secList().map((sc, si) => secCard(sc, si, w === 'datos')).join('') + `<div class="row"><button class="btn" data-fm="sadd">+ Apartado</button>${w === 'intake' && !hasGeno ? '<button class="btn" data-fm="gadd">+ Genograma</button>' : ''}</div>` + (w === 'datos' ? formCard() : '');
+    : (w === 'datos' ? `<div class="card"><b>Apartados de la ficha</b><p class="stnote" style="margin:4px 0">Identificación siempre se muestra. Muestre solo los que quiera usar; los datos ya escritos no se borran.</p>${BASE_SECS.map(([id, n]) => `<div class="row"><span style="flex:1">${n}</span><button class="btn sm ${ED.ocultos.includes(id) ? '' : 'pri'}" data-fm="oc:${id}">${ED.ocultos.includes(id) ? 'Mostrar' : 'Visible · ocultar'}</button></div>`).join('')}</div>` : '') + secList().map((sc, si) => secCard(sc, si, w === 'datos')).join('') + `<div class="row"><button class="btn" data-fm="sadd">+ Apartado</button>${(w === 'intake' || isX) && !hasGeno ? '<button class="btn" data-fm="gadd">+ Genograma</button>' : ''}${isX ? '<button class="btn" data-fm="iadd">+ Imagen</button>' : ''}</div>` + (w === 'datos' ? formCard() : '');
   root.innerHTML = `<div class="modal" role="dialog" aria-modal="true" aria-label="Mis formatos"><div class="box" id="fmform"><div class="row mfhead" style="justify-content:space-between"><h3 style="flex:1">Mis formatos</h3><button class="btn sm pri" data-fm="save">Guardar</button><button class="btn sm" data-fm="close">Cerrar</button></div>
   ${hubTabs(w)}
   <p style="margin:0;font-size:13px;color:var(--muted)">${intro}</p>
@@ -339,7 +340,8 @@ ACT.formats = b => {
     else if (op === 'oc') { const i = ED.ocultos.indexOf(arg); if (i < 0) ED.ocultos.push(arg); else ED.ocultos.splice(i, 1); }
     else if (op === 'fo') { const i = ED.formulario.indexOf(arg); if (i < 0) ED.formulario.push(arg); else ED.formulario.splice(i, 1); }
     else if (op === 'sadd') { if (L.length >= 15) return toast('Máximo 15 apartados.'); L.push({ t: 'Nuevo apartado', g: false, fs: [], soloKey: null, soloR: 4 }); }
-    else if (op === 'gadd') ED.intake.push({ t: 'Genograma', g: true, fs: [] });
+    else if (op === 'gadd') { if (ED.which === 'intake' || !L) ED.intake.push({ t: 'Genograma', g: true, fs: [] }); else L.push({ t: 'Genograma', g: true, fs: [] }); }
+    else if (op === 'iadd') { if (L.length >= 15) return toast('Máximo 15 apartados.'); L.push({ t: 'Imagen', g: false, img: true, fs: [], soloKey: 'i' + newKey(), soloR: 1 }); }
     else if (op === 'gdel') { const sc = L[+arg]; sc.g = false; }
     else if (op === 'sup') edMove(L, +arg, -1);
     else if (op === 'sdn') edMove(L, +arg, 1);
@@ -354,6 +356,7 @@ ACT.formats = b => {
   };
 };
 function secTo(sc, isDatos) {
+  if (sc.img) return [sc.t.trim(), [[sc.soloKey || 'i' + newKey(), '', 1]], 'imagen'];
   if (!sc.fs.length) {
     if (sc.g) return [sc.t.trim(), [], 'genograma'];
     const solo = [sc.soloKey || (isDatos ? 'x' : '') + newKey(), '', isDatos ? 1 : (sc.soloR || 4)];
@@ -374,6 +377,7 @@ function saveFormats() {
   if (intake.filter(sc => sc[2] === 'genograma').length > 1) return bad('Solo puede haber un genograma.');
   const pc = (S.profile.formatos || {}).pestanas || {}, extra = (pc.extra || []).map(x => ({ ...x, secs: (ED[x.id] || x.secs || []).map(sc => secTo(sc, false)) }));
   if (extra.some(x => x.secs.some(sc => !sc[0]))) return bad('Cada apartado necesita un título.');
+  if (extra.some(x => x.secs.filter(sc => sc[2] === 'genograma').length > 1)) return bad('Solo puede haber un genograma por pestaña.');
   const snap = clone(S.profile);
   S.profile.formatos = Object.assign({}, S.profile.formatos, { intake, evol, datos, ocultos: ED.ocultos || [], formulario: ED.formulario.filter(k => k === 'nombres' || FORM_BASE.some(b => b[0] === k) || datos.some(sc => (sc[1] || []).some(f => f[0] === k))), pestanas: Object.assign({}, pc, { extra }) });
   persist([S.profile], $('[data-fm="save"]')).then(ok => { if (!ok) { restore(S.profile, snap); return; } finishFormats(); });
@@ -425,8 +429,23 @@ function tabsManage() {
   };
 }
 /* Pestaña propia: texto libre guardado en la ficha. */
+/* Apartado de imagen: se sube desde el computador, se reduce y queda guardada en la ficha. */
+const imgField = (k, v) => `<div class="fld imgf"><input type="hidden" id="f_${k}" data-f="${k}" value="${esc(v || '')}"><div class="row"><input type="file" accept="image/*" data-img="${k}" aria-label="Subir imagen"><button type="button" class="btn sm warn" data-imgdel="${k}" ${v ? '' : 'hidden'}>Quitar imagen</button></div><img class="geno" id="imgp_${k}" alt="Imagen de la ficha" ${v ? `src="${esc(v)}"` : 'hidden'}></div>`;
+document.addEventListener('change', e => {
+  const t = e.target, k = t.dataset && t.dataset.img; if (!k || !t.files || !t.files[0]) return;
+  const url = URL.createObjectURL(t.files[0]), im = new Image();
+  im.onload = () => {
+    const r = Math.min(1, 1280 / Math.max(im.width, im.height)), cv = document.createElement('canvas'); cv.width = Math.round(im.width * r); cv.height = Math.round(im.height * r);
+    const cx = cv.getContext('2d'); cx.fillStyle = '#fff'; cx.fillRect(0, 0, cv.width, cv.height); cx.drawImage(im, 0, 0, cv.width, cv.height); URL.revokeObjectURL(url);
+    let q = 0.82, d = cv.toDataURL('image/jpeg', q); while (d.length > 700000 && q > 0.4) { q -= 0.1; d = cv.toDataURL('image/jpeg', q); }
+    $('#f_' + k).value = d; const p = $('#imgp_' + k); p.src = d; p.hidden = false; $('[data-imgdel="' + k + '"]').hidden = false; S.dirty = true;
+  };
+  im.onerror = () => { URL.revokeObjectURL(url); toast('No se pudo leer la imagen.'); };
+  im.src = url;
+});
+document.addEventListener('click', e => { const b = e.target.closest && e.target.closest('[data-imgdel]'); if (!b) return; const k = b.dataset.imgdel; $('#f_' + k).value = ''; const p = $('#imgp_' + k); p.hidden = true; p.removeAttribute('src'); b.hidden = true; S.dirty = true; });
 const extraFields = (x, vo) => (x.secs || []).length
-  ? x.secs.map(([t, fs]) => `<div class="sec"><h3>${esc(t)}</h3><div class="grid">${fs.map(f => F(f[1], f[0], vo[f[0]] || f[3] || '', { type: 'area', rows: f[2] || 3, wide: true, aria: t })).join('')}</div></div>`).join('')
+  ? x.secs.map(([t, fs, g]) => g === 'genograma' ? `<div class="sec"><h3>${esc(t)}</h3>${genoBlock()}</div>` : g === 'imagen' ? `<div class="sec"><h3>${esc(t)}</h3>${imgField(fs[0][0], vo[fs[0][0]])}</div>` : `<div class="sec"><h3>${esc(t)}</h3><div class="grid">${fs.map(f => F(f[1], f[0], vo[f[0]] || f[3] || '', { type: 'area', rows: f[2] || 3, wide: true, aria: t })).join('')}</div></div>`).join('')
   : `<div class="sec"><div class="fld"><textarea id="f_extra" data-f="extra" rows="10" aria-label="${esc(x.nombre)}">${esc(typeof vo === 'string' ? vo : (vo.extra || ''))}</textarea></div></div>`;
 const extraOf = x => (x.secs || []).length ? (o => o) : (o => ({ extra: o.extra || '' }));
 function tabExtra(p) {
@@ -442,13 +461,14 @@ function tabExtra(p) {
     const cur = ed === 'new' ? { at: nowISO().slice(0, 10), v: {} } : (list.find(e => e.id === ed) || { at: nowISO().slice(0, 10), v: {} });
     return `<div class="sec"><h3>${ed === 'new' ? 'Nueva entrada' : 'Editar entrada'} · ${esc(x.nombre)}</h3><div class="grid">${F('Fecha', 'extraAt', (cur.at || '').slice(0, 10), { type: 'date' })}${F('Hora', 'extraHora', cur.hora || '', { type: 'time' })}${F('Lugar', 'extraLugar', cur.lugar || '', { ph: 'Ej.: consultorio, domicilio, en línea' })}</div></div>${extraFields(x, cur.v || {})}<div class="row end"><button class="btn" data-act="extraCancel">Cancelar</button><button class="btn pri" data-act="extraSave">Guardar entrada</button></div>`;
   }
-  const show = e => (x.secs || []).length ? x.secs.map(([t, fs]) => fs.map(f => (e.v || {})[f[0]] ? `<p style="margin:4px 0"><b>${esc(f[1] || t)}:</b> ${esc(e.v[f[0]])}</p>` : '').join('')).join('') : `<p style="margin:4px 0">${esc((e.v || {}).extra || '')}</p>`;
+  const show = e => (x.secs || []).length ? x.secs.map(([t, fs, g]) => g === 'genograma' ? (e.v || {}).genograma ? `<p style="margin:4px 0"><b>${esc(t)}:</b></p><img class="geno" src="${esc(e.v.genograma)}" alt="Genograma">` : '' : g === 'imagen' ? (e.v || {})[fs[0][0]] ? `<p style="margin:4px 0"><b>${esc(t)}:</b></p><img class="geno" src="${esc(e.v[fs[0][0]])}" alt="${esc(t)}">` : '' : fs.map(f => (e.v || {})[f[0]] ? `<p style="margin:4px 0"><b>${esc(f[1] || t)}:</b> ${esc(e.v[f[0]])}</p>` : '').join('')).join('') : `<p style="margin:4px 0">${esc((e.v || {}).extra || '')}</p>`;
   return `<div class="sec"><div class="row" style="justify-content:space-between"><h3 style="flex:1">${esc(x.nombre)} (${list.length})</h3><button class="btn pri" data-act="extraNew">Nueva entrada</button></div>
   ${list.length ? list.map(e => `<div class="card"><div class="row" style="justify-content:space-between"><b>${esc((e.at || '').slice(0, 10))}${e.hora ? ' · ' + esc(e.hora) : ''}${e.lugar ? ' · ' + esc(e.lugar) : ''}</b><span><button class="btn sm" data-act="extraEdit" data-id="${e.id}">Editar</button> <button class="btn sm warn" data-act="extraDel" data-id="${e.id}">Borrar</button></span></div>${show(e)}</div>`).join('') : '<p class="stnote" style="text-align:center">Aún no hay entradas. Cada sesión se agrega aquí.</p>'}</div>`;
 }
 const extraCur = () => (tabsConf().extra || []).find(y => y.id === S.tab);
 ACT.saveExtra = async b => {
   const p = curPatient(), snap = clone(p), o = readForm($('#tabbody'), {}), x = extraCur();
+  if (geno) o.genograma = geno.data();
   p.extras = Object.assign({}, p.extras, { [S.tab]: extraOf(x)(o) });
   if (!(await persist([p], b))) { restore(p, snap); return; } toast('Guardado.');
 };
@@ -457,6 +477,7 @@ ACT.extraEdit = b => { S.extraEd = { tab: S.tab, id: b.dataset.id }; render(); }
 ACT.extraCancel = () => { S.extraEd = null; render(); };
 ACT.extraSave = async b => {
   const p = curPatient(), snap = clone(p), x = extraCur(), o = readForm($('#tabbody'), {}), id = S.extraEd && S.extraEd.id;
+  if (geno) o.genograma = geno.data();
   const at = o.extraAt || nowISO().slice(0, 10), hora = o.extraHora || '', lugar = (o.extraLugar || '').trim(); delete o.extraAt; delete o.extraHora; delete o.extraLugar;
   const list = Array.isArray((p.extras || {})[S.tab]) ? clone(p.extras[S.tab]) : [], v = extraOf(x)(o);
   if (id && id !== 'new' && list.some(e => e.id === id)) Object.assign(list.find(e => e.id === id), { at, hora, lugar, v }); else list.push({ id: newId('e'), at, hora, lugar, v });
