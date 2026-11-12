@@ -286,22 +286,13 @@ function secCard(sc, si, isDatos) {
   const geno = sc.g ? `<div class="row"><span class="chip">Incluye el genograma al final</span><button class="btn sm warn" data-fm="gdel:${si}">Quitar genograma</button></div>` : '';
   return `<div class="card">${head}${body}${geno}<div class="row"><button class="btn sm" data-fm="fadd:${si}">+ Campo</button></div></div>`;
 }
-/* Clave final de un campo propio de Datos (al guardar se les antepone «x»). */
-const fkey = k => (String(k).startsWith('x') ? k : 'x' + k);
-/* Campos del formulario que se envía al consultante nuevo: los base y los propios de este formato. */
-function formCard() {
-  ED.datos.forEach(sc => { if (!sc.g && !sc.fs.length && !sc.soloKey) sc.soloKey = 'x' + newKey(); });
-  const own = ED.datos.flatMap(sc => sc.g ? [] : sc.fs.length ? sc.fs.map(f => [fkey(f.k), sc.t + ': ' + (f.l || '…')]) : [[sc.soloKey, sc.t]]);
-  const row = (k, n, fixed) => `<div class="row"><span style="flex:1">${esc(n)}</span>${fixed ? '<span class="chip">Siempre</span>' : `<button class="btn sm ${ED.formulario.includes(k) ? 'pri' : ''}" data-fm="fo:${k}">${ED.formulario.includes(k) ? 'Incluido · quitar' : 'Agregar'}</button>`}</div>`;
-  return `<div class="card"><b>Formulario del consultante nuevo</b><p class="stnote" style="margin:4px 0">Elija qué datos le pide a quien recibe el formulario. Los campos propios aparecen aquí cuando los guarda en este formato.</p>${FORM_BASE.filter(([k, n, s]) => s === 'Identificación' || !secOculta(s === 'Contacto' ? 'contacto' : 'emergencia')).map(([k, n]) => row(k, n, k === 'nombres')).join('')}${own.length ? '<b style="font-size:13px">Mis campos</b>' + own.map(([k, n]) => row(k, n)).join('') : ''}</div>`;
-}
 function drawFormats() {
   const root = $('#modal-root'), prev = root.querySelector('.modal'), top = prev ? prev.scrollTop : 0, w = ED.which;
   const isX = String(w).startsWith('x_'), hasGeno = (isX ? ED[w] : ED.intake).some(sc => sc.g);
   const intro = {  intake: 'Los cambios solo se aplican a las <b>nuevas</b> consultas de primera vez. Las ya firmadas conservan el formato con el que se firmaron.', evol: 'Los cambios solo se aplican a las <b>nuevas</b> sesiones. Las ya firmadas conservan el formato con el que se firmaron.', datos: 'Agregue los datos sociodemográficos que usted toma y que no vienen en la pestaña Datos. Aparecen al final de esa pestaña para todos sus consultantes.' }[w] || 'Arme los apartados y campos de esta pestaña. Los cambios se aplican a todas las fichas; lo ya escrito se conserva.';
   const body = w === 'evol'
     ? `<p class="stnote" style="margin:0">La fecha y hora, la modalidad, las personas presentes van siempre en la sesión: aquí arma el resto.</p><div class="card">${ED.evol.map((f, fi) => edField(f, String(fi))).join('') || '<p style="margin:0;color:var(--muted)">Aún no tiene campos. Agréguelos uno por uno o use el formato sugerido.</p>'}<div class="row"><button class="btn sm" data-fm="fadd:">+ Campo</button>${ED.evol.length ? '' : '<button class="btn sm" data-fm="reset">Usar el formato sugerido</button>'}</div></div>`
-    : (false ? `<div class="card"><b>Apartados de la ficha</b><p class="stnote" style="margin:4px 0">Identificación siempre se muestra. Muestre solo los que quiera usar; los datos ya escritos no se borran.</p>${BASE_SECS.map(([id, n]) => `<div class="row"><span style="flex:1">${n}</span><button class="btn sm ${ED.ocultos.includes(id) ? '' : 'pri'}" data-fm="oc:${id}">${ED.ocultos.includes(id) ? 'Mostrar' : 'Visible · ocultar'}</button></div>`).join('')}</div>` : '') + secList().map((sc, si) => secCard(sc, si, w === 'datos')).join('') + `<div class="row"><button class="btn" data-fm="sadd">+ Apartado</button>${(w === 'intake' || isX) && !hasGeno ? '<button class="btn" data-fm="gadd">+ Genograma</button>' : ''}${isX ? '<button class="btn" data-fm="iadd">+ Imagen</button>' : ''}</div>` + (w === 'datos' ? formCard() : '');
+    : (false ? `<div class="card"><b>Apartados de la ficha</b><p class="stnote" style="margin:4px 0">Identificación siempre se muestra. Muestre solo los que quiera usar; los datos ya escritos no se borran.</p>${BASE_SECS.map(([id, n]) => `<div class="row"><span style="flex:1">${n}</span><button class="btn sm ${ED.ocultos.includes(id) ? '' : 'pri'}" data-fm="oc:${id}">${ED.ocultos.includes(id) ? 'Mostrar' : 'Visible · ocultar'}</button></div>`).join('')}</div>` : '') + secList().map((sc, si) => secCard(sc, si, w === 'datos')).join('') + `<div class="row"><button class="btn" data-fm="sadd">+ Apartado</button>${(w === 'intake' || isX) && !hasGeno ? '<button class="btn" data-fm="gadd">+ Genograma</button>' : ''}${isX ? '<button class="btn" data-fm="iadd">+ Imagen</button>' : ''}</div>`;
   root.innerHTML = `<div class="modal" role="dialog" aria-modal="true" aria-label="Mis formatos"><div class="box" id="fmform"><div class="row mfhead" style="justify-content:space-between"><h3 style="flex:1">Mis formatos</h3><button class="btn sm pri" data-fm="save">Guardar</button><button class="btn sm" data-fm="close">Cerrar</button></div>
   ${hubTabs(w)}
   <p style="margin:0;font-size:13px;color:var(--muted)">${intro}</p>
@@ -318,7 +309,7 @@ ACT.formats = b => {
   if (!hub) return openHub('pestanas');
   if (!isFmt(hub)) return openHub(hub);
   const pf = S.profile.formatos || {};
-  ED = Object.assign({ which: hub || 'datos', ocultos: [...(pf.ocultos || BASE_SECS.map(s => s[0]))], formulario: [...(pf.formulario || FORM_DEFAULT)] }, Object.fromEntries(((pf.pestanas || {}).extra || []).map(x => [x.id, (x.secs || []).map(secFrom)])), edFrom(clone(pf.intake || INTAKE), clone(pf.evol || []), clone(pf.datos || [])));
+  ED = Object.assign({ which: hub || 'datos', ocultos: [...(pf.ocultos || BASE_SECS.map(s => s[0]))] }, Object.fromEntries(((pf.pestanas || {}).extra || []).map(x => [x.id, (x.secs || []).map(secFrom)])), edFrom(clone(pf.intake || INTAKE), clone(pf.evol || []), clone(pf.datos || [])));
   drawFormats();
   const root = $('#modal-root');
   root.oninput = e => {
@@ -379,7 +370,7 @@ function saveFormats() {
   if (extra.some(x => x.secs.some(sc => !sc[0]))) return bad('Cada apartado necesita un título.');
   if (extra.some(x => x.secs.filter(sc => sc[2] === 'genograma').length > 1)) return bad('Solo puede haber un genograma por pestaña.');
   const snap = clone(S.profile);
-  S.profile.formatos = Object.assign({}, S.profile.formatos, { intake, evol, datos, ocultos: ED.ocultos || [], formulario: ED.formulario.filter(k => k === 'nombres' || FORM_BASE.some(b => b[0] === k) || datos.some(sc => (sc[1] || []).some(f => f[0] === k))), pestanas: Object.assign({}, pc, { extra }) });
+  S.profile.formatos = Object.assign({}, S.profile.formatos, { intake, evol, datos, ocultos: ED.ocultos || [], pestanas: Object.assign({}, pc, { extra }) });
   persist([S.profile], $('[data-fm="save"]')).then(ok => { if (!ok) { restore(S.profile, snap); return; } finishFormats(); });
 }
 /* Pestañas de la ficha: renombrar, ocultar y crear propias (texto libre por consultante). */

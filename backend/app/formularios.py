@@ -43,27 +43,17 @@ FIELDS = [
     ("emergNombre", "Contacto de emergencia: nombre", "text", None, False), ("emergParentesco", "Contacto de emergencia: parentesco", "text", None, False),
     ("emergInd", "Contacto de emergencia: indicativo", "text", None, False), ("emergTelefono", "Contacto de emergencia: teléfono", "text", None, False),
 ]
-CONTACTO = {"paisRes", "ciudad", "zona", "localidad", "direccion", "telInd", "telefono", "correo"}
-EMERGENCIA = {"emergNombre", "emergParentesco", "emergInd", "emergTelefono"}
-DEFAULT = ["nombres", "apellidos"]  # sin elección del terapeuta; el nombre siempre va
 EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 
 
-def _sec(k: str) -> str:
-    return "Contacto de emergencia" if k in EMERGENCIA else "Contacto" if k in CONTACTO else "Identificación"
-
-
 def fields(fmt: dict | None) -> list[tuple]:
-    """Campos del formulario según lo que el terapeuta eligió en Mis formatos (formatos.formulario): los de la ficha base
-    y los campos propios de «Datos del consultante». (clave, etiqueta, tipo, opciones, obligatorio, sección)."""
-    fmt = fmt or {}
-    sel = fmt.get("formulario")
-    sel = set(sel if isinstance(sel, list) else DEFAULT) | {"nombres"}
-    out = [(k, l, t, o, r, _sec(k)) for k, l, t, o, r in FIELDS if k in sel]
-    for sc in fmt.get("datos") or []:
+    """Campos del formulario: el nombre (siempre) y todos los campos que el terapeuta puso en los apartados de
+    «Datos del consultante» en Mis formatos. (clave, etiqueta, tipo, opciones, obligatorio, sección)."""
+    out = [(k, l, t, o, r, "Identificación") for k, l, t, o, r in FIELDS if k == "nombres"]
+    for sc in (fmt or {}).get("datos") or []:
         try:
             titulo, fs = str(sc[0]), sc[1]
-            out += [(str(x[0]), str(x[1] or titulo)[:120], "text", None, False, titulo[:120]) for x in fs if str(x[0]) in sel and re.match(r"^[A-Za-z0-9_-]{1,40}$", str(x[0]))]
+            out += [(str(x[0]), str(x[1] or titulo)[:120], "text", None, False, titulo[:120]) for x in fs if re.match(r"^[A-Za-z0-9_-]{1,40}$", str(x[0]))]
         except (IndexError, TypeError):
             continue
     return out
