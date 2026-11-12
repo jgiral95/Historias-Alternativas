@@ -376,7 +376,7 @@ function relogin() {
 }
 async function persist(list, btn) {
   setBusy(btn, true);
-  try { for (const o of list) await Store.save(o, { strict: true }); $$('.savefail').forEach(x => x.remove()); return true; }
+  try { for (const o of list) await Store.save(o, { strict: true }); $$('.savefail').forEach(x => x.remove()); if (btn) S.dirty = false; return true; }
   catch (e) { saveError(e); return false; }
   finally { setBusy(btn, false); }
 }

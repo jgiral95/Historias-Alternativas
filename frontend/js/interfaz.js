@@ -37,11 +37,11 @@ const OPT = {
 const CLOSED = ['Alta', 'Cerrado', 'Remitido'];
 const isClosed = p => CLOSED.includes(p.estado);
 
-const DIRTY_SEL = '#noteform, #intakeform, #reportform, #cierreform, #scaleform, #solform, #incform, #consentform, #repsblock';
+const DIRTY_SEL = '#noteform, #intakeform, #reportform, #cierreform, #scaleform, #solform, #incform, #consentform, #repsblock, #tabbody:has([data-act="saveExtra"], [data-act="extraSave"])';
 function askDiscard(go) {
   if ($('#discardask')) return;
   const d = document.createElement('div'); d.className = 'idle'; d.id = 'discardask';
-  d.innerHTML = '<div class="box" role="alertdialog" aria-labelledby="dk_t"><b id="dk_t">Tiene texto sin firmar</b><p style="margin:0">Si sale ahora, lo que escribió se pierde. Los documentos solo se guardan al firmarlos.</p><div class="row end"><button class="btn warn" id="dk_go">Descartar y salir</button><button class="btn pri" id="dk_stay">Seguir escribiendo</button></div></div>';
+  d.innerHTML = '<div class="box" role="alertdialog" aria-labelledby="dk_t"><b id="dk_t">Tiene cambios sin guardar</b><p style="margin:0">Si sale ahora, lo que escribió se pierde. Pulse «Seguir escribiendo» y guárdelo.</p><div class="row end"><button class="btn warn" id="dk_go">Descartar y salir</button><button class="btn pri" id="dk_stay">Seguir escribiendo</button></div></div>';
   document.body.appendChild(d);
   $('#dk_stay').onclick = () => d.remove();
   $('#dk_go').onclick = () => { d.remove(); go(); };
@@ -72,7 +72,7 @@ async function navRestore(st) {
     try { history.pushState(JSON.parse(Nav.key), ''); } catch (e) { /* sin historial */ }
     return;
   }
-  if (S.dirty) {  // texto sin firmar: se pregunta antes de salir
+  if (S.dirty) {  // cambios sin guardar: se pregunta antes de salir
     try { history.pushState(JSON.parse(Nav.key), ''); } catch (e) { /* sin historial */ }
     askDiscard(() => { S.dirty = false; navRestore(st); });
     return;

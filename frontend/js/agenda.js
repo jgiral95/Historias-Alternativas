@@ -328,25 +328,35 @@ ACT.reopen = b => {
 ACT.viewCierre = b => { const p = curPatient(), c = p.cierres[+b.dataset.i]; showDoc('Nota de cierre · ' + fullName(p), docCierre(p, c), 'cierre-' + slug(fullName(p)) + '-' + c.fecha + '.html'); };
 
 /* ===== Bloqueo por inactividad (solo con servidor) ===== */
-const Idle = { last: Date.now(), ping: Date.now(), timer: null };
+const Idle = { last: Date.now(), ping: Date.now(), timer: null, saved: false, draftSaved: false };
+/* Al aparecer el aviso (la sesión sigue vigente) se guarda como borrador lo que el usuario estaba escribiendo. */
+async function idleAutosave() {
+  Idle.saved = true;
+  if (!S.dirty) return;
+  const db = document.querySelector('#intakeform [data-act="saveIntake"][data-sign="0"], #noteform [data-act="saveNote"][data-sign="0"], [data-act="saveConsentDraft"], #tabbody [data-act="saveExtra"], #tabbody [data-act="extraSave"]');
+  if (!db) return;
+  try { await ACT[db.dataset.act](db); } catch (e) { /* si falla, la sesión se cierra igual */ }
+  Idle.draftSaved = !S.dirty;
+}
 function hideIdleWarn() { const w = $('#idlewarn'); if (w) w.remove(); }
 function idleActivity() {
   if (!S.user || S.mode !== 'server') return;
   if ($('#idlewarn')) return; // con el aviso visible, solo el botón cuenta como actividad
-  Idle.last = Date.now();
+  Idle.last = Date.now(); Idle.saved = false; Idle.draftSaved = false;
   if (Date.now() - Idle.ping > 5 * 60000) { Idle.ping = Date.now(); api('/auth/me').catch(() => { }); }
 }
 function idleTick() {
   if (!S.user || S.mode !== 'server') { hideIdleWarn(); return; }
   const lim = (S.user.idle_minutes || 30) * 60000, left = lim - (Date.now() - Idle.last);
-  if (left <= 0) { doLogout('Su sesión se cerró por inactividad. Ingrese de nuevo.'); return; }
+  if (left <= 0) { doLogout('Su sesión se cerró por inactividad.' + (Idle.draftSaved ? ' Lo que estaba escribiendo quedó guardado como borrador.' : '') + ' Ingrese de nuevo.'); return; }
   if (left <= 60000) {
+    if (!Idle.saved) idleAutosave();
     let w = $('#idlewarn');
     if (!w) {
       w = document.createElement('div'); w.id = 'idlewarn'; w.className = 'idle';
       w.innerHTML = '<div class="box" role="alertdialog" aria-live="assertive"><b>¿Sigue ahí?</b><p style="margin:0">Por seguridad, su sesión se cerrará en <span id="idlesec">60</span> segundos.</p><button class="btn pri" id="idlego">Seguir trabajando</button></div>';
       document.body.appendChild(w);
-      $('#idlego').onclick = () => { hideIdleWarn(); Idle.last = Date.now(); Idle.ping = Date.now(); api('/auth/me').catch(() => { }); };
+      $('#idlego').onclick = () => { hideIdleWarn(); Idle.last = Date.now(); Idle.saved = false; Idle.draftSaved = false; Idle.ping = Date.now(); api('/auth/me').catch(() => { }); };
       $('#idlego').focus();
     }
     $('#idlesec').textContent = Math.max(0, Math.ceil(left / 1000));
