@@ -126,6 +126,21 @@ class Booking(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
 
 
+class IntakeForm(Base):
+    """Formulario de datos que el terapeuta envía al consultante antes de la atención. Del enlace solo se guarda su hash;
+    lo que el consultante responde va cifrado y se borra cuando el terapeuta crea el consultante o descarta el formulario."""
+    __tablename__ = "intake_forms"
+    id: Mapped[str] = mapped_column(String(64), primary_key=True)  # hash del enlace
+    ref: Mapped[str] = mapped_column(String(32), unique=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    submitted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    done_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)  # consultante creado
+    cancelled_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    payload: Mapped[bytes] = mapped_column(LargeBinary)
+
+
 class Audit(Base):
     """Bitácora de accesos y cambios. Nunca guarda contenido de las sesiones."""
     __tablename__ = "audit"

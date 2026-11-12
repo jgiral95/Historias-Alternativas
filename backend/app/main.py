@@ -22,9 +22,9 @@ import jwt
 
 from .config import (FILE_UNDO_MINUTES, IDLE_MINUTES, MAX_FILE_BYTES, MAX_RECORD_BYTES,
                      MIN_PASSWORD, SESSION_HOURS, SESSION_SECRET)
-from . import billing, booking, compress, firmas, gcal, reminders, survey
+from . import billing, booking, compress, firmas, formularios, gcal, reminders, survey
 from .config import (BETA_COMENTARIOS, BILLING_ENFORCE, EPAYCO_PLAN_URL_ANUAL, EPAYCO_PLAN_URL_MENSUAL, EPAYCO_PRIVATE_KEY, PUBLIC_URL, RECIFRAR_AL_ARRANCAR, SURVEY_SCHEDULER, TRUSTED_DEVICE_DAYS)
-from .db import (Booking, TrustedDevice, ApptReminder, Audit, ConsentRequest, Feedback, Blob, Feed, GoogleLink, MailAccount, Record, SessionLocal, Subscription, SurveyInvite, SurveyOptOut, SurveyResponse,
+from .db import (Booking, IntakeForm, TrustedDevice, ApptReminder, Audit, ConsentRequest, Feedback, Blob, Feed, GoogleLink, MailAccount, Record, SessionLocal, Subscription, SurveyInvite, SurveyOptOut, SurveyResponse,
                  User, Verification, init_db)
 from .security import (DUMMY_HASH, check_password, decrypt, decrypt_bytes, encrypt, encrypt_bytes,
                        recovery_hash, recovery_new, totp_check, totp_new_secret,
@@ -2255,6 +2255,174 @@ def public_appt_answer(token: str, body: ApptAnswer, request: Request, bg: Backg
     if body.accion == "cancelar":
         bg.add_task(gcal.sync, r.user_id, [r.appt_id])
     return {"estado": a.get("estado"), "respuesta": estado}
+
+
+# ---------- Formulario de datos previo a la atención (el consultante lo llena; el terapeuta lo convierte en consultante) ----------
+class FormIn(BaseModel):
+    nombre: str = ""
+    correo: str = ""
+    enviar: bool = False
+
+
+def _fr_state(r: IntakeForm) -> str:
+    if r.done_at:
+        return "creado"
+    if r.cancelled_at:
+        return "anulado"
+    if r.submitted_at:
+        return "recibido"
+    if survey.aware(r.expires_at) < datetime.now(timezone.utc):
+        return "vencido"
+    return "pendiente"
+
+
+def _fr_out(r: IntakeForm) -> dict:
+    d, st = decrypt(r.payload), _fr_state(r)
+    return {"ref": r.ref, "nombre": d.get("nombre"), "para": d.get("correo"), "estado": st, "creado": _iso(r.created_at), "vence": _iso(r.expires_at),
+            "recibido": _iso(r.submitted_at), "enlace": d.get("token") if st == "pendiente" else None, "correoEnviado": d.get("enviado"),
+            "datos": d.get("datos") if st == "recibido" else None}
+
+
+def _form_mail(db: Session, user: User, r: IntakeForm, request: Request) -> dict:
+    d = decrypt(r.payload)
+    to = str(d.get("correo") or "").strip()
+    if not EMAIL_RE.match(to):
+        return {"correoEnviado": False, "motivo": "Escriba un correo válido para enviarlo."}
+    acc = survey.account(db, user.id)
+    if not survey.smtp_enabled(acc):
+        return {"correoEnviado": False, "motivo": "Aún no ha configurado su correo de envío."}
+    prof_row = db.get(Record, (user.id, "profile"))
+    prof = decrypt(prof_row.payload) if prof_row else {}
+    try:
+        formularios.send_mail(to, formularios.message(d.get("nombre"), prof, formularios.link(d["token"], acc.get("base") or _base(request))), prof, acc)
+    except Exception as e:  # noqa: BLE001
+        return {"correoEnviado": False, "motivo": "El servidor de correo respondió: " + (type(e).__name__ + ": " + str(e))[:300]}
+    d["enviado"] = datetime.now(timezone.utc).isoformat()
+    r.payload = encrypt(d)
+    db.commit()
+    return {"correoEnviado": True}
+
+
+def _my_form(db: Session, user: User, ref: str) -> IntakeForm:
+    r = db.scalar(select(IntakeForm).where(IntakeForm.ref == ref, IntakeForm.user_id == user.id)) if re.match(r"^[0-9a-f]{24}$", ref or "") else None
+    if not r:
+        raise HTTPException(404, "No encontrado")
+    return r
+
+
+@app.get("/api/formularios")
+def form_list(user: User = Depends(pro_user), db: Session = Depends(get_db)):
+    rows = db.scalars(select(IntakeForm).where(IntakeForm.user_id == user.id).order_by(IntakeForm.created_at.desc()).limit(100))
+    return [_fr_out(r) for r in rows]
+
+
+@app.post("/api/formularios")
+def form_create(body: FormIn, request: Request, user: User = Depends(pro_user), db: Session = Depends(get_db)):
+    correo_p = body.correo.strip()
+    if body.enviar and not EMAIL_RE.match(correo_p):
+        raise HTTPException(400, "Escriba un correo válido para enviarlo")
+    token, now = firmas.new_token(), datetime.now(timezone.utc)
+    data = {"token": token, "nombre": body.nombre.strip()[:120] or None, "correo": correo_p[:200] or None}
+    r = IntakeForm(id=firmas.token_hash(token), ref=secrets.token_hex(12), user_id=user.id, created_at=now, expires_at=now + formularios.ttl(), payload=encrypt(data))
+    db.add(r)
+    db.commit()
+    if body.enviar:
+        res = _form_mail(db, user, r, request)
+        return {**_fr_out(r), **res}
+    return _fr_out(r)
+
+
+@app.post("/api/formularios/{ref}/correo")
+def form_resend(ref: str, request: Request, user: User = Depends(pro_user), db: Session = Depends(get_db)):
+    r = _my_form(db, user, ref)
+    if _fr_state(r) != "pendiente":
+        raise HTTPException(409, "Este enlace ya no está pendiente")
+    return _form_mail(db, user, r, request)
+
+
+def _fr_wipe(r: IntakeForm) -> None:
+    d = decrypt(r.payload)
+    for k in ("datos", "token", "ip"):
+        d.pop(k, None)
+    r.payload = encrypt(d)
+
+
+@app.post("/api/formularios/{ref}/anular", status_code=204)
+def form_cancel(ref: str, user: User = Depends(pro_user), db: Session = Depends(get_db)):
+    """Anula el enlace; si ya había respuesta (pendiente de revisión), se descarta y se borran los datos recibidos."""
+    r = _my_form(db, user, ref)
+    if r.done_at:
+        raise HTTPException(409, "Ya se creó el consultante con este formulario")
+    r.cancelled_at = r.cancelled_at or datetime.now(timezone.utc)
+    _fr_wipe(r)
+    db.commit()
+
+
+@app.delete("/api/formularios/{ref}", status_code=204)
+def form_delete(ref: str, user: User = Depends(pro_user), db: Session = Depends(get_db)):
+    """Borra de la lista un formulario ya anulado (sin datos del consultante: se vaciaron al anular)."""
+    r = _my_form(db, user, ref)
+    if not r.cancelled_at or r.done_at:
+        raise HTTPException(409, "Solo se pueden eliminar formularios anulados")
+    db.delete(r)
+    db.commit()
+
+
+class FormDoneIn(BaseModel):
+    patientId: str
+
+
+@app.post("/api/formularios/{ref}/creado", status_code=204)
+def form_done(ref: str, body: FormDoneIn, user: User = Depends(pro_user), db: Session = Depends(get_db)):
+    """El terapeuta ya creó al consultante con lo recibido: los datos se borran del formulario (quedan en la historia)."""
+    r = _my_form(db, user, ref)
+    prow = db.get(Record, (user.id, body.patientId)) if ID_RE.match(body.patientId or "") else None
+    if _fr_state(r) != "recibido" or not prow or prow.kind != "patient":
+        raise HTTPException(409, "Este formulario no está pendiente de revisión")
+    r.done_at = datetime.now(timezone.utc)
+    _fr_wipe(r)
+    db.commit()
+    audit(db, user.id, "form.done", f"{body.patientId}:{ref}", patient_id=body.patientId)
+
+
+def _public_form(db: Session, token: str) -> IntakeForm:
+    r = db.get(IntakeForm, firmas.token_hash(token)) if re.match(r"^[A-Za-z0-9_-]{20,64}$", token or "") else None
+    if not r:
+        raise HTTPException(404, "Enlace no válido")
+    st = _fr_state(r)
+    if st != "pendiente":
+        raise HTTPException(409, {"vencido": "El enlace venció. Pida uno nuevo al consultorio.", "anulado": "Este enlace fue anulado por el consultorio."}.get(st, "Este formulario ya fue enviado. Gracias."))
+    return r
+
+
+@app.get("/api/formulario/{token}")
+def public_form(token: str, request: Request, db: Session = Depends(get_db)):
+    _public_throttle(request)
+    r = _public_form(db, token)
+    row = db.get(Record, (r.user_id, "profile"))
+    prof = decrypt(row.payload) if row else {}
+    return {"profesional": prof.get("nombre") or "su terapeuta", "consultorio": prof.get("consultorio") or "", "nombre": decrypt(r.payload).get("nombre"), "campos": formularios.spec()}
+
+
+class FormSubmitIn(BaseModel):
+    datos: dict = {}
+
+
+@app.post("/api/formulario/{token}")
+def public_form_submit(token: str, body: FormSubmitIn, request: Request, db: Session = Depends(get_db)):
+    _public_throttle(request, 20)
+    try:
+        datos = formularios.clean(body.datos)
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+    with _lock:  # el enlace sirve una sola vez
+        r = _public_form(db, token)
+        d = decrypt(r.payload)
+        d["datos"], d["ip"] = datos, client_ip(request)
+        r.payload, r.submitted_at = encrypt(d), datetime.now(timezone.utc)
+        db.commit()
+    audit(db, r.user_id, "form.submit", r.ref, ip=client_ip(request))
+    return {"ok": True}
 
 
 # ---------- Comentarios de la versión beta ----------

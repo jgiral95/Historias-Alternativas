@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Sus datos para la primera atención</title>
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Alter-Karute">
+<meta property="og:locale" content="es_CO">
+<meta property="og:title" content="Formulario de datos · Alter-Karute">
+<meta property="og:description" content="Abra el enlace para registrar sus datos antes de la primera atención.">
+<meta property="og:image" content="__ORIGIN__/og.png">
+<meta property="og:image:secure_url" content="__ORIGIN__/og.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Alter-Karute, seguimiento para terapeutas">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<meta name="robots" content="noindex">
+<style>
+/* Página pública: el paciente registra sus datos antes de la primera atención. */
+:root{--bg:#F6F1E7;--surface:#FBF8F2;--surface2:#F1ECDF;--ink:#2B2A25;--muted:#6A675C;--line:#E3DBCB;--accent:#4E6B58;--accent-ink:#FFFFFF;--accent-soft:#E4EBE2;
+  --ok:#2B7A4B;--ok-soft:#DDF0E4;--danger:#B3261E;--danger-soft:#F8DEDC;color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#1A211C;--surface:#222B25;--surface2:#2B362E;--ink:#ECE8DC;--muted:#A9B2A8;--line:#36423A;
+  --accent:#8FB09A;--accent-ink:#1A211C;--accent-soft:#2C3A31;--ok:#6CCB92;--ok-soft:#183324;--danger:#F08A82;--danger-soft:#3B1E1C;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#1A211C;--surface:#222B25;--surface2:#2B362E;--ink:#ECE8DC;--muted:#A9B2A8;--line:#36423A;
+  --accent:#8FB09A;--accent-ink:#1A211C;--accent-soft:#2C3A31;--ok:#6CCB92;--ok-soft:#183324;--danger:#F08A82;--danger-soft:#3B1E1C;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif;padding:24px 16px}
+main{max-width:720px;margin:0 auto}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:20px;display:flex;flex-direction:column;gap:14px}
+h1{margin:0;font-size:21px;display:flex;gap:10px;align-items:center;line-height:1.25}
+p{margin:0}.muted{color:var(--muted);font-size:14px}
+.when{font-size:19px;font-weight:600}
+.btns{display:flex;flex-direction:column;gap:10px}
+button{font:inherit;font-weight:500;padding:12px 18px;border-radius:8px;border:1px solid var(--accent);background:var(--accent);color:var(--accent-ink);cursor:pointer}
+button.sec{background:none;color:var(--danger);border-color:var(--danger)}
+button:disabled{opacity:.6;cursor:wait}
+.res{padding:12px 14px;border-radius:8px}.res.ok{background:var(--ok-soft);color:var(--ok)}.res.bad{background:var(--danger-soft);color:var(--danger)}
+label{font-size:14px;font-weight:600;color:var(--muted)}
+input[type=text],input[type=email],input[type=date],select{font:inherit;padding:11px 12px;border:1px solid var(--line);border-radius:8px;background:var(--surface2);color:var(--ink);width:100%}
+input[type=text]:focus,input[type=email]:focus,input[type=date]:focus,select:focus,button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.doc{background:var(--surface2);border:1px solid var(--line);border-radius:8px;padding:16px;white-space:pre-wrap;font-family:Georgia,"Times New Roman",serif;font-size:16px;line-height:1.6;max-height:60vh;overflow:auto}
+.pad{border:1px dashed var(--accent);border-radius:8px;background:#fff;position:relative;touch-action:none}
+.pad canvas{display:block;width:100%;height:170px;cursor:crosshair}
+.pad .hint{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#8a8799;pointer-events:none;font-size:14px}
+.check{display:flex;gap:10px;align-items:flex-start;font-size:15px}.check input{width:22px;height:22px;margin-top:2px;flex:none;accent-color:var(--accent)}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+button.ghost{background:none;color:var(--accent)}
+.sigs{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px}
+.sg{display:flex;flex-direction:column;gap:4px}.sg img{max-height:90px;max-width:100%;object-fit:contain;align-self:flex-start;background:#fff;border-radius:6px;padding:4px}.sg .ln{border-top:1px solid var(--line);padding-top:6px;font-size:14px}.sg .ph{height:90px;border:1px dashed var(--line);border-radius:6px;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:13px}
+@media print{body{background:#fff;padding:0}.card{border:0;padding:0}.noprint{display:none!important}.doc{max-height:none;overflow:visible;border:0;background:none;padding:0}}
+/* Pantalla de carga */
+.splash{min-height:56vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;color:var(--muted)}
+.splash-logo{width:72px;height:72px;animation:splashpulse 1.6s ease-in-out infinite}
+.splash-name{font-size:22px;font-weight:600;color:var(--ink);letter-spacing:.01em}
+.splash-bar{width:132px;height:4px;border-radius:2px;background:var(--line);overflow:hidden}
+.splash-bar i{display:block;width:40%;height:100%;border-radius:2px;background:var(--accent);animation:splashbar 1.3s ease-in-out infinite}
+.splash-txt{font-size:14px}
+@keyframes splashpulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(.94);opacity:.8}}
+@keyframes splashbar{0%{transform:translateX(-100%)}100%{transform:translateX(330%)}}
+@media (prefers-reduced-motion:reduce){.splash-logo,.splash-bar i{animation:none}}
+.f{display:flex;flex-direction:column;gap:6px}h2.sec{margin:8px 0 0;font-size:15px;color:var(--accent)}.fs{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px}.req{color:var(--danger)}
+</style>
+</head>
+<body>
+<main id="m"><div class="splash" role="status" aria-live="polite">
+  <svg class="splash-logo" viewBox="0 0 120 120" aria-hidden="true"><rect x="6" y="6" width="108" height="108" rx="16" style="fill:var(--accent)"/><rect x="34" y="22" width="52" height="64" rx="6" style="fill:var(--surface)"/><rect x="46" y="14" width="28" height="16" rx="4" style="fill:var(--surface);stroke:var(--accent)" stroke-width="4"/><rect x="42" y="46" width="36" height="6" rx="3" style="fill:var(--accent)"/><rect x="42" y="58" width="36" height="6" rx="3" style="fill:var(--accent)"/><rect x="42" y="70" width="22" height="6" rx="3" style="fill:var(--accent)"/></svg>
+  <b class="splash-name">Alter-Karute</b>
+  <div class="splash-bar" aria-hidden="true"><i></i></div>
+  <span class="splash-txt">Cargando…</span>
+</div></main>
+<script>
+const $ = s => document.querySelector(s);
+const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const H = { 'Content-Type': 'application/json', 'X-Requested-With': 'archivo-clinico' };
+const token = new URLSearchParams(location.search).get('t') || '';
+const logo = '<svg width="28" height="28" viewBox="0 0 120 120" aria-hidden="true"><rect x="6" y="6" width="108" height="108" rx="16" fill="#4E6B58"/><rect x="34" y="22" width="52" height="64" rx="6" fill="#FFFFFF"/><rect x="46" y="14" width="28" height="16" rx="4" fill="#FFFFFF" stroke="#4E6B58" stroke-width="4"/></svg>';
+const card = h => { $('#m').innerHTML = `<div class="card">${h}</div>`; };
+let d;
+const COUNTRIES = (() => { const codes = 'AF AX AL DE AD AO AI AQ AG SA DZ AR AM AW AU AT AZ BS BD BB BH BE BZ BJ BM BY BO BA BW BR BN BG BF BI BT CV KH CM CA BQ QA TD CZ CL CN CY CO KM CG CD KP KR CI CR HR CU CW DK DM EC EG SV AE ER SK SI ES US EE SZ ET PH FI FJ FR GA GM GE GH GI GD GR GL GP GU GT GF GG GN GQ GW GY HT HN HK HU IN ID IQ IR IE IS IL IT JM JP JE JO KZ KE KG KI KW LA LS LV LB LR LY LI LT LU MO MK MG MY MW MV ML MT MA MQ MU MR YT MX FM MD MC MN ME MS MZ MM NA NR NP NI NE NG NO NC NZ OM NL PK PW PS PA PG PY PE PF PL PT PR GB CF CD DO RE RW RO RU WS SM KN VC LC SN RS SC SL SG SY SO LK ZA SD SS SE CH SR TH TW TZ TJ TL TG TO TT TN TR TM TV UA UG UY UZ VU VA VE VN YE DJ ZM ZW'.split(' ');
+  let n; try { const dn = new Intl.DisplayNames(['es'], { type: 'region' }); n = codes.map(c => dn.of(c)); } catch (e) { n = ['Venezuela', 'Ecuador', 'Perú', 'Panamá', 'México', 'España', 'Estados Unidos', 'Argentina', 'Chile']; }
+  return ['Colombia', ...[...new Set(n)].filter(x => x && x !== 'Colombia' && x.length > 2).sort((a, b) => a.localeCompare(b, 'es'))]; })();
+const head = () => `<h1>${logo}Sus datos para la primera atención</h1><p>${d.nombre ? `<b>${esc(d.nombre)}</b> · ` : ''}${esc(d.profesional)} le pide que registre estos datos antes de su primera atención.</p>`;
+const field = c => {
+  const id = 'f_' + c.k, lab = `<label for="${id}">${esc(c.l)}${c.r ? ' <span class="req" aria-hidden="true">*</span>' : ''}</label>`;
+  const val = '';
+  const sec = c.s ? `<h2 class="sec" style="grid-column:1/-1">${esc(c.s)}</h2>` : '';
+  if (c.t === 'country') { const dv = c.k === 'paisNac' ? '' : 'Colombia'; return sec + `<div class="f">${lab}<select id="${id}" ${c.r ? 'required' : ''}><option value=""></option>${COUNTRIES.concat(['No responde']).map(o => `<option ${o === dv ? 'selected' : ''}>${esc(o)}</option>`).join('')}</select></div>`; }
+  if (c.t === 'select') return sec + `<div class="f">${lab}<select id="${id}" ${c.r ? 'required' : ''}><option value=""></option>${c.o.map(o => `<option>${esc(o)}</option>`).join('')}</select></div>`;
+  return sec + `<div class="f">${lab}<input id="${id}" type="${c.t === 'date' ? 'date' : c.t === 'email' ? 'email' : 'text'}" ${c.r ? 'required' : ''} value="${c.k === 'telInd' || c.k === 'emergInd' ? '+57' : val}" ${c.k === 'telefono' || c.k === 'emergTelefono' ? 'inputmode="tel"' : ''} autocomplete="off"></div>`;
+};
+function form() {
+  card(head() + `<form id="f" class="btns" autocomplete="off" novalidate><div id="err" role="alert"></div><div class="fs">${d.campos.map(field).join('')}</div>
+    <p class="muted">Los campos con <span class="req">*</span> son obligatorios. Solo se registran sus datos de identificación, contacto y de emergencia; el consentimiento informado y la autorización de uso de sus datos los firmará con su terapeuta en la primera atención. Si es menor de edad, escriba los datos del menor: su profesional le pedirá los del acudiente.</p>
+    <button type="submit">Enviar mis datos</button></form>`);
+  $('#f').onsubmit = async e => {
+    e.preventDefault();
+    const datos = {}; d.campos.forEach(c => { datos[c.k] = $('#f_' + c.k).value.trim(); });
+    const falta = d.campos.find(c => c.r && !datos[c.k]);
+    const bad = t => { $('#err').innerHTML = `<div class="res bad">${esc(t)}</div>`; $('#f button').disabled = false; };
+    if (falta) { bad('Falta: ' + falta.l.split(' (')[0]); $('#f_' + falta.k).focus(); return; }
+    $('#err').innerHTML = '';
+    $('#f button').disabled = true;
+    try {
+      const r = await fetch('/api/formulario/' + encodeURIComponent(token), { method: 'POST', headers: H, body: JSON.stringify({ datos }) });
+      const j = await r.json().catch(() => ({}));
+      if (r.ok) return card(head().replace(/<p>.*<\/p>/, '') + '<div class="res ok">Listo, recibimos sus datos. Su terapeuta los revisará antes de la primera atención. Ya puede cerrar esta página. Gracias.</div>');
+      if (r.status === 409) return card(`<h1>${logo}Alter-Karute</h1><div class="res bad">${esc(j.detail || 'Este enlace ya no está disponible.')}</div>`);
+      bad(typeof j.detail === 'string' ? j.detail : 'No se pudo enviar. Revise los datos.');
+    } catch (err) { bad('No hay conexión. Intente de nuevo.'); }
+  };
+}
+(async function load() {
+  try {
+    const r = await fetch('/api/formulario/' + encodeURIComponent(token), { headers: H });
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok) return card(`<h1>${logo}Alter-Karute</h1><div class="res bad">${esc(typeof j.detail === 'string' ? j.detail : 'Este enlace no es válido.')}</div>`);
+    d = j; form();
+  } catch (e) { card(`<h1>${logo}Alter-Karute</h1><div class="res bad">No hay conexión. Intente de nuevo.</div>`); }
+})();
+</script>
+</body>
+</html>

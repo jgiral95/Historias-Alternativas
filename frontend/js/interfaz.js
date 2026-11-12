@@ -162,7 +162,7 @@ function rowsHTML() {
   }).join('') + hitsHTML(S.q);
 }
 function listHTML() {
-  return `<div class="panel plist"><div class="plist-head"><span>Consultantes</span><span id="pcount">${S.patients.length}</span></div><div id="rows">${rowsHTML()}</div></div>`;
+  return `<div class="panel plist"><div class="plist-head"><span>Consultantes</span><span id="pcount">${S.patients.length}</span></div>${S.mode === 'server' && !TEAM() ? `<button class="btn sm" id="formsbtn" data-act="forms" style="width:calc(100% - 20px);margin:8px 10px">Enviar formulario a nuevo consultante${typeof FORMS !== 'undefined' && FORMS.n ? ` <span class="chip ok">${FORMS.n} recibido${FORMS.n === 1 ? '' : 's'}</span>` : ''}</button>` : ''}<div id="rows">${rowsHTML()}</div></div>`;
 }
 ACT.home = () => { S.view = 'patients'; S.pid = null; S.draft = false; S.draftObj = null; S.homeOpen = true; render(); scrollTo(0, 0); };
 function todoHTML() {

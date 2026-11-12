@@ -21,6 +21,7 @@ App de seguimiento de consultantes para profesionales de terapias alternativas (
 | `js/archivo.js` | adjuntos, copias, exportar, historia en papel |
 | `js/escalas.js` | escalas y frases frecuentes |
 | `js/encuesta.js` | encuesta de satisfacción y estadísticas |
+| `js/formularios.js` | formularios de datos que el consultante llena antes de la primera atención (`formulario.html` pública; `formularios.py` y `/api/formularios*` en el servidor) |
 | `js/servidor.js` | ingreso, cuenta, usuarios (admin) y arranque (`boot`) — va de último |
 
 ## Backend (`backend/app/`)
@@ -40,6 +41,7 @@ FastAPI + SQLAlchemy. `main.py` (endpoints; registros cifrados por tipo: profile
 | Navegación «Atrás» | `navegacion_e2e.js` |
 | Notas de proceso / a mano | `notas_proceso_e2e.js`, `mano_e2e.js` |
 | Reservas por enlace | `test_booking.py` |
+| Formularios de datos | `test_formularios.py` |
 | Recordatorios / firma a distancia / encuesta / bitácora / comentarios / inicio / caída / Google | `<nombre>_e2e.js` |
 
 ## Reglas que no cambian
