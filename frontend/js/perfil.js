@@ -268,14 +268,15 @@ function hubClosed() {
 let ED = null;
 /* Un apartado sin campos es «solo título»: se guarda como un único campo sin nombre (no repite subtítulo). */
 const secFrom = ([t, fs, g]) => { const solo = fs.length === 1 && !fs[0][1]; return { t, g: g === 'genograma', img: g === 'imagen', soloKey: solo ? fs[0][0] : null, soloR: solo ? fs[0][2] : 4, soloD: solo ? fs[0][3] || '' : '', fs: solo ? [] : fs.map(([k, l, r, d]) => ({ k, l, r, d: d || '' })) }; };
-const edFrom = (intake, evol, datos) => ({ intake: intake.map(secFrom), evol: evol.map(([k, l, r, d]) => ({ k, l, r, d: d || '' })), datos: (datos || []).map(secFrom) });
+const edFrom = (intake, evol, datos) => ({ intake: intake.map(secFrom), evol: evol.map(([k, l, r, d]) => ({ k, l, r, d: d || '' })), datos: (datos || []).map(sc => { const x = secFrom(sc); x.fs.forEach(f => { f.tp = f.d; f.d = ''; }); return x; }) });
 const newKey = () => 'c' + Math.random().toString(36).slice(2, 8);
 const ROWS = [[2, 'Corto'], [3, 'Medio'], [5, 'Largo']];
 const secList = () => ED[ED.which === 'datos' ? 'datos' : String(ED.which).startsWith('x_') ? ED.which : 'intake'];
 /* Texto inicial: lo que el campo trae escrito en cada nota nueva (se puede borrar o cambiar al escribir). */
 const edInit = (val, attr, label) => `<details class="edinit" ${val ? 'open' : ''}><summary>Texto inicial${val ? '' : ' (opcional)'}</summary><textarea ${attr} rows="2" aria-label="Texto inicial de ${esc(label)}" placeholder="Lo que este campo trae escrito en cada nota nueva">${esc(val || '')}</textarea></details>`;
+const CAMPO_TIPOS = [['', 'Texto'], ['date', 'Fecha'], ['time', 'Hora'], ['number', 'Número']];
 function edField(f, path, noSize) {
-  return `<div class="edfw"><div class="edf"><span class="dragh" draggable="true" data-dk="f" data-dv="${path}" title="Arrastre para cambiar el orden" aria-hidden="true">⠿</span><input type="text" data-fm-l="${path}" value="${esc(f.l)}" maxlength="120" aria-label="Nombre del campo">${noSize ? '' : `<select data-fm-r="${path}" aria-label="Tamaño">${ROWS.map(([v, n]) => `<option value="${v}" ${[2, 3, 5].reduce((a, x) => Math.abs(x - (+f.r || 3)) < Math.abs(a - (+f.r || 3)) ? x : a, 3) === v ? 'selected' : ''}>${n}</option>`).join('')}</select>`}
+  return `<div class="edfw"><div class="edf"><span class="dragh" draggable="true" data-dk="f" data-dv="${path}" title="Arrastre para cambiar el orden" aria-hidden="true">⠿</span><input type="text" data-fm-l="${path}" value="${esc(f.l)}" maxlength="120" aria-label="Nombre del campo">${noSize ? `<select data-fm-tp="${path}" aria-label="Tipo de campo">${CAMPO_TIPOS.map(([v, n]) => `<option value="${v}" ${(f.tp || '') === v ? 'selected' : ''}>${n}</option>`).join('')}</select>` : `<select data-fm-r="${path}" aria-label="Tamaño">${ROWS.map(([v, n]) => `<option value="${v}" ${[2, 3, 5].reduce((a, x) => Math.abs(x - (+f.r || 3)) < Math.abs(a - (+f.r || 3)) ? x : a, 3) === v ? 'selected' : ''}>${n}</option>`).join('')}</select>`}
   <button class="btn sm" data-fm="fup:${path}" aria-label="Subir">↑</button><button class="btn sm" data-fm="fdn:${path}" aria-label="Bajar">↓</button><button class="btn sm warn" data-fm="fdel:${path}" aria-label="Quitar campo">✕</button></div>${noSize ? '' : edInit(f.d, `data-fm-d="${path}"`, f.l)}</div>`;
 }
 function secCard(sc, si, isDatos) {
@@ -326,6 +327,7 @@ ACT.formats = b => {
     if (!ED) return;
     if (t.dataset.fmT !== undefined) secList()[+t.dataset.fmT].t = t.value;
     else if (t.dataset.fmL !== undefined) edList(t.dataset.fmL)[edIdx(t.dataset.fmL)].l = t.value;
+    else if (t.dataset.fmTp !== undefined) edList(t.dataset.fmTp)[edIdx(t.dataset.fmTp)].tp = t.value;
     else if (t.dataset.fmR !== undefined) edList(t.dataset.fmR)[edIdx(t.dataset.fmR)].r = +t.value;
     else if (t.dataset.fmD !== undefined) edList(t.dataset.fmD)[edIdx(t.dataset.fmD)].d = t.value;
     else if (t.dataset.fmSd !== undefined) secList()[+t.dataset.fmSd].soloD = t.value;
@@ -364,7 +366,7 @@ function secTo(sc, isDatos) {
     if (!isDatos && (sc.soloD || '').trim()) solo.push(sc.soloD.slice(0, 20000));
     return [sc.t.trim(), [solo]];
   }
-  const out = [sc.t.trim(), sc.fs.map(f => { const x = [f.k.startsWith('x') || !isDatos ? f.k : 'x' + f.k, f.l.trim(), +f.r || 3]; if (!isDatos && (f.d || '').trim()) x.push(f.d.slice(0, 20000)); return x; })];
+  const out = [sc.t.trim(), sc.fs.map(f => { const x = [f.k.startsWith('x') || !isDatos ? f.k : 'x' + f.k, f.l.trim(), +f.r || 3]; if (isDatos && ['date', 'time', 'number'].includes(f.tp)) x.push(f.tp); if (!isDatos && (f.d || '').trim()) x.push(f.d.slice(0, 20000)); return x; })];
   if (sc.g) out.push('genograma');
   return out;
 }

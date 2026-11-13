@@ -331,7 +331,7 @@ function tabDatos(p) {
   return `${reabrir}${secOculta('contacto') ? '' : `<div class="sec"><h3>Contacto</h3><div class="grid">${countryF('País de residencia', 'paisRes', p.paisRes)}${cityF(p)}${F('Zona de residencia', 'zona', p.zona || '', { type: 'select', opts: OPT.zona })}${F('Localidad / comuna / barrio', 'localidad', p.localidad)}${F('Dirección', 'direccion', p.direccion)}${telF('Teléfono', 'telefono', 'telInd', p)}${F('Correo electrónico', 'correo', p.correo, { type: 'email' })}</div>${naRow()}</div>`}
   ${secOculta('cuidadores') ? '' : minor ? `<div class="sec"><h3>Cuidadores o acudientes</h3>${cuid}</div>` : `<div class="sec"><h3>Cuidadores o acudientes</h3><p class="stnote">En adultos sin cuidador, marque «No aplica».</p>${cuid}</div>`}
   ${secOculta('emergencia') ? '' : `<div class="sec"><h3>Contacto de emergencia</h3><div class="grid">${F('Nombre', 'emergNombre', p.emergNombre)}${F('Parentesco', 'emergParentesco', p.emergParentesco)}${telF('Teléfono', 'emergTelefono', 'emergInd', p)}</div>${naRow()}</div>`}
-  ${datosSchema().map(([t, fs]) => `<div class="sec"><h3>${esc(t)}</h3><div class="grid">${fs.map(f => F(f[1], f[0], p[f[0]], f[1] ? {} : { wide: true, aria: t })).join('')}</div>${naRow()}</div>`).join('')}
+  ${datosSchema().map(([t, fs]) => `<div class="sec"><h3>${esc(t)}</h3><div class="grid">${fs.map(f => F(f[1], f[0], p[f[0]], Object.assign(f[1] ? {} : { wide: true, aria: t }, ['date', 'time', 'number'].includes(f[3]) ? { type: f[3] } : {}))).join('')}</div>${naRow()}</div>`).join('')}
   ${datosSchema().length ? '' : '<p class="stnote">Aún no tiene campos para los datos del consultante. Créelos en «Mis formatos» → «Datos del consultante».</p>'}
   <div id="dupslot"></div>
   <div id="lkslot">${linksHTML(p)}</div>

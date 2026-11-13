@@ -103,3 +103,16 @@ def test_el_formulario_sale_de_los_datos_del_terapeuta():
     elegir(c, [["Redes", [["xig", "Instagram", 1], ["xno", "Otro", 1]]]], ["xig"])  # el terapeuta marcó solo uno
     t = tok(c)
     assert [x["k"] for x in anon().get(f"/api/formulario/{t}").json()["campos"]] == ["xig"]
+
+
+def test_campos_de_fecha_hora_y_numero():
+    make_user("ana@x.co")
+    c = client_for("ana@x.co")
+    elegir(c, [["Datos", [["xf", "Fecha", 1, "date"], ["xh", "Hora", 1, "time"], ["xn", "Edad", 1, "number"], ["xt", "Texto", 1]]]])
+    t = tok(c)
+    campos = anon().get(f"/api/formulario/{t}").json()["campos"]
+    assert [x["t"] for x in campos] == ["date", "time", "number", "text"]
+    ok = {"xf": "2030-05-01", "xh": "09:30", "xn": "42", "xt": "a"}
+    for malo in ({**ok, "xf": "ayer"}, {**ok, "xh": "25:00"}, {**ok, "xn": "abc"}):
+        assert anon().post(f"/api/formulario/{t}", json={"datos": malo}).status_code == 400
+    assert anon().post(f"/api/formulario/{t}", json={"datos": ok}).status_code == 200

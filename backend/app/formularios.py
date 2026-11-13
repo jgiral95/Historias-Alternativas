@@ -55,7 +55,7 @@ def fields(fmt: dict | None) -> list[tuple]:
     for sc in (fmt or {}).get("datos") or []:
         try:
             titulo, fs = str(sc[0]), sc[1]
-            out += [(str(x[0]), str(x[1] or titulo)[:120], "text", None, True, titulo[:120]) for x in fs if re.match(r"^[A-Za-z0-9_-]{1,40}$", str(x[0])) and (sel is None or str(x[0]) in sel)]
+            out += [(str(x[0]), str(x[1] or titulo)[:120], x[3] if len(x) > 3 and x[3] in ("date", "time", "number") else "text", None, True, titulo[:120]) for x in fs if re.match(r"^[A-Za-z0-9_-]{1,40}$", str(x[0])) and (sel is None or str(x[0]) in sel)]
         except (IndexError, TypeError):
             continue
     return out
@@ -89,9 +89,13 @@ def clean(raw: dict, fmt: dict | None = None) -> dict:
             try:
                 d = date.fromisoformat(v)
             except ValueError:
-                raise ValueError("La fecha de nacimiento no es válida")
-            if d > date.today() or d.year < 1900:
-                raise ValueError("La fecha de nacimiento no es válida")
+                raise ValueError(f"La fecha de «{label}» no es válida")
+            if d.year < 1900 or d.year > 2200:
+                raise ValueError(f"La fecha de «{label}» no es válida")
+        if t == "time" and not re.match(r"^([01]\d|2[0-3]):[0-5]\d$", v):
+            raise ValueError(f"La hora de «{label}» no es válida")
+        if t == "number" and not re.match(r"^-?\d+([.,]\d+)?$", v):
+            raise ValueError(f"«{label}» debe ser un número")
         out[k] = v
     return out
 
