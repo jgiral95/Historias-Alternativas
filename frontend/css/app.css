@@ -510,3 +510,5 @@ body:has(#fb-root .fbbtn) .modal{padding-bottom:84px}
 .ustat{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 14px;display:flex;flex-direction:column;gap:2px}
 .ustat span{font-size:13px;color:var(--ink)}.ustat b{font-size:26px;line-height:1.15}.ustat small{font-size:12px;color:var(--muted)}
 .ustat b.ok{color:#2F6B4A}.ustat b.warn{color:#B4541F}
+
+.fld .rq{color:#b3261e;font-weight:700}
