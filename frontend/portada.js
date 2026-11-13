@@ -23,19 +23,19 @@
     { id: 'astro', n: 'Astrología', tabs: [['ses', 'Sesión'], ['nat', 'Carta natal'], ['sol', 'Revolución solar'], ['inf', 'Informes', 'inf']], citas: [
       { hora: '8:30', n: 'Lucía V.', st: 'Confirmó', meta: 'En línea · Sesión 4', d: {
         ses: [['Motivo', 'Entender un cambio de trabajo que se aproxima.'], ['Lo trabajado', 'Tránsitos de Saturno por su casa 10 y fechas posibles para decidir.'], ['Para la próxima', 'Escribir qué espera de su nuevo rol antes de la luna nueva.']],
-        nat: [['Nacimiento', '14 de marzo de 1991 · 6:42 a. m. · Medellín'], ['Sol · Luna · Ascendente', 'Piscis · Cáncer · Virgo'], ['Notas', 'Luna en casa 4: la familia pesa en sus decisiones.']],
+        nat: [['Nacimiento', '14 de marzo de 1991 · 6:42 a. m. · Medellín'], ['☉ Sol · ☽ Luna · AC Ascendente', '♓ Piscis · ♋ Cáncer · ♍ Virgo'], ['Notas', '☽ en casa 4: la familia pesa en sus decisiones. ☉ △ ♄ (trígono Sol–Saturno).']],
         sol: [['Año', 'Revolución solar 2026–2027'], ['Ascendente del año', 'Escorpio'], ['Tema central', 'Cierre de un ciclo laboral y mudanza.']], inf: ['Resumen de la sesión', 'Entregado en PDF con el mapa y las fechas clave.'] } },
       { hora: '10:00', n: 'Andrés G.', st: 'Primera vez', meta: 'Presencial · Sesión 1', d: {
         ses: [['Motivo', 'Curiosidad por su carta y por una etapa de decisiones.'], ['Lo trabajado', 'Lectura general de la carta: elementos, modalidades y casas.'], ['Para la próxima', 'Confirmar la hora de nacimiento con su madre.']],
-        nat: [['Nacimiento', '2 de agosto de 1988 · hora por confirmar · Bogotá'], ['Sol · Luna · Ascendente', 'Leo · Escorpio · por confirmar'], ['Notas', 'Sin hora exacta: se usará un mapa solar.']],
+        nat: [['Nacimiento', '2 de agosto de 1988 · hora por confirmar · Bogotá'], ['☉ Sol · ☽ Luna · AC Ascendente', '♌ Leo · ♏ Escorpio · por confirmar'], ['Notas', 'Sin hora exacta: se usará un mapa solar.']],
         sol: [['Año', 'Aún sin calcular'], ['Pendiente', 'Calcular cuando confirme la hora.'], ['Tema central', 'Por definir.']], inf: ['Sin informes todavía', 'Después de la primera sesión podrá crear un resumen.'] } },
       { hora: '12:00', n: 'Camila R.', st: 'En línea', meta: 'En línea · Sesión 2', d: {
         ses: [['Motivo', 'Compatibilidad con su pareja y momento para convivir.'], ['Lo trabajado', 'Sinastría: Venus y Marte en contacto; Luna en tensión.'], ['Para la próxima', 'Conversar sobre acuerdos de convivencia.']],
-        nat: [['Nacimiento', '9 de noviembre de 1993 · 11:15 p. m. · Cali'], ['Sol · Luna · Ascendente', 'Escorpio · Libra · Capricornio'], ['Notas', 'Hay una carta de su pareja guardada para comparar.']],
+        nat: [['Nacimiento', '9 de noviembre de 1993 · 11:15 p. m. · Cali'], ['☉ Sol · ☽ Luna · AC Ascendente', '♏ Escorpio · ♎ Libra · ♑ Capricornio'], ['Notas', 'Hay una carta de su pareja guardada para comparar.']],
         sol: [['Año', 'Revolución solar 2026–2027'], ['Ascendente del año', 'Géminis'], ['Tema central', 'Vínculos y compromisos.']], inf: ['Mapa de sinastría', 'Documento con la comparación de ambas cartas.'] } },
       { hora: '16:00', n: 'Jorge M.', st: 'Firma pendiente', meta: 'Presencial · Sesión 3', d: {
         ses: [['Motivo', 'Elegir fecha para abrir su negocio.'], ['Lo trabajado', 'Astrología electiva: tres fechas posibles en diciembre.'], ['Para la próxima', 'Decidir la fecha y revisar la Luna fuera de curso.']],
-        nat: [['Nacimiento', '21 de enero de 1985 · 3:05 p. m. · Barranquilla'], ['Sol · Luna · Ascendente', 'Acuario · Tauro · Libra'], ['Notas', 'Júpiter transita su casa 2.']],
+        nat: [['Nacimiento', '21 de enero de 1985 · 3:05 p. m. · Barranquilla'], ['☉ Sol · ☽ Luna · AC Ascendente', '♒ Acuario · ♉ Tauro · ♎ Libra'], ['Notas', '♃ Júpiter transita su casa 2.']],
         sol: [['Año', 'Revolución solar 2026–2027'], ['Ascendente del año', 'Leo'], ['Tema central', 'Ingresos y proyectos propios.']], inf: ['Fechas electivas', 'Se envió el consentimiento por enlace: falta su firma.'] } } ] },
     { id: 'crianza', n: 'Crianza', tabs: [['ses', 'Sesión'], ['fam', 'Familia'], ['acu', 'Acuerdos', 'chq'], ['inf', 'Informes', 'inf']], citas: [
       { hora: '9:00', n: 'Familia Rojas', st: 'Confirmó', meta: 'Presencial · Sesión 5', d: {
@@ -94,6 +94,14 @@
   if (!lista || !tabs || !panel) return;
   let pr = P[0], cita = pr.citas[1], tab = 'ses';
   const el = (tag, cls, txt) => { const x = document.createElement(tag); if (cls) x.className = cls; if (txt != null) x.textContent = txt; return x; };
+  const rueda = () => { const n = 'http://www.w3.org/2000/svg', g = '♈♉♊♋♌♍♎♏♐♑♒♓', v = document.createElementNS(n, 'svg'); v.setAttribute('viewBox', '0 0 100 100'); v.setAttribute('width', 64); v.setAttribute('height', 64); v.setAttribute('aria-hidden', 'true');
+    const add = (t, a) => { const e = document.createElementNS(n, t); for (const k in a) e.setAttribute(k, a[k]); v.append(e); return e; };
+    add('circle', { cx: 50, cy: 50, r: 47, fill: '#fff', stroke: '#2F4F3E', 'stroke-width': 2 }); add('circle', { cx: 50, cy: 50, r: 30, fill: 'none', stroke: '#7C9A86' });
+    [...g].forEach((c, i) => { const a = (i * 30 + 15) * Math.PI / 180, t = add('text', { x: 50 + 38.5 * Math.cos(a), y: 50 + 38.5 * Math.sin(a) + 3, 'text-anchor': 'middle', 'font-size': 8, fill: '#2F4F3E' }); t.textContent = c; });
+    [[20, 62], [75, 35], [55, 78], [40, 28]].forEach(([x, y]) => add('circle', { cx: x, cy: y, r: 2, fill: '#C0654A' })); add('path', { d: 'M20 62L75 35L55 78Z', fill: 'none', stroke: '#C0654A', 'stroke-width': .8 }); return v; };
+  const adjuntos = () => { const d = el('div', 'demo-field'), r = el('div', 'demo-adj'), f = el('figure'); f.append(rueda(), el('figcaption', '', 'carta-natal.png'));
+    const f2 = el('figure'); f2.append(rueda(), el('figcaption', '', 'transitos-2026.jpg')); const b = el('span', 'demo-subir', '＋ Subir imagen'); r.append(f, f2, b);
+    d.append(el('b', '', 'Imágenes adjuntas'), r, el('p', 'demo-hint', 'Puede subir la carta de su programa de astrología u otras imágenes y verlas junto a la ficha.')); return d; };
   const campo = (t, v) => { const d = el('div', 'demo-field'); d.append(el('b', '', t), el('p', '', v)); return d; };
   function pintaProf() {
     if (!prof) return;
@@ -128,7 +136,7 @@
       nodes.push(el('p', 'demo-hint', 'Chequeos sencillos: cada vez se guardan para comparar el recorrido.'));
       panel.replaceChildren(...nodes);
     } else if (tp === 'inf') panel.replaceChildren(campo(dat[0], dat[1]));
-    else panel.replaceChildren(...dat.map(([t, v]) => campo(t, v)));
+    else { const n = dat.map(([t, v]) => campo(t, v)); if (pr.id === 'astro' && tab === 'nat') n.push(adjuntos()); panel.replaceChildren(...n); }
   }
   function pinta() { $('d-nombre').textContent = cita.n; $('d-meta').textContent = cita.hora + ' · ' + cita.meta + ' · datos de ejemplo'; pintaProf(); pintaCitas(); pintaTabs(); pintaPanel(); }
   pinta();
