@@ -135,8 +135,10 @@ def test_signed_documents_are_immutable():
     assert c.put("/api/records/p_1", json={**add, "consents": []}).status_code == 409
     # datos sociodemográficos sí se pueden corregir
     assert c.put("/api/records/p_1", json={**add, "telefono": "300"}).status_code == 200
-    # notas: deben guardarse firmadas, no se editan ni se borran
-    assert c.put("/api/records/n_1", json={"id": "n_1", "kind": "note", "patientId": "p_1", "tema": "x"}).status_code == 400
+    # notas: admiten borrador (se edita y se borra); firmada, no se edita ni se borra
+    draft = {"id": "n_1", "kind": "note", "patientId": "p_1", "tema": "x"}
+    assert c.put("/api/records/n_1", json=draft).status_code in (200, 204)
+    assert c.put("/api/records/n_1", json={**draft, "tema": "x2"}).status_code in (200, 204)
     note = {"id": "n_1", "kind": "note", "patientId": "p_1", "tema": "x", "signedAt": NOW, "addenda": []}
     assert c.put("/api/records/n_1", json=note).status_code in (200, 204)
     assert c.put("/api/records/n_1", json={**note, "tema": "y"}).status_code == 409

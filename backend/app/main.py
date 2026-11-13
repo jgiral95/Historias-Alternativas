@@ -818,7 +818,7 @@ def _check_immutable(kind: str, old: dict | None, new: dict) -> None:
     if kind == "file" and old is not None and old != new:
         raise HTTPException(409, "Un adjunto no se puede modificar")
     if kind in ("note", "report", "scale"):
-        if old is None and not new.get("signedAt"):
+        if kind == "scale" and old is None and not new.get("signedAt"):  # notas e informes admiten borrador
             raise HTTPException(400, "El documento debe guardarse firmado")
         if kind == "note" and new.get("signedAt") and not (old or {}).get("signedAt"):
             _check_dx(new)
