@@ -56,7 +56,7 @@ ACT.survey = () => {
     <div class="fld"><label for="sv_intro">Texto de bienvenida</label><textarea id="sv_intro" rows="2">${esc(cfg.intro)}</textarea></div>
     <div class="row" style="justify-content:space-between"><b>Preguntas (${cfg.preguntas.length})</b><span class="row"><button class="btn sm" data-sv="preview">${preview ? 'Editar preguntas' : 'Ver como consultante'}</button><button class="btn sm" data-sv="reset">Restaurar sugeridas</button></span></div>
     ${preview ? svFormHTML(cfg.preguntas, true) : cfg.preguntas.map((q, k) => `<div class="card svq"><div class="row" style="margin:0"><span class="dragh" draggable="true" data-dk="q" data-dv="${k}" title="Arrastre para cambiar el orden" aria-hidden="true">⠿</span><span class="stnote" style="margin:0">Arrastre para cambiar el orden</span></div><div class="grid"><div class="fld"><label>Dimensión</label><input data-q="dim" value="${esc(q.dim)}"></div><div class="fld"><label>Tipo de respuesta</label><select data-q="tipo">${Object.keys(SV_TYPES).map(t => `<option value="${t}" ${q.tipo === t ? 'selected' : ''}>${SV_TIPO_LBL[t]}</option>`).join('')}</select></div><div class="fld wide"><label>Pregunta ${k + 1}</label><input data-q="texto" value="${esc(q.texto)}"></div></div>
-      <div class="row end">${k ? `<button class="btn sm" data-sv="up" data-k="${k}" aria-label="Subir pregunta ${k + 1}">↑</button>` : ''}${k < cfg.preguntas.length - 1 ? `<button class="btn sm" data-sv="down" data-k="${k}" aria-label="Bajar pregunta ${k + 1}">↓</button>` : ''}<button class="btn sm warn" data-sv="del" data-k="${k}">Quitar</button></div></div>`).join('') + '<div class="row"><button class="btn" data-sv="add">+ Pregunta</button></div>'}
+      <div class="row end"><button class="btn sm warn" data-sv="del" data-k="${k}">Quitar</button></div></div>`).join('') + '<div class="row"><button class="btn" data-sv="add">+ Pregunta</button></div>'}
     <p style="margin:0;font-size:13px;color:var(--muted)">Los cambios en las preguntas aplican a las encuestas que se envíen desde ahora. Último sorteo: ${st.ultimoSorteo ? esc(fmtDT(st.ultimoSorteo)) : 'ninguno'}.</p>
     <details class="sec" id="svtest" ${testOpen ? 'open' : ''}><summary>Enviar una encuesta de prueba</summary>
       <p style="margin:6px 0;font-size:13px;color:var(--muted)">Llega al correo que escriba, enviada desde su correo de envío, con las preguntas guardadas. Puede responderla para ver cómo funciona: en Estadísticas aparece solo si marca «Incluir las respuestas de prueba». Guarde antes los cambios a las preguntas.</p>
@@ -64,6 +64,7 @@ ACT.survey = () => {
     <div class="row end"><button class="btn" data-sv="draw">Guardar y sortear ahora</button><button class="btn pri" data-sv="save">Guardar</button></div></div></div>`;
   };
   draw();
+  window.__svMove = (i, j) => { if (!root.querySelector('.svq') || i === j || !cfg.preguntas[i] || !cfg.preguntas[j]) return; sync(); cfg.preguntas.splice(j, 0, cfg.preguntas.splice(i, 1)[0]); draw(); };  // arrastrar para ordenar
   root.onclick = async e => {
     const b = e.target.closest('[data-sv]'); if (!b) return;
     const a = b.dataset.sv, k = +b.dataset.k;
@@ -94,7 +95,6 @@ ACT.survey = () => {
     if (a === 'reset') { cfg.preguntas = clone(SV_DEFAULT); return draw(); }
     if (a === 'add') { cfg.preguntas.push({ id: 'q' + Math.random().toString(36).slice(2, 8), dim: 'General', texto: '', tipo: 'escala' }); draw(); const ins = $$('[data-q="texto"]'); ins[ins.length - 1].focus(); return; }
     if (a === 'del') { cfg.preguntas.splice(k, 1); return draw(); }
-    if (a === 'up' || a === 'down') { const j = a === 'up' ? k - 1 : k + 1; [cfg.preguntas[k], cfg.preguntas[j]] = [cfg.preguntas[j], cfg.preguntas[k]]; return draw(); }
     if (a === 'save' || a === 'draw') {
       cfg.preguntas = cfg.preguntas.filter(q => q.texto);
       if (!cfg.preguntas.some(q => q.tipo !== 'texto')) { toast('La encuesta necesita al menos una pregunta con opciones.'); return; }

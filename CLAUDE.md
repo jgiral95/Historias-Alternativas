@@ -41,6 +41,7 @@ FastAPI + SQLAlchemy. `main.py` (endpoints; registros cifrados por tipo: profile
 | Equipo | `equipo_e2e.js`, `test_team.py` |
 | Celular / diseño | `movil_e2e.js` |
 | Navegación «Atrás» | `navegacion_e2e.js` |
+| Arrastrar para ordenar (Mis formatos) | `orden_e2e.js` |
 | Notas de proceso / a mano | `notas_proceso_e2e.js`, `mano_e2e.js` |
 | Idioma EN | `i18n_e2e.js` (lista el español sin traducir), `publicas_i18n_e2e.js`, `test_traduccion.py` |
 | Reservas por enlace | `test_booking.py` |

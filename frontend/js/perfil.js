@@ -276,11 +276,10 @@ const secList = () => ED[ED.which === 'datos' ? 'datos' : String(ED.which).start
 const edInit = (val, attr, label) => `<details class="edinit" ${val ? 'open' : ''}><summary>Texto inicial${val ? '' : ' (opcional)'}</summary><textarea ${attr} rows="2" aria-label="Texto inicial de ${esc(label)}" placeholder="Lo que este campo trae escrito en cada nota nueva">${esc(val || '')}</textarea></details>`;
 const CAMPO_TIPOS = [['', 'Texto'], ['date', 'Fecha'], ['time', 'Hora'], ['number', 'Número']];
 function edField(f, path, noSize) {
-  return `<div class="edfw"><div class="edf"><span class="dragh" draggable="true" data-dk="f" data-dv="${path}" title="Arrastre para cambiar el orden" aria-hidden="true">⠿</span><input type="text" data-fm-l="${path}" value="${esc(f.l)}" maxlength="120" aria-label="Nombre del campo">${noSize ? `<select data-fm-tp="${path}" aria-label="Tipo de campo">${CAMPO_TIPOS.map(([v, n]) => `<option value="${v}" ${(f.tp || '') === v ? 'selected' : ''}>${n}</option>`).join('')}</select>` : `<select data-fm-r="${path}" aria-label="Tamaño">${ROWS.map(([v, n]) => `<option value="${v}" ${[2, 3, 5].reduce((a, x) => Math.abs(x - (+f.r || 3)) < Math.abs(a - (+f.r || 3)) ? x : a, 3) === v ? 'selected' : ''}>${n}</option>`).join('')}</select>`}
-  <button class="btn sm" data-fm="fup:${path}" aria-label="Subir">↑</button><button class="btn sm" data-fm="fdn:${path}" aria-label="Bajar">↓</button><button class="btn sm warn" data-fm="fdel:${path}" aria-label="Quitar campo">✕</button></div>${noSize ? '' : edInit(f.d, `data-fm-d="${path}"`, f.l)}</div>`;
+  return `<div class="edfw"><div class="edf"><span class="dragh" draggable="true" data-dk="f" data-dv="${path}" title="Arrastre para cambiar el orden" aria-hidden="true">⠿</span><input type="text" data-fm-l="${path}" value="${esc(f.l)}" maxlength="120" aria-label="Nombre del campo">${noSize ? `<select data-fm-tp="${path}" aria-label="Tipo de campo">${CAMPO_TIPOS.map(([v, n]) => `<option value="${v}" ${(f.tp || '') === v ? 'selected' : ''}>${n}</option>`).join('')}</select>` : `<select data-fm-r="${path}" aria-label="Tamaño">${ROWS.map(([v, n]) => `<option value="${v}" ${[2, 3, 5].reduce((a, x) => Math.abs(x - (+f.r || 3)) < Math.abs(a - (+f.r || 3)) ? x : a, 3) === v ? 'selected' : ''}>${n}</option>`).join('')}</select>`}<button class="btn sm warn" data-fm="fdel:${path}" aria-label="Quitar campo">✕</button></div>${noSize ? '' : edInit(f.d, `data-fm-d="${path}"`, f.l)}</div>`;
 }
 function secCard(sc, si, isDatos) {
-  const head = `<div class="edf"><span class="dragh" draggable="true" data-dk="s" data-dv="${si}" title="Arrastre para cambiar el orden" aria-hidden="true">⠿</span><input type="text" data-fm-t="${si}" value="${esc(sc.t)}" maxlength="120" aria-label="Título del apartado" style="font-weight:600"><button class="btn sm" data-fm="sup:${si}" aria-label="Subir apartado">↑</button><button class="btn sm" data-fm="sdn:${si}" aria-label="Bajar apartado">↓</button><button class="btn sm warn" data-fm="sdel:${si}" aria-label="Quitar apartado">✕</button></div>`;
+  const head = `<div class="edf"><span class="dragh" draggable="true" data-dk="s" data-dv="${si}" title="Arrastre para cambiar el orden" aria-hidden="true">⠿</span><input type="text" data-fm-t="${si}" value="${esc(sc.t)}" maxlength="120" aria-label="Título del apartado" style="font-weight:600"><button class="btn sm warn" data-fm="sdel:${si}" aria-label="Quitar apartado">✕</button></div>`;
   if (sc.img) return `<div class="card">${head}<p style="margin:0;font-size:13px;color:var(--muted)">Apartado de imagen: el terapeuta sube una imagen de su computador en cada ficha. Quítelo con ✕ si no lo usa.</p></div>`;
   if (sc.g && !sc.fs.length) return `<div class="card">${head}<p style="margin:0;font-size:13px;color:var(--muted)">Apartado de genograma: espacio para dibujarlo o subir una imagen. Quítelo con ✕ si no lo usa.</p></div>`;
   const body = sc.fs.length ? sc.fs.map((f, fi) => edField(f, si + '.' + fi, isDatos)).join('') : `<p style="margin:0;font-size:13px;color:var(--muted)">Solo título: se escribe en un único espacio, sin subtítulos. Use «+ Campo» si quiere dividirlo.</p>${isDatos ? '' : edInit(sc.soloD, `data-fm-sd="${si}"`, sc.t)}`;
@@ -346,12 +345,8 @@ ACT.formats = b => {
     else if (op === 'gadd') { if (ED.which === 'intake' || !L) ED.intake.push({ t: 'Genograma', g: true, fs: [] }); else L.push({ t: 'Genograma', g: true, fs: [] }); }
     else if (op === 'iadd') { if (L.length >= 15) return toast('Máximo 15 apartados.'); L.push({ t: 'Imagen', g: false, img: true, fs: [], soloKey: 'i' + newKey(), soloR: 1 }); }
     else if (op === 'gdel') { const sc = L[+arg]; sc.g = false; }
-    else if (op === 'sup') edMove(L, +arg, -1);
-    else if (op === 'sdn') edMove(L, +arg, 1);
     else if (op === 'sdel') { L.splice(+arg, 1); }
     else if (op === 'fadd') { const l = arg === '' ? ED.evol : L[+arg].fs; if (l.length >= 25) return toast('Máximo 25 campos.'); l.push({ k: newKey(), l: 'Nuevo campo', r: 3 }); }
-    else if (op === 'fup') edMove(edList(arg), edIdx(arg), -1);
-    else if (op === 'fdn') edMove(edList(arg), edIdx(arg), 1);
     else if (op === 'fdel') { const l = edList(arg); if (l.length < 2 && arg !== '' && arg.includes('.') === false) return toast('Debe quedar al menos un campo.'); l.splice(edIdx(arg), 1); }
     else if (op === 'reset') { const d = edFrom(clone(INTAKE), clone(NOTE_FIELDS), []); ED[ED.which] = d[ED.which] || []; }
     else if (op === 'save') return saveFormats();
@@ -388,7 +383,7 @@ function saveFormats() {
 /* Pestañas de la ficha: renombrar, ocultar y crear propias (texto libre por consultante). */
 let TM = null;
 const tabsDraw = () => {
-  const root = $('#modal-root'), prevM = root.querySelector('.modal'), top = prevM ? prevM.scrollTop : 0, row = (id, n, hid, ex) => `<div class="edf">${ex ? '<span class="dragh" draggable="true" data-dk="t" data-dv="${id}" title="Arrastre para cambiar el orden" aria-hidden="true">⠿</span>' : ''}<input type="text" data-tm-n="${id}" value="${esc(n)}" maxlength="60" placeholder="Nueva pestaña" aria-label="Nombre de la pestaña">${id === 'datos' ? '<span class="chip">Siempre visible</span>' : ex ? `<button class="btn sm" data-tm="mod:${id}" title="Una sola vez: datos que casi no cambian. Por sesión: se agrega una entrada con fecha en cada encuentro.">${(TM.extra.find(y => y.id === id) || {}).modo === 'sesion' ? 'Por sesión' : 'Una sola vez'} · cambiar</button><button class="btn sm" data-tm="up:${id}" aria-label="Subir pestaña" title="Mover antes">↑</button><button class="btn sm" data-tm="dn:${id}" aria-label="Bajar pestaña" title="Mover después">↓</button><button class="btn sm warn" data-tm="del:${id}">Borrar</button>` : `<button class="btn sm ${hid ? '' : 'pri'}" data-tm="hid:${id}">${hid ? 'Oculta · mostrar' : 'Visible · ocultar'}</button>`}</div>`;
+  const root = $('#modal-root'), prevM = root.querySelector('.modal'), top = prevM ? prevM.scrollTop : 0, row = (id, n, hid, ex) => `<div class="edf">${ex ? `<span class="dragh" draggable="true" data-dk="t" data-dv="${id}" title="Arrastre para cambiar el orden" aria-hidden="true">⠿</span>` : ''}<input type="text" data-tm-n="${id}" value="${esc(n)}" maxlength="60" placeholder="Nueva pestaña" aria-label="Nombre de la pestaña">${id === 'datos' ? '<span class="chip">Siempre visible</span>' : ex ? `<button class="btn sm" data-tm="mod:${id}" title="Una sola vez: datos que casi no cambian. Por sesión: se agrega una entrada con fecha en cada encuentro.">${(TM.extra.find(y => y.id === id) || {}).modo === 'sesion' ? 'Por sesión' : 'Una sola vez'} · cambiar</button><button class="btn sm warn" data-tm="del:${id}">Borrar</button>` : `<button class="btn sm ${hid ? '' : 'pri'}" data-tm="hid:${id}">${hid ? 'Oculta · mostrar' : 'Visible · ocultar'}</button>`}</div>`;
   root.innerHTML = `<div class="modal" role="dialog" aria-modal="true" aria-label="Mis formatos"><div class="box"><div class="row mfhead" style="justify-content:space-between"><h3 style="flex:1">Mis formatos</h3><button class="btn sm pri" data-tm="save">Guardar</button><button class="btn sm" data-tm="close">Cerrar</button></div>${hubTabs('pestanas')}
   <p style="margin:0;font-size:13px;color:var(--muted)">Cree las pestañas de la ficha del consultante. Para cada pestaña nueva elija «Una sola vez» (datos que casi no cambian, como los del consultante) o «Por sesión» (una entrada con fecha en cada encuentro).</p>
   <h4 style="margin:12px 0 4px">Pestañas de la ficha</h4>
@@ -411,7 +406,6 @@ function tabsManage() {
     else if (op === 'coach') coachAdd(arg);
     else if (op === 'cria') crianzaAdd(arg);
     else if (op === 'del') TM.extra = TM.extra.filter(x => x.id !== arg);
-    else if (op === 'up' || op === 'dn') { const i = TM.extra.findIndex(x => x.id === arg), j = i + (op === 'up' ? -1 : 1); if (i >= 0 && j >= 0 && j < TM.extra.length) [TM.extra[i], TM.extra[j]] = [TM.extra[j], TM.extra[i]]; }
     else if (op === 'add') { if (TM.extra.length >= 30) return toast('Máximo 30 pestañas nuevas.'); TM.extra.push({ id: 'x_' + newKey(), nombre: '', modo: 'unica', secs: [] }); }
     else if (op === 'save') {
       const nombres = Object.fromEntries(Object.entries(TM.nombres).map(([k, v]) => [k, v.trim()]).filter(([, v]) => v));
@@ -478,7 +472,7 @@ function finishFormats() {
 }
 
 
-/* Arrastrar para ordenar (con el mouse): usa los mismos botones ↑ ↓ de cada lista, un paso a la vez. Pestañas propias, apartados y campos. */
+/* Arrastrar para ordenar (con el mouse): pestañas propias, apartados, campos y preguntas de la encuesta; y las listas del perfil (LISTAS). */
 const LISTAS = {  // listas de Mis formatos que se guardan en el perfil: clave → dónde están y cómo se vuelven a dibujar
   plt: { get: () => myTemplates(), set: l => { S.profile.plantillas = l; }, id: x => x.id, redraw: () => ACT.tplManage() },
   cons: { get: () => myConsents(), set: l => { S.profile.consentimientos = l; delete S.profile.consentimiento; }, id: x => x.id, redraw: () => ACT.consentManage() },
@@ -506,13 +500,11 @@ async function moverLista(L, from, to) {
     e.preventDefault(); const k = drag.dataset.dk, from = drag.dataset.dv, to = t.dataset.dv; drag = null; clear();
     if (LISTAS[k]) return moverLista(LISTAS[k], from, to);
     const hs = [...root().querySelectorAll('.dragh')].filter(h => h.dataset.dk === k && key(h) === key(t)).map(h => h.dataset.dv);
-    const n = hs.indexOf(to) - hs.indexOf(from), up = n < 0;
-    const btn = v => root().querySelector({ t: `[data-tm="${up ? 'up' : 'dn'}:${v}"]`, s: `[data-fm="${up ? 'sup' : 'sdn'}:${v}"]`, f: `[data-fm="${up ? 'fup' : 'fdn'}:${v}"]`, q: `[data-sv="${up ? 'up' : 'down'}"][data-k="${v}"]` }[k]);
-    let cur = from;
-    for (let i = 0; i < Math.abs(n); i++) {
-      const b = btn(cur); if (!b) break; b.click();
-      if (k === 'f') { const pre = cur.includes('.') ? cur.slice(0, cur.lastIndexOf('.') + 1) : ''; cur = pre + (+cur.split('.').pop() + (up ? -1 : 1)); }
-      else if (k !== 't') cur = String(+cur + (up ? -1 : 1));
-    }
+    if (hs.indexOf(from) < 0 || hs.indexOf(to) < 0) return;
+    const mv = (arr, i, j) => { if (i >= 0 && j >= 0 && i !== j) arr.splice(j, 0, arr.splice(i, 1)[0]); };
+    if (k === 'f') { mv(edList(from), edIdx(from), edIdx(to)); drawFormats(); }
+    else if (k === 's') { mv(secList(), +from, +to); drawFormats(); }
+    else if (k === 't') { mv(TM.extra, TM.extra.findIndex(x => x.id === from), TM.extra.findIndex(x => x.id === to)); tabsDraw(); }
+    else if (k === 'q' && window.__svMove) window.__svMove(+from, +to);
   });
 })();
