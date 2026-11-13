@@ -28,6 +28,13 @@ let bad = 0; const ok = (c, m) => { console.log((c ? 'OK   ' : 'FALLA') + ' ' + 
   ok(c.some(t => t.includes('☾')), 'un símbolo copiado con espacio o carácter invisible también se encuentra');
   const l2 = await buscar('luna');
   ok(l2.some(t => t.includes('☾')), 'luna encuentra ☾');
+  await buscar('virgo');
+  const todo = await page.locator('.hits .hit').count(), nf = await page.locator('.hitf .chip').count();
+  await page.click('.hitf .chip:has-text("Carta Natal")'); await page.waitForTimeout(200);
+  const fil = await page.evaluate(() => [...document.querySelectorAll('.hits .hit .sub')].map(e => e.textContent));
+  ok(nf > 2 && fil.length > 0 && fil.length < todo && fil.every(t => /Carta Natal/.test(t)), 'filtro por sección (nombre de «Mis formatos»): ' + JSON.stringify(fil));
+  await page.click('.hitf .chip:has-text("Todo")'); await page.waitForTimeout(200);
+  ok(await page.locator('.hits .hit').count() === todo, '«Todo» quita el filtro');
   ok(errors.length === 0, 'sin errores de JavaScript' + (errors.length ? ': ' + errors[0] : ''));
   await b.close(); process.exit(bad);
 })().catch(e => { console.error(e); process.exit(1); });

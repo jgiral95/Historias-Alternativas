@@ -512,3 +512,5 @@ body:has(#fb-root .fbbtn) .modal{padding-bottom:84px}
 .ustat b.ok{color:#2F6B4A}.ustat b.warn{color:#B4541F}
 
 .fld .rq{color:#b3261e;font-weight:700}
+
+.hitf{display:flex;flex-wrap:wrap;gap:6px;padding:4px 10px 8px}.hitf .chip{cursor:pointer;border:1px solid var(--line,#d8d3c8);background:#fff;font:inherit;font-size:12px;padding:3px 10px;border-radius:99px}.hitf .chip.on{background:#2F4A3A;color:#fff;border-color:#2F4A3A}

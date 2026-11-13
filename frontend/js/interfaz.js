@@ -172,10 +172,18 @@ function searchNotes(q) {
 }
 function hitsHTML(q) {
   if (qAlts(q).every(a => a.length < 3)) return '';
-  const hs = searchNotes(q);
-  if (!hs.length) return '';
-  return `<div class="hits"><div class="hits-h">En las notas (${hs.length})</div>${hs.slice(0, 30).map(h => `<button class="prow hit" data-act="openHit" data-id="${h.p.id}" data-tab="${h.tab}" data-rec="${esc(h.rec)}"><span><div class="nm">${esc(fullName(h.p))}</div><div class="sub">${esc(h.label)}</div><div class="snip">${esc(h.pre)}<mark>${esc(h.m)}</mark>${esc(h.post)}</div></span></button>`).join('')}</div>`;
+  const all = searchNotes(q).map(h => Object.assign(h, { sec: h.label === 'Cita' ? 'cita' : h.tab }));
+  if (!all.length) return '';
+  // Filtros: las secciones de «Mis formatos» (con sus nombres propios) que tienen resultados
+  const c = tabsConf(), nm = c.nombres || {}, oc = c.ocultas || [];
+  const secs = TABS.filter(([k]) => !oc.includes(k)).map(([k, l]) => [k, nm[k] || l]).concat((c.extra || []).map(x => [x.id, x.nombre]), [['pnote', 'Notas de proceso'], ['cita', 'Citas']]);
+  const cnt = k => all.filter(h => h.sec === k).length, chips = secs.filter(([k]) => cnt(k));
+  if (S.qf && !chips.some(x => x[0] === S.qf)) S.qf = '';
+  const hs = S.qf ? all.filter(h => h.sec === S.qf) : all;
+  const bar = chips.length > 1 ? `<div class="hitf" role="group" aria-label="Filtrar por sección"><button type="button" class="chip${S.qf ? '' : ' on'}" data-act="hitFiltro" data-k=""><span>Todo</span> (${all.length})</button>${chips.map(([k, l]) => `<button type="button" class="chip${S.qf === k ? ' on' : ''}" data-act="hitFiltro" data-k="${esc(k)}"><span>${esc(l)}</span> (${cnt(k)})</button>`).join('')}</div>` : '';
+  return `<div class="hits"><div class="hits-h">En las notas (${hs.length})</div>${bar}${hs.slice(0, 30).map(h => `<button class="prow hit" data-act="openHit" data-id="${h.p.id}" data-tab="${h.tab}" data-rec="${esc(h.rec)}"><span><div class="nm">${esc(fullName(h.p))}</div><div class="sub">${esc(h.label)}</div><div class="snip">${esc(h.pre)}<mark>${esc(h.m)}</mark>${esc(h.post)}</div></span></button>`).join('')}</div>`;
 }
+ACT.hitFiltro = b => { S.qf = b.dataset.k; $('#rows').innerHTML = rowsHTML(); };
 ACT.openHit = b => {
   if (b.dataset.tab === 'pnote') return ACT.pnOpen({ dataset: { id: b.dataset.rec } });
   ACT.open(b);
