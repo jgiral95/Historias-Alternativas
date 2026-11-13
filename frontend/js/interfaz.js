@@ -122,9 +122,15 @@ function prowHTML(p) {
   return `<button class="prow ${p.id === S.pid ? 'on' : ''}" data-act="open" data-id="${p.id}"><span class="dot ${p.estado === 'En pausa' ? 'pausa' : isClosed(p) ? 'alta' : ''}"></span><span><div class="nm">${esc(fullName(p))}${p.demo ? ' <span class="chip" style="font-size:10px">Ejemplo</span>' : ''}</div><div class="sub">${esc(p.documento || 'sin documento')}${st.last ? ' · últ. ' + esc(fmtD(st.last).replace(/ de /g, ' ')) : ''}</div></span></button>`;
 }
 const norm = v => String(v || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+/* Búsqueda de símbolos: «virgo» también encuentra ♍ y ♍ también encuentra «virgo» (nombres del banco de símbolos, simbolos.js). */
+function qAlts(q) {
+  const t = String(q || '').replace(/\uFE0E/g, ''), n = norm(t).trim(), out = [norm(t)];
+  SIMBOLOS.forEach(([, l]) => l.forEach(([c, nom]) => { if (n === norm(nom)) out.push(c); else if (t.includes(c)) out.push(norm(t.split(c).join(nom))); }));
+  return out;
+}
 function searchNotes(q) {
-  const nq = norm(q), hits = [];
-  const add = (p, tab, rec, label, txt) => { const nt = norm(txt), i = nt.indexOf(nq); if (i < 0) return; const a = Math.max(0, i - 40), raw = String(txt); hits.push({ p, tab, rec, label, pre: (a ? '…' : '') + raw.slice(a, i), m: raw.slice(i, i + q.length), post: raw.slice(i + q.length, i + q.length + 60) + (i + q.length + 60 < raw.length ? '…' : '') }); };
+  const alts = qAlts(q), hits = [];
+  const add = (p, tab, rec, label, txt) => { const nt = norm(txt); let i = -1, n = 0; alts.forEach(a => { const k = a ? nt.indexOf(a) : -1; if (k >= 0 && (i < 0 || k < i)) { i = k; n = a.length; } }); if (i < 0) return; const a = Math.max(0, i - 40), raw = String(txt); hits.push({ p, tab, rec, label, pre: (a ? '…' : '') + raw.slice(a, i), m: raw.slice(i, i + n), post: raw.slice(i + n, i + n + 60) + (i + n + 60 < raw.length ? '…' : '') }); };
   S.patients.forEach(p => {
     const i = p.intake; if (i && i.signedAt) { intakeSchema(i).forEach(([t, fs]) => fs.forEach(f => add(p, 'intake', '', 'Primera vez', i[f[0]]))); (i.diagnosticos || []).forEach(d => add(p, 'intake', '', 'Impresión', d.codigo + ' ' + d.nombre)); }
     (p.cierres || []).forEach(c => CIERRE_FIELDS.forEach(f => add(p, 'cierre', '', 'Cierre ' + fmtD(c.fecha), c[f[0]])));
@@ -145,7 +151,7 @@ function searchNotes(q) {
   return hits.filter(h => { const k = h.p.id + h.tab + h.rec + h.label; if (seen.has(k)) return false; seen.add(k); return true; });
 }
 function hitsHTML(q) {
-  if (norm(q).length < 3) return '';
+  if (qAlts(q).every(a => a.length < 3)) return '';
   const hs = searchNotes(q);
   if (!hs.length) return '';
   return `<div class="hits"><div class="hits-h">En las notas (${hs.length})</div>${hs.slice(0, 30).map(h => `<button class="prow hit" data-act="openHit" data-id="${h.p.id}" data-tab="${h.tab}" data-rec="${esc(h.rec)}"><span><div class="nm">${esc(fullName(h.p))}</div><div class="sub">${esc(h.label)}</div><div class="snip">${esc(h.pre)}<mark>${esc(h.m)}</mark>${esc(h.post)}</div></span></button>`).join('')}</div>`;
@@ -219,8 +225,8 @@ function sessionRows() {
 function nlFilter(rows) {
   const now = new Date(), y = now.getFullYear(), m = now.getMonth();
   const from = { '7': new Date(now - 7 * 864e5), '30': new Date(now - 30 * 864e5), mes: new Date(y, m, 1), mesant: new Date(y, m - 1, 1), anio: new Date(y, 0, 1) }[NL.per];
-  const to = NL.per === 'mesant' ? new Date(y, m, 1) : null, q = norm(NL.q.trim());
-  return rows.filter(r => (!from || new Date(r.at) >= from) && (!to || new Date(r.at) < to) && (!NL.tipo || r.tipo === NL.tipo) && (!q || norm(r.name + ' ' + r.text).includes(q)));
+  const to = NL.per === 'mesant' ? new Date(y, m, 1) : null, q = qAlts(NL.q.trim());
+  return rows.filter(r => (!from || new Date(r.at) >= from) && (!to || new Date(r.at) < to) && (!NL.tipo || r.tipo === NL.tipo) && (!NL.q.trim() || q.some(a => a && norm(r.name + ' ' + r.text).includes(a))));
 }
 /* Por defecto, una fila por paciente: su nota más reciente entre las que cumplen los filtros. */
 function latestPerPatient(rows) {
