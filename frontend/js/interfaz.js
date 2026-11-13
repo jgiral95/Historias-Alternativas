@@ -124,7 +124,7 @@ function prowHTML(p) {
 const norm = v => String(v || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
 /* Búsqueda de símbolos: «virgo» también encuentra ♍ y ♍ también encuentra «virgo» (nombres del banco de símbolos, simbolos.js).
    Los símbolos de un mismo astro se buscan juntos (☽ ☾ 🌙 y «luna»; ☉ ☀ y «sol») y los nombres con o sin tilde. */
-const SIM_VAR = { '☽': ['☾', '🌙', '🌛', '🌜'], '☉': ['☀', '⊙', '☼', '🌞'], '♅': ['⛢'], '♇': ['⯓'], '⚹': ['✶', '✱'], '☊': ['☋'] };
+const SIM_VAR = { '☽': ['☾', '☪', '🌑', '🌒', '🌓', '🌔', '🌕', '🌖', '🌗', '🌘', '🌙', '🌚', '🌛', '🌜'], '☉': ['☀', '⊙', '☼', '🌞'], '♅': ['⛢'], '♇': ['⯓'], '⚹': ['✶', '✱'], '☊': ['☋'] };
 function simGrupos() {
   const g = [];
   SIMBOLOS.forEach(([, l]) => l.forEach(([c, nom]) => g.push({ ch: [c], nm: [norm(nom)] })));
