@@ -47,15 +47,15 @@ EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 
 
 def fields(fmt: dict | None) -> list[tuple]:
-    """Campos del formulario: el nombre (siempre) y los campos de los apartados de «Datos del consultante» (Mis formatos)
-    que el terapeuta marcó (formatos.formulario); si nunca eligió, todos. (clave, etiqueta, tipo, opciones, obligatorio, sección)."""
+    """Campos del formulario: solo los de los apartados de «Datos del consultante» (Mis formatos) que el terapeuta marcó
+    (formatos.formulario); si nunca eligió, todos. Todos son obligatorios. (clave, etiqueta, tipo, opciones, obligatorio, sección)."""
     sel = (fmt or {}).get("formulario")
     sel = set(map(str, sel)) if isinstance(sel, list) else None
-    out = [(k, l, t, o, r, "Identificación") for k, l, t, o, r in FIELDS if k == "nombres"]
+    out = []
     for sc in (fmt or {}).get("datos") or []:
         try:
             titulo, fs = str(sc[0]), sc[1]
-            out += [(str(x[0]), str(x[1] or titulo)[:120], "text", None, False, titulo[:120]) for x in fs if re.match(r"^[A-Za-z0-9_-]{1,40}$", str(x[0])) and (sel is None or str(x[0]) in sel)]
+            out += [(str(x[0]), str(x[1] or titulo)[:120], "text", None, True, titulo[:120]) for x in fs if re.match(r"^[A-Za-z0-9_-]{1,40}$", str(x[0])) and (sel is None or str(x[0]) in sel)]
         except (IndexError, TypeError):
             continue
     return out

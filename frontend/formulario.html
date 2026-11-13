@@ -93,7 +93,7 @@ const field = c => {
 };
 function form() {
   card(head() + `<form id="f" class="btns" autocomplete="off" novalidate><div id="err" role="alert"></div><div class="fs">${d.campos.map(field).join('')}</div>
-    <p class="muted">Los campos con <span class="req">*</span> son obligatorios. Solo se registran sus datos de identificación, contacto y de emergencia; el consentimiento informado y la autorización de uso de sus datos los firmará con su terapeuta en la primera atención. Si es menor de edad, escriba los datos del menor: su profesional le pedirá los del acudiente.</p>
+    <p class="muted">Los campos con <span class="req">*</span> son obligatorios. Solo se registran los datos que le pide su terapeuta; el consentimiento informado y la autorización de uso de sus datos los firmará con su terapeuta en la primera atención. Si es menor de edad, escriba los datos del menor: su profesional le pedirá los del acudiente.</p>
     <button type="submit">Enviar mis datos</button></form>`);
   $('#f').onsubmit = async e => {
     e.preventDefault();

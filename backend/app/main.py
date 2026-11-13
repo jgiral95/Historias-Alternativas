@@ -2401,6 +2401,9 @@ def form_create(body: FormIn, request: Request, user: User = Depends(pro_user), 
     correo_p = body.correo.strip()
     if body.enviar and not EMAIL_RE.match(correo_p):
         raise HTTPException(400, "Escriba un correo válido para enviarlo")
+    prow = db.get(Record, (user.id, "profile"))
+    if not formularios.spec((decrypt(prow.payload).get("formatos") or {}) if prow else {}):
+        raise HTTPException(400, "Agregue campos en Mis formatos > Datos del consultante (y márquelos para el formulario) antes de enviarlo.")
     token, now = firmas.new_token(), datetime.now(timezone.utc)
     data = {"token": token, "nombre": body.nombre.strip()[:120] or None, "correo": correo_p[:200] or None}
     r = IntakeForm(id=firmas.token_hash(token), ref=secrets.token_hex(12), user_id=user.id, created_at=now, expires_at=now + formularios.ttl(), payload=encrypt(data))

@@ -286,14 +286,14 @@ function secCard(sc, si, isDatos) {
   const geno = sc.g ? `<div class="row"><span class="chip">Incluye el genograma al final</span><button class="btn sm warn" data-fm="gdel:${si}">Quitar genograma</button></div>` : '';
   return `<div class="card">${head}${body}${geno}<div class="row"><button class="btn sm" data-fm="fadd:${si}">+ Campo</button></div></div>`;
 }
-/* Campos de «Datos del consultante» que van en el formulario del consultante nuevo (el nombre siempre va). Sin elección previa, todos. */
+/* Campos de «Datos del consultante» que van en el formulario del consultante nuevo (todos obligatorios). Sin elección previa, todos. */
 const fkey = k => (String(k).startsWith('x') ? k : 'x' + k);
 function formCard() {
   ED.datos.forEach(sc => { if (!sc.g && !sc.fs.length && !sc.soloKey) sc.soloKey = 'x' + newKey(); });
   const own = ED.datos.flatMap(sc => sc.g ? [] : sc.fs.length ? sc.fs.map(f => [fkey(f.k), sc.t + ': ' + (f.l || '…')]) : [[sc.soloKey, sc.t]]);
   if (!ED.formulario) ED.formulario = own.map(o => o[0]);
   const row = (k, n) => `<div class="row"><span style="flex:1">${esc(n)}</span><button class="btn sm ${ED.formulario.includes(k) ? 'pri' : ''}" data-fm="fo:${k}">${ED.formulario.includes(k) ? 'En el formulario · quitar' : 'Agregar al formulario'}</button></div>`;
-  return own.length ? `<div class="card"><b>Formulario del consultante nuevo</b><p class="stnote" style="margin:4px 0">Elija cuáles de estos campos le pide a quien recibe el formulario. El nombre siempre va. Los campos nuevos aparecen aquí cuando los guarda en este formato.</p>${own.map(([k, n]) => row(k, n)).join('')}</div>` : '';
+  return own.length ? `<div class="card"><b>Formulario del consultante nuevo</b><p class="stnote" style="margin:4px 0">Elija cuáles de estos campos le pide a quien recibe el formulario; todos los que elija son obligatorios. Los campos nuevos aparecen aquí cuando los guarda en este formato.</p>${own.map(([k, n]) => row(k, n)).join('')}</div>` : '';
 }
 function drawFormats() {
   const root = $('#modal-root'), prev = root.querySelector('.modal'), top = prev ? prev.scrollTop : 0, w = ED.which;

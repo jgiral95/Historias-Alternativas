@@ -3,7 +3,7 @@ import pytest
 from app import formularios, main, survey
 from conftest import anon, client_for, make_user, patient
 
-OK = {"nombres": "Luisa", "xdoc": "123456", "xciudad": "Bogotá", "xcorreo": "luisa@x.co"}
+OK = {"xdoc": "123456", "xciudad": "Bogotá", "xcorreo": "luisa@x.co"}
 
 
 DATOS = [["Contacto", [["xdoc", "Documento", 1], ["xciudad", "Ciudad", 1], ["xcorreo", "Correo", 1]]]]
@@ -24,7 +24,7 @@ def test_flujo_recibir_revisar_y_crear_paciente():
     f = c.post("/api/formularios", json={"nombre": "Luisa"}).json()
     assert f["estado"] == "pendiente" and f["enlace"]
     p = anon().get(f"/api/formulario/{f['enlace']}").json()
-    assert [x["k"] for x in p["campos"]] == ["nombres", "xdoc", "xciudad", "xcorreo"]  # el nombre y lo que puso el terapeuta; nada más
+    assert [x["k"] for x in p["campos"]] == ["xdoc", "xciudad", "xcorreo"]  # solo lo que puso el terapeuta
     assert anon().post(f"/api/formulario/{f['enlace']}", json={"datos": OK}).json() == {"ok": True}
     r = c.get("/api/formularios").json()[0]
     assert r["estado"] == "recibido" and r["datos"]["xdoc"] == "123456" and r["enlace"] is None
@@ -41,7 +41,7 @@ def test_validacion_de_lo_que_envia_el_paciente():
     c = client_for("ana@x.co")
     elegir(c, DATOS)
     t = tok(c)
-    for malo in ({**OK, "nombres": ""}, {**OK, "xdoc": "9" * 300}):
+    for malo in ({**OK, "xdoc": ""}, {k: v for k, v in OK.items() if k != "xciudad"}, {**OK, "xdoc": "9" * 300}):  # todo es obligatorio
         assert anon().post(f"/api/formulario/{t}", json={"datos": malo}).status_code == 400
     ok = anon().post(f"/api/formulario/{t}", json={"datos": {**OK, "extra": "ignorado", "estado": "Activo", "documento": "1"}})
     assert ok.status_code == 200
@@ -52,6 +52,7 @@ def test_validacion_de_lo_que_envia_el_paciente():
 def test_anular_vence_y_aislamiento():
     make_user("ana@x.co"); make_user("beto@x.co")
     c, b = client_for("ana@x.co"), client_for("beto@x.co")
+    elegir(c, DATOS)
     f = c.post("/api/formularios", json={}).json()
     assert b.get("/api/formularios").json() == [] and b.post(f"/api/formularios/{f['ref']}/anular").status_code == 404
     anon().post(f"/api/formulario/{f['enlace']}", json={"datos": OK})
@@ -78,6 +79,7 @@ def test_anular_vence_y_aislamiento():
 def test_envio_por_correo(monkeypatch):
     make_user("ana@x.co")
     c = client_for("ana@x.co")
+    elegir(c, DATOS)
     sent = []
     monkeypatch.setattr(survey, "account", lambda db, u: {"host": "h", "from": "ana@gmail.com", "base": "https://h.co", "propio": True})
     monkeypatch.setattr(formularios, "send_mail", lambda to, body, prof, acc: sent.append((to, body)))
@@ -90,15 +92,14 @@ def test_envio_por_correo(monkeypatch):
 def test_el_formulario_sale_de_los_datos_del_terapeuta():
     make_user("ana@x.co")
     c = client_for("ana@x.co")
-    t = tok(c)  # sin apartados propios: solo el nombre
-    assert [x["k"] for x in anon().get(f"/api/formulario/{t}").json()["campos"]] == ["nombres"]
+    assert c.post("/api/formularios", json={}).status_code == 400  # sin campos en Mis formatos no hay formulario que enviar
     elegir(c, [["Redes", [["xig", "Instagram", 1]]], ["Notas", [["xn", "", 1]]]])  # un campo sin etiqueta toma el título del apartado
     t = tok(c)
     campos = anon().get(f"/api/formulario/{t}").json()["campos"]
-    assert [x["k"] for x in campos] == ["nombres", "xig", "xn"] and campos[1]["l"] == "Instagram" and campos[1]["s"] == "Redes" and campos[2]["l"] == "Notas"
-    assert anon().post(f"/api/formulario/{t}", json={"datos": {"xig": "@luisa"}}).status_code == 400  # falta el nombre
-    assert anon().post(f"/api/formulario/{t}", json={"datos": {"nombres": "Luisa", "xig": "@luisa", "apellidos": "Mora"}}).status_code == 200
-    assert c.get("/api/formularios").json()[0]["datos"] == {"nombres": "Luisa", "xig": "@luisa"}
+    assert [x["k"] for x in campos] == ["xig", "xn"] and campos[0]["l"] == "Instagram" and campos[0]["s"] == "Redes" and campos[1]["l"] == "Notas" and all(x["r"] for x in campos)
+    assert anon().post(f"/api/formulario/{t}", json={"datos": {"xig": "@luisa"}}).status_code == 400  # falta uno
+    assert anon().post(f"/api/formulario/{t}", json={"datos": {"xn": "hola", "xig": "@luisa", "apellidos": "Mora"}}).status_code == 200
+    assert c.get("/api/formularios").json()[0]["datos"] == {"xn": "hola", "xig": "@luisa"}
     elegir(c, [["Redes", [["xig", "Instagram", 1], ["xno", "Otro", 1]]]], ["xig"])  # el terapeuta marcó solo uno
     t = tok(c)
-    assert [x["k"] for x in anon().get(f"/api/formulario/{t}").json()["campos"]] == ["nombres", "xig"]
+    assert [x["k"] for x in anon().get(f"/api/formulario/{t}").json()["campos"]] == ["xig"]
