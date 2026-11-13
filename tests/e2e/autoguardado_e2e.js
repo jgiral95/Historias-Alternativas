@@ -29,6 +29,10 @@ let bad = 0; const ok = (c, m) => { console.log((c ? 'OK   ' : 'FALLA') + ' ' + 
   await page.evaluate(() => { ACT.open({ dataset: { id: S.patients[S.patients.length - 1].id, tab: 'cierre' } }); });
   await page.waitForSelector('#cierreform [data-f="resumen"]');
   ok((await page.locator('#cierreform [data-f="resumen"]').inputValue()) === 'Resumen del cierre', 'al volver a abrir, el cierre recupera el borrador');
+  // Campo numérico: sin flechas (type text) y solo acepta números
+  await page.evaluate(() => { document.body.insertAdjacentHTML('beforeend', F('Num', 'zz_num', '', { type: 'number' })); });
+  const nu = page.locator('#f_zz_num'); await nu.type('a1b2,5-x'); 
+  ok((await nu.getAttribute('type')) === 'text' && (await nu.inputValue()) === '12,5', 'campo numérico sin flechas y solo acepta números (' + await nu.inputValue() + ')');
   ok(errors.length === 0, 'sin errores de página' + (errors.length ? ': ' + errors[0] : ''));
   await b.close(); process.exit(bad);
 })();

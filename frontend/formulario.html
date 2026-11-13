@@ -80,6 +80,8 @@ button.ghost{background:none;color:var(--accent)}
 <script src="js/en-07.js"></script>
 <script src="js/en-10.js"></script>
 <script>
+/* Campos numéricos: solo dígitos, «-» inicial y separador decimal. */
+document.addEventListener('input', e => { const el = e.target; if (!el.hasAttribute || !el.hasAttribute('data-num')) return; const v = el.value, n = v.replace(/[^\d.,-]/g, '').replace(/(?!^)-/g, ''); if (n !== v) el.value = n; });
 const $ = s => document.querySelector(s);
 const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const H = { 'Content-Type': 'application/json', 'X-Requested-With': 'archivo-clinico' };
@@ -97,7 +99,7 @@ const field = c => {
   const sec = c.s ? `<h2 class="sec" style="grid-column:1/-1">${esc(c.s)}</h2>` : '';
   if (c.t === 'country') { const dv = c.k === 'paisNac' ? '' : 'Colombia'; return sec + `<div class="f">${lab}<select id="${id}" ${c.r ? 'required' : ''}><option value=""></option>${COUNTRIES.concat(['No responde']).map(o => `<option ${o === dv ? 'selected' : ''}>${esc(o)}</option>`).join('')}</select></div>`; }
   if (c.t === 'select') return sec + `<div class="f">${lab}<select id="${id}" ${c.r ? 'required' : ''}><option value=""></option>${c.o.map(o => `<option>${esc(o)}</option>`).join('')}</select></div>`;
-  return sec + `<div class="f">${lab}<input id="${id}" type="${['date', 'time', 'email'].includes(c.t) ? c.t : 'text'}" ${c.t === 'number' ? 'inputmode="decimal"' : ''} ${c.r ? 'required' : ''} value="${c.k === 'telInd' || c.k === 'emergInd' ? '+57' : val}" ${c.k === 'telefono' || c.k === 'emergTelefono' ? 'inputmode="tel"' : ''} autocomplete="off"></div>`;
+  return sec + `<div class="f">${lab}<input id="${id}" type="${['date', 'time', 'email'].includes(c.t) ? c.t : 'text'}" ${c.t === 'number' ? 'inputmode="decimal" data-num="1"' : ''} ${c.r ? 'required' : ''} value="${c.k === 'telInd' || c.k === 'emergInd' ? '+57' : val}" ${c.k === 'telefono' || c.k === 'emergTelefono' ? 'inputmode="tel"' : ''} autocomplete="off"></div>`;
 };
 function form() {
   card(head() + `<form id="f" class="btns" autocomplete="off" novalidate><div id="err" role="alert"></div><div class="fs">${d.campos.map(field).join('')}</div>

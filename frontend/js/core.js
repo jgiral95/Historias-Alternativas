@@ -161,12 +161,14 @@ function mountPads() { $$('[data-pad]').forEach(h => makePad(h, h.dataset.pad));
 
 /* ===== Valores de formularios ===== */
 function readForm(root, obj) { $$('[data-f]', root).forEach(el => { obj[el.dataset.f] = el.type === 'checkbox' ? el.checked : el.type === 'password' ? el.value : el.value.trim(); }); return obj; }
+/* Campos numéricos: sin flechas; solo se aceptan dígitos, un signo «-» al inicio y separador decimal. */
+document.addEventListener('input', e => { const el = e.target; if (!el || !el.hasAttribute || !el.hasAttribute('data-num')) return; const v = el.value, n = v.replace(/[^\d.,-]/g, '').replace(/(?!^)-/g, ''); if (n !== v) el.value = n; });
 function F(label, key, val, o = {}) {
   const t = o.type || 'text', cls = 'fld' + (o.wide ? ' wide' : '') + (o.lock ? ' locked' : '');
   const lab = label ? `<label for="f_${key}">${esc(label)}${o.lock ? ' <span class="lockico" title="Dato de identidad: no se puede cambiar">🔒</span>' : ''}${o.age ? ` <span class="agehint" id="age_${key}" aria-live="polite">${ageTxt(val)}</span>` : ''}</label>` : '', aria = (label ? '' : ` aria-label="${esc(o.aria || key)}"`) + (o.lock ? ' disabled' : '');
   if (t === 'area') return `<div class="${cls}">${lab}<textarea id="f_${key}" data-f="${key}" rows="${o.rows || 3}"${aria}>${esc(val)}</textarea>${o.req ? `<div class="nrq">${NR.map(v => `<button type="button" class="btn sm" data-nr="${key}">${v}</button>`).join('')}</div>` : ''}</div>`;
   if (t === 'select') { const opts = val && !o.opts.includes(val) ? o.opts.concat([val]) : o.opts; return `<div class="${cls}">${lab}<select id="f_${key}" data-f="${key}"${aria}>${opts.map(x => `<option ${x === val ? 'selected' : ''}>${esc(x)}</option>`).join('')}</select></div>`; }
-  return `<div class="${cls}">${lab}<input id="f_${key}" data-f="${key}" type="${t}" value="${esc(val)}" ${o.ph ? `placeholder="${esc(o.ph)}"` : ''}${aria}>${o.req && o.nr ? `<div class="nrq">${o.nr.map(v => `<button type="button" class="btn sm" data-nr="${key}">${v}</button>`).join('')}</div>` : ''}</div>`;
+  return `<div class="${cls}">${lab}<input id="f_${key}" data-f="${key}" type="${t === 'number' ? 'text' : t}"${t === 'number' ? ' inputmode="decimal" data-num="1"' : ''} value="${esc(val)}" ${o.ph ? `placeholder="${esc(o.ph)}"` : ''}${aria}>${o.req && o.nr ? `<div class="nrq">${o.nr.map(v => `<button type="button" class="btn sm" data-nr="${key}">${v}</button>`).join('')}</div>` : ''}</div>`;
 }
 /* ===== Genograma: lienzo con trazos vectoriales sobre una imagen opcional ===== */
 let geno = null;
