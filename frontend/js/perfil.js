@@ -385,24 +385,20 @@ function saveFormats() {
 }
 /* Pestañas de la ficha: renombrar, ocultar y crear propias (texto libre por consultante). */
 let TM = null;
-const grp = x => (TM.grupos.some(g => g.id === x.gid) ? x.gid : '');
 const tabsDraw = () => {
-  const root = $('#modal-root'), prevM = root.querySelector('.modal'), top = prevM ? prevM.scrollTop : 0, row = (id, n, hid, ex) => `<div class="edf"><input type="text" data-tm-n="${id}" value="${esc(n)}" maxlength="60" placeholder="Nueva pestaña" aria-label="Nombre de la pestaña">${id === 'datos' ? '<span class="chip">Siempre visible</span>' : ex ? `<button class="btn sm" data-tm="mod:${id}" title="Una sola vez: datos que casi no cambian. Por sesión: se agrega una entrada con fecha en cada encuentro.">${(TM.extra.find(y => y.id === id) || {}).modo === 'sesion' ? 'Por sesión' : 'Una sola vez'} · cambiar</button>${TM.grupos.length ? `<select class="btn sm" data-tm-s="${id}" aria-label="Grupo de la pestaña"><option value="">Sin grupo</option>${TM.grupos.map(g => `<option value="${esc(g.id)}" ${(TM.extra.find(y => y.id === id) || {}).gid === g.id ? 'selected' : ''}>${esc(g.nombre)}</option>`).join('')}</select>` : ''}<button class="btn sm warn" data-tm="del:${id}">Borrar</button>` : `<button class="btn sm ${hid ? '' : 'pri'}" data-tm="hid:${id}">${hid ? 'Oculta · mostrar' : 'Visible · ocultar'}</button>`}</div>`;
+  const root = $('#modal-root'), prevM = root.querySelector('.modal'), top = prevM ? prevM.scrollTop : 0, row = (id, n, hid, ex) => `<div class="edf"><input type="text" data-tm-n="${id}" value="${esc(n)}" maxlength="60" placeholder="Nueva pestaña" aria-label="Nombre de la pestaña">${id === 'datos' ? '<span class="chip">Siempre visible</span>' : ex ? `<button class="btn sm" data-tm="mod:${id}" title="Una sola vez: datos que casi no cambian. Por sesión: se agrega una entrada con fecha en cada encuentro.">${(TM.extra.find(y => y.id === id) || {}).modo === 'sesion' ? 'Por sesión' : 'Una sola vez'} · cambiar</button><button class="btn sm warn" data-tm="del:${id}">Borrar</button>` : `<button class="btn sm ${hid ? '' : 'pri'}" data-tm="hid:${id}">${hid ? 'Oculta · mostrar' : 'Visible · ocultar'}</button>`}</div>`;
   root.innerHTML = `<div class="modal" role="dialog" aria-modal="true" aria-label="Mis formatos"><div class="box"><div class="row mfhead" style="justify-content:space-between"><h3 style="flex:1">Mis formatos</h3><button class="btn sm pri" data-tm="save">Guardar</button><button class="btn sm" data-tm="close">Cerrar</button></div>${hubTabs('pestanas')}
   <p style="margin:0;font-size:13px;color:var(--muted)">Cree las pestañas de la ficha del consultante. Para cada pestaña nueva elija «Una sola vez» (datos que casi no cambian, como los del consultante) o «Por sesión» (una entrada con fecha en cada encuentro).</p>
   <h4 style="margin:12px 0 4px">Pestañas de la ficha</h4>
-  <div class="row" style="justify-content:space-between;margin:12px 0 4px"><span></span><button class="btn sm" data-tm="add:">+ Pestaña nueva</button></div><div class="card">${TM.extra.filter(x => !grp(x)).map(x => row(x.id, x.nombre, false, true)).join('') || '<p style="margin:0;color:var(--muted);font-size:13px">Aún no ha creado pestañas propias. Use «+ Pestaña nueva».</p>'}</div>
-  ${TM.grupos.map(g => `<div class="row" style="justify-content:space-between;margin:12px 0 4px"><input type="text" data-tm-g="${esc(g.id)}" value="${esc(g.nombre)}" maxlength="60" aria-label="Nombre del grupo" style="flex:1;font-weight:600"><button class="btn sm" data-tm="add:${esc(g.id)}">+ Pestaña nueva</button><button class="btn sm warn" data-tm="delg:${esc(g.id)}" title="Borra el grupo y todas sus pestañas">Quitar grupo</button></div><div class="card">${TM.extra.filter(x => grp(x) === g.id).map(x => row(x.id, x.nombre, false, true)).join('') || '<p style="margin:0;color:var(--muted);font-size:13px">Sin pestañas en este grupo.</p>'}</div>`).join('')}
-  <div class="row"><button class="btn" data-tm="addg">+ Grupo nuevo</button></div>
+  <div class="row" style="justify-content:space-between;margin:12px 0 4px"><span></span><button class="btn sm" data-tm="add:">+ Pestaña nueva</button></div><div class="card">${TM.extra.map(x => row(x.id, x.nombre, false, true)).join('') || '<p style="margin:0;color:var(--muted);font-size:13px">Aún no ha creado pestañas propias. Use «+ Pestaña nueva».</p>'}</div>
   <div class="row end"><button class="btn pri" data-tm="save">Guardar</button></div></div></div>`;
   const nm = root.querySelector('.modal'); if (nm) nm.scrollTop = top;
 };
 function tabsManage() {
   const c = tabsConf(), root = $('#modal-root'); ED = null;
-  TM = { nombres: { ...(c.nombres || {}) }, ocultas: [...(c.ocultas || [])], extra: clone(c.extra || []), grupos: clone(c.grupos || []) };
-  coachGroups();
+  TM = { nombres: { ...(c.nombres || {}) }, ocultas: [...(c.ocultas || [])], extra: clone(c.extra || []) };
   tabsDraw();
-  root.oninput = e => { const gs = e.target.dataset.tmS; if (gs && TM) { const x = TM.extra.find(y => y.id === gs); if (x) { x.gid = e.target.value; tabsDraw(); } return; } const gi = e.target.dataset.tmG; if (gi && TM) { const g = TM.grupos.find(y => y.id === gi); if (g) g.nombre = e.target.value; return; } const id = e.target.dataset.tmN; if (!id || !TM) return; const x = TM.extra.find(y => y.id === id); if (x) x.nombre = e.target.value; else TM.nombres[id] = e.target.value; };
+  root.oninput = e => { const id = e.target.dataset.tmN; if (!id || !TM) return; const x = TM.extra.find(y => y.id === id); if (x) x.nombre = e.target.value; else TM.nombres[id] = e.target.value; };
   root.onclick = e => {
     const h = e.target.closest('[data-hub]'); if (h) return openHub(h.dataset.hub);
     const b = e.target.closest('[data-tm]'); if (!b || !TM) return;
@@ -413,15 +409,11 @@ function tabsManage() {
     else if (op === 'coach') coachAdd(arg);
     else if (op === 'cria') crianzaAdd(arg);
     else if (op === 'del') TM.extra = TM.extra.filter(x => x.id !== arg);
-    else if (op === 'add') { if (TM.extra.length >= 30) return toast('Máximo 30 pestañas nuevas.'); TM.extra.push({ id: 'x_' + newKey(), nombre: '', modo: 'unica', secs: [], gid: arg }); }
-    else if (op === 'addg') { if (TM.grupos.length >= 10) return toast('Máximo 10 grupos.'); TM.grupos.push({ id: 'g_' + newKey(), nombre: 'Grupo nuevo' }); }
-    else if (op === 'delg') { TM.extra = TM.extra.filter(x => x.gid !== arg); TM.grupos = TM.grupos.filter(g => g.id !== arg); }
+    else if (op === 'add') { if (TM.extra.length >= 30) return toast('Máximo 30 pestañas nuevas.'); TM.extra.push({ id: 'x_' + newKey(), nombre: '', modo: 'unica', secs: [] }); }
     else if (op === 'save') {
       const nombres = Object.fromEntries(Object.entries(TM.nombres).map(([k, v]) => [k, v.trim()]).filter(([, v]) => v));
       if (TM.extra.some(x => !x.nombre.trim())) return toast('Cada pestaña necesita un nombre.');
-      if (TM.grupos.some(g => !g.nombre.trim())) return toast('Cada grupo necesita un nombre.');
-      const orden = [''].concat(TM.grupos.map(g => g.id)), extraOrd = TM.extra.slice().sort((x, y) => orden.indexOf(grp(x)) - orden.indexOf(grp(y)));
-      const snap = clone(S.profile); S.profile.formatos = Object.assign({}, S.profile.formatos, { pestanas: { nombres, ocultas: TM.ocultas, grupos: TM.grupos.map(g => ({ id: g.id, nombre: g.nombre.trim() })), extra: extraOrd.map(x => ({ id: x.id, nombre: x.nombre.trim(), modo: x.modo === 'sesion' ? 'sesion' : 'unica', secs: x.secs || [], gid: grp(x) || undefined })) } });
+      const snap = clone(S.profile); S.profile.formatos = Object.assign({}, S.profile.formatos, { pestanas: { nombres, ocultas: TM.ocultas, extra: TM.extra.map(x => ({ id: x.id, nombre: x.nombre.trim(), modo: x.modo === 'sesion' ? 'sesion' : 'unica', secs: x.secs || [] })) } });
       const t = tabsList().map(x => x[0]); if (!t.includes(S.tab)) S.tab = 'datos';
       return persist([S.profile], b).then(ok => { if (!ok) { restore(S.profile, snap); return; } toast('Pestañas guardadas.'); render(); tabsDraw(); });
     }

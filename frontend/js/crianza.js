@@ -48,16 +48,10 @@ const CRIANZA_MODELOS = [
     ['Pantallas', KK(['k_pant', 'Acuerdo de uso: cuánto, cuándo, qué contenido, dónde', 3])],
     ['Transición', KK(['k_fecha', 'Fecha del cambio (llegada del bebé, primer día de jardín…)', 1], ['k_prep', 'Cómo se preparó al niño (cuentos, visitas, anticipación)', 3], ['k_obs', 'Cambios observados desde entonces (sueño, apetito, regresiones, apego)', 3], ['k_casas', 'Separación: acuerdos de crianza entre las dos casas, solo lo que ambos cuidadores aceptan registrar', 3])], KK_CIERRE] }
 ];
-function crianzaGid(base) {
-  const id = base ? 'g_cri_base' : 'g_cri_enf';
-  if (!TM.grupos.some(g => g.id === id)) TM.grupos.push({ id, nombre: base ? 'Crianza: modelos base' : 'Crianza: enfoques y temas' });
-  return id;
-}
 function crianzaAdd(grupo) {
   const have = new Set(TM.extra.map(x => x.id)), add = CRIANZA_MODELOS.filter(m => (grupo === 'base' ? m.base : !m.base) && !have.has(m.id));
   if (!add.length) return toast('Esos modelos ya están instalados.');
   if (TM.extra.length + add.length > 30) return toast('Máximo 30 pestañas nuevas.');
-  const gid = crianzaGid(grupo === 'base' ? 1 : 0);
-  add.forEach(m => TM.extra.push({ id: m.id, nombre: m.nombre, modo: m.modo, secs: clone(m.secs), gid }));
+  add.forEach(m => TM.extra.push({ id: m.id, nombre: m.nombre, modo: m.modo, secs: clone(m.secs) }));
   toast(add.length + (add.length === 1 ? ' pestaña agregada' : ' pestañas agregadas') + '. Pulse Guardar.');
 }

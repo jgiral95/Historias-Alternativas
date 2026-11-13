@@ -46,17 +46,6 @@ function coachAdd(grupo) {
   const have = new Set(TM.extra.map(x => x.id)), add = COACH_MODELOS.filter(m => (grupo === 'base' ? m.base : !m.base) && !have.has(m.id));
   if (!add.length) return toast('Esos modelos ya están instalados.');
   if (TM.extra.length + add.length > 30) return toast('Máximo 30 pestañas nuevas.');
-  const gid = coachGid(grupo === 'base' ? 1 : 0);
-  add.forEach(m => TM.extra.push({ id: m.id, nombre: m.nombre, modo: m.modo, secs: clone(m.secs), gid }));
+  add.forEach(m => TM.extra.push({ id: m.id, nombre: m.nombre, modo: m.modo, secs: clone(m.secs) }));
   toast(add.length + (add.length === 1 ? ' pestaña agregada' : ' pestañas agregadas') + '. Pulse Guardar.');
-}
-
-/* Grupos de coaching en Mis formatos: se crean al instalar modelos y agrupan los ya instalados. */
-function coachGid(base) {
-  const id = base ? 'g_coach_base' : 'g_coach_esc';
-  if (!TM.grupos.some(g => g.id === id)) TM.grupos.push({ id, nombre: base ? 'Coaching: modelos base' : 'Coaching: escuelas' });
-  return id;
-}
-function coachGroups() {
-  TM.extra.forEach(x => { const m = COACH_MODELOS.find(y => y.id === x.id); if (m && !x.gid) x.gid = coachGid(m.base); const c = CRIANZA_MODELOS.find(y => y.id === x.id); if (c && !x.gid) x.gid = crianzaGid(c.base); });
 }
