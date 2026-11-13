@@ -504,3 +504,9 @@ body:has(#fb-root .fbbtn) .modal{padding-bottom:84px}
 .modal:has(.mfhead)>.box{margin-top:auto;border-radius:10px;overflow-y:auto}
 .mfhead{top:-18px}
 @media (max-width:560px){.modal{padding:10px}.modal>.box{max-height:calc(100dvh - 20px)}.modal>.box>.row:first-child:has(h3){top:-18px;padding:14px 58px 10px 18px}.modal>.box>.row:first-child>.mx{right:10px}}
+
+/* Cifras del panel de administración de usuarios */
+.ustats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:6px 0 12px}
+.ustat{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 14px;display:flex;flex-direction:column;gap:2px}
+.ustat span{font-size:13px;color:var(--ink)}.ustat b{font-size:26px;line-height:1.15}.ustat small{font-size:12px;color:var(--muted)}
+.ustat b.ok{color:#2F6B4A}.ustat b.warn{color:#B4541F}

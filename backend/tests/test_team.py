@@ -155,3 +155,14 @@ def test_team_is_limited_to_two_helpers():
         assert c.post("/api/equipo", json={"email": f"a{i}@x.co", "name": "Ayuda", "password": PASSWORD}, headers=HEADERS).status_code == 201
     r = c.post("/api/equipo", json={"email": "a3@x.co", "name": "Ayuda", "password": PASSWORD}, headers=HEADERS)
     assert r.status_code == 400 and "Máximo 2" in r.json()["detail"]
+
+
+def test_admin_resumen_counts():
+    from conftest import make_user, client_for
+    make_user("adm@x.co", role="admin")
+    make_user("t1@x.co")
+    c = client_for("adm@x.co")
+    r = c.get("/api/admin/resumen").json()
+    assert r["terapeutas"] == 2 and r["equipo"] == 0 and r["activas"] == 2 and r["sinSuscripcion"] >= 0
+    assert set(r) >= {"conSuscripcion", "vencidas", "nunca", "consultantes", "dosPasos", "nuevos"}
+    assert client_for("t1@x.co").get("/api/admin/resumen").status_code == 403

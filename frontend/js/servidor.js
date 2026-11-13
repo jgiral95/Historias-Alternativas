@@ -139,7 +139,12 @@ ACT.users = async () => {
   };
   const load = async () => { try { list = await api('/admin/users'); } catch (e) { toast(e.message); return false; } return true; };
   if (!(await load())) return;
+  let rs = null; try { rs = await api('/admin/resumen'); } catch (e) { /* sin cifras */ }
+  const tile = (t, v, sb, cls) => `<div class="ustat"><span>${t}</span><b class="${cls || ''}">${v}</b>${sb ? `<small>${sb}</small>` : ''}</div>`;
+  const pl = (n, a, b) => n === 1 ? a : b;
+  const stats = !rs ? '' : `<div class="ustats">${tile('Terapeutas', rs.terapeutas, '+ ' + rs.equipo + ' de equipo')}${tile('Con suscripción', rs.conSuscripcion, rs.terapeutas ? Math.round(rs.conSuscripcion * 100 / rs.terapeutas) + ' % del total' : '', 'ok')}${tile('Sin suscripción', rs.sinSuscripcion, rs.vencidas + ' ' + pl(rs.vencidas, 'vencida', 'vencidas') + ' · ' + rs.nunca + ' nunca', rs.sinSuscripcion ? 'warn' : '')}${tile('Consultantes', rs.consultantes, rs.terapeutas ? 'prom. ' + (rs.consultantes / rs.terapeutas).toFixed(1).replace('.', ',') + ' por terapeuta' : '')}${tile('Activas / inactivas', rs.activas + ' / ' + rs.inactivas)}${tile('Con 2 pasos', rs.dosPasos)}${tile('Nuevos', rs.nuevos, 'últimos 30 días')}</div>`;
   root.innerHTML = `<div class="modal" role="dialog" aria-modal="true" aria-label="Usuarios"><div class="box" id="uform" style="max-width:820px"><div class="row" style="justify-content:space-between"><h3>Usuarios</h3><button class="btn sm" id="ucl">Cerrar</button></div>
+    ${stats}
     <div class="row"><input type="search" id="u_q" placeholder="Buscar por nombre o correo (también en los equipos)" aria-label="Buscar usuarios" style="flex:1;min-width:220px"><span class="ts" id="u_count"></span></div>
     <div id="u_list" class="ulist"></div>
     <div class="card"><h3>Nuevo usuario</h3><div class="grid">${F('Nombre', 'uname', '')}${F('Correo', 'uemail', '', { type: 'email' })}${F('Contraseña inicial (mín. 10)', 'upass', '', { type: 'password' })}${F('Rol', 'urole', 'Terapeuta', { type: 'select', opts: ['Terapeuta', 'Administrador'] })}</div><div class="row end"><button class="btn pri" data-u="create">Crear usuario</button></div></div>

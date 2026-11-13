@@ -505,6 +505,37 @@ def list_users(_: User = Depends(require_admin), db: Session = Depends(get_db)):
     return [user_out(u, by_id.get(u.owner_id)) for u in users]
 
 
+@app.get("/api/admin/resumen")
+def admin_resumen(_: User = Depends(require_admin), db: Session = Depends(get_db)):
+    """Cifras para el encabezado de «Usuarios»: terapeutas, suscripciones, consultantes, cuentas activas, 2 pasos y nuevos."""
+    users = list(db.scalars(select(User)))
+    pros = [u for u in users if u.role != "asistente"]
+    now_ = datetime.now(timezone.utc)
+    subs = {x.user_id: x for x in db.scalars(select(Subscription))}
+    con = vencidas = nunca = 0
+    for u in pros:
+        sb = subs.get(u.id)
+        pu = sb.paid_until if sb else None
+        if pu is not None and pu.tzinfo is None:
+            pu = pu.replace(tzinfo=timezone.utc)
+        if pu and pu > now_:
+            con += 1
+        elif pu:
+            vencidas += 1
+        else:
+            nunca += 1
+    pacientes = db.scalar(select(func.count()).select_from(Record).where(Record.kind == "patient")) or 0
+    desde = now_ - timedelta(days=30)
+
+    def reciente(u):
+        c = u.created_at
+        return c is not None and (c if c.tzinfo else c.replace(tzinfo=timezone.utc)) >= desde
+    return {"terapeutas": len(pros), "equipo": len(users) - len(pros), "conSuscripcion": con, "sinSuscripcion": vencidas + nunca,
+            "vencidas": vencidas, "nunca": nunca, "consultantes": pacientes, "activas": sum(1 for u in users if u.active),
+            "inactivas": sum(1 for u in users if not u.active), "dosPasos": sum(1 for u in users if u.totp_enabled),
+            "nuevos": sum(1 for u in pros if reciente(u))}
+
+
 @app.post("/api/admin/users", status_code=201)
 def create_user(body: UserCreate, admin: User = Depends(require_admin), db: Session = Depends(get_db)):
     email = body.email.strip().lower()
