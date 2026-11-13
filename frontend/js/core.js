@@ -35,7 +35,7 @@ function toast(msg) {
 const logoSVG = (px = 32) => `<svg class="logo" width="${px}" height="${px}" viewBox="0 0 120 120" role="img" aria-label="Alter-Karute"><circle cx="60" cy="60" r="56" fill="#E4EBE2"/><path d="M60 24C88.8 39.6 88.8 75.6 60 96C31.2 75.6 31.2 39.6 60 24Z" fill="#7C9A83"/><path d="M60 98V43" stroke="#2F4A3A" stroke-width="4.2" fill="none" stroke-linecap="round"/><path d="M60 67L45.6 55M60 77L74.4 62" stroke="#2F4A3A" stroke-width="3" fill="none" stroke-linecap="round"/><circle cx="60" cy="60" r="56" fill="none" stroke="#2F4A3A" stroke-width="3"/></svg>`;
 
 /* ===== Estado ===== */
-const S = { user: null, profile: null, patients: [], notes: [], reports: [], pnotes: [], pn: { q: '', pid: '', tipo: '', estado: 'abiertas', sel: null, draft: null, open: new Set() }, appts: [], files: [], scales: [], view: 'patients', newSol: false, newIncorp: false, newScale: null, week: null, noteSeed: null, pid: null, draft: false, tab: 'datos', q: '', mode: 'local', loading: true, newNote: false, newReport: false };
+const S = { user: null, profile: null, patients: [], notes: [], reports: [], pnotes: [], pagos: [], pn: { q: '', pid: '', tipo: '', estado: 'abiertas', sel: null, draft: null, open: new Set() }, appts: [], files: [], scales: [], view: 'patients', newSol: false, newIncorp: false, newScale: null, week: null, noteSeed: null, pid: null, draft: false, tab: 'datos', q: '', mode: 'local', loading: true, newNote: false, newReport: false };
 
 /* ===== Almacenamiento: privado por usuario en db; respaldo local si db no está disponible ===== */
 /* Llamadas a la API propia (modo servidor). */
@@ -45,7 +45,7 @@ async function api(path, opt = {}) {
     headers: Object.assign({ 'Content-Type': 'application/json', 'X-Requested-With': 'archivo-clinico' }, opt.headers || {}),
     body: opt.body !== undefined ? JSON.stringify(opt.body) : undefined
   });
-  if (r.status === 401 && !opt.noRedirect && S.user) { S.user = null; S.patients = []; S.notes = []; S.reports = []; S.appts = []; S.files = []; S.scales = []; S.pid = null; hideIdleWarn(); renderLogin('Su sesión terminó. Ingrese de nuevo.'); throw new Error('Sesión terminada'); }
+  if (r.status === 401 && !opt.noRedirect && S.user) { S.user = null; S.patients = []; S.notes = []; S.reports = []; S.appts = []; S.pagos = []; S.files = []; S.scales = []; S.pid = null; hideIdleWarn(); renderLogin('Su sesión terminó. Ingrese de nuevo.'); throw new Error('Sesión terminada'); }
   if (!r.ok) {
     let m = 'Error ' + r.status;
     let det = null;
@@ -89,11 +89,11 @@ const Store = {
     return this._loading;
   },
   async _load() {
-    const D = { profile: null, patients: [], notes: [], reports: [], appts: [], files: [], scales: [], pnotes: [] };
+    const D = { profile: null, patients: [], notes: [], reports: [], appts: [], files: [], scales: [], pnotes: [], pagos: [] };
     const put = o => {
       if (!o || !o.kind) return;
       if (o.kind === 'profile') { D.profile = o; return; }
-      const k = { patient: 'patients', note: 'notes', report: 'reports', appt: 'appts', file: 'files', scale: 'scales', pnote: 'pnotes' }[o.kind];
+      const k = { patient: 'patients', note: 'notes', report: 'reports', appt: 'appts', file: 'files', scale: 'scales', pnote: 'pnotes', pago: 'pagos' }[o.kind];
       if (k && !D[k].some(x => x.id === o.id)) D[k].push(o);
     };
     if (S.mode === 'server') (await api('/records')).forEach(put);

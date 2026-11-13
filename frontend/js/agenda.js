@@ -10,13 +10,15 @@ const apName = a => a.evento ? a.evento : a.patientId ? patName(a.patientId) : a
 const apptsOn = key => S.appts.filter(a => dayKey(new Date(a.startAt)) === key).sort((a, b) => a.startAt.localeCompare(b.startAt));
 const remChip = a => { const c = a.confirmacion && a.confirmacion.estado, r = S.rem && S.rem.items && S.rem.items[a.id]; return c === 'Confirmada' ? ' · ✓ confirmó' : c ? ' · canceló' : r && r.enviado ? ' · recordada' : ''; };
 function apptBtn(a) {
-  return `<button class="ap ${esc((a.estado || 'Programada').replace(/\s/g, '-'))}${a.evento ? ' evento' : ''}" data-act="apptEdit" data-id="${a.id}"><b>${esc(hhmm(a.startAt))}</b><span>${esc(apName(a))}</span><small>${esc(remChip(a).replace(/^ · /, '') ? remChip(a).replace(/^ · /, '') + ' · ' : '')}${esc([a.duracion ? a.duracion + ' min' : '', a.modalidad, a.estado && a.estado !== 'Programada' ? a.estado : ''].filter(Boolean).join(' · '))}</small></button>`;
+  const fe = typeof finEstadoCita === 'function' ? finEstadoCita(a) : '', impaga = fe === 'Pendiente' || fe === 'Abonada';
+  return `<button class="ap ${esc((a.estado || 'Programada').replace(/\s/g, '-'))}${a.evento ? ' evento' : ''}${impaga ? ' impaga' : ''}" data-act="apptEdit" data-id="${a.id}"><b>${esc(hhmm(a.startAt))}</b><span>${esc(apName(a))}</span><small>${esc(remChip(a).replace(/^ · /, '') ? remChip(a).replace(/^ · /, '') + ' · ' : '')}${esc([a.duracion ? a.duracion + ' min' : '', a.modalidad, a.estado && a.estado !== 'Programada' ? a.estado : ''].filter(Boolean).join(' · '))}</small></button>`;
 }
 /* Vista de la agenda (día, semana o mes): preferencia de este navegador. */
 const AG_VIEWS = [['dia', 'Día'], ['semana', 'Semana'], ['mes', 'Mes']];
 function agView() { if (!S.agView) { try { S.agView = localStorage.getItem('ac_agview') || 'semana'; } catch (e) { S.agView = 'semana'; } } return AG_VIEWS.some(v => v[0] === S.agView) ? S.agView : 'semana'; }
 const agAnchor = () => S.agDate ? new Date(S.agDate + 'T12:00:00') : (() => { const d = new Date(); d.setHours(12, 0, 0, 0); return d; })();
 function agendaHTML() {
+  if (typeof finMemoReset === 'function') finMemoReset();
   const v = agView(), anchor = agAnchor(), today = dayKey(new Date());
   const fmt = d => d.toLocaleDateString('es-CO', { day: 'numeric', month: 'short' });
   let title, body;

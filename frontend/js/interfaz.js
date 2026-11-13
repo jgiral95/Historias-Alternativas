@@ -15,11 +15,11 @@ const closeMenu = () => { const m = $('#acmenu'), b = $('[data-act="menu"]'); if
 const curPatient = () => S.draft ? S.draftObj : S.patients.find(x => x.id === S.pid);
 const therSnap = () => ({ therapistName: S.profile.nombre, therapistDocId: S.profile.cedula || undefined, therapistReg: S.profile.registro, therapistSig: S.profile.firma, consultorio: S.profile.consultorio });
 const canSign = () => S.profile.nombre && S.profile.firma;
-const TABS = [['datos', 'Datos'], ['consent', 'Consentimiento'], ['intake', 'Primera vez'], ['evol', 'Sesión'], ['escalas', 'Chequeos'], ['informes', 'Informes'], ['cierre', 'Cierre'], ['archivo', 'Archivo']];
+const TABS = [['datos', 'Datos'], ['consent', 'Consentimiento'], ['intake', 'Primera vez'], ['evol', 'Sesión'], ['escalas', 'Chequeos'], ['informes', 'Informes'], ['finanzas', 'Finanzas'], ['cierre', 'Cierre'], ['archivo', 'Archivo']];
 /* Pestañas de la ficha según «Mis formatos»: se pueden renombrar, ocultar (menos Datos) y agregar propias (id «x_…»). */
 const tabsConf = () => (S.profile && S.profile.formatos && S.profile.formatos.pestanas) || {};
 const tabsList = () => { const c = tabsConf(), ex = c.extra || [];
-  return TABS.filter(([k]) => ['datos', 'consent', 'archivo'].includes(k)).map(([k, l]) => [k, (c.nombres || {})[k] || l]).concat(ex.map(x => [x.id, x.nombre])).sort((a, b) => (a[0] === 'archivo') - (b[0] === 'archivo')); };
+  return TABS.filter(([k]) => ['datos', 'consent', 'archivo'].includes(k) || (k === 'finanzas' && S.mode === 'server')).map(([k, l]) => [k, (c.nombres || {})[k] || l]).concat(ex.map(x => [x.id, x.nombre])).sort((a, b) => (a[0] === 'archivo') - (b[0] === 'archivo')); };
 const OPT = {
   tipoDoc: ['CC', 'TI', 'CE', 'Registro civil', 'Pasaporte', 'Permiso por protección temporal (PPT)', 'Permiso especial de permanencia (PEP)', 'Menor sin documento', 'Otro'],
   zona: ['', 'Urbana', 'Rural', 'No responde'],
@@ -52,7 +52,7 @@ function askDiscard(go) {
    así «Atrás» vuelve a la pantalla anterior dentro de la app en vez de salir de ella. */
 const Nav = { key: null, restoring: false };
 function navState() {
-  const v = S.view === 'agenda' || S.view === 'cuaderno' ? S.view : 'patients';
+  const v = S.view === 'agenda' || S.view === 'cuaderno' || S.view === 'finanzas' ? S.view : 'patients';
   return { hc: 1, v, pid: v === 'patients' && !S.draft ? S.pid || null : null, draft: v === 'patients' && !!S.draft, tab: v === 'patients' && S.pid ? S.tab : null,
     home: v === 'patients' && !S.pid ? !!S.homeOpen : null, ht: v === 'patients' && !S.pid ? S.homeTab || null : null, pn: v === 'cuaderno' ? S.pn.sel || null : null,
     form: v === 'patients' && S.pid ? (S.newNote ? 'note' : S.newReport ? 'report' : S.newScale ? 'scale' : S.reconsent ? 'consent' : S.newSol ? 'sol' : S.newIncorp ? 'incorp' : null) : null };
@@ -80,7 +80,7 @@ async function navRestore(st) {
   if (S.view === 'cuaderno') await pnLeave();
   closeMenu();
   const p = st.pid && S.patients.find(x => x.id === st.pid);
-  S.view = st.v === 'agenda' || st.v === 'cuaderno' ? st.v : 'patients';
+  S.view = st.v === 'agenda' || st.v === 'cuaderno' || st.v === 'finanzas' ? st.v : 'patients';
   S.draft = false; S.draftObj = null; S.pid = p ? p.id : null; S.tab = p && st.tab ? st.tab : 'datos';
   S.newNote = false; S.newReport = false; S.newScale = null; S.reconsent = false; S.consentPreset = null; S.newSol = false; S.newIncorp = false; S.noteSeed = null;
   if (!p) { S.homeOpen = !!st.home; if (st.ht) S.homeTab = st.ht; }
@@ -98,7 +98,7 @@ function renderMain() {
   const incomplete = !pr.nombre || !pr.firma;
   $('#app').innerHTML = `
   <header class="top"><button class="brand" data-act="home" title="Ir al resumen">${logoSVG(34)}<b>Alter-Karute</b></button>
-    <nav class="nav" aria-label="Secciones"><button class="${S.view === 'agenda' || S.view === 'cuaderno' ? '' : 'on'}" data-act="view" data-v="patients">Consultantes</button><button class="${S.view === 'agenda' ? 'on' : ''}" data-act="view" data-v="agenda">Agenda</button>${TEAM() ? '' : `<button class="${S.view === 'cuaderno' ? 'on' : ''}" data-act="view" data-v="cuaderno" title="Notas de proceso: ideas y consejos de colegas, fuera de la ficha">Notas<span class="lbl-long"> de proceso</span></button>`}</nav>
+    <nav class="nav" aria-label="Secciones"><button class="${S.view === 'agenda' || S.view === 'cuaderno' || S.view === 'finanzas' ? '' : 'on'}" data-act="view" data-v="patients">Consultantes</button><button class="${S.view === 'agenda' ? 'on' : ''}" data-act="view" data-v="agenda">Agenda</button>${S.mode === 'server' ? `<button class="${S.view === 'finanzas' ? 'on' : ''}" data-act="view" data-v="finanzas">Finanzas</button>` : ''}${TEAM() ? '' : `<button class="${S.view === 'cuaderno' ? 'on' : ''}" data-act="view" data-v="cuaderno" title="Notas de proceso: ideas y consejos de colegas, fuera de la ficha">Notas<span class="lbl-long"> de proceso</span></button>`}</nav>
     <div class="top-search"><input type="text" id="q" placeholder="Buscar consultante o texto en notas" value="${esc(S.q)}" aria-label="Buscar consultante"></div>
     <div class="top-actions">${S.view === 'cuaderno' ? '<button class="btn pri" data-act="pnNew">+ <span class="lbl-long">Nueva nota</span></button>' : '<button class="btn pri" data-act="newPatient">+ <span class="lbl-long">Nuevo consultante</span></button>'}
     ${themeBtnHTML()}<div class="avwrap"><button class="avatar" data-act="menu" aria-haspopup="true" aria-expanded="false" aria-label="Menú de cuenta"><i>${esc(initials(pr.nombre || (S.user && S.user.name) || (S.user && S.user.email) || 'P'))}</i><svg viewBox="0 0 12 12"><path d="M2 4l4 4 4-4"/></svg></button>
@@ -108,8 +108,8 @@ function renderMain() {
   ${S.mode === 'server' && hasLocal() ? '<div class="banner">Hay datos guardados en este navegador de antes de usar el servidor. <span class="row" style="display:inline-flex;margin-left:6px"><button class="btn sm" data-act="importLocal">Importar al servidor</button><button class="btn sm warn" data-act="dropLocal">Borrar copia local</button></span></div>' : ''}
   ${S.patients.some(x => x.demo) ? `<div class="banner demo">Está viendo <b>consultantes de ejemplo</b> (ficticios), marcados «Ejemplo». Pruebe lo que quiera con ellos; nunca se les envía nada.${TEAM() ? '' : ' <button class="btn sm" data-act="demoDel">Borrar los datos de ejemplo</button>'}</div>` : ''}
   ${incomplete && !TEAM() ? '<div class="banner">Complete su perfil y dibuje su firma en «Mi perfil y firma». Sin ella no podrá firmar consentimientos, notas ni informes.</div>' : ''}
-  ${S.view === 'agenda' ? agendaHTML() : S.view === 'cuaderno' && !TEAM() ? pnHTML() : `<div class="layout ${p || S.homeOpen ? 'in-file' : ''}"><div class="plist-wrap">${listHTML()}</div><div class="file-wrap">${p ? fileHTML(p) : homeHTML()}</div></div>`}`;
-  if (S.view === 'agenda') return;
+  ${S.view === 'agenda' ? agendaHTML() : S.view === 'finanzas' ? finanzasHTML() : S.view === 'cuaderno' && !TEAM() ? pnHTML() : `<div class="layout ${p || S.homeOpen ? 'in-file' : ''}"><div class="plist-wrap">${listHTML()}</div><div class="file-wrap">${p ? fileHTML(p) : homeHTML()}</div></div>`}`;
+  if (S.view === 'agenda' || S.view === 'finanzas') return;
   if (S.view === 'cuaderno') { pnMount(); return; }
   if (p && !S.draft) { if (S.tab === 'consent' || S.tab === 'intake' || S.tab === 'evol' || S.tab === 'informes') mountPads(); }
   mountGeno(); dxMount();
@@ -272,10 +272,11 @@ function fileHTML(p) {
   return `<div class="panel file"><div class="file-head"><div><button class="btn sm back" data-act="back">← Consultantes</button><h2>${esc(S.draft ? 'Nuevo consultante' : fullName(p))}</h2>
   <div class="meta"><span class="mono">${esc([p.tipoDoc, p.documento].filter(Boolean).join(' ') || 'sin documento')}</span>${!S.draft && openedAt(p) ? `<span>Historia abierta el ${esc(fmtD(openedAt(p)))}</span>` : ''}${a !== null ? `<span>${a} años</span>` : ''}${p.estado ? `<span class="chip ${p.estado === 'Activo' ? 'ok' : 'warn'}">${esc(p.estado)}</span>` : ''}${p.servicio && p.servicio !== 'Individual' ? `<span class="chip">${esc(p.servicio)}${linked(p).length ? ' · con ' + esc(linked(p).map(x => x.nombres || fullName(x)).join(', ')) : ''}</span>` : ''}${S.draft ? '' : nextApptHTML(p)}</div></div>
   ${S.draft || TEAM() ? '' : `<span class="row" style="gap:6px"><button class="btn sm" data-act="pnFor" data-id="${p.id}" title="Ideas, consejos de colegas y seguimiento: no forman parte de la ficha">Notas de proceso${S.pnotes.filter(n => n.patientId === p.id).length ? ' (' + S.pnotes.filter(n => n.patientId === p.id).length + ')' : ''}</button><button class="btn sm" data-act="accessLog" title="Quién abrió esta historia y qué hizo">Accesos</button><button class="btn sm" data-act="fullDoc">Historia completa</button></span>`}</div>
-  <div class="tabs" role="tablist">${(TEAM() ? TABS.slice(0, 1) : tabsList()).map(([k, l]) => `<button class="tab ${S.tab === k ? 'on' : ''}" role="tab" data-act="tab" data-tab="${k}" ${S.draft && k !== 'datos' ? 'disabled style="opacity:.4;cursor:not-allowed"' : ''}>${l}</button>`).join('')}</div>
+  <div class="tabs" role="tablist">${(TEAM() ? TABS.filter(t => t[0] === 'datos' || t[0] === 'finanzas') : tabsList()).map(([k, l]) => `<button class="tab ${S.tab === k ? 'on' : ''}" role="tab" data-act="tab" data-tab="${k}" ${S.draft && k !== 'datos' ? 'disabled style="opacity:.4;cursor:not-allowed"' : ''}>${l}</button>`).join('')}</div>
   <div class="body" id="tabbody">${tabHTML(p)}</div></div>`;
 }
 function tabHTML(p) {
+  if (S.tab === 'finanzas') return tabFinanzas(p);
   if (S.tab === 'datos' || TEAM()) return tabDatos(p);
   if (S.tab.startsWith('x_')) return tabExtra(p);
   if (S.tab === 'consent') return tabConsent(p);
