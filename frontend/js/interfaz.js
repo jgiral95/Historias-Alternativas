@@ -132,12 +132,18 @@ function searchNotes(q) {
   const alts = qAlts(q), hits = [];
   const add = (p, tab, rec, label, txt) => { const nt = norm(txt); let i = -1, n = 0; alts.forEach(a => { const k = a ? nt.indexOf(a) : -1; if (k >= 0 && (i < 0 || k < i)) { i = k; n = a.length; } }); if (i < 0) return; const a = Math.max(0, i - 40), raw = String(txt); hits.push({ p, tab, rec, label, pre: (a ? '…' : '') + raw.slice(a, i), m: raw.slice(i, i + n), post: raw.slice(i + n, i + n + 60) + (i + n + 60 < raw.length ? '…' : '') }); };
   S.patients.forEach(p => {
-    const i = p.intake; if (i && i.signedAt) { intakeSchema(i).forEach(([t, fs]) => fs.forEach(f => add(p, 'intake', '', 'Primera vez', i[f[0]]))); (i.diagnosticos || []).forEach(d => add(p, 'intake', '', 'Impresión', d.codigo + ' ' + d.nombre)); }
+    const i = p.intake; if (i) { intakeSchema(i).forEach(([t, fs]) => fs.forEach(f => add(p, 'intake', '', 'Primera vez', i[f[0]]))); (i.diagnosticos || []).forEach(d => add(p, 'intake', '', 'Impresión', d.codigo + ' ' + d.nombre)); }
     (p.cierres || []).forEach(c => CIERRE_FIELDS.forEach(f => add(p, 'cierre', '', 'Cierre ' + fmtD(c.fecha), c[f[0]])));
   });
-  S.notes.forEach(n => { const p = S.patients.find(x => x.id === n.patientId); if (p && n.signedAt) { evolSchema(n).forEach(f => add(p, 'evol', n.id, 'Sesión ' + fmtD(n.sessionAt), n[f[0]])); if (n.dxCambio) (n.diagnosticos || []).forEach(d => add(p, 'evol', n.id, 'Impresión ' + fmtD(n.sessionAt), d.codigo + ' ' + d.nombre)); } });
-  S.reports.forEach(r => { const p = S.patients.find(x => x.id === r.patientId); if (p && r.signedAt) add(p, 'informes', r.id, r.tipo, r.contenido); });
+  S.notes.forEach(n => { const p = S.patients.find(x => x.id === n.patientId); if (p) { evolSchema(n).forEach(f => add(p, 'evol', n.id, 'Sesión ' + fmtD(n.sessionAt), n[f[0]])); if (n.dxCambio) (n.diagnosticos || []).forEach(d => add(p, 'evol', n.id, 'Impresión ' + fmtD(n.sessionAt), d.codigo + ' ' + d.nombre)); } });
+  S.reports.forEach(r => { const p = S.patients.find(x => x.id === r.patientId); if (p) add(p, 'informes', r.id, r.tipo, r.contenido); });
   S.scales.forEach(e => { const p = S.patients.find(x => x.id === e.patientId); if (p) add(p, 'escalas', '', e.escala.nombre, e.observaciones); });
+  // Todo lo escrito cuenta: borradores, notas de proceso y citas (aquí no hay documentos «firmados» que filtrar)
+  S.pnotes.concat(S.pn && S.pn.draft ? [S.pn.draft] : []).forEach(n => {
+    const p = S.patients.find(x => x.id === n.patientId) || { id: '', nombres: 'Nota de proceso', apellidos: '' };
+    [n.titulo, n.texto, (n.etiquetas || []).join(' '), n.revisar].concat((n.seguimiento || []).map(x => x && x.texto)).forEach(t => add(p, 'pnote', n.id, 'Nota de proceso · ' + (n.titulo || 'Sin título'), t));
+  });
+  S.appts.forEach(a => { const p = S.patients.find(x => x.id === a.patientId); if (p) Object.keys(a).forEach(k => { const v = a[k]; if (typeof v === 'string' && !/^(id|kind|patientId|estado|noteId|inicio|fin|at|createdAt|updatedAt)$/.test(k) && v.length > 2 && v.length < 3000) add(p, 'datos', '', 'Cita', v); }); });
   // Datos de la ficha y pestañas propias (única y por sesión)
   const SKIP = new Set(['id', 'kind', 'estado', 'createdAt', 'updatedAt', 'signedAt', 'tarifa']);
   S.patients.forEach(p => {
@@ -157,6 +163,7 @@ function hitsHTML(q) {
   return `<div class="hits"><div class="hits-h">En las notas (${hs.length})</div>${hs.slice(0, 30).map(h => `<button class="prow hit" data-act="openHit" data-id="${h.p.id}" data-tab="${h.tab}" data-rec="${esc(h.rec)}"><span><div class="nm">${esc(fullName(h.p))}</div><div class="sub">${esc(h.label)}</div><div class="snip">${esc(h.pre)}<mark>${esc(h.m)}</mark>${esc(h.post)}</div></span></button>`).join('')}</div>`;
 }
 ACT.openHit = b => {
+  if (b.dataset.tab === 'pnote') return ACT.pnOpen({ dataset: { id: b.dataset.rec } });
   ACT.open(b);
   const id = b.dataset.rec; if (!id) return;
   const el = document.getElementById('rec-' + id); if (el) { el.scrollIntoView({ block: 'center' }); el.classList.add('flash'); setTimeout(() => el.classList.remove('flash'), 2200); }
@@ -337,6 +344,8 @@ const BASE_SECS = [['contacto', 'Contacto'], ['cuidadores', 'Cuidadores o acudie
 const secOculta = id => { const o = (S.profile.formatos || {}).ocultos; return !o || o.includes(id); };  // sin preestablecidos: ocultos hasta que el terapeuta los muestre
 const datosSchema = () => (S.profile.formatos && S.profile.formatos.datos) || [];
 /* Datos de identidad: una vez guardados no se pueden cambiar (el servidor también lo exige). */
+/* Campos fijos de «Datos del consultante»: siempre van primero y no se pueden quitar ni renombrar en «Mis formatos». */
+const FIJOS = [['nombres', 'Nombre'], ['apellidos', 'Apellido'], ['documento', 'Documento de identidad']];
 const IDENT = ['nombres', 'apellidos', 'tipoDoc', 'documento', 'nacimiento', 'paisNac'];
 function tabDatos(p) {
   const age = ageOf(p.nacimiento), minor = age !== null && age < 18;
@@ -346,8 +355,8 @@ function tabDatos(p) {
   return `${reabrir}${secOculta('contacto') ? '' : `<div class="sec"><h3>Contacto</h3><div class="grid">${countryF('País de residencia', 'paisRes', p.paisRes)}${cityF(p)}${F('Zona de residencia', 'zona', p.zona || '', { type: 'select', opts: OPT.zona })}${F('Localidad / comuna / barrio', 'localidad', p.localidad)}${F('Dirección', 'direccion', p.direccion)}${telF('Teléfono', 'telefono', 'telInd', p)}${F('Correo electrónico', 'correo', p.correo, { type: 'email' })}</div>${naRow()}</div>`}
   ${secOculta('cuidadores') ? '' : minor ? `<div class="sec"><h3>Cuidadores o acudientes</h3>${cuid}</div>` : `<div class="sec"><h3>Cuidadores o acudientes</h3><p class="stnote">En adultos sin cuidador, marque «No aplica».</p>${cuid}</div>`}
   ${secOculta('emergencia') ? '' : `<div class="sec"><h3>Contacto de emergencia</h3><div class="grid">${F('Nombre', 'emergNombre', p.emergNombre)}${F('Parentesco', 'emergParentesco', p.emergParentesco)}${telF('Teléfono', 'emergTelefono', 'emergInd', p)}</div>${naRow()}</div>`}
-  ${datosSchema().map(([t, fs]) => `<div class="sec"><h3>${esc(t)}</h3><div class="grid">${fs.map(f => F(f[1], f[0], p[f[0]], Object.assign(f[1] ? {} : { wide: true, aria: t }, ['date', 'time', 'number'].includes(f[3]) ? { type: f[3] } : {}))).join('')}</div>${naRow()}</div>`).join('')}
-  ${datosSchema().length ? '' : '<p class="stnote">Aún no tiene campos para los datos del consultante. Créelos en «Mis formatos» → «Datos del consultante».</p>'}
+  <div class="sec"><h3>Identificación</h3><div class="grid">${FIJOS.map(([k, l]) => F(l, k, p[k] || '')).join('')}</div></div>
+  ${datosSchema().map(([t, fs]) => `<div class="sec"><h3>${esc(t)}</h3><div class="grid">${fs.filter(f => !FIJOS.some(x => x[0] === f[0])).map(f => F(f[1], f[0], p[f[0]], Object.assign(f[1] ? {} : { wide: true, aria: t }, ['date', 'time', 'number'].includes(f[3]) ? { type: f[3] } : {}))).join('')}</div>${naRow()}</div>`).join('')}
   <div id="dupslot"></div>
   <div id="lkslot">${linksHTML(p)}</div>
   <div class="row end">${S.draft ? '<button class="btn" data-act="cancelDraft">Cancelar</button>' : ''}<button class="btn pri" data-act="savePatient">Guardar datos</button></div>
@@ -469,9 +478,9 @@ function deriveName(o) {
 ACT.savePatient = async b => {
   const p = curPatient(), o = readForm($('#tabbody'), {});
   // El nombre de la ficha sale de los campos propios (Mis formatos): «Nombre»/«Apellido»; si no hay, del primer campo con datos.
-  const nm = deriveName(o);
+  const nm = String(o.nombres || '').trim() || String(o.apellidos || '').trim() ? {} : deriveName(o);
   if (nm.nombres || nm.apellidos) Object.assign(o, nm);
-  else if (!p.nombres && !p.apellidos) { if (AUTO.on) return; toast(datosSchema().length ? 'Escriba al menos el nombre del consultante.' : 'Primero cree los campos en «Mis formatos» → «Datos del consultante».'); return; }
+  else if (!String(o.nombres || '').trim() && !String(o.apellidos || '').trim() && !p.nombres && !p.apellidos) { if (AUTO.on) return; toast('Escriba al menos el nombre del consultante.'); return; }
   if (S.draft && dupOf(o, p.id)) { if (!AUTO.on) dupWarn(o, p.id); return; }
   const snap = clone(p); Object.assign(p, o);
   if (!(await persist([p], b))) { restore(p, snap); return; }
