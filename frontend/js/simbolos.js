@@ -29,3 +29,23 @@ document.addEventListener('click', e => {
   if (!p.hidden && !e.target.closest('#simpanel')) p.hidden = true;
 });
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && $('#simpanel') && !$('#simpanel').hidden) { $('#simpanel').hidden = true; e.stopPropagation(); } }, true);
+
+/* Atajos con barra invertida: al escribir «\virgo» (o «\virgo» + espacio) el texto se cambia por ♍. Sirve con el nombre en español
+   (sin tildes ni espacios: \nodonorte, \luna) y con los signos y planetas en inglés (\scorpio, \moon). Si el nombre es el comienzo de otro
+   más largo (\sol, \luna), se cambia al escribir un espacio o un salto de línea. */
+const SIM_AL = (() => {
+  const n = s => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z]/g, ''), m = {};
+  SIMBOLOS.forEach(([, l]) => l.forEach(([c, nom]) => { m[n(nom)] = c; }));
+  const en = { aries: '♈', taurus: '♉', gemini: '♊', cancer: '♋', leo: '♌', virgo: '♍', libra: '♎', scorpio: '♏', sagittarius: '♐', capricorn: '♑', aquarius: '♒', pisces: '♓',
+    sun: '☉', moon: '☽', mercury: '☿', mars: '♂', jupiter: '♃', saturn: '♄', uranus: '♅', neptune: '♆', pluto: '♇', chiron: '⚷', northnode: '☊' };
+  return Object.assign(m, en);
+})();
+document.addEventListener('input', e => {
+  const el = e.target; if (!simCampo(el) || !/^insert/.test(e.inputType || '')) return;
+  const i = el.selectionStart; if (i == null || i !== el.selectionEnd) return;
+  const q = el.value.slice(Math.max(0, i - 24), i).match(/\\([A-Za-zÁÉÍÓÚáéíóúÑñ]+)([ \n]?)$/); if (!q) return;
+  const k = q[1].normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase(), c0 = SIM_AL[k]; if (!c0) return;
+  if (!q[2] && Object.keys(SIM_AL).some(x => x !== k && x.startsWith(k))) return;
+  const c = c0 + (/[♈-♓]/.test(c0) ? '︎' : '') + q[2], j = i - q[0].length;
+  el.setRangeText(c, j, i, 'end'); el.dispatchEvent(new Event('input', { bubbles: true }));
+});
