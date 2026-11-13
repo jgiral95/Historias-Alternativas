@@ -122,11 +122,25 @@ function prowHTML(p) {
   return `<button class="prow ${p.id === S.pid ? 'on' : ''}" data-act="open" data-id="${p.id}"><span class="dot ${p.estado === 'En pausa' ? 'pausa' : isClosed(p) ? 'alta' : ''}"></span><span><div class="nm">${esc(fullName(p))}${p.demo ? ' <span class="chip" style="font-size:10px">Ejemplo</span>' : ''}</div><div class="sub">${esc(p.documento || 'sin documento')}${st.last ? ' · últ. ' + esc(fmtD(st.last).replace(/ de /g, ' ')) : ''}</div></span></button>`;
 }
 const norm = v => String(v || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
-/* Búsqueda de símbolos: «virgo» también encuentra ♍ y ♍ también encuentra «virgo» (nombres del banco de símbolos, simbolos.js). */
+/* Búsqueda de símbolos: «virgo» también encuentra ♍ y ♍ también encuentra «virgo» (nombres del banco de símbolos, simbolos.js).
+   Los símbolos de un mismo astro se buscan juntos (☽ ☾ 🌙 y «luna»; ☉ ☀ y «sol») y los nombres con o sin tilde. */
+const SIM_VAR = { '☽': ['☾', '🌙', '🌛', '🌜'], '☉': ['☀', '⊙', '☼', '🌞'], '♅': ['⛢'], '♇': ['⯓'], '⚹': ['✶', '✱'], '☊': ['☋'] };
+function simGrupos() {
+  const g = [];
+  SIMBOLOS.forEach(([, l]) => l.forEach(([c, nom]) => g.push({ ch: [c], nm: [norm(nom)] })));
+  const por = c => g.find(x => x.ch.includes(c));
+  [['☽', '☾'], ['☉', '☀']].forEach(([a, b]) => { const A = por(a), B = por(b); if (A && B && A !== B) { A.ch.push(...B.ch); A.nm.push(...B.nm); g.splice(g.indexOf(B), 1); } });
+  Object.keys(SIM_VAR).forEach(c => { const x = por(c); if (x) SIM_VAR[c].forEach(v => { if (!x.ch.includes(v)) x.ch.push(v); }); });
+  return g;
+}
 function qAlts(q) {
-  const t = String(q || '').replace(/\uFE0E/g, ''), n = norm(t).trim(), out = [norm(t)];
-  SIMBOLOS.forEach(([, l]) => l.forEach(([c, nom]) => { if (n === norm(nom)) out.push(c); else if (t.includes(c)) out.push(norm(t.split(c).join(nom))); }));
-  return out;
+  const t = String(q || '').replace(/[\uFE0E\uFE0F]/g, ''), n = norm(t).trim(), out = [norm(t)];
+  simGrupos().forEach(({ ch, nm }) => {
+    const forms = ch.concat(nm);
+    if (nm.includes(n)) out.push(...forms);
+    else ch.forEach(c => { if (t.includes(c)) forms.filter(f => f !== c).forEach(f => out.push(norm(t.split(c).join(f)))); });
+  });
+  return [...new Set(out)];
 }
 function searchNotes(q) {
   const alts = qAlts(q), hits = [];

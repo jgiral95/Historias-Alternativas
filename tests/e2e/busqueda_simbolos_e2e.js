@@ -16,12 +16,16 @@ let bad = 0; const ok = (c, m) => { console.log((c ? 'OK   ' : 'FALLA') + ' ' + 
     S.reports.push({ id: 'r_sim2', patientId: pid, signedAt: new Date().toISOString(), tipo: 'Informe', contenido: 'El ascendente es Virgo y el sol en Leo.' });
   });
   // dos entradas de una pestaña propia el mismo día (misma etiqueta): ambas deben salir
-  await page.evaluate(() => { S.profile.formatos = Object.assign({}, S.profile.formatos, { pestanas: { extra: [{ id: 'x_sim', nombre: 'Carta Natal' }] } }); S.patients[0].extras = { x_sim: [{ at: '2026-11-13T10:00:00', v: { a: 'Sol en virgo' } }, { at: '2026-11-13T11:00:00', v: { a: '♍︎ luna' } }] }; });
+  await page.evaluate(() => { S.profile.formatos = Object.assign({}, S.profile.formatos, { pestanas: { extra: [{ id: 'x_sim', nombre: 'Carta Natal' }] } }); S.patients[0].extras = { x_sim: [{ at: '2026-11-13T10:00:00', v: { a: 'Sol en virgo' } }, { at: '2026-11-13T11:00:00', v: { a: '♍︎ luna' } }, { at: '2026-11-09T09:00:00', v: { a: '☾ cuarto' } }] }; });
   const buscar = async q => { await page.fill('#q', q); await page.dispatchEvent('#q', 'input'); await page.waitForTimeout(300); return page.evaluate(() => [...document.querySelectorAll('.hits .snip')].map(e => e.textContent)); };
   const w = await buscar('virgo');
   ok(w.some(t => t.includes('♍')) && w.some(t => /Virgo/.test(t)) && w.some(t => /Mercurio/.test(t)) && w.some(t => /^♍︎ luna/.test(t.replace(/^…/, ''))), 'virgo encuentra (borrador y nota de proceso incluidos) el símbolo y la palabra: ' + JSON.stringify(w));
   const s = await buscar('♍');
   ok(s.some(t => t.includes('♍')) && s.some(t => /Virgo/.test(t)), '♍ encuentra el símbolo y la palabra: ' + JSON.stringify(s));
+  const l = await buscar('☽');
+  ok(l.some(t => t.includes('☾')) && l.some(t => /Luna/.test(t)), '☽ también encuentra ☾ y «luna»: ' + JSON.stringify(l));
+  const l2 = await buscar('luna');
+  ok(l2.some(t => t.includes('☾')), 'luna encuentra ☾');
   ok(errors.length === 0, 'sin errores de JavaScript' + (errors.length ? ': ' + errors[0] : ''));
   await b.close(); process.exit(bad);
 })().catch(e => { console.error(e); process.exit(1); });
