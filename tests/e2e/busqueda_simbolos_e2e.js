@@ -16,7 +16,7 @@ let bad = 0; const ok = (c, m) => { console.log((c ? 'OK   ' : 'FALLA') + ' ' + 
     S.reports.push({ id: 'r_sim2', patientId: pid, signedAt: new Date().toISOString(), tipo: 'Informe', contenido: 'El ascendente es Virgo y el sol en Leo.' });
   });
   // dos entradas de una pestaña propia el mismo día (misma etiqueta): ambas deben salir
-  await page.evaluate(() => { S.profile.formatos = Object.assign({}, S.profile.formatos, { pestanas: { extra: [{ id: 'x_sim', nombre: 'Carta Natal' }] } }); S.patients[0].extras = { x_sim: [{ at: '2026-11-13T10:00:00', v: { a: 'Sol en virgo' } }, { at: '2026-11-13T11:00:00', v: { a: '♍︎ luna' } }, { at: '2026-11-09T09:00:00', v: { a: '☾ cuarto' } }] }; });
+  await page.evaluate(() => { S.profile.formatos = Object.assign({}, S.profile.formatos, { pestanas: { extra: [{ id: 'x_sim', nombre: 'Carta Natal', secs: [['Carta', [['a', 'Sol', 3], ['b', 'Luna', 3]]]] }] } }); S.patients[0].extras = { x_sim: [{ at: '2026-11-13T10:00:00', v: { a: 'Sol en virgo' } }, { at: '2026-11-13T11:00:00', v: { a: '♍︎ luna' } }, { at: '2026-11-09T09:00:00', v: { a: '☾ cuarto' } }] }; });
   const buscar = async q => { await page.fill('#q', q); await page.dispatchEvent('#q', 'input'); await page.waitForTimeout(300); return page.evaluate(() => [...document.querySelectorAll('.hits .snip')].map(e => e.textContent)); };
   const w = await buscar('virgo');
   ok(w.some(t => t.includes('♍')) && w.some(t => /Virgo/.test(t)) && w.some(t => /Mercurio/.test(t)) && w.some(t => /^♍︎ luna/.test(t.replace(/^…/, ''))), 'virgo encuentra (borrador y nota de proceso incluidos) el símbolo y la palabra: ' + JSON.stringify(w));
@@ -35,6 +35,12 @@ let bad = 0; const ok = (c, m) => { console.log((c ? 'OK   ' : 'FALLA') + ' ' + 
   ok(nf > 2 && fil.length > 0 && fil.length < todo && fil.every(t => /Carta Natal/.test(t)), 'filtro por sección (nombre de «Mis formatos»): ' + JSON.stringify(fil));
   await page.click('.hitf .chip:has-text("Todo")'); await page.waitForTimeout(200);
   ok(await page.locator('.hits .hit').count() === todo, '«Todo» quita el filtro');
+  await page.evaluate(() => { S.profile.formatos.filtros = ['a']; });
+  await buscar('virgo');
+  const cs = await page.locator('[aria-label="Filtrar por campo"] .chip').allTextContents();
+  ok(cs.length === 1 && /^Sol/.test(cs[0]), 'solo salen como filtro los campos elegidos en Mis formatos: ' + JSON.stringify(cs));
+  await page.click('[data-act="hitCampo"]'); await page.waitForTimeout(200);
+  ok(await page.locator('.hits .hit').count() === 2, 'filtrar por campo deja solo sus resultados');
   ok(errors.length === 0, 'sin errores de JavaScript' + (errors.length ? ': ' + errors[0] : ''));
   await b.close(); process.exit(bad);
 })().catch(e => { console.error(e); process.exit(1); });

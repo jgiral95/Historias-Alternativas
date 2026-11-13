@@ -295,6 +295,15 @@ function formCard() {
   const row = (k, n) => `<div class="row"><span style="flex:1">${esc(n)}</span><button class="btn sm ${ED.formulario.includes(k) ? 'pri' : ''}" data-fm="fo:${k}">${ED.formulario.includes(k) ? 'En el formulario · quitar' : 'Agregar al formulario'}</button></div>`;
   return own.length ? `<div class="card"><b>Formulario del consultante nuevo</b><p class="stnote" style="margin:4px 0">Elija cuáles de estos campos le pide a quien recibe el formulario; todos los que elija son obligatorios. Los campos nuevos aparecen aquí cuando los guarda en este formato.</p>${own.map(([k, n]) => row(k, n)).join('')}</div>` : '';
 }
+/* Campos de este formato que salen como filtro en el buscador (se guardan en formatos.filtros por clave de campo). */
+function filtroCard() {
+  const w = ED.which, secs = w === 'evol' ? null : secList();
+  const own = w === 'evol' ? ED.evol.map(f => [f.k, f.l]) : secs.flatMap(sc => sc.g || sc.img ? [] : sc.fs.length ? sc.fs.map(f => [f.k, sc.fs.length > 1 ? sc.t + ': ' + (f.l || '…') : (f.l || sc.t)]) : sc.soloKey ? [[sc.soloKey, sc.t]] : []);
+  if (!own.length) return '';
+  if (!ED.filtros) ED.filtros = ((S.profile.formatos || {}).filtros || []).slice();
+  const row = ([k, n]) => `<div class="row"><span style="flex:1">${esc(n)}</span><button class="btn sm ${ED.filtros.includes(k) ? 'pri' : ''}" data-fm="fi:${k}">${ED.filtros.includes(k) ? 'Es filtro · quitar' : 'Usar como filtro'}</button></div>`;
+  return `<div class="card"><b>Filtros del buscador</b><p class="stnote" style="margin:4px 0">Elija con qué campos de este formato se puede filtrar la búsqueda. Los campos nuevos aparecen aquí cuando los guarda en este formato.</p>${own.map(row).join('')}</div>`;
+}
 function drawFormats() {
   const root = $('#modal-root'), prev = root.querySelector('.modal'), top = prev ? prev.scrollTop : 0, w = ED.which;
   const isX = String(w).startsWith('x_'), hasGeno = (isX ? ED[w] : ED.intake).some(sc => sc.g);
@@ -306,6 +315,7 @@ function drawFormats() {
   ${hubTabs(w)}
   <p style="margin:0;font-size:13px;color:var(--muted)">${intro}</p>
   ${body || ''}
+  ${filtroCard()}
   <div class="row" style="justify-content:space-between">${w === 'evol' ? '<span></span>' : '<button class="btn warn" data-fm="reset">Restaurar formato base</button>'}<button class="btn pri" data-fm="save">Guardar formato</button></div></div></div>`;
   const m = root.querySelector('.modal'); m.scrollTop = top;
 }
@@ -339,6 +349,7 @@ ACT.formats = b => {
     if (op === 'close') { ED = null; root.innerHTML = ''; root.onclick = root.oninput = root.onchange = null; return; }
     if (op === 'tab') ED.which = arg;
     else if (op === 'oc') { const i = ED.ocultos.indexOf(arg); if (i < 0) ED.ocultos.push(arg); else ED.ocultos.splice(i, 1); }
+    else if (op === 'fi') { if (!ED.filtros) ED.filtros = []; const i = ED.filtros.indexOf(arg); if (i < 0) ED.filtros.push(arg); else ED.filtros.splice(i, 1); }
     else if (op === 'fo') { const i = ED.formulario.indexOf(arg); if (i < 0) ED.formulario.push(arg); else ED.formulario.splice(i, 1); }
     else if (op === 'fo') { if (!ED.formulario) ED.formulario = []; const i = ED.formulario.indexOf(arg); if (i < 0) ED.formulario.push(arg); else ED.formulario.splice(i, 1); }
     else if (op === 'sadd') { if (L.length >= 15) return toast('Máximo 15 apartados.'); L.push({ t: 'Nuevo apartado', g: false, fs: [], soloKey: null, soloR: 4 }); }
@@ -377,7 +388,7 @@ function saveFormats() {
   if (extra.some(x => x.secs.some(sc => !sc[0]))) return bad('Cada apartado necesita un título.');
   if (extra.some(x => x.secs.filter(sc => sc[2] === 'genograma').length > 1)) return bad('Solo puede haber un genograma por pestaña.');
   const snap = clone(S.profile);
-  S.profile.formatos = Object.assign({}, S.profile.formatos, { intake, evol, datos, ocultos: ED.ocultos || [], formulario: ED.formulario ? ED.formulario.filter(k => datos.some(sc => (sc[1] || []).some(f => f[0] === k))) : undefined, pestanas: Object.assign({}, pc, { extra }) });
+  S.profile.formatos = Object.assign({}, S.profile.formatos, { intake, evol, datos, filtros: ED.filtros || (S.profile.formatos || {}).filtros || [], ocultos: ED.ocultos || [], formulario: ED.formulario ? ED.formulario.filter(k => datos.some(sc => (sc[1] || []).some(f => f[0] === k))) : undefined, pestanas: Object.assign({}, pc, { extra }) });
   persist([S.profile], $('[data-fm="save"]')).then(ok => { if (!ok) { restore(S.profile, snap); return; } finishFormats(); });
 }
 /* Pestañas de la ficha: renombrar, ocultar y crear propias (texto libre por consultante). */

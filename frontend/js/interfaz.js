@@ -144,12 +144,12 @@ function qAlts(q) {
 }
 function searchNotes(q) {
   const alts = qAlts(q), hits = [];
-  const add = (p, tab, rec, label, txt) => { const nt = norm(txt); let i = -1, n = 0; alts.forEach(a => { const k = a ? nt.indexOf(a) : -1; if (k >= 0 && (i < 0 || k < i)) { i = k; n = a.length; } }); if (i < 0) return; const a = Math.max(0, i - 40), raw = String(txt); hits.push({ p, tab, rec, label, pre: (a ? '…' : '') + raw.slice(a, i), m: raw.slice(i, i + n), post: raw.slice(i + n, i + n + 60) + (i + n + 60 < raw.length ? '…' : '') }); };
+  const add = (p, tab, rec, label, txt, fk, fl) => { const nt = norm(txt); let i = -1, n = 0; alts.forEach(a => { const k = a ? nt.indexOf(a) : -1; if (k >= 0 && (i < 0 || k < i)) { i = k; n = a.length; } }); if (i < 0) return; const a = Math.max(0, i - 40), raw = String(txt); hits.push({ p, tab, rec, label, fk, fl, pre: (a ? '…' : '') + raw.slice(a, i), m: raw.slice(i, i + n), post: raw.slice(i + n, i + n + 60) + (i + n + 60 < raw.length ? '…' : '') }); };
   S.patients.forEach(p => {
-    const i = p.intake; if (i) { intakeSchema(i).forEach(([t, fs]) => fs.forEach(f => add(p, 'intake', '', 'Primera vez', i[f[0]]))); (i.diagnosticos || []).forEach(d => add(p, 'intake', '', 'Impresión', d.codigo + ' ' + d.nombre)); }
+    const i = p.intake; if (i) { intakeSchema(i).forEach(([t, fs]) => fs.forEach(f => add(p, 'intake', '', 'Primera vez', i[f[0]], f[0], f[1] || t))); (i.diagnosticos || []).forEach(d => add(p, 'intake', '', 'Impresión', d.codigo + ' ' + d.nombre)); }
     (p.cierres || []).forEach(c => CIERRE_FIELDS.forEach(f => add(p, 'cierre', '', 'Cierre ' + fmtD(c.fecha), c[f[0]])));
   });
-  S.notes.forEach(n => { const p = S.patients.find(x => x.id === n.patientId); if (p) { evolSchema(n).forEach(f => add(p, 'evol', n.id, 'Sesión ' + fmtD(n.sessionAt), n[f[0]])); if (n.dxCambio) (n.diagnosticos || []).forEach(d => add(p, 'evol', n.id, 'Impresión ' + fmtD(n.sessionAt), d.codigo + ' ' + d.nombre)); } });
+  S.notes.forEach(n => { const p = S.patients.find(x => x.id === n.patientId); if (p) { evolSchema(n).forEach(f => add(p, 'evol', n.id, 'Sesión ' + fmtD(n.sessionAt), n[f[0]], f[0], f[1])); if (n.dxCambio) (n.diagnosticos || []).forEach(d => add(p, 'evol', n.id, 'Impresión ' + fmtD(n.sessionAt), d.codigo + ' ' + d.nombre)); } });
   S.reports.forEach(r => { const p = S.patients.find(x => x.id === r.patientId); if (p) add(p, 'informes', r.id, r.tipo, r.contenido); });
   S.scales.forEach(e => { const p = S.patients.find(x => x.id === e.patientId); if (p) add(p, 'escalas', '', e.escala.nombre, e.observaciones); });
   // Todo lo escrito cuenta: borradores, notas de proceso y citas (aquí no hay documentos «firmados» que filtrar)
@@ -159,12 +159,14 @@ function searchNotes(q) {
   });
   S.appts.forEach(a => { const p = S.patients.find(x => x.id === a.patientId); if (p) Object.keys(a).forEach(k => { const v = a[k]; if (typeof v === 'string' && !/^(id|kind|patientId|estado|noteId|inicio|fin|at|createdAt|updatedAt)$/.test(k) && v.length > 2 && v.length < 3000) add(p, 'datos', '', 'Cita', v); }); });
   // Datos de la ficha y pestañas propias (única y por sesión)
+  const DL = {}; FIJOS.forEach(([k, l]) => DL[k] = l); datosSchema().forEach(([t, fs]) => fs.forEach(f => { DL[f[0]] = f[1] || t; }));
+  const XL = {}; (tabsConf().extra || []).forEach(x => (x.secs || []).forEach(([t, fs]) => fs.forEach(f => { XL[f[0]] = f[1] || t; })));
   const SKIP = new Set(['id', 'kind', 'estado', 'createdAt', 'updatedAt', 'signedAt', 'tarifa']);
   S.patients.forEach(p => {
-    Object.keys(p).forEach(k => { const v = p[k]; if (!SKIP.has(k) && typeof v === 'string' && v.length < 5000 && !v.startsWith('data:')) add(p, 'datos', '', 'Datos', v); });
+    Object.keys(p).forEach(k => { const v = p[k]; if (!SKIP.has(k) && typeof v === 'string' && v.length < 5000 && !v.startsWith('data:')) add(p, 'datos', '', 'Datos', v, k, DL[k]); });
     (tabsConf().extra || []).forEach(x => {
-      const v = (p.extras || {})[x.id], vals = o => !o ? [] : typeof o === 'string' ? [o] : Object.values(o.v || o).filter(y => typeof y === 'string' && !y.startsWith('data:'));
-      (Array.isArray(v) ? v : [v]).forEach(e => vals(e).forEach(t => add(p, x.id, '', x.nombre + (e && e.at ? ' ' + fmtD(e.at) : ''), t)));
+      const v = (p.extras || {})[x.id], vals = o => !o ? [] : typeof o === 'string' ? [[null, o]] : Object.entries(o.v || o).filter(y => typeof y[1] === 'string' && !y[1].startsWith('data:'));
+      (Array.isArray(v) ? v : [v]).forEach(e => vals(e).forEach(([fk, t]) => add(p, x.id, '', x.nombre + (e && e.at ? ' ' + fmtD(e.at) : ''), t, fk, fk && XL[fk])));
     });
   });
   const seen = new Set();
@@ -179,10 +181,14 @@ function hitsHTML(q) {
   const secs = TABS.filter(([k]) => !oc.includes(k)).map(([k, l]) => [k, nm[k] || l]).concat((c.extra || []).map(x => [x.id, x.nombre]), [['pnote', 'Notas de proceso'], ['cita', 'Citas']]);
   const cnt = k => all.filter(h => h.sec === k).length, chips = secs.filter(([k]) => cnt(k));
   if (S.qf && !chips.some(x => x[0] === S.qf)) S.qf = '';
-  const hs = S.qf ? all.filter(h => h.sec === S.qf) : all;
+  const fsel = ((S.profile.formatos || {}).filtros || []), fl = {}; all.forEach(h => { if (h.fk && h.fl && fsel.includes(h.fk)) (fl[h.fk] = fl[h.fk] || { l: h.fl, n: 0 }).n++; });
+  if (S.qk && !fl[S.qk]) S.qk = '';
+  let hs = S.qf ? all.filter(h => h.sec === S.qf) : all; if (S.qk) hs = hs.filter(h => h.fk === S.qk);
+  const fbar = Object.keys(fl).length ? `<div class="hitf" role="group" aria-label="Filtrar por campo">${Object.entries(fl).map(([k, v]) => `<button type="button" class="chip${S.qk === k ? ' on' : ''}" data-act="hitCampo" data-k="${esc(k)}"><span>${esc(v.l)}</span> (${v.n})</button>`).join('')}</div>` : '';
   const bar = chips.length ? `<div class="hitf" role="group" aria-label="Filtrar por sección"><button type="button" class="chip${S.qf ? '' : ' on'}" data-act="hitFiltro" data-k=""><span>Todo</span> (${all.length})</button>${secs.map(([k, l]) => `<button type="button" class="chip${S.qf === k ? ' on' : ''}"${cnt(k) ? '' : ' disabled'} data-act="hitFiltro" data-k="${esc(k)}"><span>${esc(l)}</span> (${cnt(k)})</button>`).join('')}</div>` : '';
-  return `<div class="hits"><div class="hits-h">En las notas (${hs.length})</div>${bar}${hs.slice(0, 30).map(h => `<button class="prow hit" data-act="openHit" data-id="${h.p.id}" data-tab="${h.tab}" data-rec="${esc(h.rec)}"><span><div class="nm">${esc(fullName(h.p))}</div><div class="sub">${esc(h.label)}</div><div class="snip">${esc(h.pre)}<mark>${esc(h.m)}</mark>${esc(h.post)}</div></span></button>`).join('')}</div>`;
+  return `<div class="hits"><div class="hits-h">En las notas (${hs.length})</div>${bar}${fbar}${hs.slice(0, 30).map(h => `<button class="prow hit" data-act="openHit" data-id="${h.p.id}" data-tab="${h.tab}" data-rec="${esc(h.rec)}"><span><div class="nm">${esc(fullName(h.p))}</div><div class="sub">${esc(h.label)}</div><div class="snip">${esc(h.pre)}<mark>${esc(h.m)}</mark>${esc(h.post)}</div></span></button>`).join('')}</div>`;
 }
+ACT.hitCampo = b => { S.qk = S.qk === b.dataset.k ? '' : b.dataset.k; $('#rows').innerHTML = rowsHTML(); };
 ACT.hitFiltro = b => { S.qf = b.dataset.k; $('#rows').innerHTML = rowsHTML(); };
 ACT.openHit = b => {
   if (b.dataset.tab === 'pnote') return ACT.pnOpen({ dataset: { id: b.dataset.rec } });
