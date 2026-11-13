@@ -81,12 +81,12 @@ button,input,select,textarea{font:inherit;color:inherit}
 .grid .wide{grid-column:1/-1}
 .fld{display:flex;flex-direction:column;gap:4px;min-width:0}
 .fld label,.lbl{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--muted)}
-input:not([type]),input[type=text],input[type=date],input[type=datetime-local],input[type=time],input[type=tel],input[type=email],input[type=number],input[type=password],input[type=search],input[type=url],select,textarea{
+input:not([type]),input[type=text],input[type=date],input[type=month],input[type=datetime-local],input[type=time],input[type=tel],input[type=email],input[type=number],input[type=password],input[type=search],input[type=url],select,textarea{
   width:100%;background:var(--surface2);border:1px solid var(--line);border-radius:6px;padding:8px 10px;min-width:0}
 textarea{resize:vertical;min-height:84px;line-height:1.5}
 /* iPhone: las casillas de fecha y hora tienen un ancho propio que se sale del margen y se encogen si están vacías */
-input[type=date],input[type=datetime-local],input[type=time]{-webkit-appearance:none;appearance:none;display:block;max-width:100%;min-height:2.6em;text-align:left;font:inherit;color:inherit}
-input[type=date]::-webkit-date-and-time-value,input[type=datetime-local]::-webkit-date-and-time-value,input[type=time]::-webkit-date-and-time-value{text-align:left;min-height:1.4em}
+input[type=date],input[type=month],input[type=datetime-local],input[type=time]{-webkit-appearance:none;appearance:none;display:block;max-width:100%;min-height:2.6em;text-align:left;font:inherit;color:inherit}
+input[type=date]::-webkit-date-and-time-value,input[type=month]::-webkit-date-and-time-value,input[type=datetime-local]::-webkit-date-and-time-value,input[type=time]::-webkit-date-and-time-value{text-align:left;min-height:1.4em}
 .grid>*,.fld{min-width:0}
 input:focus,select:focus,textarea:focus{border-color:var(--accent);outline:none;box-shadow:0 0 0 2px var(--accent-soft)}
 .sec{display:flex;flex-direction:column;gap:12px}
