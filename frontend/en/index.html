@@ -56,8 +56,13 @@ header.top{display:flex;justify-content:space-between;align-items:center;padding
 .kicker{font-size:13px;letter-spacing:2px;text-transform:uppercase;color:var(--terracota);font-weight:600;margin-bottom:14px}
 .centro{text-align:center}.centro h2{max-width:18em;margin:0 auto 16px}.centro .sub{max-width:38em;margin:0 auto;color:var(--suave)}
 h2{font-size:clamp(30px,4vw,46px);letter-spacing:-.5px}
-.terapias{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:34px}
-.terapias span{background:var(--crema);border:1px solid var(--linea);border-radius:99px;padding:9px 18px;font-size:15px;color:var(--tierra)}
+.terapias{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-top:34px;text-align:left}
+.tc{border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:6px;min-height:118px;transition:transform .25s ease,box-shadow .25s ease}
+.tc:hover{transform:translateY(-4px);box-shadow:0 14px 28px -18px rgba(47,74,58,.5)}
+.tc svg{margin-bottom:4px}.tc b{font-weight:600;font-size:15px;line-height:1.25}.tc span{font-size:13px;line-height:1.4;opacity:.85}
+.tc.a{background:#E4EBE2;color:#2F4A3A}.tc.b{background:#F3E2D8;color:#7A4126}.tc.c{background:#EFE6D2;color:#5A412E}.tc.d{background:#DCE6DD;color:#2F4A3A}
+@media (max-width:560px){.terapias{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (prefers-reduced-motion:reduce){.tc{transition:none}.tc:hover{transform:none}}
 .tres{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:22px;margin-top:48px}
 .tarjeta{background:var(--crema);border:1px solid var(--linea);border-radius:28px 28px 28px 8px;padding:30px}
 .tarjeta .ico{width:48px;height:48px;border-radius:50%;background:#E4EBE2;display:grid;place-items:center;margin-bottom:18px}
@@ -106,6 +111,14 @@ header.top .nav a.nl{color:var(--tinta);text-decoration:none;padding:8px 2px}hea
 .demo-side ul{list-style:none;margin:0;padding:0;display:grid;gap:8px}
 .demo-side li button{all:unset;box-sizing:border-box;width:100%;cursor:pointer;display:flex;justify-content:space-between;gap:8px;padding:10px 12px;border-radius:12px}
 .demo-side li button:focus-visible,.demo-tabs button:focus-visible{outline:3px solid var(--terracota);outline-offset:2px}
+.demo-prof{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;align-items:center;margin-bottom:18px}
+.demo-prof-l{font-size:14px;color:var(--suave);margin-right:4px}
+.demo-prof button{font:inherit;cursor:pointer;background:var(--crema);padding:7px 16px;border-radius:99px;border:1px solid var(--linea);font-size:14px;color:var(--suave)}
+.demo-prof button[aria-pressed="true"]{background:var(--bosque);border-color:var(--bosque);color:#fff}
+.demo-prof button:focus-visible{outline:3px solid var(--terracota);outline-offset:2px}
+.demo-adj{display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin:8px 0}
+.demo-adj figure{margin:0;text-align:center;font-size:12px;color:var(--suave)}.demo-adj svg{display:block;margin:0 auto 4px;border:1px solid var(--linea);border-radius:10px}
+.demo-subir{border:1px dashed var(--salvia);border-radius:10px;padding:18px 14px;font-size:13px;color:var(--bosque)}
 .demo-hint{font-size:12.5px;color:var(--suave);margin-top:14px}
 .barra{height:10px;background:#E4EBE2;border-radius:99px;overflow:hidden;margin-top:6px}.barra i{display:block;height:100%;background:var(--salvia);border-radius:99px;transition:width .4s}
 .demo-field .row2{display:flex;justify-content:space-between;font-size:14px}
@@ -168,6 +181,7 @@ header.top .nav a.lg{border:1.5px solid var(--salvia);color:var(--bosque);text-d
 </section>
 
 <section class="demo-wrap" aria-label="App preview" style="padding-top:0"><div class="wrap">
+  <div class="demo-prof" id="d-prof" role="group" aria-label="Elija su práctica para ver un ejemplo"></div>
   <div class="demo">
     <div class="demo-side"><b class="k" id="d-hoy">Today</b><ul aria-labelledby="d-hoy" id="d-citas"></ul><p class="demo-hint">Sample data: click an appointment or a tab.</p></div>
     <div class="demo-main"><b class="k">Client file</b><h3 id="d-nombre"></h3><p class="meta" id="d-meta"></p>
@@ -183,7 +197,22 @@ header.top .nav a.lg{border:1.5px solid var(--salvia);color:var(--bosque);text-d
     <h2>Made for those who heal from other perspectives</h2>
     <p class="sub">If your practice grows from listening, the body and balance, here you'll find a place that speaks your language.</p>
     <div class="terapias">
-      <span>Reiki</span><span>Acupuncture</span><span>Naturopathy</span><span>Aromatherapy</span><span>Bach flowers</span><span>Therapeutic yoga</span><span>Massage and bodywork</span><span>Constellations</span><span>Conscious breathing</span><span>Ancestral medicine</span><span>Holistic coaching</span>
+      <div class="tc a"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21c-4 0-6-3-6-6V9a1.5 1.5 0 0 1 3 0V6a1.5 1.5 0 0 1 3 0v-.5a1.5 1.5 0 0 1 3 0V9a1.5 1.5 0 0 1 3 0v6c0 3-2 6-6 6z"/></svg><b>Reiki</b><span>Energy and presence</span></div>
+      <div class="tc b"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20 16 8"/><path d="M14 6l4 4"/><path d="M17 3l4 4"/></svg><b>Acupuncture</b><span>Points and balance</span></div>
+      <div class="tc c"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 19c0-8 5-14 15-14 0 10-6 15-14 15"/><path d="M5 19c3-5 6-8 10-10"/></svg><b>Naturopathy</b><span>Habits and plants</span></div>
+      <div class="tc d"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3c4 5 6 8 6 11a6 6 0 0 1-12 0c0-3 2-6 6-11z"/></svg><b>Aromatherapy</b><span>Oils and scents</span></div>
+      <div class="tc b"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="2.5"/><path d="M12 9.5C10 6 10 4 12 3c2 1 2 3 0 6.5M14.5 12c3.5-2 5.5-2 6.5 0-1 2-3 2-6.5 0M12 14.5c2 3.5 2 5.5 0 6.5-2-1-2-3 0-6.5M9.5 12c-3.5 2-5.5 2-6.5 0 1-2 3-2 6.5 0"/></svg><b>Bach flowers</b><span>Emotions at ease</span></div>
+      <div class="tc a"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="5" r="2"/><path d="M12 8v5M7 21c0-3 2-5 5-5s5 2 5 5M5 11c3 1 5 2 7 2s4-1 7-2"/></svg><b>Therapeutic yoga</b><span>Body and breath</span></div>
+      <div class="tc c"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 15c3-4 5 4 9 0s6 4 9 0"/><path d="M3 9c3-4 5 4 9 0s6 4 9 0"/></svg><b>Massage and bodywork</b><span>Touch that releases</span></div>
+      <div class="tc d"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="5" cy="17" r="1.8"/><circle cx="10" cy="7" r="1.8"/><circle cx="17" cy="12" r="1.8"/><circle cx="20" cy="5" r="1.2"/><path d="M6 15.5l3-7M11.6 7.9 15.5 11M18.5 10.8l1.2-4.6"/></svg><b>Constellations</b><span>Bonds and systems</span></div>
+      <div class="tc a"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9h10a3 3 0 1 0-3-3M3 14h14a3 3 0 1 1-3 3M3 19h6"/></svg><b>Conscious breathing</b><span>Air, rhythm and calm</span></div>
+      <div class="tc b"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 19 10 6l4 7 2-3 5 9z"/></svg><b>Ancestral medicine</b><span>Wisdom of the earth</span></div>
+      <div class="tc c"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m15.5 8.5-2 5-5 2 2-5z"/></svg><b>Holistic coaching</b><span>Goals with meaning</span></div>
+      <div class="tc d"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/></svg><b>Astrology</b><span>Reading cycles</span></div>
+      <div class="tc b"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 20c-1-4-1-8 1-12 1-2 4-2 5 0 1 3 0 6 1 9l-1 3z"/><circle cx="17" cy="6" r="1"/><circle cx="19.5" cy="9" r="1"/></svg><b>Reflexology</b><span>Feet and hands</span></div>
+      <div class="tc a"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3h6M10 3v6l-5 9a2 2 0 0 0 2 3h10a2 2 0 0 0 2-3l-5-9V3"/></svg><b>Homeopathy</b><span>An individualized approach</span></div>
+      <div class="tc d"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="9" r="3"/><path d="M5 20c1-4 3-5 7-5s6 1 7 5M12 2v1M4.5 6l.8.8M19.5 6l-.8.8"/></svg><b>Meditation and mindfulness</b><span>Full attention</span></div>
+      <div class="tc c"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 11h16a8 8 0 0 1-16 0z"/><path d="M8 7c0-2 2-2 2-4M14 7c0-2 2-2 2-4"/></svg><b>Sound therapy</b><span>Bowls and vibration</span></div>
     </div>
   </div>
 </section>
