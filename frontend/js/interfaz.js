@@ -134,7 +134,7 @@ function simGrupos() {
   return g;
 }
 function qAlts(q) {
-  const t = String(q || '').replace(/[\uFE0E\uFE0F]/g, ''), n = norm(t).trim(), out = [norm(t)];
+  const t = String(q || '').replace(/[\u200B-\u200F\u2060\uFEFF\uFE0E\uFE0F]/g, '').trim(), n = norm(t), out = [n];  // al copiar un símbolo suelen venir espacios o caracteres invisibles
   simGrupos().forEach(({ ch, nm }) => {
     const forms = ch.concat(nm);
     if (nm.includes(n)) out.push(...forms);

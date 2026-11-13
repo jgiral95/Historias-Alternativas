@@ -24,6 +24,8 @@ let bad = 0; const ok = (c, m) => { console.log((c ? 'OK   ' : 'FALLA') + ' ' + 
   ok(s.some(t => t.includes('♍')) && s.some(t => /Virgo/.test(t)), '♍ encuentra el símbolo y la palabra: ' + JSON.stringify(s));
   const l = await buscar('☽');
   ok(l.some(t => t.includes('☾')) && l.some(t => /Luna/.test(t)), '☽ también encuentra ☾ y «luna»: ' + JSON.stringify(l));
+  const c = await buscar('☾\u200b ');
+  ok(c.some(t => t.includes('☾')), 'un símbolo copiado con espacio o carácter invisible también se encuentra');
   const l2 = await buscar('luna');
   ok(l2.some(t => t.includes('☾')), 'luna encuentra ☾');
   ok(errors.length === 0, 'sin errores de JavaScript' + (errors.length ? ': ' + errors[0] : ''));
