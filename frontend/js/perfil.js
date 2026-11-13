@@ -247,7 +247,7 @@ const HUB = [['pestanas', 'Pestañas'], ['datos', 'Datos del consultante'], ['co
 /* Barra de Mis formatos: sin las pestañas ocultas, con los nombres propios y con las pestañas nuevas. */
 const hubList = () => { const c = tabsConf(), oc = c.ocultas || [], nm = c.nombres || {};
   return HUB.filter(([k]) => !oc.includes(k)).map(([k, l]) => [k, nm[k] || l]).concat((c.extra || []).map(x => [x.id, x.nombre])); };
-const hubTabs = active => `<div class="tabs hubtabs" role="tablist" aria-label="Secciones de Mis formatos">${hubList().map(([k, l]) => `<button type="button" class="tab ${active === k ? 'on' : ''}" role="tab" aria-selected="${active === k}" data-hub="${k}">${l}</button>`).join('')}</div>`;
+const hubTabs = active => `<div class="tabwrap hubwrap"><div class="tabs hubtabs" role="tablist" aria-label="Secciones de Mis formatos">${hubList().map(([k, l]) => `<button type="button" class="tab ${active === k ? 'on' : ''}" role="tab" aria-selected="${active === k}" data-hub="${k}">${l}</button>`).join('')}</div><button type="button" class="tabarrow l" aria-label="Pestañas anteriores">‹</button><button type="button" class="tabarrow r" aria-label="Más pestañas">›</button></div>`;
 const isFmt = k => ['intake', 'evol', 'datos'].includes(k) || String(k).startsWith('x_');
 function openHub(k) {
   if (ED && isFmt(k)) { ED.which = k; return drawFormats(); }  // conserva lo no guardado

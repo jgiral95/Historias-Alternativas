@@ -272,7 +272,7 @@ function fileHTML(p) {
   return `<div class="panel file"><div class="file-head"><div><button class="btn sm back" data-act="back">← Consultantes</button><h2>${esc(S.draft ? 'Nuevo consultante' : fullName(p))}</h2>
   <div class="meta"><span class="mono">${esc([p.tipoDoc, p.documento].filter(Boolean).join(' ') || 'sin documento')}</span>${!S.draft && openedAt(p) ? `<span>Historia abierta el ${esc(fmtD(openedAt(p)))}</span>` : ''}${a !== null ? `<span>${a} años</span>` : ''}${p.estado ? `<span class="chip ${p.estado === 'Activo' ? 'ok' : 'warn'}">${esc(p.estado)}</span>` : ''}${p.servicio && p.servicio !== 'Individual' ? `<span class="chip">${esc(p.servicio)}${linked(p).length ? ' · con ' + esc(linked(p).map(x => x.nombres || fullName(x)).join(', ')) : ''}</span>` : ''}${S.draft ? '' : nextApptHTML(p)}</div></div>
   ${S.draft || TEAM() ? '' : `<span class="row" style="gap:6px"><button class="btn sm" data-act="pnFor" data-id="${p.id}" title="Ideas, consejos de colegas y seguimiento: no forman parte de la ficha">Notas de proceso${S.pnotes.filter(n => n.patientId === p.id).length ? ' (' + S.pnotes.filter(n => n.patientId === p.id).length + ')' : ''}</button><button class="btn sm" data-act="accessLog" title="Quién abrió esta historia y qué hizo">Accesos</button><button class="btn sm" data-act="fullDoc">Historia completa</button></span>`}</div>
-  <div class="tabs" role="tablist">${(TEAM() ? TABS.filter(t => t[0] === 'datos' || t[0] === 'finanzas') : tabsList()).map(([k, l]) => `<button class="tab ${S.tab === k ? 'on' : ''}" role="tab" data-act="tab" data-tab="${k}" ${S.draft && k !== 'datos' ? 'disabled style="opacity:.4;cursor:not-allowed"' : ''}>${l}</button>`).join('')}</div>
+  <div class="tabwrap"><div class="tabs" role="tablist">${(TEAM() ? TABS.filter(t => t[0] === 'datos' || t[0] === 'finanzas') : tabsList()).map(([k, l]) => `<button class="tab ${S.tab === k ? 'on' : ''}" role="tab" data-act="tab" data-tab="${k}" ${S.draft && k !== 'datos' ? 'disabled style="opacity:.4;cursor:not-allowed"' : ''}>${l}</button>`).join('')}</div><button type="button" class="tabarrow l" aria-label="Pestañas anteriores">‹</button><button type="button" class="tabarrow r" aria-label="Más pestañas">›</button></div>
   <div class="body" id="tabbody">${tabHTML(p)}</div></div>`;
 }
 function tabHTML(p) {
@@ -529,3 +529,25 @@ function tabConsent(p) {
   <div class="row end">${btns}</div>
   ${S.mode === 'server' ? `<p class="stnote">${minor ? 'Para menores de edad, el consentimiento se firma en consulta (firman ambos representantes).' : '«Enviar para firmar a distancia» (teleterapia): el consultante recibe un enlace, escribe su número de documento, lee el texto y firma con el dedo. Queda con la hora del servidor, igual de inmutable.'}</p>` : ''}</div>`;
 }
+
+/* Barra de pestañas (ficha y «Mis formatos»): una sola fila que se desplaza de lado (rueda del mouse o flechas), con degradado en los bordes
+   cuando hay más pestañas, y la pestaña activa queda a la vista. Se activa sola en cada `.tabwrap` que aparece en pantalla. */
+function tabsMount(w) {
+  const t = w.querySelector('.tabs'); if (!t) return; w.dataset.m = '1';
+  const max = () => t.scrollWidth - t.clientWidth;
+  const upd = () => { w.classList.toggle('can-l', t.scrollLeft > 4); w.classList.toggle('can-r', t.scrollLeft < max() - 4); };
+  t.addEventListener('scroll', upd, { passive: true });
+  t.addEventListener('wheel', e => {
+    const d = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
+    if (!d || max() <= 0 || (d < 0 && t.scrollLeft <= 0) || (d > 0 && t.scrollLeft >= max() - 1)) return;  // en los extremos deja pasar el desplazamiento de la página
+    e.preventDefault(); t.scrollLeft += d;
+  }, { passive: false });
+  w.querySelector('.tabarrow.l').onclick = () => t.scrollBy({ left: -t.clientWidth * 0.6, behavior: 'smooth' });
+  w.querySelector('.tabarrow.r').onclick = () => t.scrollBy({ left: t.clientWidth * 0.6, behavior: 'smooth' });
+  const on = t.querySelector('.tab.on');
+  if (on && !t.scrollLeft) t.scrollLeft += on.getBoundingClientRect().left - t.getBoundingClientRect().left - (t.clientWidth - on.offsetWidth) / 2;
+  upd();
+}
+const tabsScan = () => document.querySelectorAll('.tabwrap:not([data-m])').forEach(tabsMount);
+new MutationObserver(tabsScan).observe(document.documentElement, { childList: true, subtree: true });
+window.addEventListener('resize', () => document.querySelectorAll('.tabwrap .tabs').forEach(t => t.dispatchEvent(new Event('scroll'))));
