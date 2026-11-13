@@ -5,7 +5,7 @@ async function startApp() {
   if (S.mode === 'server') await syncClock();
   S.pid = null; S.draft = false; S.tab = 'datos'; S.view = 'patients'; Idle.last = Idle.ping = Date.now();
   try { await Store.load(); } catch (e) { if (e.status === 402) { S.loading = false; if (!S.profile) S.profile = { id: 'profile', kind: 'profile' }; render(); subDraw(e.message); return; } toast('No se pudieron cargar los datos guardados.'); if (!S.profile) S.profile = { id: 'profile', kind: 'profile' }; }
-  S.loading = false; render(); fbMount(); welcome();
+  S.loading = false; if (I18N.fromProfile(S.profile)) return; render(); fbMount(); welcome();
   Promise.all([svLoad(), remLoad(), firmasSync()]).then(() => { if (S.view === 'patients' && !S.pid && !$('.modal') && !S.dirty && !$('#acmenu.open') && !(document.activeElement && /INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName))) render(); });
 }
 /* El servidor web responde pero la API no: nunca pasar a modo local con datos de consultantes. */

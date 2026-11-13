@@ -7,6 +7,7 @@ App de seguimiento de consultantes para profesionales de terapias alternativas (
 
 | Archivo | Qué tiene |
 |---|---|
+| `js/i18n.js` | idioma ES/EN (va primero): `t()`, `I18N.add({es:en})`, traductor automático del DOM en inglés; diccionarios en `js/en-*.js`; idioma en `profile.idioma` («Mi perfil») |
 | `js/core.js` | utilidades (`$`, `esc`, `api`), estado `S`, `Store` (carga/guarda), firma en lienzo, `F()` campos, genograma |
 | `js/documentos.js` | definiciones clínicas (INTAKE, NOTE_FIELDS, CAUSAS…), plantillas de consentimiento, HTML de documentos, `persist` |
 | `js/interfaz.js` | `render()`, menú, botón «Atrás», lista de pacientes, resumen, Datos (`tabDatos`), consentimiento |
