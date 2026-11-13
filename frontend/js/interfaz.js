@@ -327,16 +327,13 @@ function tabDatos(p) {
   const age = ageOf(p.nacimiento), minor = age !== null && age < 18;
   const lk = k => !S.draft && String(p[k] || '').trim() !== '';
   const cuid = `${cuidadorHTML(p, 1, 'acud')}${cuidadorHTML(p, 2, 'acud2')}`;
-  return `<div class="sec"><h3>Identificación</h3>${!S.draft && IDENT.some(lk) ? '<p class="stnote">Los datos con 🔒 identifican al consultante y no se pueden cambiar después de guardados. Los demás sí, y cada cambio queda registrado.</p>' : (S.draft ? '<p class="stnote">Revise bien nombres, documento, fecha y país de nacimiento: después de guardarlos no se podrán cambiar.</p>' : '')}<div class="grid">
-  ${F('Nombres', 'nombres', p.nombres, { lock: lk('nombres') })}${F('Apellidos', 'apellidos', p.apellidos, { lock: lk('apellidos') })}${F('Tipo de documento', 'tipoDoc', p.tipoDoc || 'CC', { type: 'select', opts: OPT.tipoDoc, lock: lk('tipoDoc') })}${F('Número de documento', 'documento', p.documento, { lock: lk('documento') })}
-  ${F('Fecha de nacimiento', 'nacimiento', p.nacimiento, { type: 'date', lock: lk('nacimiento'), age: true })}${F('Lugar de nacimiento', 'lugarNac', p.lugarNac)}${countryF('País de nacimiento', 'paisNac', p.paisNac, lk('paisNac'))}${F('Sexo', 'sexo', p.sexo, { type: 'select', opts: OPT.sexo })}${F('Identidad de género', 'identidadGenero', p.identidadGenero || '', { type: 'select', opts: OPT.genero })}${countryF('Nacionalidad', 'nacionalidad', p.nacionalidad === undefined && S.draft ? 'Colombia' : p.nacionalidad)}${F('Pertenencia étnica', 'etnia', p.etnia, { type: 'select', opts: OPT.etnia })}${F('Pueblo o comunidad', 'etniaPueblo', p.etniaPueblo, { ph: 'Ej.: Wayuu, Nasa, Emberá' })}${F('Estado civil', 'estadoCivil', p.estadoCivil, { type: 'select', opts: OPT.estadoCivil })}${F('Escolaridad', 'escolaridad', p.escolaridad, { type: 'select', opts: OPT.escolaridad })}
-  ${F('Ocupación', 'ocupacion', p.ocupacion)}${F('Discapacidad', 'discapacidad', p.discapacidad || '', { type: 'select', opts: OPT.discapacidad })}${F('Tipo de servicio', 'servicio', p.servicio || '', { type: 'select', opts: OPT.servicio })}${F('Modalidad de atención', 'modalidadAt', p.modalidadAt || '', { type: 'select', opts: OPT.modalidadAt })}${F('Estado del proceso', 'estado', p.estado || 'Activo', { type: 'select', opts: OPT.estado })}<div id="razonwrap" ${(p.estado || 'Activo') === 'Activo' ? 'hidden' : ''}>${F('Razón de inactividad', 'razonInactividad', p.razonInactividad || '', { type: 'select', opts: OPT.razon })}</div></div>${naRow()}</div>
-  ${secOculta('contacto') ? '' : `<div class="sec"><h3>Contacto</h3><div class="grid">${countryF('País de residencia', 'paisRes', p.paisRes)}${cityF(p)}${F('Zona de residencia', 'zona', p.zona || '', { type: 'select', opts: OPT.zona })}${F('Localidad / comuna / barrio', 'localidad', p.localidad)}${F('Dirección', 'direccion', p.direccion)}${telF('Teléfono', 'telefono', 'telInd', p)}${F('Correo electrónico', 'correo', p.correo, { type: 'email' })}</div>${naRow()}</div>`}
+  const reabrir = !S.draft && (p.estado || 'Activo') !== 'Activo' ? `<div class="sec"><h3>Estado del proceso</h3><div class="grid">${F('Estado del proceso', 'estado', p.estado || 'Activo', { type: 'select', opts: OPT.estado })}<div id="razonwrap">${F('Razón de inactividad', 'razonInactividad', p.razonInactividad || '', { type: 'select', opts: OPT.razon })}</div></div><p class="stnote">Para volver a atender a este consultante, cambie el estado a «Activo».</p></div>` : '';
+  return `${reabrir}${secOculta('contacto') ? '' : `<div class="sec"><h3>Contacto</h3><div class="grid">${countryF('País de residencia', 'paisRes', p.paisRes)}${cityF(p)}${F('Zona de residencia', 'zona', p.zona || '', { type: 'select', opts: OPT.zona })}${F('Localidad / comuna / barrio', 'localidad', p.localidad)}${F('Dirección', 'direccion', p.direccion)}${telF('Teléfono', 'telefono', 'telInd', p)}${F('Correo electrónico', 'correo', p.correo, { type: 'email' })}</div>${naRow()}</div>`}
   ${secOculta('cuidadores') ? '' : minor ? `<div class="sec"><h3>Cuidadores o acudientes</h3>${cuid}</div>` : `<div class="sec"><h3>Cuidadores o acudientes</h3><p class="stnote">En adultos sin cuidador, marque «No aplica».</p>${cuid}</div>`}
   ${secOculta('emergencia') ? '' : `<div class="sec"><h3>Contacto de emergencia</h3><div class="grid">${F('Nombre', 'emergNombre', p.emergNombre)}${F('Parentesco', 'emergParentesco', p.emergParentesco)}${telF('Teléfono', 'emergTelefono', 'emergInd', p)}</div>${naRow()}</div>`}
   ${datosSchema().map(([t, fs]) => `<div class="sec"><h3>${esc(t)}</h3><div class="grid">${fs.map(f => F(f[1], f[0], p[f[0]], f[1] ? {} : { wide: true, aria: t })).join('')}</div>${naRow()}</div>`).join('')}
-  <p class="stnote">Solo el nombre es necesario; los demás datos son opcionales y puede completarlos cuando quiera.</p>
-  <div id="dupslot"></div>${p.tipoDoc === 'Menor sin documento' || S.draft ? '<p class="stnote">Menor sin documento: elija «Menor sin documento» y escriba la cédula de la madre (o del padre) seguida del número de orden del menor en el grupo familiar, por ejemplo 52123456-2 (Res. 1995, art. 6).</p>' : ''}
+  ${datosSchema().length ? '' : '<p class="stnote">Aún no tiene campos para los datos del consultante. Créelos en «Mis formatos» → «Datos del consultante».</p>'}
+  <div id="dupslot"></div>
   <div id="lkslot">${linksHTML(p)}</div>
   <div class="row end">${S.draft ? '<button class="btn" data-act="cancelDraft">Cancelar</button>' : ''}<button class="btn pri" data-act="savePatient">Guardar datos</button></div>
   ${S.draft ? '' : changesHTML(p)}`;
@@ -447,10 +444,19 @@ ACT.lkDel = async b => {
   if (!(await persist(ch, b))) { snaps.forEach(([x, sn]) => restore(x, sn)); return; }
   toast('Vínculo quitado.'); $('#lkslot').innerHTML = linksHTML(p);
 };
+function deriveName(o) {
+  const fs = datosSchema().flatMap(([t, f]) => f.map(x => [x[0], String(x[1] || t)])), val = k => String(o[k] || '').trim();
+  const pick = re => fs.filter(([k, l]) => re.test(l) && val(k)).map(([k]) => val(k));
+  let nombres = pick(/^(primer\s+)?nombres?\b|^nombre completo/i), apellidos = pick(/^apellidos?\b/i);
+  if (!nombres.length && !apellidos.length) { const first = fs.map(([k]) => val(k)).find(Boolean); if (first) nombres = [first]; }
+  return { nombres: nombres.join(' '), apellidos: apellidos.join(' ') };
+}
 ACT.savePatient = async b => {
   const p = curPatient(), o = readForm($('#tabbody'), {});
-  // Solo el nombre es necesario para identificar la ficha; los demás datos son opcionales.
-  if (!String(o.nombres || '').trim()) { toast('Escriba al menos el nombre del consultante.'); const f = $('#f_nombres'); if (f) { f.closest('.fld').classList.add('miss'); f.focus(); } return; }
+  // El nombre de la ficha sale de los campos propios (Mis formatos): «Nombre»/«Apellido»; si no hay, del primer campo con datos.
+  const nm = deriveName(o);
+  if (nm.nombres || nm.apellidos) Object.assign(o, nm);
+  else if (!p.nombres && !p.apellidos) { toast(datosSchema().length ? 'Escriba al menos el nombre del consultante.' : 'Primero cree los campos en «Mis formatos» → «Datos del consultante».'); return; }
   if (S.draft && dupOf(o, p.id)) { dupWarn(o, p.id); return; }
   const snap = clone(p); Object.assign(p, o);
   if (!(await persist([p], b))) { restore(p, snap); return; }
