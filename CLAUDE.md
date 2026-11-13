@@ -46,6 +46,7 @@ FastAPI + SQLAlchemy. `main.py` (endpoints; registros cifrados por tipo: profile
 | Notas de proceso / a mano | `notas_proceso_e2e.js`, `mano_e2e.js` |
 | Búsqueda (símbolos virgo ↔ ♍, borradores, notas de proceso) | `busqueda_simbolos_e2e.js` |
 | Datos del consultante: campos fijos (nombre, apellido, documento) | `datos_fijos_e2e.js` |
+| Popups: clic fuera para cerrar | `popup_fuera_e2e.js` |
 | Idioma EN | `i18n_e2e.js` (lista el español sin traducir), `publicas_i18n_e2e.js`, `test_traduccion.py` |
 | Reservas por enlace | `test_booking.py` |
 | Formularios de datos | `test_formularios.py` |

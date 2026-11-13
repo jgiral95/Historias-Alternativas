@@ -343,6 +343,16 @@ function mountOneGeno(gk) {
     if (hasHd) hd.insertBefore(t, hd.querySelector(':scope > .mx'));
     else { const bar = document.createElement('div'); bar.className = 'row end topsave'; bar.appendChild(t); box.insertBefore(bar, box.firstChild); }
   });
+  /* Clic fuera de la ventana: la cierra con su propio botón Cancelar/Cerrar/Volver (si no tiene, no se cierra; el aviso de inactividad tampoco).
+     Solo cuenta si el clic empieza y termina en el fondo, para que arrastrar para seleccionar texto no cierre nada. */
+  let down = null;
+  document.addEventListener('mousedown', e => { down = e.target.classList && e.target.classList.contains('modal') ? e.target : null; }, true);
+  document.addEventListener('click', e => {
+    const m = e.target; if (!m.classList || !m.classList.contains('modal') || down !== m) return;
+    const box = m.querySelector(':scope > .box'); if (!box || box.classList.contains('idle')) return;
+    const b = [...box.querySelectorAll('button')].find(x => /^(cancelar|cerrar|volver)\b/i.test(x.textContent.trim()) && !x.classList.contains('mx'));
+    if (b) b.click();
+  }, true);
   let q = 0;
   new MutationObserver(() => { if (!q) q = requestAnimationFrame(() => { q = 0; run(); }); }).observe(document.documentElement, { childList: true, subtree: true });
 })();
