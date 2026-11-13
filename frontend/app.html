@@ -9,9 +9,26 @@
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="css/fonts.css">
 <link rel="stylesheet" href="css/app.css">
+<style>
+/* Pantalla de carga: se ve hasta que la app pinta el ingreso o la agenda */
+.splash{min-height:62vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;color:var(--muted)}
+.splash-logo{width:72px;height:72px;animation:splashpulse 1.6s ease-in-out infinite}
+.splash-name{font-size:22px;font-weight:600;color:var(--ink);letter-spacing:.01em}
+.splash-bar{width:132px;height:4px;border-radius:2px;background:var(--line);overflow:hidden}
+.splash-bar i{display:block;width:40%;height:100%;border-radius:2px;background:var(--accent);animation:splashbar 1.3s ease-in-out infinite}
+.splash-txt{font-size:14px}
+@keyframes splashpulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(.94);opacity:.8}}
+@keyframes splashbar{0%{transform:translateX(-100%)}100%{transform:translateX(330%)}}
+@media(prefers-reduced-motion:reduce){.splash-logo,.splash-bar i{animation:none}}
+</style>
 </head>
 <body>
-<div class="shell" id="app"><div class="empty">Cargando…</div></div>
+<div class="shell" id="app"><div class="splash" role="status" aria-live="polite">
+  <img class="splash-logo" src="logo.svg" alt="" width="72" height="72">
+  <b class="splash-name">Alter-Karute</b>
+  <div class="splash-bar" aria-hidden="true"><i></i></div>
+  <span class="splash-txt">Cargando…</span>
+</div></div>
 <div id="modal-root"></div>
 <div id="fb-root"></div>
 <script src="vendor/qrcode.js"></script>
