@@ -154,7 +154,7 @@ function searchNotes(q) {
     });
   });
   const seen = new Set();
-  return hits.filter(h => { const k = h.p.id + h.tab + h.rec + h.label; if (seen.has(k)) return false; seen.add(k); return true; });
+  return hits.filter(h => { const k = h.p.id + h.tab + h.rec + h.label + '|' + h.pre + h.m + h.post; if (seen.has(k)) return false; seen.add(k); return true; });
 }
 function hitsHTML(q) {
   if (qAlts(q).every(a => a.length < 3)) return '';
@@ -355,7 +355,7 @@ function tabDatos(p) {
   return `${reabrir}${secOculta('contacto') ? '' : `<div class="sec"><h3>Contacto</h3><div class="grid">${countryF('País de residencia', 'paisRes', p.paisRes)}${cityF(p)}${F('Zona de residencia', 'zona', p.zona || '', { type: 'select', opts: OPT.zona })}${F('Localidad / comuna / barrio', 'localidad', p.localidad)}${F('Dirección', 'direccion', p.direccion)}${telF('Teléfono', 'telefono', 'telInd', p)}${F('Correo electrónico', 'correo', p.correo, { type: 'email' })}</div>${naRow()}</div>`}
   ${secOculta('cuidadores') ? '' : minor ? `<div class="sec"><h3>Cuidadores o acudientes</h3>${cuid}</div>` : `<div class="sec"><h3>Cuidadores o acudientes</h3><p class="stnote">En adultos sin cuidador, marque «No aplica».</p>${cuid}</div>`}
   ${secOculta('emergencia') ? '' : `<div class="sec"><h3>Contacto de emergencia</h3><div class="grid">${F('Nombre', 'emergNombre', p.emergNombre)}${F('Parentesco', 'emergParentesco', p.emergParentesco)}${telF('Teléfono', 'emergTelefono', 'emergInd', p)}</div>${naRow()}</div>`}
-  <div class="sec"><h3>Identificación</h3><div class="grid">${FIJOS.map(([k, l]) => F(l, k, p[k] || '')).join('')}</div></div>
+  <div class="sec"><h3>Datos base</h3><div class="grid">${FIJOS.map(([k, l]) => F(l, k, p[k] || '')).join('')}</div></div>
   ${datosSchema().map(([t, fs]) => `<div class="sec"><h3>${esc(t)}</h3><div class="grid">${fs.filter(f => !FIJOS.some(x => x[0] === f[0])).map(f => F(f[1], f[0], p[f[0]], Object.assign(f[1] ? {} : { wide: true, aria: t }, ['date', 'time', 'number'].includes(f[3]) ? { type: f[3] } : {}))).join('')}</div>${naRow()}</div>`).join('')}
   <div id="dupslot"></div>
   <div id="lkslot">${linksHTML(p)}</div>
