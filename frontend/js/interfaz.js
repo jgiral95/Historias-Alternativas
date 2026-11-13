@@ -180,7 +180,7 @@ function hitsHTML(q) {
   const cnt = k => all.filter(h => h.sec === k).length, chips = secs.filter(([k]) => cnt(k));
   if (S.qf && !chips.some(x => x[0] === S.qf)) S.qf = '';
   const hs = S.qf ? all.filter(h => h.sec === S.qf) : all;
-  const bar = chips.length > 1 ? `<div class="hitf" role="group" aria-label="Filtrar por sección"><button type="button" class="chip${S.qf ? '' : ' on'}" data-act="hitFiltro" data-k=""><span>Todo</span> (${all.length})</button>${chips.map(([k, l]) => `<button type="button" class="chip${S.qf === k ? ' on' : ''}" data-act="hitFiltro" data-k="${esc(k)}"><span>${esc(l)}</span> (${cnt(k)})</button>`).join('')}</div>` : '';
+  const bar = chips.length ? `<div class="hitf" role="group" aria-label="Filtrar por sección"><button type="button" class="chip${S.qf ? '' : ' on'}" data-act="hitFiltro" data-k=""><span>Todo</span> (${all.length})</button>${secs.map(([k, l]) => `<button type="button" class="chip${S.qf === k ? ' on' : ''}"${cnt(k) ? '' : ' disabled'} data-act="hitFiltro" data-k="${esc(k)}"><span>${esc(l)}</span> (${cnt(k)})</button>`).join('')}</div>` : '';
   return `<div class="hits"><div class="hits-h">En las notas (${hs.length})</div>${bar}${hs.slice(0, 30).map(h => `<button class="prow hit" data-act="openHit" data-id="${h.p.id}" data-tab="${h.tab}" data-rec="${esc(h.rec)}"><span><div class="nm">${esc(fullName(h.p))}</div><div class="sub">${esc(h.label)}</div><div class="snip">${esc(h.pre)}<mark>${esc(h.m)}</mark>${esc(h.post)}</div></span></button>`).join('')}</div>`;
 }
 ACT.hitFiltro = b => { S.qf = b.dataset.k; $('#rows').innerHTML = rowsHTML(); };
@@ -198,12 +198,12 @@ function rowsHTML() {
   if (!list.length) return home + (hitsHTML(S.q) || `<div class="empty">${S.patients.length ? 'Ningún consultante ni nota coincide.' : 'Aún no hay consultantes. Cree el primero con «Nuevo consultante».'}</div>`);
   S.openGroups = S.openGroups || ['Activo'];
   const cur = S.patients.find(x => x.id === S.pid);
-  return home + GROUPS.map(([k, label]) => {
+  return home + hitsHTML(S.q) + GROUPS.map(([k, label]) => {
     const g = list.filter(p => (p.estado || 'Activo') === k);
     if (!g.length) return '';
     const open = q || S.openGroups.includes(k) || (cur && (cur.estado || 'Activo') === k);
     return `<details class="pgroup" data-g="${esc(k)}" ${open ? 'open' : ''}><summary><span>${esc(label)}</span><span class="cnt">${g.length}</span></summary>${g.map(prowHTML).join('')}</details>`;
-  }).join('') + hitsHTML(S.q);
+  }).join('');
 }
 function listHTML() {
   return `<div class="panel plist"><div class="plist-head"><span>Consultantes</span><span id="pcount">${S.patients.length}</span></div>${S.mode === 'server' && !TEAM() ? `<button class="btn sm" id="formsbtn" data-act="forms" style="width:calc(100% - 20px);margin:8px 10px">Enviar formulario a nuevo consultante${typeof FORMS !== 'undefined' && FORMS.n ? ` <span class="chip ok">${FORMS.n} recibido${FORMS.n === 1 ? '' : 's'}</span>` : ''}</button>` : ''}<div id="rows">${rowsHTML()}</div></div>`;
