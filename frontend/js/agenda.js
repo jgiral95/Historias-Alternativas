@@ -331,11 +331,25 @@ ACT.viewCierre = b => { const p = curPatient(), c = p.cierres[+b.dataset.i]; sho
 
 /* ===== Bloqueo por inactividad (solo con servidor) ===== */
 const Idle = { last: Date.now(), ping: Date.now(), timer: null, saved: false, draftSaved: false };
+const draftBtn = () => document.querySelector('#intakeform [data-act="saveIntake"][data-sign="0"], #noteform [data-act="saveNote"][data-sign="0"], #reportform [data-act="saveReport"][data-sign="0"], [data-act="saveConsentDraft"], #tabbody [data-act="saveExtra"], #tabbody [data-act="extraSave"]');
+/* Guardado automático: 4 s después de dejar de escribir se guarda el borrador, sin avisos ni redibujar. */
+function autoDraft() {
+  clearTimeout(AUTO.t);
+  AUTO.t = setTimeout(async () => {
+    if (!S.dirty || AUTO.busy || $('.modal') || !S.user) return;
+    const db = draftBtn(); if (!db) return;
+    AUTO.busy = AUTO.on = true;
+    try { await ACT[db.dataset.act](db); } catch (e) { /* se reintenta con la próxima edición */ }
+    AUTO.busy = AUTO.on = false;
+    if (!S.dirty) { let s = $('#autosaved'); if (!s) { s = document.createElement('div'); s.id = 'autosaved'; s.setAttribute('role', 'status'); s.style.cssText = 'position:fixed;right:14px;bottom:10px;font-size:12px;color:var(--muted,#6b7a70);background:var(--card,#fff);padding:4px 10px;border-radius:99px;box-shadow:0 1px 4px #0002;z-index:50'; document.body.append(s); }
+      s.textContent = 'Borrador guardado ' + new Date().toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' }); clearTimeout(s._t); s._t = setTimeout(() => s.remove(), 4000); }
+  }, 4000);
+}
 /* Al aparecer el aviso (la sesión sigue vigente) se guarda como borrador lo que el usuario estaba escribiendo. */
 async function idleAutosave() {
   Idle.saved = true;
   if (!S.dirty) return;
-  const db = document.querySelector('#intakeform [data-act="saveIntake"][data-sign="0"], #noteform [data-act="saveNote"][data-sign="0"], [data-act="saveConsentDraft"], #tabbody [data-act="saveExtra"], #tabbody [data-act="extraSave"]');
+  const db = draftBtn();
   if (!db) return;
   try { await ACT[db.dataset.act](db); } catch (e) { /* si falla, la sesión se cierra igual */ }
   Idle.draftSaved = !S.dirty;

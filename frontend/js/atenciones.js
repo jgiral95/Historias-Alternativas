@@ -172,6 +172,7 @@ ACT.saveIntake = async b => {
   const snap = clone(p);
   p.intake = Object.assign(p.intake || {}, o);
   if (!(await persist([p], b))) { restore(p, snap); return; }
+  if (AUTO.on) return;
   if (sign) Dx.ctx = null;
   toast(sign ? 'Primera vez firmada y guardada.' : 'Borrador guardado.'); render();
 };
@@ -272,6 +273,7 @@ ACT.saveNote = async b => {
   if (sign) Object.assign(n, therSnap(), { signedAt: nowISO(), addenda: [], schema: clone(evolSchema({})) });
   if (!(await persist([n], b))) { if (!fresh) restore(n, snap); return; }
   if (fresh) S.notes.push(n);
+  if (AUTO.on) { S.newNote = n.id; return; }
   S.newNote = false; S.noteSeed = null; Dx.ctx = null;
   const ap = sign && n.apptId && S.appts.find(a => a.id === n.apptId); if (ap && ap.estado !== 'Atendida') { ap.estado = 'Atendida'; ap.noteId = n.id; Store.save(ap); }
   toast(sign ? 'Nota firmada y guardada.' : 'Borrador guardado.'); render();

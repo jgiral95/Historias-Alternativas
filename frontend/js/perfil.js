@@ -445,7 +445,7 @@ ACT.saveExtra = async b => {
   if (geno) o.genograma = geno.data();
   Object.keys(genos).filter(Boolean).forEach(k => { o[k] = genos[k].data(); });
   p.extras = Object.assign({}, p.extras, { [S.tab]: extraOf(x)(o) });
-  if (!(await persist([p], b))) { restore(p, snap); return; } toast('Guardado.');
+  if (!(await persist([p], b))) { restore(p, snap); return; } if (!AUTO.on) toast('Guardado.');
 };
 ACT.extraNew = () => { S.extraEd = { tab: S.tab, id: 'new' }; render(); };
 ACT.extraEdit = b => { S.extraEd = { tab: S.tab, id: b.dataset.id }; render(); };
@@ -456,9 +456,11 @@ ACT.extraSave = async b => {
   Object.keys(genos).filter(Boolean).forEach(k => { o[k] = genos[k].data(); });
   const at = o.extraAt || nowISO().slice(0, 10), hora = o.extraHora || '', lugar = (o.extraLugar || '').trim(); delete o.extraAt; delete o.extraHora; delete o.extraLugar;
   const list = Array.isArray((p.extras || {})[S.tab]) ? clone(p.extras[S.tab]) : [], v = extraOf(x)(o);
-  if (id && id !== 'new' && list.some(e => e.id === id)) Object.assign(list.find(e => e.id === id), { at, hora, lugar, v }); else list.push({ id: newId('e'), at, hora, lugar, v });
+  let eid = id; if (id && id !== 'new' && list.some(e => e.id === id)) Object.assign(list.find(e => e.id === id), { at, hora, lugar, v }); else { eid = newId('e'); list.push({ id: eid, at, hora, lugar, v }); }
   p.extras = Object.assign({}, p.extras, { [S.tab]: list });
-  if (!(await persist([p], b))) { restore(p, snap); return; } S.extraEd = null; toast('Entrada guardada.'); render();
+  if (!(await persist([p], b))) { restore(p, snap); return; }
+  if (AUTO.on) { S.extraEd = { tab: S.tab, id: eid }; return; }
+  S.extraEd = null; toast('Entrada guardada.'); render();
 };
 ACT.extraDel = async b => {
   if (!b.dataset.sure) { b.dataset.sure = 1; b.textContent = 'Confirmar'; return; }

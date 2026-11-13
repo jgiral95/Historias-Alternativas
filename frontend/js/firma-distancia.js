@@ -75,7 +75,7 @@ ACT.saveConsentDraft = async b => {
   const p = curPatient(), o = readForm($('#tabbody'), {}), snap = clone(p);
   p.consentDraft = { tipo: o.tipo, consentText: o.consentText, signerType: o.signerType, signerName: o.signerName, signerDoc: o.signerDoc, copia: o.copia, savedAt: nowISO() };
   if (!(await persist([p], b))) { restore(p, snap); return; }
-  S.dirty = false; toast('Borrador guardado. Aún no es un consentimiento firmado.'); render();
+  S.dirty = false; if (AUTO.on) return; toast('Borrador guardado. Aún no es un consentimiento firmado.'); render();
 };
 ACT.signConsent = async b => {
   const p = curPatient();

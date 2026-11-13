@@ -187,7 +187,7 @@ new MutationObserver(ms => ms.forEach(m => m.addedNodes.forEach(n => { if (n.nod
   const app = $('#app');
   const NAV = ['open', 'openHit', 'tab', 'home', 'view', 'newPatient', 'back', 'cancelNote', 'cancelReport', 'cancelScale', 'cancelRe', 'cancelSol', 'cancelIncorp', 'cancelDraft', 'newNote', 'newReport', 'newScale', 'reConsent', 'newDataAuth', 'newSol', 'newIncorp', 'apptEvol', 'editNote', 'editReport', 'logout', 'profile', 'scaleManage'];
   app.addEventListener('click', e => { const t = e.target.closest('[data-act]'); if (t && S.dirty && NAV.includes(t.dataset.act) && !t.dataset.hub) { e.stopImmediatePropagation(); askDiscard(() => { S.dirty = false; t.click(); }); } }, true);
-  app.addEventListener('input', e => { if (e.target.closest(DIRTY_SEL)) S.dirty = true; }, true);
+  app.addEventListener('input', e => { if (e.target.closest(DIRTY_SEL)) { S.dirty = true; autoDraft(); } }, true);
   app.addEventListener('pointerdown', e => { if (e.target.closest('.sigbox') && e.target.closest(DIRTY_SEL)) S.dirty = true; }, true);
   window.addEventListener('beforeunload', e => { if (S.dirty) { e.preventDefault(); e.returnValue = ''; } });
   app.addEventListener('click', e => { const b = e.target.closest('[data-act]'); if (!e.target.closest('.avwrap')) closeMenu(); else if (b && b.dataset.act !== 'menu' && b.dataset.act !== 'theme') closeMenu(); if (b && ACT[b.dataset.act]) ACT[b.dataset.act](b, e); });

@@ -13,7 +13,7 @@ function reportForm(p, r) {
   <div class="grid">${F('Divulgación autorizada por', 'autorizaPor', r.autorizaPor || (ageOf(p.nacimiento) !== null && ageOf(p.nacimiento) < 18 && p.acudNombre ? 'Acudiente: ' + p.acudNombre : 'El consultante'))}</div>
   <label class="check"><input type="checkbox" id="r_ok" data-f="autoriza" ${r.autoriza ? 'checked' : ''}> <span>Cuento con autorización escrita del consultante o su acudiente para entregar este informe y su contenido.</span></label>
   <div class="fld"><span class="lbl">Firma del terapeuta (de su perfil)</span>${therPreview()}</div>
-  <p class="lock-note">Al guardar, el documento queda firmado con su firma, la fecha y la hora, y <b>no podrá modificarse</b>. Solo podrá agregar adendas.</p><div class="row end"><button class="btn" data-act="cancelReport">Cancelar</button><button class="btn pri" data-act="saveReport" data-sign="1">Firmar y guardar</button></div></div>`;
+  <p class="lock-note">Al guardar, el documento queda firmado con su firma, la fecha y la hora, y <b>no podrá modificarse</b>. Solo podrá agregar adendas.</p><div class="row end"><button class="btn" data-act="cancelReport">Cancelar</button><button class="btn" data-act="saveReport" data-sign="0">Guardar borrador</button><button class="btn pri" data-act="saveReport" data-sign="1">Firmar y guardar</button></div></div>`;
 }
 function reportCard(r) {
   return `<div class="card" id="rec-${r.id}"><div class="row" style="justify-content:space-between"><span><b>${esc(r.tipo)}</b>${r.destinatario ? ' · ' + esc(r.destinatario) : ''}</span><span class="chip ${r.signedAt ? 'ok' : 'warn'}">${r.signedAt ? 'Firmado' : 'Borrador'}</span></div>
@@ -58,6 +58,7 @@ ACT.saveReport = async b => {
   if (sign) Object.assign(r, therSnap(), { signedAt: nowISO(), addenda: [] }, signExtrasReport(r));
   if (!(await persist([r], b))) { if (!fresh) restore(r, snap); return; }
   if (fresh) S.reports.push(r);
+  if (AUTO.on) { S.newReport = r.id; return; }
   S.newReport = false; toast(sign ? 'Informe firmado.' : 'Borrador guardado.'); render();
 };
 

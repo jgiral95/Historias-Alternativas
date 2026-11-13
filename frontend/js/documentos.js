@@ -374,6 +374,8 @@ function relogin() {
     } catch (err) { toast(err.message); }
   };
 }
+/* Guardado automático de borradores: con AUTO.on los guardados de borrador no avisan ni redibujan (para no cortar al que escribe). */
+const AUTO = { on: false, busy: false, t: null };
 async function persist(list, btn) {
   setBusy(btn, true);
   try { for (const o of list) await Store.save(o, { strict: true }); $$('.savefail').forEach(x => x.remove()); if (btn) S.dirty = false; return true; }
