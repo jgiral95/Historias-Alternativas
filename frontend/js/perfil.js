@@ -275,11 +275,11 @@ const secList = () => ED[ED.which === 'datos' ? 'datos' : String(ED.which).start
 /* Texto inicial: lo que el campo trae escrito en cada nota nueva (se puede borrar o cambiar al escribir). */
 const edInit = (val, attr, label) => `<details class="edinit" ${val ? 'open' : ''}><summary>Texto inicial${val ? '' : ' (opcional)'}</summary><textarea ${attr} rows="2" aria-label="Texto inicial de ${esc(label)}" placeholder="Lo que este campo trae escrito en cada nota nueva">${esc(val || '')}</textarea></details>`;
 function edField(f, path, noSize) {
-  return `<div class="edfw"><div class="edf"><input type="text" data-fm-l="${path}" value="${esc(f.l)}" maxlength="120" aria-label="Nombre del campo">${noSize ? '' : `<select data-fm-r="${path}" aria-label="Tamaño">${ROWS.map(([v, n]) => `<option value="${v}" ${[2, 3, 5].reduce((a, x) => Math.abs(x - (+f.r || 3)) < Math.abs(a - (+f.r || 3)) ? x : a, 3) === v ? 'selected' : ''}>${n}</option>`).join('')}</select>`}
+  return `<div class="edfw"><div class="edf"><span class="dragh" draggable="true" data-dk="f" data-dv="${path}" title="Arrastre para cambiar el orden" aria-hidden="true">⠿</span><input type="text" data-fm-l="${path}" value="${esc(f.l)}" maxlength="120" aria-label="Nombre del campo">${noSize ? '' : `<select data-fm-r="${path}" aria-label="Tamaño">${ROWS.map(([v, n]) => `<option value="${v}" ${[2, 3, 5].reduce((a, x) => Math.abs(x - (+f.r || 3)) < Math.abs(a - (+f.r || 3)) ? x : a, 3) === v ? 'selected' : ''}>${n}</option>`).join('')}</select>`}
   <button class="btn sm" data-fm="fup:${path}" aria-label="Subir">↑</button><button class="btn sm" data-fm="fdn:${path}" aria-label="Bajar">↓</button><button class="btn sm warn" data-fm="fdel:${path}" aria-label="Quitar campo">✕</button></div>${noSize ? '' : edInit(f.d, `data-fm-d="${path}"`, f.l)}</div>`;
 }
 function secCard(sc, si, isDatos) {
-  const head = `<div class="edf"><input type="text" data-fm-t="${si}" value="${esc(sc.t)}" maxlength="120" aria-label="Título del apartado" style="font-weight:600"><button class="btn sm" data-fm="sup:${si}" aria-label="Subir apartado">↑</button><button class="btn sm" data-fm="sdn:${si}" aria-label="Bajar apartado">↓</button><button class="btn sm warn" data-fm="sdel:${si}" aria-label="Quitar apartado">✕</button></div>`;
+  const head = `<div class="edf"><span class="dragh" draggable="true" data-dk="s" data-dv="${si}" title="Arrastre para cambiar el orden" aria-hidden="true">⠿</span><input type="text" data-fm-t="${si}" value="${esc(sc.t)}" maxlength="120" aria-label="Título del apartado" style="font-weight:600"><button class="btn sm" data-fm="sup:${si}" aria-label="Subir apartado">↑</button><button class="btn sm" data-fm="sdn:${si}" aria-label="Bajar apartado">↓</button><button class="btn sm warn" data-fm="sdel:${si}" aria-label="Quitar apartado">✕</button></div>`;
   if (sc.img) return `<div class="card">${head}<p style="margin:0;font-size:13px;color:var(--muted)">Apartado de imagen: el terapeuta sube una imagen de su computador en cada ficha. Quítelo con ✕ si no lo usa.</p></div>`;
   if (sc.g && !sc.fs.length) return `<div class="card">${head}<p style="margin:0;font-size:13px;color:var(--muted)">Apartado de genograma: espacio para dibujarlo o subir una imagen. Quítelo con ✕ si no lo usa.</p></div>`;
   const body = sc.fs.length ? sc.fs.map((f, fi) => edField(f, si + '.' + fi, isDatos)).join('') : `<p style="margin:0;font-size:13px;color:var(--muted)">Solo título: se escribe en un único espacio, sin subtítulos. Use «+ Campo» si quiere dividirlo.</p>${isDatos ? '' : edInit(sc.soloD, `data-fm-sd="${si}"`, sc.t)}`;
@@ -386,7 +386,7 @@ function saveFormats() {
 /* Pestañas de la ficha: renombrar, ocultar y crear propias (texto libre por consultante). */
 let TM = null;
 const tabsDraw = () => {
-  const root = $('#modal-root'), prevM = root.querySelector('.modal'), top = prevM ? prevM.scrollTop : 0, row = (id, n, hid, ex) => `<div class="edf"><input type="text" data-tm-n="${id}" value="${esc(n)}" maxlength="60" placeholder="Nueva pestaña" aria-label="Nombre de la pestaña">${id === 'datos' ? '<span class="chip">Siempre visible</span>' : ex ? `<button class="btn sm" data-tm="mod:${id}" title="Una sola vez: datos que casi no cambian. Por sesión: se agrega una entrada con fecha en cada encuentro.">${(TM.extra.find(y => y.id === id) || {}).modo === 'sesion' ? 'Por sesión' : 'Una sola vez'} · cambiar</button><button class="btn sm" data-tm="up:${id}" aria-label="Subir pestaña" title="Mover antes">↑</button><button class="btn sm" data-tm="dn:${id}" aria-label="Bajar pestaña" title="Mover después">↓</button><button class="btn sm warn" data-tm="del:${id}">Borrar</button>` : `<button class="btn sm ${hid ? '' : 'pri'}" data-tm="hid:${id}">${hid ? 'Oculta · mostrar' : 'Visible · ocultar'}</button>`}</div>`;
+  const root = $('#modal-root'), prevM = root.querySelector('.modal'), top = prevM ? prevM.scrollTop : 0, row = (id, n, hid, ex) => `<div class="edf">${ex ? '<span class="dragh" draggable="true" data-dk="t" data-dv="${id}" title="Arrastre para cambiar el orden" aria-hidden="true">⠿</span>' : ''}<input type="text" data-tm-n="${id}" value="${esc(n)}" maxlength="60" placeholder="Nueva pestaña" aria-label="Nombre de la pestaña">${id === 'datos' ? '<span class="chip">Siempre visible</span>' : ex ? `<button class="btn sm" data-tm="mod:${id}" title="Una sola vez: datos que casi no cambian. Por sesión: se agrega una entrada con fecha en cada encuentro.">${(TM.extra.find(y => y.id === id) || {}).modo === 'sesion' ? 'Por sesión' : 'Una sola vez'} · cambiar</button><button class="btn sm" data-tm="up:${id}" aria-label="Subir pestaña" title="Mover antes">↑</button><button class="btn sm" data-tm="dn:${id}" aria-label="Bajar pestaña" title="Mover después">↓</button><button class="btn sm warn" data-tm="del:${id}">Borrar</button>` : `<button class="btn sm ${hid ? '' : 'pri'}" data-tm="hid:${id}">${hid ? 'Oculta · mostrar' : 'Visible · ocultar'}</button>`}</div>`;
   root.innerHTML = `<div class="modal" role="dialog" aria-modal="true" aria-label="Mis formatos"><div class="box"><div class="row mfhead" style="justify-content:space-between"><h3 style="flex:1">Mis formatos</h3><button class="btn sm pri" data-tm="save">Guardar</button><button class="btn sm" data-tm="close">Cerrar</button></div>${hubTabs('pestanas')}
   <p style="margin:0;font-size:13px;color:var(--muted)">Cree las pestañas de la ficha del consultante. Para cada pestaña nueva elija «Una sola vez» (datos que casi no cambian, como los del consultante) o «Por sesión» (una entrada con fecha en cada encuentro).</p>
   <h4 style="margin:12px 0 4px">Pestañas de la ficha</h4>
@@ -475,3 +475,28 @@ function finishFormats() {
   drawFormats();  // el panel sigue abierto para seguir editando
 }
 
+
+/* Arrastrar para ordenar (con el mouse): usa los mismos botones ↑ ↓ de cada lista, un paso a la vez. Pestañas propias, apartados y campos. */
+(() => {
+  let drag = null;
+  const root = () => $('#modal-root'), key = h => h.dataset.dk + '|' + (h.dataset.dk === 'f' ? h.dataset.dv.split('.').slice(0, -1).join('.') : '');
+  const rowOf = h => h.dataset.dk === 's' || h.dataset.dk === 'q' ? h.closest('.card') : h.closest('.edf');
+  const clear = () => document.querySelectorAll('.dragover,.dragging').forEach(x => x.classList.remove('dragover', 'dragging'));
+  const hOf = (e, d) => { if (!d || !e.target.closest) return null; let r = e.target.closest('.card, .edf'); while (r) { const h = [...r.querySelectorAll('.dragh')].find(x => x.dataset.dk === d.dataset.dk && rowOf(x) === r); if (h && key(h) === key(d)) return h; r = r.parentElement && r.parentElement.closest('.card, .edf'); } return null; };
+  document.addEventListener('dragstart', e => { const h = e.target.closest && e.target.closest('.dragh'); if (!h) return; drag = h; try { e.dataTransfer.setData('text/plain', 'orden'); e.dataTransfer.effectAllowed = 'move'; const r = rowOf(h); if (r) { e.dataTransfer.setDragImage(r, 10, 10); r.classList.add('dragging'); } } catch (err) { /* sin vista previa */ } });
+  document.addEventListener('dragover', e => { const t = hOf(e, drag); if (!t || t === drag) return; e.preventDefault(); document.querySelectorAll('.dragover').forEach(x => x.classList.remove('dragover')); rowOf(t).classList.add('dragover'); });
+  document.addEventListener('dragend', () => { clear(); drag = null; });
+  document.addEventListener('drop', e => {
+    const t = hOf(e, drag); if (!t || !drag || t === drag) { clear(); return; }
+    e.preventDefault(); const k = drag.dataset.dk, from = drag.dataset.dv, to = t.dataset.dv; drag = null; clear();
+    const hs = [...root().querySelectorAll('.dragh')].filter(h => h.dataset.dk === k && key(h) === key(t)).map(h => h.dataset.dv);
+    const n = hs.indexOf(to) - hs.indexOf(from), up = n < 0;
+    const btn = v => root().querySelector({ t: `[data-tm="${up ? 'up' : 'dn'}:${v}"]`, s: `[data-fm="${up ? 'sup' : 'sdn'}:${v}"]`, f: `[data-fm="${up ? 'fup' : 'fdn'}:${v}"]`, q: `[data-sv="${up ? 'up' : 'down'}"][data-k="${v}"]` }[k]);
+    let cur = from;
+    for (let i = 0; i < Math.abs(n); i++) {
+      const b = btn(cur); if (!b) break; b.click();
+      if (k === 'f') { const pre = cur.includes('.') ? cur.slice(0, cur.lastIndexOf('.') + 1) : ''; cur = pre + (+cur.split('.').pop() + (up ? -1 : 1)); }
+      else if (k !== 't') cur = String(+cur + (up ? -1 : 1));
+    }
+  });
+})();
