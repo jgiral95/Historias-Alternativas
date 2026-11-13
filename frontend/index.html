@@ -103,6 +103,11 @@ header.top .nav a.nl{color:var(--tinta);text-decoration:none;padding:8px 2px}hea
 .demo-side ul{list-style:none;margin:0;padding:0;display:grid;gap:8px}
 .demo-side li button{all:unset;box-sizing:border-box;width:100%;cursor:pointer;display:flex;justify-content:space-between;gap:8px;padding:10px 12px;border-radius:12px}
 .demo-side li button:focus-visible,.demo-tabs button:focus-visible{outline:3px solid var(--terracota);outline-offset:2px}
+.demo-prof{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;align-items:center;margin-bottom:18px}
+.demo-prof-l{font-size:14px;color:var(--suave);margin-right:4px}
+.demo-prof button{font:inherit;cursor:pointer;background:var(--crema);padding:7px 16px;border-radius:99px;border:1px solid var(--linea);font-size:14px;color:var(--suave)}
+.demo-prof button[aria-pressed="true"]{background:var(--bosque);border-color:var(--bosque);color:#fff}
+.demo-prof button:focus-visible{outline:3px solid var(--terracota);outline-offset:2px}
 .demo-hint{font-size:12.5px;color:var(--suave);margin-top:14px}
 .barra{height:10px;background:#E4EBE2;border-radius:99px;overflow:hidden;margin-top:6px}.barra i{display:block;height:100%;background:var(--salvia);border-radius:99px;transition:width .4s}
 .demo-field .row2{display:flex;justify-content:space-between;font-size:14px}
@@ -165,6 +170,7 @@ header.top .nav a.lg{border:1.5px solid var(--salvia);color:var(--bosque);text-d
 </section>
 
 <section class="demo-wrap" aria-label="Vista previa de la app" style="padding-top:0"><div class="wrap">
+  <div class="demo-prof" id="d-prof" role="group" aria-label="Elija su práctica para ver un ejemplo"></div>
   <div class="demo">
     <div class="demo-side"><b class="k" id="d-hoy">Hoy</b><ul aria-labelledby="d-hoy" id="d-citas"></ul><p class="demo-hint">Datos de ejemplo: pulse una cita o una pestaña.</p></div>
     <div class="demo-main"><b class="k">Ficha del consultante</b><h3 id="d-nombre"></h3><p class="meta" id="d-meta"></p>
