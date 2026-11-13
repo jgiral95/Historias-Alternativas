@@ -42,6 +42,16 @@ let bad = 0; const ok = (c, m) => { console.log((c ? 'OK   ' : 'FALLA') + ' ' + 
   ok(await ent() === '1:false', 'al guardar la entrada deja de ser borrador (' + await ent() + ')');
   await page.evaluate(() => { S.tab = 'x_u'; S.extraEd = null; render(); }); await page.waitForSelector('#f_extra'); await page.fill('#f_extra', 'dato'); await page.waitForTimeout(5500);
   ok(await page.evaluate(() => { const v = S.patients[S.patients.length - 1].extras.x_u; return !!v && v.borrador === true && v.extra === 'dato'; }), 'pestaña de una sola vez: se guarda sola como borrador');
+  // Datos del consultante: se guarda solo y tiene botón «Guardar borrador»
+  await page.evaluate(async () => { const pf = clone(S.profile); pf.formatos = Object.assign({}, pf.formatos, { datos: [['General', [['xciudad', 'Ciudad', 1]]]] }); S.profile = pf; await persist([pf]); S.tab = 'datos'; S.extraEd = null; ACT.open({ dataset: { id: S.patients[S.patients.length - 1].id, tab: 'datos' } }); });
+  await page.waitForSelector('#f_xciudad'); await page.fill('#f_xciudad', 'Bogotá'); await page.waitForTimeout(5500);
+  ok(await page.evaluate(() => S.patients[S.patients.length - 1].xciudad === 'Bogotá'), 'Datos: se guarda solo');
+  ok(await page.locator('[data-act="savePatient"][data-draft="1"]').count() === 1, 'Datos: botón «Guardar borrador»');
+  await page.fill('#f_xciudad', 'Cali'); await page.click('[data-act="savePatient"][data-draft="1"]'); await page.waitForTimeout(700);
+  ok(await page.evaluate(() => S.patients[S.patients.length - 1].xciudad === 'Cali') && await page.locator('#autosaved').isVisible(), 'Datos: «Guardar borrador» guarda y avisa');
+  const np = await page.evaluate(() => S.patients.length);
+  await page.evaluate(() => ACT.newPatient()); await page.waitForSelector('#f_xciudad'); await page.fill('#f_xciudad', 'Pasto'); await page.waitForTimeout(5500);
+  ok(await page.evaluate(n => S.patients.length === n + 1 && S.patients[n].xciudad === 'Pasto', np), 'consultante nuevo sin nombre: se guarda solo como borrador');
   // Campo numérico: sin flechas (type text) y solo acepta números
   await page.evaluate(() => { document.body.insertAdjacentHTML('beforeend', F('Num', 'zz_num', '', { type: 'number' })); });
   const nu = page.locator('#f_zz_num'); await nu.type('a1b2,5-x'); 

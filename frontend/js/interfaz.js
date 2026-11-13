@@ -373,7 +373,7 @@ function tabDatos(p) {
   ${datosSchema().map(([t, fs]) => `<div class="sec"><h3>${esc(t)}</h3><div class="grid">${fs.filter(f => !FIJOS.some(x => x[0] === f[0])).map(f => F(f[1], f[0], p[f[0]], Object.assign(f[1] ? {} : { wide: true, aria: t }, ['date', 'time', 'number'].includes(f[3]) ? { type: f[3] } : {}))).join('')}</div>${naRow()}</div>`).join('')}
   <div id="dupslot"></div>
   <div id="lkslot">${linksHTML(p)}</div>
-  <div class="row end">${S.draft ? '<button class="btn" data-act="cancelDraft">Cancelar</button>' : ''}<button class="btn pri" data-act="savePatient">Guardar datos</button></div>
+  <div class="row end">${S.draft ? '<button class="btn" data-act="cancelDraft">Cancelar</button>' : ''}<button class="btn" data-act="savePatient" data-draft="1">Guardar borrador</button><button class="btn pri" data-act="savePatient">Guardar datos</button></div>
   ${S.draft ? '' : changesHTML(p)}`;
 }
 /* Registro de modificaciones de los datos (lo arma el servidor: fecha, hora, quién, antes y después). */
@@ -490,16 +490,16 @@ function deriveName(o) {
   return { nombres: nombres.join(' '), apellidos: apellidos.join(' ') };
 }
 ACT.savePatient = async b => {
-  const p = curPatient(), o = readForm($('#tabbody'), {});
+  const p = curPatient(), o = readForm($('#tabbody'), {}), dr = AUTO.on || (b && b.dataset.draft === '1');
   // El nombre de la ficha sale de los campos propios (Mis formatos): «Nombre»/«Apellido»; si no hay, del primer campo con datos.
   const nm = String(o.nombres || '').trim() || String(o.apellidos || '').trim() ? {} : deriveName(o);
   if (nm.nombres || nm.apellidos) Object.assign(o, nm);
-  else if (!String(o.nombres || '').trim() && !String(o.apellidos || '').trim() && !p.nombres && !p.apellidos) { if (AUTO.on) return; toast('Escriba al menos el nombre del consultante.'); return; }
+  else if (!String(o.nombres || '').trim() && !String(o.apellidos || '').trim() && !p.nombres && !p.apellidos) { if (!dr) { toast('Escriba al menos el nombre del consultante.'); return; } o.nombres = 'Borrador sin nombre'; }
   if (S.draft && dupOf(o, p.id)) { if (!AUTO.on) dupWarn(o, p.id); return; }
   const snap = clone(p); Object.assign(p, o);
   if (!(await persist([p], b))) { restore(p, snap); return; }
   if (S.draft) { if (!S.patients.some(x => x.id === p.id)) S.patients.push(p); S.draft = false; S.draftObj = null; S.pid = p.id; }
-  if (AUTO.on) return;
+  if (dr) { if (!AUTO.on) aviso('Borrador guardado'); return; }
   toast('Datos guardados.'); render();
 };
 ACT.delPatient = () => {
