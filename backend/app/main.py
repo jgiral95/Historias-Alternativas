@@ -2701,7 +2701,7 @@ def _demo_ids(db: Session, oid: int) -> tuple[list[Record], set[str]]:
 @app.post("/api/demo", status_code=201)
 def demo_load(body: DemoIn, user: User = Depends(pro_user), db: Session = Depends(get_db)):
     """Guarda los consultantes ficticios que arma la app. Quedan marcados por el servidor para poder borrarlos
-    después, aunque tengan documentos firmados; solo se aceptan consultantes con documento «DEMO-…»."""
+    después, aunque tengan documentos firmados; solo se aceptan consultantes con documento de ejemplo (9000000001…)."""
     recs = body.records
     if not recs or len(recs) > 80:
         raise HTTPException(400, "Datos de ejemplo no válidos")
@@ -2716,8 +2716,8 @@ def demo_load(body: DemoIn, user: User = Depends(pro_user), db: Session = Depend
             raise HTTPException(400, "Registro de ejemplo no válido")
         if db.get(Record, (user.id, rid)) or len(json.dumps(r, ensure_ascii=False)) > MAX_RECORD_BYTES:
             raise HTTPException(400, "Registro de ejemplo no válido")
-        if kind == "patient" and not str(r.get("documento") or "").startswith("DEMO-"):
-            raise HTTPException(400, "Los consultantes de ejemplo deben tener documento DEMO-")
+        if kind == "patient" and not re.fullmatch(r"DEMO-.*|90000\d{5}", str(r.get("documento") or "")):
+            raise HTTPException(400, "Los consultantes de ejemplo deben tener documento numérico de ejemplo (90000…)")
         pid = rid if kind == "patient" else r.get("patientId") or None
         if kind != "patient" and pid not in pats and not (kind == "pnote" and pid is None):
             raise HTTPException(400, "Los registros de ejemplo deben ser de consultantes de ejemplo")

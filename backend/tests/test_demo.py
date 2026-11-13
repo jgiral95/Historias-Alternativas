@@ -9,7 +9,7 @@ NOW = datetime.now(timezone.utc).isoformat()
 
 
 def batch():
-    return [patient("p_d1", documento="DEMO-001", correo="demo@example.com", consents=[{"tipo": "x", "text": "t", "signedAt": NOW}],
+    return [patient("p_d1", documento="9000000001", correo="demo@example.com", consents=[{"tipo": "x", "text": "t", "signedAt": NOW}],
                     intake={"motivo": "ejemplo", "signedAt": NOW, "addenda": []}),
             {"id": "n_d1", "kind": "note", "patientId": "p_d1", "tema": "ejemplo", "signedAt": NOW, "addenda": []},
             {"id": "a_d1", "kind": "appt", "patientId": "p_d1", "startAt": (datetime.now(timezone.utc) + timedelta(hours=3)).isoformat(), "estado": "Programada"},
