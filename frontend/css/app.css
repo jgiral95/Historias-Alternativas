@@ -493,3 +493,14 @@ body:has(#fb-root .fbbtn) .modal{padding-bottom:84px}
 /* Arrastrar para ordenar */
 .dragh{cursor:grab;color:var(--muted);user-select:none;padding:0 4px;font-size:16px;line-height:1;flex:none}.dragh:active{cursor:grabbing}
 .dragging{opacity:.5}.dragover{outline:2px dashed var(--accent);outline-offset:2px;border-radius:8px}
+
+/* ---- Ventanas emergentes (formato Karute): encabezado fijo con título, «Guardar» y ✕; el desplazamiento queda dentro de la ventana ---- */
+.modal{backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px);overflow:hidden}
+.modal>.box{position:relative;box-shadow:0 24px 60px rgba(8,16,18,.28);max-height:calc(100vh - 32px);max-height:calc(100dvh - 32px);overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--line) transparent}
+.modal>.box>.row:first-child:has(h3){position:sticky;top:-18px;z-index:3;margin:-18px -18px 0;padding:16px 62px 12px 18px;background:var(--surface);border-bottom:1px solid var(--line);border-radius:10px 10px 0 0;align-items:center}
+.modal>.box>.row:first-child>.mx,.modal>.box>.mx{position:absolute;top:14px;right:14px;padding:0}
+.modal>.box>.row.topsave{justify-content:flex-end}
+.modal:has(.mfhead){padding-top:16px}
+.modal:has(.mfhead)>.box{margin-top:auto;border-radius:10px;overflow-y:auto}
+.mfhead{top:-18px}
+@media (max-width:560px){.modal{padding:10px}.modal>.box{max-height:calc(100dvh - 20px)}.modal>.box>.row:first-child:has(h3){top:-18px;padding:14px 58px 10px 18px}.modal>.box>.row:first-child>.mx{right:10px}}

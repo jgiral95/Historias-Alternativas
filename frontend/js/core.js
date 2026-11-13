@@ -315,3 +315,32 @@ function mountOneGeno(gk) {
   if (!gk) geno = genos[''];
 }
 
+
+/* Ventanas emergentes con el formato de Karute: encabezado fijo (título, «Guardar» y ✕) que no se mueve al desplazar.
+   · La ✕ cierra con el botón Cancelar/Cerrar/Volver de la ventana (el «Cerrar» se oculta; Cancelar/Volver se quedan junto a la acción).
+   · El «Guardar» principal de abajo recibe una copia en el encabezado: solo pulsa el original (sin id ni data-*), así no cambia ninguna lógica. */
+(() => {
+  const DISMISS = /^(cancelar|cerrar|volver|salir)\b/i;
+  const run = () => document.querySelectorAll('.modal > .box:not(.idle):not(#apform)').forEach(box => {
+    const hd = box.querySelector(':scope > .row:first-child');
+    const hasHd = !!(hd && hd.querySelector(':scope > h3, :scope > div > h3'));
+    const btns = () => [...box.querySelectorAll('button')].filter(b => DISMISS.test(b.textContent.trim()) && !b.classList.contains('mx'));
+    if (btns().length && !box.querySelector(':scope > .mx, :scope > .row:first-child > .mx')) {
+      const x = document.createElement('button'); x.type = 'button'; x.className = 'apx mx'; x.setAttribute('aria-label', 'Cerrar'); x.textContent = '✕';
+      x.onclick = () => { const b = btns()[0]; if (b) b.click(); };
+      (hasHd ? hd : box).appendChild(x);
+    }
+    btns().forEach(b => { if (/^cerrar/i.test(b.textContent.trim())) b.style.display = 'none'; });
+    if (box.querySelector('.topsave, .mfhead .btn.pri')) return;
+    const b = [...box.querySelectorAll('button.btn.pri:not(.sm):not([type=submit])')].find(e => /^Guardar/.test(e.textContent.trim()));
+    if (!b) return;
+    const t = document.createElement('button'); t.type = 'button'; t.className = 'btn pri sm topsave'; t.textContent = b.textContent.trim();
+    t.onclick = () => b.click();
+    const sync = () => { t.disabled = b.disabled; };
+    sync(); new MutationObserver(sync).observe(b, { attributes: true, attributeFilter: ['disabled'] });
+    if (hasHd) hd.insertBefore(t, hd.querySelector(':scope > .mx'));
+    else { const bar = document.createElement('div'); bar.className = 'row end topsave'; bar.appendChild(t); box.insertBefore(bar, box.firstChild); }
+  });
+  let q = 0;
+  new MutationObserver(() => { if (!q) q = requestAnimationFrame(() => { q = 0; run(); }); }).observe(document.documentElement, { childList: true, subtree: true });
+})();
