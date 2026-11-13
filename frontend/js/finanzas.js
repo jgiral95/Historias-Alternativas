@@ -63,8 +63,9 @@ const finK = (label, val, cls = '', sub = '') => `<div class="fk ${cls}"><span c
 const FIN_CERRADAS = new Set();
 const finCard = (titulo, n, cuerpo, extra = '') => `<section class="fcard${FIN_CERRADAS.has(titulo) ? ' min' : ''}" data-ft="${esc(titulo)}"><header><h4>${titulo}${n != null ? ` <span class="fcn">${n}</span>` : ''}</h4><span class="row" style="gap:8px;flex-wrap:nowrap">${extra}<button type="button" class="fchev" aria-label="Minimizar o mostrar" aria-expanded="${FIN_CERRADAS.has(titulo) ? 'false' : 'true'}">▾</button></span></header>${cuerpo}</section>`;
 document.addEventListener('click', e => {
-  const b = e.target.closest('.fcard .fchev'); if (!b) return;
-  const c = b.closest('.fcard'), min = c.classList.toggle('min'), t = c.dataset.ft;
+  const h = e.target.closest('.fcard > header'); if (!h || e.target.closest('button:not(.fchev), a, input, select, label')) return;  // toda la barra minimiza, salvo sus propios botones
+  const b = h.querySelector('.fchev'); if (!b) return;
+  const c = h.closest('.fcard'), min = c.classList.toggle('min'), t = c.dataset.ft;
   b.setAttribute('aria-expanded', String(!min)); if (min) FIN_CERRADAS.add(t); else FIN_CERRADAS.delete(t);
 });
 const finVacio = t => `<div class="fempty">${t}</div>`;

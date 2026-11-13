@@ -441,7 +441,7 @@ body:has(#fb-root .fbbtn) .modal{padding-bottom:84px}
 .fk.ok .fkv{color:var(--ok)}.fk.warn .fkv{color:var(--warn)}
 .fks{font-size:12px;color:var(--muted)}
 .fcard{background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:hidden}
-.fcard>header{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:var(--surface2);border-bottom:1px solid var(--line)}
+.fcard>header{cursor:pointer;display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:var(--surface2);border-bottom:1px solid var(--line)}
 .fcard h4{margin:0;font-size:14px}.fcn{display:inline-block;margin-left:6px;font-size:12px;font-weight:600;padding:1px 8px;border-radius:99px;background:var(--accent-soft);color:var(--accent-fg)}
 .fcard table.sttab th,.fcard table.sttab td{padding:10px 16px}
 .fcard table.sttab tbody tr:last-child td{border-bottom:0}.fcard table.sttab tbody tr:hover{background:var(--surface2)}
