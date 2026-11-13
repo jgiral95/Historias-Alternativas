@@ -163,7 +163,7 @@ ACT.openHit = b => {
 };
 function rowsHTML() {
   const q = S.q.toLowerCase();
-  const list = S.patients.filter(p => !q || qAlts(S.q).some(a => a && norm(fullName(p) + ' ' + (p.documento || '')).includes(a)))
+  const list = S.patients.filter(p => !q || norm(fullName(p) + ' ' + (p.documento || '')).includes(norm(q)))
     .sort((a, b) => (a.apellidos || '').localeCompare(b.apellidos || '') || (a.nombres || '').localeCompare(b.nombres || ''));
   const home = `<button class="prow home ${!S.pid ? 'on' : ''}" data-act="home"><span class="ico" aria-hidden="true">⌂</span><span class="nm">Resumen</span></button>`;
   if (!list.length) return home + (hitsHTML(S.q) || `<div class="empty">${S.patients.length ? 'Ningún consultante ni nota coincide.' : 'Aún no hay consultantes. Cree el primero con «Nuevo consultante».'}</div>`);
