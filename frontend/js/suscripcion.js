@@ -1,5 +1,5 @@
 /* Mi suscripción: estado, planes (ePayco) y cancelación. Parte de app.html (scripts clásicos; se usa al hacer clic, no al cargar). */
-const fmtFecha = iso => iso ? new Date(iso).toLocaleDateString('es-CO', { day: 'numeric', month: 'long', year: 'numeric' }) : '';
+const fmtFecha = iso => iso ? new Date(iso).toLocaleDateString(I18N.locale(), { day: 'numeric', month: 'long', year: 'numeric' }) : '';
 const SUB_INFO = { mensual: { precio: '$80.000', per: 'COP / mes', prueba: '5 días' }, anual: { precio: '$800.000', per: 'COP / año', prueba: '15 días' } };
 async function subDraw(msg) {
   const root = $('#modal-root'); let st;

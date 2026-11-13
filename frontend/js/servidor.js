@@ -194,7 +194,7 @@ new MutationObserver(ms => ms.forEach(m => m.addedNodes.forEach(n => { if (n.nod
   document.addEventListener('keydown', e => { if (e.key === 'Escape') { const m = $('#acmenu'); if (m && m.classList.contains('open')) { closeMenu(); const t = $('[data-act="menu"]'); if (t) t.focus(); return; }
     if (e.defaultPrevented) return;
     const mo = $('#modal-root .modal'); if (!mo) return;
-    const x = [...mo.querySelectorAll('button, a.btn')].find(b => /^(Cerrar|Cancelar|Listo)$/.test(b.textContent.trim()));
+    const x = [...mo.querySelectorAll('button, a.btn')].find(b => /^(Cerrar|Cancelar|Listo|Close|Cancel|Done)$/.test(b.textContent.trim()));
     if (x) { e.preventDefault(); x.click(); } } });
   $('#modal-root').addEventListener('click', e => { const h = e.target.closest('[data-hub]'); if (!h) return; e.stopPropagation(); e.preventDefault(); openHub(h.dataset.hub); }, true);
   app.addEventListener('click', e => { const t = e.target.closest('[data-dx]'); if (t && t.tagName === 'BUTTON') { e.preventDefault(); dxClick(t); } else if (!e.target.closest('#dxsearch')) { const b = $('#dx_res'); if (b && !b.hidden) dxShow([]); } });

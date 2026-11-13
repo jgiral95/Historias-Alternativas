@@ -178,7 +178,7 @@ function svAggregate(responses) {
   dims.forEach(d => { d.pc = d.items.reduce((a, b) => a + b.pc, 0) / d.items.length; });
   return { dims, comments, global: dims.length ? dims.reduce((a, b) => a + b.pc, 0) / dims.length : null };
 }
-const r1 = v => (Math.round(v * 10) / 10).toLocaleString('es-CO');
+const r1 = v => (Math.round(v * 10) / 10).toLocaleString(I18N.locale());
 function statsHTML(forDoc, part) {
   const enc_ = part === 'enc';
   const years = [...new Set((enc_ ? [...((S.sv && S.sv.invitaciones) || []).map(i => i.creada.slice(0, 4)), ...(S.svRes || []).map(r => (r.mes || '').slice(0, 4)), ...(S.profile.acciones || []).map(a => (a.fecha || '').slice(0, 4))]

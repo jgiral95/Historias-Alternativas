@@ -125,7 +125,7 @@ async function pnSaveNow() {
   try {
     await Store.save(n, { strict: true });
     if (isNew && !$('#pnedit [data-act="pnDel"]')) { const row = $('#pnedit > .row:last-child'); if (row) row.insertAdjacentHTML('beforeend', '<button class="btn sm warn" data-act="pnDel">Eliminar nota</button>'); }
-    const s2 = $('#pn_stat'); if (s2) s2.textContent = 'Guardada ' + new Date().toLocaleTimeString('es-CO', { hour: 'numeric', minute: '2-digit' });
+    const s2 = $('#pn_stat'); if (s2) s2.textContent = 'Guardada ' + new Date().toLocaleTimeString(I18N.locale(), { hour: 'numeric', minute: '2-digit' });
     const l = $('#pnlist'); if (l) l.innerHTML = pnListHTML(); pnCount();
   } catch (e) {
     restore(n, snap); pnPending = true;

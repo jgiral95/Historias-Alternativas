@@ -4,7 +4,7 @@ const APPT_EST = ['Programada', 'Atendida', 'No asistió', 'Cancelada'];
 const MODS = ['Presencial', 'Virtual', 'Telefónica'];
 const dayKey = d => { const p = n => String(n).padStart(2, '0'); return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`; };
 const mondayOf = d => { const x = new Date(d); x.setHours(12, 0, 0, 0); x.setDate(x.getDate() - ((x.getDay() + 6) % 7)); return x; };
-const hhmm = iso => new Date(iso).toLocaleTimeString('es-CO', { hour: 'numeric', minute: '2-digit' });
+const hhmm = iso => new Date(iso).toLocaleTimeString(I18N.locale(), { hour: 'numeric', minute: '2-digit' });
 const patName = id => { const p = S.patients.find(x => x.id === id); return p ? fullName(p) : 'Consultante eliminado'; };
 const apName = a => a.evento ? a.evento : a.patientId ? patName(a.patientId) : a.nuevo ? [a.nuevo.nombres, a.nuevo.apellidos].join(' ') + ' (nuevo)' : 'Sin consultante';
 const apptsOn = key => S.appts.filter(a => dayKey(new Date(a.startAt)) === key).sort((a, b) => a.startAt.localeCompare(b.startAt));
@@ -20,19 +20,19 @@ const agAnchor = () => S.agDate ? new Date(S.agDate + 'T12:00:00') : (() => { co
 function agendaHTML() {
   if (typeof finMemoReset === 'function') finMemoReset();
   const v = agView(), anchor = agAnchor(), today = dayKey(new Date());
-  const fmt = d => d.toLocaleDateString('es-CO', { day: 'numeric', month: 'short' });
+  const fmt = d => d.toLocaleDateString(I18N.locale(), { day: 'numeric', month: 'short' });
   let title, body;
   if (v === 'dia') {
     const k = dayKey(anchor), list = apptsOn(k);
-    title = anchor.toLocaleDateString('es-CO', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+    title = anchor.toLocaleDateString(I18N.locale(), { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
     const hours = [...new Set([...Array(16)].map((_, i) => i + 6).concat(list.map(a => new Date(a.startAt).getHours())))].sort((a, b) => a - b);
     body = `<div class="dayview">${hours.map(h => { const at = list.filter(a => new Date(a.startAt).getHours() === h); return `<div class="hrow"><span class="hlbl">${String(h).padStart(2, '0')}:00</span><div class="hcell">${at.map(apptBtn).join('')}<button class="add" data-act="apptEdit" data-date="${k}" data-hour="${h}" aria-label="Nueva cita a las ${h}:00">+</button></div></div>`; }).join('')}</div>`;
   } else if (v === 'mes') {
     const first = new Date(anchor.getFullYear(), anchor.getMonth(), 1, 12), start = mondayOf(first), month = anchor.getMonth();
-    title = anchor.toLocaleDateString('es-CO', { month: 'long', year: 'numeric' });
+    title = anchor.toLocaleDateString(I18N.locale(), { month: 'long', year: 'numeric' });
     const cells = [...Array(42)].map((_, i) => { const d = new Date(start); d.setDate(d.getDate() + i); return d; });
     const weeks = cells[35].getMonth() !== month ? cells.slice(0, 35) : cells;
-    const wd = [...Array(7)].map((_, i) => { const d = new Date(start); d.setDate(d.getDate() + i); return d.toLocaleDateString('es-CO', { weekday: 'short' }); });
+    const wd = [...Array(7)].map((_, i) => { const d = new Date(start); d.setDate(d.getDate() + i); return d.toLocaleDateString(I18N.locale(), { weekday: 'short' }); });
     body = `<div class="month"><div class="mhead">${wd.map(x => `<span>${esc(x)}</span>`).join('')}</div><div class="mgrid">${weeks.map(d => { const k = dayKey(d), l = apptsOn(k).filter(a => a.estado !== 'Cancelada');
       return `<div class="mcell ${d.getMonth() !== month ? 'out' : ''} ${k === today ? 'today' : ''}"><button class="mday" data-act="agDay" data-date="${k}" aria-label="Ver el ${esc(fmt(d))}">${d.getDate()}</button>
       ${l.slice(0, 3).map(a => `<button class="mapt" data-act="apptEdit" data-id="${a.id}" title="${esc(hhmm(a.startAt) + ' · ' + apName(a))}"><b>${esc(hhmm(a.startAt))}</b> ${esc(apName(a))}</button>`).join('')}
@@ -40,7 +40,7 @@ function agendaHTML() {
   } else {
     const mon = mondayOf(anchor), days = [...Array(7)].map((_, i) => { const d = new Date(mon); d.setDate(d.getDate() + i); return d; });
     title = `${fmt(days[0])} – ${fmt(days[6])} ${days[6].getFullYear()}`;
-    body = `<div class="week">${days.map(d => { const k = dayKey(d); return `<div class="day ${k === today ? 'today' : ''}"><h4><button class="mday" data-act="agDay" data-date="${k}"><span>${esc(d.toLocaleDateString('es-CO', { weekday: 'short' }))}</span><b>${d.getDate()}</b></button></h4>${apptsOn(k).map(apptBtn).join('')}<button class="add" data-act="apptEdit" data-date="${k}" aria-label="Nueva cita el ${esc(fmt(d))}">+</button></div>`; }).join('')}</div>`;
+    body = `<div class="week">${days.map(d => { const k = dayKey(d); return `<div class="day ${k === today ? 'today' : ''}"><h4><button class="mday" data-act="agDay" data-date="${k}"><span>${esc(d.toLocaleDateString(I18N.locale(), { weekday: 'short' }))}</span><b>${d.getDate()}</b></button></h4>${apptsOn(k).map(apptBtn).join('')}<button class="add" data-act="apptEdit" data-date="${k}" aria-label="Nueva cita el ${esc(fmt(d))}">+</button></div>`; }).join('')}</div>`;
   }
   const unit = { dia: 'Día', semana: 'Semana', mes: 'Mes' }[v];
   return `<div class="panel"><div class="ag-head"><div><h2>Agenda</h2><span style="font-size:13px;color:var(--muted)">${esc(title)}</span></div>
@@ -79,7 +79,7 @@ ACT.apptEdit = b => {
   const root = $('#modal-root'), mv = a ? a.modalidad : 'Presencial', mods = MODS.includes(mv) ? MODS : MODS.concat([mv]);
   root.innerHTML = `<div class="modal" role="dialog" aria-modal="true" aria-label="Cita"><div class="box" id="apform" style="width:min(560px,100%)"><div class="row aphd"><div><h3>${a ? esc(apName(a)) : 'Nueva cita'}</h3>${a ? '' : '<p class="apsub">Elija consultante, día y hora</p>'}</div><button class="apx" id="apcl" aria-label="Cerrar" title="Cerrar">✕</button></div>
   ${a && a.nuevo ? `<div class="apnew"><div><b>Consultante nuevo${a.origen === 'enlace' ? ' · agendó por su enlace' : ''}</b><br><span class="ts">${esc([a.nuevo.correo, a.nuevo.telefono].filter(Boolean).join(' · '))}${a.nuevo.correo || a.nuevo.telefono ? ' · ' : ''}Aún no tiene ficha.</span></div></div>` : ''}
-  ${a ? `<div class="apsum"><div class="row" style="justify-content:space-between"><b class="apwhen">${esc(start.toLocaleString('es-CO', { weekday: 'short', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' }))}</b><span class="chip">${esc(a.estado || 'Programada')}</span></div><span class="ts">${esc(a.duracion || 50)} min · ${esc(a.modalidad || '')}</span></div>
+  ${a ? `<div class="apsum"><div class="row" style="justify-content:space-between"><b class="apwhen">${esc(start.toLocaleString(I18N.locale(), { weekday: 'short', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' }))}</b><span class="chip">${esc(a.estado || 'Programada')}</span></div><span class="ts">${esc(a.duracion || 50)} min · ${esc(a.modalidad || '')}</span></div>
   <div class="row">${TEAM() || a.evento ? '' : a.noteId ? `<button class="btn sm" data-ap="note">Ver sesión</button>` : `<button class="btn sm pri" data-ap="evol">Registrar sesión</button>`}${a.patientId ? '<button class="btn sm" data-ap="open">Abrir consultante</button>' : ''}${(a.estado === 'Programada' || !a.estado) && !a.evento ? `<button class="btn sm" data-ap="rem">Enviar recordatorio</button>` : ''}<button class="btn sm warn" data-ap="del">${a.evento ? 'Eliminar evento' : 'Eliminar cita'}</button></div>
   <p class="k2">Reprogramar o cambiar</p>` : ''}
   <div class="grid">${a ? '' : '<div class="fld wide"><div class="seg" id="pnseg"><button type="button" data-pn="0" class="on">Consultante existente</button><button type="button" data-pn="1">Consultante nuevo</button><button type="button" data-pn="2">Evento</button></div></div>'}<div class="fld wide" id="pn_ev" ${a && a.evento ? '' : 'style="display:none"'}>${F('Título del evento (ej.: Almuerzo, Capacitación)', 'evTitulo', a && a.evento || '')}</div><div class="fld wide" id="pn_ex" ${a && (a.patientId || a.nuevo || a.evento) ? 'style="display:none"' : ''}><label for="f_patientId">Consultante</label><select id="f_patientId" data-f="patientId"><option value="">Elija un consultante…</option>${pats.map(p => `<option value="${p.id}" ${p.id === pre ? 'selected' : ''}>${esc(fullName(p))}</option>`).join('')}</select></div>
@@ -210,7 +210,7 @@ ACT.reservas = async () => {
   };
   const calHTML = () => {
     const [Y, M] = st.mes.split('-').map(Number), n = new Date(Y, M, 0).getDate(), off = (new Date(Y, M - 1, 1).getDay() + 6) % 7, lim = limite();
-    const nom = new Date(Y, M - 1, 1).toLocaleDateString('es-CO', { month: 'long', year: 'numeric' });
+    const nom = new Date(Y, M - 1, 1).toLocaleDateString(I18N.locale(), { month: 'long', year: 'numeric' });
     let c = ['L', 'M', 'M', 'J', 'V', 'S', 'D'].map(w => `<span style="text-align:center;font-size:12px;color:var(--muted)">${w}</span>`).join('') + '<span></span>'.repeat(off);
     for (let k = 1; k <= n; k++) {
       const ds = `${st.mes}-${String(k).padStart(2, '0')}`, f = st.fechas[ds], on = ds === st.sel;
@@ -222,7 +222,7 @@ ACT.reservas = async () => {
   };
   const diaHTML = () => {
     if (!st.sel) return '<p style="margin:0;font-size:13px;color:var(--muted)">Elija un día del calendario para marcar su horario y el tipo de consulta.</p>';
-    const f = st.fechas[st.sel], tit = new Date(st.sel + 'T12:00:00').toLocaleDateString('es-CO', { weekday: 'long', day: 'numeric', month: 'long' }), dia = tit.split(',')[0].split(' ')[0];
+    const f = st.fechas[st.sel], tit = new Date(st.sel + 'T12:00:00').toLocaleDateString(I18N.locale(), { weekday: 'long', day: 'numeric', month: 'long' }), dia = tit.split(',')[0].split(' ')[0];
     return `<div class="card" role="group" aria-label="${esc(tit)}"><div class="row" style="justify-content:space-between;align-items:center"><b>${esc(tit)}</b><label><input type="checkbox" id="rs_atiendo" ${f ? 'checked' : ''}> Atiendo este día</label></div>
     ${f ? `<div class="card" role="group" aria-labelledby="rs_tipos"><b id="rs_tipos">Tipos de consulta de este día</b><div class="row">${MODS_R.map(m => `<label><input type="checkbox" data-dm="${m}" ${f.modalidades.includes(m) ? 'checked' : ''}> ${m}</label>`).join('')}</div></div>
     ${f.franjas.map((x, j) => `<div class="row" style="align-items:center"><input type="time" data-t="${st.sel}|${j}|0" value="${esc(x[0])}" aria-label="Desde"><span>a</span><input type="time" data-t="${st.sel}|${j}|1" value="${esc(x[1])}" aria-label="Hasta"><button type="button" class="btn sm" data-r="del" data-j="${j}" aria-label="Quitar franja">×</button></div>`).join('')}

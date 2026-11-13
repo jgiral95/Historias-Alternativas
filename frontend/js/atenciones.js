@@ -37,7 +37,7 @@ function reqCheck() { $$('.fld.miss').forEach(x => x.classList.remove('miss')); 
 document.addEventListener('click', e => {
   const b = e.target.closest('[data-nr]'); if (!b) return;
   const ta = document.getElementById('f_' + b.dataset.nr); if (!ta) return;
-  ta.value = b.textContent; ta.dispatchEvent(new Event('input', { bubbles: true })); const f = ta.closest('.fld'); if (f) f.classList.remove('miss');
+  ta.value = NR.find(v => I18N.tr(v) === b.textContent) || b.textContent; ta.dispatchEvent(new Event('input', { bubbles: true })); const f = ta.closest('.fld'); if (f) f.classList.remove('miss');
 });
 /* ----- Cabecera de la atención, riesgo y destino ----- */
 /* Datos de la atención: fecha y hora, modalidad y quiénes estuvieron presentes. */

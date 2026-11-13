@@ -408,7 +408,7 @@ const telOf = (num, ind) => { const n = String(num || '').trim(); if (!n) return
 
 /* ----- País (lista ISO en español, con escritura libre) ----- */
 const COUNTRIES = (() => { const codes = 'AF AX AL DE AD AO AI AQ AG SA DZ AR AM AW AU AT AZ BS BD BB BH BE BZ BJ BM BY BO BA BW BR BN BG BF BI BT CV KH CM CA BQ QA TD CZ CL CN CY CO KM CG CD KP KR CI CR HR CU CW DK DM EC EG SV AE ER SK SI ES US EE SZ ET PH FI FJ FR GA GM GE GH GI GD GR GL GP GU GT GF GG GN GQ GW GY HT HN HK HU IN ID IQ IR IE IS IL IT JM JP JE JO KZ KE KG KI KW LA LS LV LB LR LY LI LT LU MO MK MG MY MW MV ML MT MA MQ MU MR YT MX FM MD MC MN ME MS MZ MM NA NR NP NI NE NG NO NC NZ OM NL PK PW PS PA PG PY PE PF PL PT PR GB CF DO RE RW RO RU WS AS BL KN SM MF PM VC SH LC ST SN RS SC SL SG SX SY SO LK ZA SD SS SE CH SR SJ TH TW TZ TJ TL TG TO TT TN TM TR TV UA UG UY UZ VU VA VE VN WF YE DJ ZM ZW'.split(' ');
-  let names; try { const dn = new Intl.DisplayNames(['es'], { type: 'region' }); names = codes.map(c => dn.of(c)); } catch (e) { names = ['Colombia', 'Venezuela', 'Ecuador', 'Perú', 'Panamá', 'México', 'España', 'Estados Unidos', 'Argentina', 'Chile']; }
+  let names; try { const dn = new Intl.DisplayNames([I18N.lang], { type: 'region' }); names = codes.map(c => dn.of(c)); } catch (e) { names = ['Colombia', 'Venezuela', 'Ecuador', 'Perú', 'Panamá', 'México', 'España', 'Estados Unidos', 'Argentina', 'Chile']; }
   return ['Colombia', ...[...new Set(names)].filter(n => n && n !== 'Colombia').sort((a, b) => a.localeCompare(b, 'es'))]; })();
 /* País: lista desplegable como las demás (se puede escribir la inicial para saltar al país). */
 function countryF(label, key, val, lock) {

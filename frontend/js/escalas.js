@@ -53,7 +53,7 @@ function scaleChart(sc, list) {
   const ticks = [lo, Math.round((lo + hi) / 2), hi].map(v => `<text class="axl" x="${L - 6}" y="${y(v) + 4}" text-anchor="end">${v}</text>`).join('');
   const pts = list.map((e, i) => [x(i), y(e.total), e]);
   const line = pts.length > 1 ? `<path class="ln" d="M${pts.map(p => p[0].toFixed(1) + ',' + p[1].toFixed(1)).join('L')}"/>` : '';
-  const fd = iso => new Date(iso).toLocaleDateString('es-CO', { day: 'numeric', month: 'short' });
+  const fd = iso => new Date(iso).toLocaleDateString(I18N.locale(), { day: 'numeric', month: 'short' });
   const xl = list.length ? [0, list.length - 1].filter((v, i, a) => a.indexOf(v) === i).map(i => `<text class="axl" x="${x(i)}" y="${H - 8}" text-anchor="${list.length > 1 ? (i ? 'end' : 'start') : 'middle'}">${esc(fd(list[i].aplicadaAt))}</text>`).join('') : '';
   const dots = pts.map(([px, py, e]) => `<g class="pp" tabindex="0" data-tip="${esc(fd(e.aplicadaAt) + ' · ' + e.total + ' puntos' + (e.nivel ? ' · ' + e.nivel : ''))}"><circle class="hit" cx="${px}" cy="${py}" r="14"/><circle class="pt" cx="${px}" cy="${py}" r="5"/></g>`).join('');
   return `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Puntaje de ${esc(sc.nombre)} en el tiempo">${bands}<line class="ax" x1="${L}" y1="${H - B}" x2="${W - R}" y2="${H - B}"/>${ticks}${xl}${line}${dots}</svg>`;

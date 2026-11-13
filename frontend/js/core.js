@@ -11,9 +11,9 @@ const clone = o => JSON.parse(JSON.stringify(o));
 let CLOCK_SKEW = 0;
 const nowISO = () => new Date(Date.now() + CLOCK_SKEW).toISOString();
 async function syncClock() { try { const t0 = Date.now(), r = await fetch('/api/time', { credentials: 'same-origin' }); if (!r.ok) return; const j = await r.json(), t1 = Date.now(); CLOCK_SKEW = new Date(j.now).getTime() - (t0 + t1) / 2; } catch (e) { /* sin servidor */ } }
-const fmtDT = iso => iso ? new Date(iso).toLocaleString('es-CO', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', hour: 'numeric', minute: '2-digit' }) : '';
-const fmtShort = iso => iso ? new Date(iso).toLocaleString('es-CO', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '';
-const fmtD = iso => { if (!iso) return ''; const d = /^\d{4}-\d{2}-\d{2}$/.test(iso) ? new Date(iso + 'T12:00:00') : new Date(iso); return d.toLocaleDateString('es-CO', { day: 'numeric', month: 'long', year: 'numeric' }); };
+const fmtDT = iso => iso ? new Date(iso).toLocaleString(I18N.locale(), { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', hour: 'numeric', minute: '2-digit' }) : '';
+const fmtShort = iso => iso ? new Date(iso).toLocaleString(I18N.locale(), { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '';
+const fmtD = iso => { if (!iso) return ''; const d = /^\d{4}-\d{2}-\d{2}$/.test(iso) ? new Date(iso + 'T12:00:00') : new Date(iso); return d.toLocaleDateString(I18N.locale(), { day: 'numeric', month: 'long', year: 'numeric' }); };
 const localInput = (d = new Date()) => { const p = n => String(n).padStart(2, '0'); return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`; };
 /* Edad para mostrar junto a una fecha de nacimiento: «41 años», «1 año», «8 meses» (bebés) o vacío si la fecha no sirve. */
 const ageTxt = b => { const a = ageOf(b); if (a === null || a > 130) return ''; if (a > 0) return a + (a === 1 ? ' año' : ' años');
