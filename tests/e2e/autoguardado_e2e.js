@@ -29,6 +29,8 @@ let bad = 0; const ok = (c, m) => { console.log((c ? 'OK   ' : 'FALLA') + ' ' + 
   await page.evaluate(() => { ACT.open({ dataset: { id: S.patients[S.patients.length - 1].id, tab: 'cierre' } }); });
   await page.waitForSelector('#cierreform [data-f="resumen"]');
   ok((await page.locator('#cierreform [data-f="resumen"]').inputValue()) === 'Resumen del cierre', 'al volver a abrir, el cierre recupera el borrador');
+  await page.locator('#cierreform [data-f="logros"]').fill('Logros'); await page.click('#cierreform [data-act="saveBorrador"]'); await page.waitForTimeout(800);
+  ok(await page.locator('#autosaved').isVisible() && await page.evaluate(() => S.patients[S.patients.length - 1].borradores.cierreform.v.logros === 'Logros'), 'botón «Guardar borrador» del cierre guarda y muestra el aviso');
   // Campo numérico: sin flechas (type text) y solo acepta números
   await page.evaluate(() => { document.body.insertAdjacentHTML('beforeend', F('Num', 'zz_num', '', { type: 'number' })); });
   const nu = page.locator('#f_zz_num'); await nu.type('a1b2,5-x'); 

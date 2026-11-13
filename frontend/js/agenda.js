@@ -307,7 +307,7 @@ function tabCierre(p) {
   <div class="grid">${CIERRE_FIELDS.map(f => F(f[1], f[0], '', { type: 'area', rows: f[2], wide: true, req: true })).join('')}</div>
   <div class="fld"><span class="lbl">Firma del terapeuta (de su perfil)</span>${therPreview()}</div>
   <p class="lock-note">Al guardar, la nota de cierre queda firmada y <b>no podrá modificarse</b>, y el consultante pasa al estado que elija arriba.</p>
-  <div class="row end"><button class="btn pri" data-act="saveCierre">Firmar cierre</button></div></div></div>`;
+  <div class="row end"><button class="btn" data-act="saveBorrador">Guardar borrador</button><button class="btn pri" data-act="saveCierre">Firmar cierre</button></div></div></div>`;
 }
 ACT.saveCierre = async b => {
   const p = curPatient(), o = readForm($('#cierreform'), {});
@@ -348,6 +348,12 @@ function restoreBorradores() {
   BORR.forEach(id => { const el = document.getElementById(id), d = p.borradores[id]; if (!el || !d) return;
     $$('[data-f]', el).forEach(x => { const k = x.dataset.f; if (!(k in d.v)) return; if (x.type === 'checkbox') x.checked = !!d.v[k]; else if (x.type !== 'password' && !x.disabled) x.value = d.v[k]; }); });
 }
+ACT.saveBorrador = async () => { if (await saveBorradorForm()) { aviso('Borrador guardado'); } };
+/* Aviso discreto y visible de guardado */
+function aviso(txt) {
+  let s = $('#autosaved'); if (!s) { s = document.createElement('div'); s.id = 'autosaved'; s.setAttribute('role', 'status'); s.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);bottom:18px;font-size:13.5px;color:var(--ink);background:var(--surface);border:1px solid var(--line);padding:7px 16px;border-radius:99px;box-shadow:0 2px 10px #0003;z-index:300'; document.body.append(s); }
+  s.textContent = '✓ ' + txt + ' · ' + new Date().toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' }); clearTimeout(s._t); s._t = setTimeout(() => s.remove(), 3500);
+}
 /* Guardado automático: 4 s después de dejar de escribir se guarda el borrador, sin avisos ni redibujar. */
 function autoDraft() {
   clearTimeout(AUTO.t);
@@ -357,8 +363,7 @@ function autoDraft() {
     AUTO.busy = AUTO.on = true;
     try { if (db) await ACT[db.dataset.act](db); else if (!(await saveBorradorForm())) { AUTO.busy = AUTO.on = false; return; } } catch (e) { /* se reintenta con la próxima edición */ }
     AUTO.busy = AUTO.on = false;
-    if (!S.dirty) { let s = $('#autosaved'); if (!s) { s = document.createElement('div'); s.id = 'autosaved'; s.setAttribute('role', 'status'); s.style.cssText = 'position:fixed;right:14px;bottom:10px;font-size:12px;color:var(--muted,#6b7a70);background:var(--card,#fff);padding:4px 10px;border-radius:99px;box-shadow:0 1px 4px #0002;z-index:50'; document.body.append(s); }
-      s.textContent = 'Borrador guardado ' + new Date().toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' }); clearTimeout(s._t); s._t = setTimeout(() => s.remove(), 4000); }
+    if (!S.dirty) aviso('Borrador guardado');
   }, 4000);
 }
 /* Al aparecer el aviso (la sesión sigue vigente) se guarda como borrador lo que el usuario estaba escribiendo. */

@@ -36,7 +36,7 @@ function tabArchivo(p) {
     ${F('Fecha de la solicitud', 'fecha', today, { type: 'date' })}${F('Quién la solicita', 'calidad', SOL_CALIDAD[0], { type: 'select', opts: SOL_CALIDAD })}${F('Nombre del solicitante', 'solicitante', fullName(p))}${F('Documento del solicitante', 'documento', p.documento || '')}
     ${F('Medio de entrega preferido', 'medio', SOL_MEDIO[0], { type: 'select', opts: SOL_MEDIO })}${F('Observaciones (alcance, dirección de envío…)', 'observaciones', '', { type: 'area', rows: 2, wide: true })}</div>
     <label class="check"><input type="checkbox" id="f_verifica" data-f="verificado"> <span>Verifiqué la identidad del solicitante y, si no es el consultante, el soporte que lo autoriza (poder, autorización escrita, orden judicial, registro de defunción y parentesco).</span></label>
-    <div class="row end"><button class="btn" data-act="cancelSol">Cancelar</button><button class="btn pri" data-act="saveSol">Registrar solicitud</button></div></div>` : '';
+    <div class="row end"><button class="btn" data-act="cancelSol">Cancelar</button><button class="btn" data-act="saveBorrador">Guardar borrador</button><button class="btn pri" data-act="saveSol">Registrar solicitud</button></div></div>` : '';
   const last = lastAttention(p);
   return `${incorpHTML(p)}<div class="sec"><h3>Adjuntos</h3>${files}</div>
   <div class="sec"><div class="row" style="justify-content:space-between"><h3 style="flex:1">Solicitudes de copia de la historia</h3>${S.newSol ? '' : '<button class="btn" data-act="newSol">Registrar solicitud</button>'}</div>
