@@ -31,6 +31,17 @@ let bad = 0; const ok = (c, m) => { console.log((c ? 'OK   ' : 'FALLA') + ' ' + 
   ok((await page.locator('#cierreform [data-f="resumen"]').inputValue()) === 'Resumen del cierre', 'al volver a abrir, el cierre recupera el borrador');
   await page.locator('#cierreform [data-f="logros"]').fill('Logros'); await page.click('#cierreform [data-act="saveBorrador"]'); await page.waitForTimeout(800);
   ok(await page.locator('#autosaved').isVisible() && await page.evaluate(() => S.patients[S.patients.length - 1].borradores.cierreform.v.logros === 'Logros'), 'botón «Guardar borrador» del cierre guarda y muestra el aviso');
+  // Pestañas propias (Mis formatos): botón «Guardar borrador», guardado solo y marca «Borrador»
+  await page.evaluate(async () => { const pf = clone(S.profile); pf.formatos = Object.assign({}, pf.formatos, { pestanas: { extra: [{ id: 'x_s', nombre: 'Sesiones propias', modo: 'sesion', secs: [] }, { id: 'x_u', nombre: 'Datos propios', modo: 'unica', secs: [] }] } }); S.profile = pf; await persist([pf]); ACT.open({ dataset: { id: S.patients[S.patients.length - 1].id, tab: 'x_s' } }); ACT.extraNew(); });
+  await page.waitForSelector('#f_extra'); await page.fill('#f_extra', 'texto uno'); await page.click('[data-act="extraSave"][data-draft="1"]'); await page.waitForTimeout(700);
+  const ent = () => page.evaluate(() => { const l = S.patients[S.patients.length - 1].extras.x_s; return l.length + ':' + !!l[0].borrador; });
+  ok(await ent() === '1:true', 'pestaña por sesión: «Guardar borrador» crea la entrada marcada como borrador (' + await ent() + ')');
+  await page.fill('#f_extra', 'texto dos'); await page.waitForTimeout(5500);
+  ok(await ent() === '1:true', 'se actualiza sola, sin duplicar (' + await ent() + ')');
+  await page.click('[data-act="extraSave"]:not([data-draft])'); await page.waitForTimeout(700);
+  ok(await ent() === '1:false', 'al guardar la entrada deja de ser borrador (' + await ent() + ')');
+  await page.evaluate(() => { S.tab = 'x_u'; S.extraEd = null; render(); }); await page.waitForSelector('#f_extra'); await page.fill('#f_extra', 'dato'); await page.waitForTimeout(5500);
+  ok(await page.evaluate(() => { const v = S.patients[S.patients.length - 1].extras.x_u; return !!v && v.borrador === true && v.extra === 'dato'; }), 'pestaña de una sola vez: se guarda sola como borrador');
   // Campo numérico: sin flechas (type text) y solo acepta números
   await page.evaluate(() => { document.body.insertAdjacentHTML('beforeend', F('Num', 'zz_num', '', { type: 'number' })); });
   const nu = page.locator('#f_zz_num'); await nu.type('a1b2,5-x'); 
