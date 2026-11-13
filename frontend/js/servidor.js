@@ -35,7 +35,7 @@ function renderRegistro(msg, v) {
   $('#rg_back').onclick = () => renderLogin();
   $('#regform').onsubmit = async ev => {
     ev.preventDefault();
-    const b = { name: $('#rg_name').value.trim(), email: $('#rg_email').value.trim(), password: $('#rg_pass').value };
+    const b = { name: $('#rg_name').value.trim(), email: $('#rg_email').value.trim(), password: $('#rg_pass').value, idioma: I18N.lang };
     if (b.password !== $('#rg_pass2').value) { renderRegistro('Las contraseñas no coinciden.', b); return; }
     try {
       await api('/auth/register', { method: 'POST', body: b, noRedirect: true });

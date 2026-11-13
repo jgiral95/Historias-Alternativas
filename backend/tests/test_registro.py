@@ -10,7 +10,7 @@ OK = {"name": "Luz Prueba", "email": "luz@x.co", "password": "una-clave-larga-1"
 def _con_correo(monkeypatch):
     sent = []
     monkeypatch.setattr(survey, "server_account", lambda: {"host": "h", "from": "a@x.co", "base": "https://ak.test"})
-    monkeypatch.setattr(survey, "send_verify", lambda to, name, url, acc: sent.append((to, url)))
+    monkeypatch.setattr(survey, "send_verify", lambda to, name, url, acc, lang=None: sent.append((to, url)))
     main._signups.clear()
     return sent
 
@@ -41,3 +41,15 @@ def test_registro_validaciones(monkeypatch):
 def test_registro_sin_correo_configurado(monkeypatch):
     monkeypatch.setattr(survey, "server_account", lambda: None)
     assert anon().post("/api/auth/register", json=OK).status_code == 503
+
+
+def test_registro_en_ingles_envia_correo_en_ingles(monkeypatch):
+    got = []
+    monkeypatch.setattr(survey, "server_account", lambda: {"host": "h", "from": "a@x.co", "base": "https://ak.test"})
+    monkeypatch.setattr(survey, "send_verify", lambda to, name, url, acc, lang=None: got.append((url, lang)))
+    main._signups.clear()
+    assert anon().post("/api/auth/register", json={**OK, "idioma": "en"}).status_code == 202
+    assert got[0][1] == "en" and got[0][0].endswith("&lang=en")
+    got.clear(); main._signups.clear()
+    assert anon().post("/api/auth/register", json={**OK, "email": "otra@x.co"}).status_code == 202
+    assert got[0][1] is None and "lang=en" not in got[0][0]

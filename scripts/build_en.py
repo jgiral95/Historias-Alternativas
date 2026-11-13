@@ -51,7 +51,7 @@ def build(p):
         # enlaces internos -> /en
         def lk(m):
             h = m.group(2)
-            if h in ('/app', '/app?registro=1') or h.startswith('/app'): return m.group(0)
+            if h.startswith('/app'): return 'href="' + h + ('&' if '?' in h else '?') + 'lang=en"'
             if re.match(r'^/(blog/?.*|privacidad|)$', h): return m.group(1) + '"/en' + (h if h != '/' else '/') + '"'
             return m.group(0)
         t = re.sub(r'(href=)"(/[^"]*)"', lambda m: lk(m), t)

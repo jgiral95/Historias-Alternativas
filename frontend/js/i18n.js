@@ -7,7 +7,11 @@
   /* Páginas públicas (window.I18N_PUBLIC): el idioma viene de ?lang=en o del campo «idioma» que devuelve la API del terapeuta. */
   const PUB = !!window.I18N_PUBLIC;
   if (PUB) lang = /[?&]lang=en\b/.test(location.search) ? 'en' : 'es';
-  else try { lang = localStorage.getItem('ak_lang') === 'en' ? 'en' : 'es'; } catch (e) { /* sin almacenamiento */ }
+  else try {
+    /* ?lang=en (enlaces de las páginas en inglés, p. ej. crear cuenta o confirmar correo) fija el idioma de este navegador */
+    if (/[?&]lang=en\b/.test(location.search)) localStorage.setItem('ak_lang', 'en');
+    lang = localStorage.getItem('ak_lang') === 'en' ? 'en' : 'es';
+  } catch (e) { /* sin almacenamiento */ }
   const norm = s => s.replace(/\s+/g, ' ').trim();
   const esc = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   function add(o) {

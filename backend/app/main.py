@@ -327,6 +327,7 @@ class RegisterIn(BaseModel):
     name: str
     email: str
     password: str
+    idioma: str = ""
 
 
 SIGNUPS_POR_IP = 3  # cuentas nuevas por IP cada 24 horas
@@ -363,10 +364,11 @@ def register(body: RegisterIn, request: Request, db: Session = Depends(get_db)):
         raise HTTPException(429, "Demasiados intentos. Espere unos minutos e intente de nuevo.")
     _register_fail(email, ip)
     if not db.scalar(select(User).where(User.email == email)):  # si ya existe no se revela: la respuesta es la misma
+        en = body.idioma.lower().startswith("en")
         tok = jwt.encode({"p": "reg", "e": email, "n": name, "h": hash_password(body.password), "exp": int(time.time()) + 86400},
                          SESSION_SECRET, algorithm="HS256")
         try:
-            survey.send_verify(email, name, f"{acc.get('base') or PUBLIC_URL}/app?verificar={tok}", acc)
+            survey.send_verify(email, name, f"{acc.get('base') or PUBLIC_URL}/app?verificar={tok}" + ("&lang=en" if en else ""), acc, "en" if en else None)
         except Exception:
             raise HTTPException(502, "No se pudo enviar el correo. Revise la dirección e intente de nuevo.")
     return {"ok": True}
