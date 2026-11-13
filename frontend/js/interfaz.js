@@ -132,6 +132,15 @@ function searchNotes(q) {
   S.notes.forEach(n => { const p = S.patients.find(x => x.id === n.patientId); if (p && n.signedAt) { evolSchema(n).forEach(f => add(p, 'evol', n.id, 'Sesión ' + fmtD(n.sessionAt), n[f[0]])); if (n.dxCambio) (n.diagnosticos || []).forEach(d => add(p, 'evol', n.id, 'Impresión ' + fmtD(n.sessionAt), d.codigo + ' ' + d.nombre)); } });
   S.reports.forEach(r => { const p = S.patients.find(x => x.id === r.patientId); if (p && r.signedAt) add(p, 'informes', r.id, r.tipo, r.contenido); });
   S.scales.forEach(e => { const p = S.patients.find(x => x.id === e.patientId); if (p) add(p, 'escalas', '', e.escala.nombre, e.observaciones); });
+  // Datos de la ficha y pestañas propias (única y por sesión)
+  const SKIP = new Set(['id', 'kind', 'estado', 'createdAt', 'updatedAt', 'signedAt', 'tarifa']);
+  S.patients.forEach(p => {
+    Object.keys(p).forEach(k => { const v = p[k]; if (!SKIP.has(k) && typeof v === 'string' && v.length < 5000 && !v.startsWith('data:')) add(p, 'datos', '', 'Datos', v); });
+    (tabsConf().extra || []).forEach(x => {
+      const v = (p.extras || {})[x.id], vals = o => !o ? [] : typeof o === 'string' ? [o] : Object.values(o.v || o).filter(y => typeof y === 'string' && !y.startsWith('data:'));
+      (Array.isArray(v) ? v : [v]).forEach(e => vals(e).forEach(t => add(p, x.id, '', x.nombre + (e && e.at ? ' ' + fmtD(e.at) : ''), t)));
+    });
+  });
   const seen = new Set();
   return hits.filter(h => { const k = h.p.id + h.tab + h.rec + h.label; if (seen.has(k)) return false; seen.add(k); return true; });
 }
