@@ -27,7 +27,7 @@ App de seguimiento de consultantes para profesionales de terapias alternativas (
 | `js/servidor.js` | ingreso, cuenta, usuarios (admin) y arranque (`boot`) — va de último |
 
 ## Backend (`backend/app/`)
-FastAPI + SQLAlchemy. `main.py` (endpoints; registros cifrados por tipo: profile, patient, note, report, appt, file, scale, pnote), `firmas.py`, `booking.py` (reservas por enlace público; página `reservar.html`), `reminders.py`, `survey.py`, `gcal.py`, `security.py` (AES-256-GCM). Datos estáticos en `app/data/`.
+FastAPI + SQLAlchemy. `main.py` (endpoints; registros cifrados por tipo: profile, patient, note, report, appt, file, scale, pnote), `firmas.py`, `booking.py` (reservas por enlace público; página `reservar.html`), `reminders.py`, `survey.py`, `gcal.py`, `security.py` (AES-256-GCM), `traduccion.py` (inglés de los correos según `profile.idioma`; `correo.agregar(m, html, lang)`). Las páginas públicas cargan `js/i18n.js` con `I18N_PUBLIC` y toman el idioma de `?lang=en` o del campo `idioma` de la API. Datos estáticos en `app/data/`.
 
 ## Pruebas
 - Servidor: `cd backend && /tmp/venv-hc/bin/python -m pytest -q tests/test_X.py`
@@ -42,7 +42,7 @@ FastAPI + SQLAlchemy. `main.py` (endpoints; registros cifrados por tipo: profile
 | Celular / diseño | `movil_e2e.js` |
 | Navegación «Atrás» | `navegacion_e2e.js` |
 | Notas de proceso / a mano | `notas_proceso_e2e.js`, `mano_e2e.js` |
-| Idioma EN | `i18n_e2e.js` (lista el español sin traducir) |
+| Idioma EN | `i18n_e2e.js` (lista el español sin traducir), `publicas_i18n_e2e.js`, `test_traduccion.py` |
 | Reservas por enlace | `test_booking.py` |
 | Formularios de datos | `test_formularios.py` |
 | Recordatorios / firma a distancia / encuesta / bitácora / comentarios / inicio / caída / Google | `<nombre>_e2e.js` |

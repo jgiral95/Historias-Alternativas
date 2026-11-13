@@ -1536,7 +1536,7 @@ def public_survey(token: str, request: Request, db: Session = Depends(get_db)):
     if not inv:
         raise HTTPException(404, "Enlace no válido")
     d = decrypt(inv.payload)
-    return {"estado": _invite_state(inv), "prueba": bool(d.get("prueba")), "profesional": d.get("profesional"), "consultorio": d.get("consultorio"),
+    return {"estado": _invite_state(inv), "prueba": bool(d.get("prueba")), "profesional": d.get("profesional"), "consultorio": d.get("consultorio"), "idioma": d.get("idioma") or "",
             "intro": d.get("intro"),
             "preguntas": [{**q, "opciones": [o[0] for o in survey.TYPES[q["tipo"]]]} for q in d.get("preguntas") or []]}
 
@@ -1655,7 +1655,7 @@ def surveys_test(body: SurveyTestIn, user: User = Depends(pro_user), db: Session
     db.add(SurveyInvite(id=survey.token_hash(token), user_id=user.id, patient_id="prueba", created_at=now,
                         expires_at=now + timedelta(days=2), channel="prueba",
                         payload=encrypt({"token": token, "prueba": True, "preguntas": cfg["preguntas"], "intro": cfg["intro"],
-                                         "profesional": prof.get("nombre") or "", "consultorio": prof.get("consultorio") or ""})))
+                                         "profesional": prof.get("nombre") or "", "consultorio": prof.get("consultorio") or "", "idioma": prof.get("idioma") or ""})))
     db.commit()
     audit(db, user.id, "survey.test", "")
     acc = survey.account(db, user.id)
@@ -1994,7 +1994,7 @@ def remote_create(body: RemoteConsentIn, request: Request, user: User = Depends(
     token, now = firmas.new_token(), datetime.now(timezone.utc)
     data = {"token": token, "tipo": tipo, "plantilla": (body.plantilla or None), "text": text, "signerType": body.signerType,
             "signerName": body.signerName.strip()[:200], "signerDoc": body.signerDoc.strip()[:40],
-            "therapistName": prof.get("nombre"), "therapistDocId": prof.get("cedula") or None, "therapistReg": prof.get("registro"),
+            "therapistName": prof.get("nombre"), "idioma": prof.get("idioma") or "", "therapistDocId": prof.get("cedula") or None, "therapistReg": prof.get("registro"),
             "therapistSig": prof.get("firma"), "consultorio": prof.get("consultorio"), "enviadoAt": now.isoformat()}
     r = ConsentRequest(id=firmas.token_hash(token), ref=secrets.token_hex(12), user_id=user.id, patient_id=body.patientId,
                        created_at=now, expires_at=now + firmas.ttl(), attempts=0, payload=encrypt(data))
@@ -2062,7 +2062,7 @@ def _public_request(db: Session, token: str) -> ConsentRequest:
 
 def _public_head(db: Session, r: ConsentRequest) -> dict:
     d = decrypt(r.payload)
-    return {"tipo": d.get("tipo"), "profesional": d.get("therapistName") or "", "consultorio": d.get("consultorio") or "",
+    return {"tipo": d.get("tipo"), "profesional": d.get("therapistName") or "", "consultorio": d.get("consultorio") or "", "idioma": d.get("idioma") or "",
             "estado": _cr_state(r), "vence": _iso(r.expires_at), "firmado": _iso(r.signed_at), "quien": d.get("signerType")}
 
 
@@ -2223,7 +2223,7 @@ def public_booking(slug: str, request: Request, db: Session = Depends(get_db)):
     _public_throttle(request)
     b, u, prof, _acc = _booking_link(db, slug)
     cfg = decrypt(b.payload)
-    return {"profesional": prof.get("nombre") or u.name, "consultorio": prof.get("consultorio") or "", "modalidades": cfg["modalidades"], "modalidadDia": booking.modalidades_por_dia(cfg),
+    return {"profesional": prof.get("nombre") or u.name, "consultorio": prof.get("consultorio") or "", "idioma": prof.get("idioma") or "", "modalidades": cfg["modalidades"], "modalidadDia": booking.modalidades_por_dia(cfg),
             "duracion": cfg["duracion"], "dias": booking.slots(cfg, booking.busy_of(_appts_of(db, u.id)))}
 
 
@@ -2301,7 +2301,7 @@ def public_appt(token: str, request: Request, db: Session = Depends(get_db)):
     prof = decrypt(prof_row.payload) if prof_row else {}
     start = reminders.parse(a.get("startAt"))
     return {"cuando": reminders.when_text(start) if start else "", "inicio": a.get("startAt"), "modalidad": a.get("modalidad") or "Presencial",
-            "profesional": prof.get("nombre") or "", "consultorio": prof.get("consultorio") or "", "estado": a.get("estado") or "Programada",
+            "profesional": prof.get("nombre") or "", "consultorio": prof.get("consultorio") or "", "idioma": prof.get("idioma") or "", "estado": a.get("estado") or "Programada",
             "respuesta": (a.get("confirmacion") or {}).get("estado"), "pasada": bool(start and start < datetime.now(timezone.utc))}
 
 
@@ -2484,7 +2484,7 @@ def public_form(token: str, request: Request, db: Session = Depends(get_db)):
     r = _public_form(db, token)
     row = db.get(Record, (r.user_id, "profile"))
     prof = decrypt(row.payload) if row else {}
-    return {"profesional": prof.get("nombre") or "su terapeuta", "consultorio": prof.get("consultorio") or "", "nombre": decrypt(r.payload).get("nombre"), "campos": formularios.spec((prof.get("formatos") or {}))}
+    return {"profesional": prof.get("nombre") or "su terapeuta", "consultorio": prof.get("consultorio") or "", "idioma": prof.get("idioma") or "", "nombre": decrypt(r.payload).get("nombre"), "campos": formularios.spec((prof.get("formatos") or {}))}
 
 
 class FormSubmitIn(BaseModel):

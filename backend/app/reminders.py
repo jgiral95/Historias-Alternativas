@@ -89,7 +89,7 @@ def send_mail(to: str, body: str, prof: dict, acc: dict) -> None:
     m.set_content(body + "\n\nEste es un mensaje automático de recordatorio.\n")
     antes, url, despues = correo.separar_enlace(body)
     correo.agregar(m, correo.layout("Recordatorio de su cita", [antes, despues], boton=("Confirmar o cancelar mi cita", url) if url else None,
-                                    firma=("Atentamente,", prof.get("nombre") or place)))
+                                    firma=("Atentamente,", prof.get("nombre") or place)), prof.get("idioma"))
     with survey.smtp_open(acc) as s:
         s.send_message(m)
 

@@ -41,6 +41,12 @@ button:disabled{opacity:.6;cursor:wait}
 </head>
 <body>
 <main id="m"><div class="card"><p class="muted">Cargando…</p></div></main>
+<script>window.I18N_PUBLIC = 1;</script>
+<script src="js/i18n.js"></script>
+<script src="js/en-04.js"></script>
+<script src="js/en-06.js"></script>
+<script src="js/en-07.js"></script>
+<script src="js/en-10.js"></script>
 <script>
 const $ = s => document.querySelector(s);
 const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));

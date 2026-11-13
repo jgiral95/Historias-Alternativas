@@ -219,7 +219,7 @@ def draw(user_id: int, force: bool = False, now: datetime | None = None) -> int:
             inv = SurveyInvite(id=token_hash(token), user_id=user_id, patient_id=p["id"], created_at=now,
                                expires_at=now + timedelta(days=SURVEY_DAYS_OPEN), channel=channel,
                                payload=encrypt({"token": token, "preguntas": cfg["preguntas"], "intro": cfg["intro"],
-                                                "profesional": prof.get("nombre") or "", "consultorio": prof.get("consultorio") or "",
+                                                "profesional": prof.get("nombre") or "", "consultorio": prof.get("consultorio") or "", "idioma": prof.get("idioma") or "",
                                                 "correoProfesional": prof.get("correo") or ""}))
             db.add(inv)
             if channel == "correo":
@@ -272,7 +272,7 @@ def message(to: str, token: str, p: dict, prof: dict, acc: dict | None = None) -
     correo.agregar(m, correo.layout("¿Cómo le pareció la atención?",
                                     [f"Hola{(' ' + first) if first else ''}. {who} le invita a responder una encuesta corta sobre la atención que recibió. Toma unos 2 minutos y sus respuestas se guardan sin su nombre."],
                                     cierre=[f"El enlace estará abierto {SURVEY_DAYS_OPEN} días. Responder es voluntario."], boton=("Responder la encuesta", url),
-                                    notas=[("Si no desea recibir más encuestas,", "haga clic aquí", out)], firma=("Gracias por su tiempo,", who)))
+                                    notas=[("Si no desea recibir más encuestas,", "haga clic aquí", out)], firma=("Gracias por su tiempo,", who)), prof.get("idioma"))
     return m
 
 

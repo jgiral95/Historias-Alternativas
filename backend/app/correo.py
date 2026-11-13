@@ -6,6 +6,7 @@ import re
 from email.message import EmailMessage
 from html import escape as e
 
+from . import traduccion
 from .config import PUBLIC_URL
 
 URL_RE = re.compile(r"https?://[^\s]+")
@@ -64,8 +65,16 @@ def layout(titulo: str, intro=(), filas=(), cierre=(), boton: tuple[str, str] | 
 </td></tr></table></body></html>"""
 
 
-def agregar(m: EmailMessage, html: str) -> EmailMessage:
-    """Suma al correo (ya con su texto plano) la versión HTML y, en ambas, la descripción de Alter-Karute."""
-    m.set_content(m.get_content().rstrip("\n") + f"\n\n--\n{ACERCA}" + (f"\n{PUBLIC_URL}" if PUBLIC_URL else "") + "\n")
+def agregar(m: EmailMessage, html: str, lang: str | None = None) -> EmailMessage:
+    """Suma al correo (ya con su texto plano) la versión HTML y, en ambas, la descripción de Alter-Karute.
+    Con lang="en" traduce asunto, texto y HTML (traduccion.py)."""
+    if lang == "en":
+        asunto = traduccion.tr(m["Subject"] or "", "en")
+        del m["Subject"]
+        m["Subject"] = asunto
+        m.set_content(traduccion.texto(m.get_content(), "en"))
+        html = traduccion.html(html, "en")
+    acerca = traduccion.tr(ACERCA, lang)
+    m.set_content(m.get_content().rstrip("\n") + f"\n\n--\n{acerca}" + (f"\n{PUBLIC_URL}" if PUBLIC_URL else "") + "\n")
     m.add_alternative(html, subtype="html")
     return m

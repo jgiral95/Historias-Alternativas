@@ -132,7 +132,7 @@ def send_mail(to: str, subject: str, body: str, prof: dict, acc: dict, html: str
         m["Reply-To"] = reply
     m.set_content(body)
     if html:
-        correo.agregar(m, html)
+        correo.agregar(m, html, prof.get("idioma"))
     with survey.smtp_open(acc) as s:
         s.send_message(m)
 
