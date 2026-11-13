@@ -305,7 +305,7 @@ function filtroCard() {
   return `<div class="card"><b>Filtros del buscador</b><p class="stnote" style="margin:4px 0">Elija con qué campos de este formato se puede filtrar la búsqueda. Los campos nuevos aparecen aquí cuando los guarda en este formato.</p>${own.map(row).join('')}</div>`;
 }
 function drawFormats() {
-  const root = $('#modal-root'), prev = root.querySelector('.modal'), top = prev ? prev.scrollTop : 0, w = ED.which;
+  const root = $('#modal-root'), prev = root.querySelector('.modal > .box'), top = prev ? prev.scrollTop : 0, w = ED.which;
   const isX = String(w).startsWith('x_'), hasGeno = (isX ? ED[w] : ED.intake).some(sc => sc.g);
   const intro = {  intake: 'Los cambios solo se aplican a las <b>nuevas</b> consultas de primera vez. Las ya firmadas conservan el formato con el que se firmaron.', evol: 'Los cambios solo se aplican a las <b>nuevas</b> sesiones. Las ya firmadas conservan el formato con el que se firmaron.', datos: 'Agregue los datos que usted toma de cada consultante, además de los campos fijos. Aparecen al final de esa pestaña para todos sus consultantes.' }[w] || 'Arme los apartados y campos de esta pestaña. Los cambios se aplican a todas las fichas; lo ya escrito se conserva.';
   const body = w === 'evol'
@@ -317,7 +317,7 @@ function drawFormats() {
   ${body || ''}
   ${filtroCard()}
   <div class="row" style="justify-content:space-between">${w === 'evol' ? '<span></span>' : '<button class="btn warn" data-fm="reset">Restaurar formato base</button>'}<button class="btn pri" data-fm="save">Guardar formato</button></div></div></div>`;
-  const m = root.querySelector('.modal'); m.scrollTop = top;
+  const m = root.querySelector('.modal > .box'); m.scrollTop = top;
 }
 const edList = (path) => path.includes('.') ? secList()[+path.split('.')[0]].fs : ED.evol;
 const edIdx = path => +path.split('.').pop();
