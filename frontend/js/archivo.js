@@ -86,7 +86,7 @@ ACT.saveSol = async b => {
   const p = curPatient(), o = readForm($('#solform'), {});
   if (!o.solicitante || !o.fecha) { toast('Indique el solicitante y la fecha.'); return; }
   if (!o.verificado) { toast('Confirme que verificó la identidad y la autorización del solicitante.'); return; }
-  const snap = clone(p);
+  const snap = clone(p); dropBorrador(p, 'solform');
   p.solicitudes = (p.solicitudes || []).concat([{ id: newId('s'), fecha: o.fecha, calidad: o.calidad, solicitante: o.solicitante, documento: o.documento, medio: o.medio, observaciones: o.observaciones, verificado: true, registradoAt: nowISO(), registradoPor: S.profile.nombre }]);
   if (!(await persist([p], b))) { restore(p, snap); return; }
   S.newSol = false; toast('Solicitud registrada.'); render();

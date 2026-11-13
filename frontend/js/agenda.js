@@ -314,7 +314,7 @@ ACT.saveCierre = async b => {
   if (!canSign()) { toast('Primero guarde su nombre y firma en «Mi perfil».'); return; }
   if (!o.fecha) { toast('Indique la fecha del cierre.'); return; }
   if (!reqCheck($('#cierreform'), o, CIERRE_FIELDS.map(f => f[0]))) return;
-  const snap = clone(p);
+  const snap = clone(p); dropBorrador(p, 'cierreform');
   p.cierres = (p.cierres || []).concat([Object.assign(o, therSnap(), { signedAt: nowISO() })]);
   p.estado = CLOSED.includes(o.estadoFinal) ? o.estadoFinal : 'Alta';
   if (!(await persist([p], b))) { restore(p, snap); return; }
@@ -331,15 +331,31 @@ ACT.viewCierre = b => { const p = curPatient(), c = p.cierres[+b.dataset.i]; sho
 
 /* ===== Bloqueo por inactividad (solo con servidor) ===== */
 const Idle = { last: Date.now(), ping: Date.now(), timer: null, saved: false, draftSaved: false };
-const draftBtn = () => document.querySelector('#intakeform [data-act="saveIntake"][data-sign="0"], #noteform [data-act="saveNote"][data-sign="0"], #reportform [data-act="saveReport"][data-sign="0"], [data-act="saveConsentDraft"], #tabbody [data-act="saveExtra"], #tabbody [data-act="extraSave"]');
+const draftBtn = () => document.querySelector('#intakeform [data-act="saveIntake"][data-sign="0"], #noteform [data-act="saveNote"][data-sign="0"], #reportform [data-act="saveReport"][data-sign="0"], [data-act="saveConsentDraft"], #tabbody [data-act="saveExtra"], #tabbody [data-act="extraSave"], #tabbody [data-act="savePatient"]');
+const BORR = ['cierreform', 'solform'];
+const dropBorrador = (p, id) => { if (p.borradores && p.borradores[id]) { p.borradores = Object.assign({}, p.borradores); delete p.borradores[id]; } };
+/* Formularios sin versión «borrador» propia: lo escrito se guarda en la ficha y se recupera al volver a abrirlos. */
+async function saveBorradorForm() {
+  const el = BORR.map(i => document.getElementById(i)).find(Boolean), p = curPatient();
+  if (!el || !p || S.draft) return false;
+  const v = readForm(el, {}); if (!Object.values(v).some(x => x === true || (typeof x === 'string' && x))) return true;
+  const snap = clone(p); p.borradores = Object.assign({}, p.borradores, { [el.id]: { v, at: nowISO() } });
+  if (!(await persist([p]))) { restore(p, snap); return true; }
+  S.dirty = false; return true;
+}
+function restoreBorradores() {
+  const p = curPatient(); if (!p || !p.borradores) return;
+  BORR.forEach(id => { const el = document.getElementById(id), d = p.borradores[id]; if (!el || !d) return;
+    $$('[data-f]', el).forEach(x => { const k = x.dataset.f; if (!(k in d.v)) return; if (x.type === 'checkbox') x.checked = !!d.v[k]; else if (x.type !== 'password' && !x.disabled) x.value = d.v[k]; }); });
+}
 /* Guardado automático: 4 s después de dejar de escribir se guarda el borrador, sin avisos ni redibujar. */
 function autoDraft() {
   clearTimeout(AUTO.t);
   AUTO.t = setTimeout(async () => {
     if (!S.dirty || AUTO.busy || $('.modal') || !S.user) return;
-    const db = draftBtn(); if (!db) return;
+    const db = draftBtn();
     AUTO.busy = AUTO.on = true;
-    try { await ACT[db.dataset.act](db); } catch (e) { /* se reintenta con la próxima edición */ }
+    try { if (db) await ACT[db.dataset.act](db); else if (!(await saveBorradorForm())) { AUTO.busy = AUTO.on = false; return; } } catch (e) { /* se reintenta con la próxima edición */ }
     AUTO.busy = AUTO.on = false;
     if (!S.dirty) { let s = $('#autosaved'); if (!s) { s = document.createElement('div'); s.id = 'autosaved'; s.setAttribute('role', 'status'); s.style.cssText = 'position:fixed;right:14px;bottom:10px;font-size:12px;color:var(--muted,#6b7a70);background:var(--card,#fff);padding:4px 10px;border-radius:99px;box-shadow:0 1px 4px #0002;z-index:50'; document.body.append(s); }
       s.textContent = 'Borrador guardado ' + new Date().toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' }); clearTimeout(s._t); s._t = setTimeout(() => s.remove(), 4000); }

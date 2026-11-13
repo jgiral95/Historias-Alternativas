@@ -20,6 +20,15 @@ let bad = 0; const ok = (c, m) => { console.log((c ? 'OK   ' : 'FALLA') + ' ' + 
   await ta.type(' y segunda'); await page.waitForTimeout(5500);
   r = await page.evaluate(() => ({ n: S.notes.length, txt: JSON.stringify(S.notes[S.notes.length - 1]) }));
   ok(r.n === n0 + 1 && r.txt.includes('segunda'), 'el segundo guardado actualiza el mismo borrador (sin duplicar)');
+  // Cierre: lo escrito se guarda solo en la ficha y se recupera al volver a abrir
+  await page.evaluate(() => { ACT.open({ dataset: { id: S.patients[S.patients.length - 1].id, tab: 'cierre' } }); });
+  await page.waitForSelector('#cierreform [data-f="resumen"]');
+  await page.locator('#cierreform [data-f="resumen"]').type('Resumen del cierre'); await page.waitForTimeout(5500);
+  ok(await page.evaluate(() => { const p = S.patients[S.patients.length - 1]; return !!(p.borradores && p.borradores.cierreform && p.borradores.cierreform.v.resumen === 'Resumen del cierre') && !(p.cierres || []).length; }), 'el cierre se guarda como borrador en la ficha (sin cerrar el proceso)');
+  await page.reload(); await page.waitForSelector('[data-act="menu"]');
+  await page.evaluate(() => { ACT.open({ dataset: { id: S.patients[S.patients.length - 1].id, tab: 'cierre' } }); });
+  await page.waitForSelector('#cierreform [data-f="resumen"]');
+  ok((await page.locator('#cierreform [data-f="resumen"]').inputValue()) === 'Resumen del cierre', 'al volver a abrir, el cierre recupera el borrador');
   ok(errors.length === 0, 'sin errores de página' + (errors.length ? ': ' + errors[0] : ''));
   await b.close(); process.exit(bad);
 })();

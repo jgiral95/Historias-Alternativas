@@ -37,7 +37,7 @@ const OPT = {
 const CLOSED = ['Alta', 'Cerrado', 'Remitido'];
 const isClosed = p => CLOSED.includes(p.estado);
 
-const DIRTY_SEL = '#noteform, #intakeform, #reportform, #cierreform, #scaleform, #solform, #incform, #consentform, #repsblock, #tabbody:has([data-act="saveExtra"], [data-act="extraSave"])';
+const DIRTY_SEL = '#noteform, #intakeform, #reportform, #cierreform, #scaleform, #solform, #incform, #consentform, #repsblock, #tabbody:has([data-act="saveExtra"], [data-act="extraSave"], [data-act="savePatient"])';
 function askDiscard(go) {
   if ($('#discardask')) return;
   const d = document.createElement('div'); d.className = 'idle'; d.id = 'discardask';
@@ -91,7 +91,7 @@ async function navRestore(st) {
   if (p) logView();
 }
 window.addEventListener('popstate', e => { navRestore(e.state); });
-function render() { const tl = $('.tabs'), sx = tl ? tl.scrollLeft : 0; renderMain(); const t2 = $('.tabs'); if (t2) { t2.scrollLeft = sx; const on = t2.querySelector('.tab.on'); if (on && (on.offsetLeft < t2.scrollLeft || on.offsetLeft + on.offsetWidth > t2.scrollLeft + t2.clientWidth)) t2.scrollLeft = Math.max(0, on.offsetLeft - 16); } navSync(); const sh = $('#app'); if (sh && !$('#aviso-alcance')) sh.insertAdjacentHTML('beforeend', '<div id="aviso-alcance" style="text-align:center;font-size:12px;color:var(--muted);padding:10px 0">Alter-Karute acompaña el bienestar y la salud con terapias alternativas: no realiza procesos clínicos.</div>'); }
+function render() { const tl = $('.tabs'), sx = tl ? tl.scrollLeft : 0; renderMain(); restoreBorradores(); const t2 = $('.tabs'); if (t2) { t2.scrollLeft = sx; const on = t2.querySelector('.tab.on'); if (on && (on.offsetLeft < t2.scrollLeft || on.offsetLeft + on.offsetWidth > t2.scrollLeft + t2.clientWidth)) t2.scrollLeft = Math.max(0, on.offsetLeft - 16); } navSync(); const sh = $('#app'); if (sh && !$('#aviso-alcance')) sh.insertAdjacentHTML('beforeend', '<div id="aviso-alcance" style="text-align:center;font-size:12px;color:var(--muted);padding:10px 0">Alter-Karute acompaña el bienestar y la salud con terapias alternativas: no realiza procesos clínicos.</div>'); }
 function renderMain() {
   S.dirty = false;
   const p = curPatient(), pr = S.profile;
@@ -471,11 +471,12 @@ ACT.savePatient = async b => {
   // El nombre de la ficha sale de los campos propios (Mis formatos): «Nombre»/«Apellido»; si no hay, del primer campo con datos.
   const nm = deriveName(o);
   if (nm.nombres || nm.apellidos) Object.assign(o, nm);
-  else if (!p.nombres && !p.apellidos) { toast(datosSchema().length ? 'Escriba al menos el nombre del consultante.' : 'Primero cree los campos en «Mis formatos» → «Datos del consultante».'); return; }
-  if (S.draft && dupOf(o, p.id)) { dupWarn(o, p.id); return; }
+  else if (!p.nombres && !p.apellidos) { if (AUTO.on) return; toast(datosSchema().length ? 'Escriba al menos el nombre del consultante.' : 'Primero cree los campos en «Mis formatos» → «Datos del consultante».'); return; }
+  if (S.draft && dupOf(o, p.id)) { if (!AUTO.on) dupWarn(o, p.id); return; }
   const snap = clone(p); Object.assign(p, o);
   if (!(await persist([p], b))) { restore(p, snap); return; }
   if (S.draft) { if (!S.patients.some(x => x.id === p.id)) S.patients.push(p); S.draft = false; S.draftObj = null; S.pid = p.id; }
+  if (AUTO.on) return;
   toast('Datos guardados.'); render();
 };
 ACT.delPatient = () => {
