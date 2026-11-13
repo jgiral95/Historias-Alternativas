@@ -12,5 +12,6 @@ I18N.add({
 I18N.add({
 "Agendar cita":"Book appointment","Cargando…":"Loading…","Confirmar cita":"Confirm appointment","Sus datos para la primera atención":"Your details for the first session","Firmar consentimiento":"Sign consent","Verificar documento":"Verify document","Verificar un documento":"Verify a document",
 "Escriba el código de verificación impreso al final del informe o del certificado. Si es auténtico, verá el contenido tal como lo firmó el profesional: compárelo con el documento que recibió.":"Enter the verification code printed at the end of the report or certificate. If it is authentic, you'll see the content as the practitioner signed it: compare it with the document you received.",
-"Esta consulta queda registrada. La información de este documento es reservada: úsela solo para el fin para el que le entregaron el documento.":"This query is logged. The information in this document is confidential: use it only for the purpose for which the document was given to you."
+"Esta consulta queda registrada. La información de este documento es reservada: úsela solo para el fin para el que le entregaron el documento.":"This query is logged. The information in this document is confidential: use it only for the purpose for which the document was given to you.",
+"Aún no tiene campos para los datos del consultante. Créelos en «Mis formatos» → «Datos del consultante».":"You have no client data fields yet. Create them in “My templates” → “Client data”."
 });
