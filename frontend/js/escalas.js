@@ -104,7 +104,7 @@ ACT.scaleManage = () => {
       ${F('Ítems (uno por línea)', 'items', (edit.items || []).join('\n'), { type: 'area', rows: 8, wide: true })}</div>
       <p style="margin:0;font-size:13px;color:var(--muted)">Si la escala tiene derechos de autor (por ejemplo BDI-II o BAI), úsela solo si tiene la licencia. Cada aplicación guarda una copia de la escala tal como estaba, así que editarla después no cambia lo ya aplicado.</p>
       <div class="row end"><button class="btn" data-sm="list">Volver</button><button class="btn pri" data-sm="save" data-id="${esc(edit.id || '')}">Guardar escala</button></div>`
-    : `${list.map(x => `<div class="card"><div class="row" style="justify-content:space-between"><b>${esc(x.nombre)}</b><span class="row"><button class="btn sm" data-sm="edit" data-id="${x.id}">Editar</button><button class="btn sm warn" data-sm="del" data-id="${x.id}">Quitar</button></span></div><span class="ts">${x.items.length} ítems · puntaje ${scaleMin(x)} a ${scaleMax(x)}</span></div>`).join('') || '<p style="margin:0;color:var(--muted)">Aún no tiene escalas propias. PHQ-9 y GAD-7 ya vienen incluidas.</p>'}
+    : `${list.map(x => `<div class="card"><div class="row" style="justify-content:space-between"><b><span class="dragh" draggable="true" data-dk="esc" data-dv="${x.id}" title="Arrastre para cambiar el orden" aria-hidden="true">⠿</span> ${esc(x.nombre)}</b><span class="row"><button class="btn sm" data-sm="edit" data-id="${x.id}">Editar</button><button class="btn sm warn" data-sm="del" data-id="${x.id}">Quitar</button></span></div><span class="ts">${x.items.length} ítems · puntaje ${scaleMin(x)} a ${scaleMax(x)}</span></div>`).join('') || '<p style="margin:0;color:var(--muted)">Aún no tiene escalas propias. PHQ-9 y GAD-7 ya vienen incluidas.</p>'}
       <div class="row end"><button class="btn pri" data-sm="new">Nueva escala</button></div>`}</div></div>`;
   };
   draw(null);
@@ -179,7 +179,7 @@ ACT.phrases = () => {
     const list = myPhrases();
     root.innerHTML = `<div class="modal" role="dialog" aria-modal="true" aria-label="Mis frases"><div class="box" id="phform"><div class="row mfhead" style="justify-content:space-between"><h3 style="flex:1">Mis formatos</h3><button class="btn sm" data-ph="close">Cerrar</button></div>${hubTabs('frases')}<b>Frases frecuentes</b>
     <p style="margin:0;font-size:13px;color:var(--muted)">En cualquier campo de texto de una nota, escriba <b>/</b> y el atajo (por ejemplo <b>/psico</b>) y pulse Enter: se inserta la frase completa.</p>
-    ${list.map((f, i) => `<div class="card"><div class="row" style="justify-content:space-between"><b>/${esc(f.a)}</b><button class="btn sm warn" data-ph="del" data-i="${i}">Quitar</button></div><p>${esc(f.t)}</p></div>`).join('') || '<p style="margin:0;color:var(--muted)">Aún no tiene frases.</p>'}
+    ${list.map((f, i) => `<div class="card"><div class="row" style="justify-content:space-between"><b><span class="dragh" draggable="true" data-dk="fra" data-dv="${i}" title="Arrastre para cambiar el orden" aria-hidden="true">⠿</span> /${esc(f.a)}</b><button class="btn sm warn" data-ph="del" data-i="${i}">Quitar</button></div><p>${esc(f.t)}</p></div>`).join('') || '<p style="margin:0;color:var(--muted)">Aún no tiene frases.</p>'}
     <div class="card"><div class="grid">${F('Atajo (una palabra)', 'a', '', { ph: 'Ej.: psico' })}${F('Frase', 't', '', { type: 'area', rows: 3, wide: true })}</div><div class="row end"><button class="btn pri" data-ph="add">Agregar frase</button></div></div></div></div>`;
   };
   draw();

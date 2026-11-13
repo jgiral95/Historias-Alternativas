@@ -479,10 +479,23 @@ function finishFormats() {
 
 
 /* Arrastrar para ordenar (con el mouse): usa los mismos botones ↑ ↓ de cada lista, un paso a la vez. Pestañas propias, apartados y campos. */
+const LISTAS = {  // listas de Mis formatos que se guardan en el perfil: clave → dónde están y cómo se vuelven a dibujar
+  plt: { get: () => myTemplates(), set: l => { S.profile.plantillas = l; }, id: x => x.id, redraw: () => ACT.tplManage() },
+  cons: { get: () => myConsents(), set: l => { S.profile.consentimientos = l; delete S.profile.consentimiento; }, id: x => x.id, redraw: () => ACT.consentManage() },
+  esc: { get: () => myScales(), set: l => { S.profile.escalas = l; }, id: x => x.id, redraw: () => ACT.scaleManage() },
+  fra: { get: () => myPhrases(), set: l => { S.profile.frases = l; }, id: (x, i) => i, redraw: () => ACT.phrases() },
+};
+async function moverLista(L, from, to) {
+  const arr = L.get().slice(), i = arr.findIndex((x, n) => String(L.id(x, n)) === from), j = arr.findIndex((x, n) => String(L.id(x, n)) === to);
+  if (i < 0 || j < 0 || i === j) return;
+  const snap = clone(S.profile); arr.splice(j, 0, arr.splice(i, 1)[0]); L.set(arr);
+  if (!(await persist([S.profile]))) restore(S.profile, snap);
+  L.redraw();
+}
 (() => {
   let drag = null;
   const root = () => $('#modal-root'), key = h => h.dataset.dk + '|' + (h.dataset.dk === 'f' ? h.dataset.dv.split('.').slice(0, -1).join('.') : '');
-  const rowOf = h => h.dataset.dk === 's' || h.dataset.dk === 'q' ? h.closest('.card') : h.closest('.edf');
+  const rowOf = h => h.dataset.dk === 'f' || h.dataset.dk === 't' ? h.closest('.edf') : h.closest('.card');
   const clear = () => document.querySelectorAll('.dragover,.dragging').forEach(x => x.classList.remove('dragover', 'dragging'));
   const hOf = (e, d) => { if (!d || !e.target.closest) return null; let r = e.target.closest('.card, .edf'); while (r) { const h = [...r.querySelectorAll('.dragh')].find(x => x.dataset.dk === d.dataset.dk && rowOf(x) === r); if (h && key(h) === key(d)) return h; r = r.parentElement && r.parentElement.closest('.card, .edf'); } return null; };
   document.addEventListener('dragstart', e => { const h = e.target.closest && e.target.closest('.dragh'); if (!h) return; drag = h; try { e.dataTransfer.setData('text/plain', 'orden'); e.dataTransfer.effectAllowed = 'move'; const r = rowOf(h); if (r) { e.dataTransfer.setDragImage(r, 10, 10); r.classList.add('dragging'); } } catch (err) { /* sin vista previa */ } });
@@ -491,6 +504,7 @@ function finishFormats() {
   document.addEventListener('drop', e => {
     const t = hOf(e, drag); if (!t || !drag || t === drag) { clear(); return; }
     e.preventDefault(); const k = drag.dataset.dk, from = drag.dataset.dv, to = t.dataset.dv; drag = null; clear();
+    if (LISTAS[k]) return moverLista(LISTAS[k], from, to);
     const hs = [...root().querySelectorAll('.dragh')].filter(h => h.dataset.dk === k && key(h) === key(t)).map(h => h.dataset.dv);
     const n = hs.indexOf(to) - hs.indexOf(from), up = n < 0;
     const btn = v => root().querySelector({ t: `[data-tm="${up ? 'up' : 'dn'}:${v}"]`, s: `[data-fm="${up ? 'sup' : 'sdn'}:${v}"]`, f: `[data-fm="${up ? 'fup' : 'fdn'}:${v}"]`, q: `[data-sv="${up ? 'up' : 'down'}"][data-k="${v}"]` }[k]);
