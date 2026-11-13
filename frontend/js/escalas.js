@@ -72,7 +72,7 @@ ACT.newScale = () => { S.newScale = SCALES_BASE[0].id; render(); updateScaleTota
 ACT.cancelScale = () => { S.newScale = null; render(); };
 ACT.saveScale = async b => {
   const p = curPatient(), r = readScale(), o = readForm($('#scaleform'), {});
-  if (!canSign()) { toast('Primero guarde su nombre y firma en «Mi perfil y firma».'); return; }
+  if (!canSign()) { toast('Primero guarde su nombre y firma en «Mi perfil».'); return; }
   if (r.done < r.sc.items.length) { toast(r.sc.items.length - r.done === 1 ? 'Falta 1 ítem por responder.' : `Faltan ${r.sc.items.length - r.done} ítems por responder.`); return; }
   if (!reqCheck($('#scaleform'), o, ['version', 'motivo', 'observaciones', 'interpretacion'])) return;
   const fileRef = o.protocolo ? S.files.find(f => f.patientId === p.id && f.nombre === o.protocolo) : null;

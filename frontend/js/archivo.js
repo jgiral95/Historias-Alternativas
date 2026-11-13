@@ -107,7 +107,7 @@ ACT.deliverSol = b => {
 };
 ACT.revokeConsent = b => {
   const p = curPatient(), i = +b.dataset.i, c = p.consents[i], root = $('#modal-root');
-  if (!canSign()) { toast('Primero guarde su nombre y firma en «Mi perfil y firma».'); return; }
+  if (!canSign()) { toast('Primero guarde su nombre y firma en «Mi perfil».'); return; }
   root.innerHTML = `<div class="modal" role="dialog" aria-modal="true" aria-label="Revocación"><div class="box" id="revform" style="width:min(640px,100%)"><div class="row" style="justify-content:space-between"><h3>Revocación del consentimiento</h3><button class="btn sm" id="rvcl">Cerrar</button></div>
   <p style="margin:0;font-size:14px">Consentimiento de ${esc(c.tipo || 'atención presencial').toLowerCase()} firmado el ${esc(fmtD(c.signedAt))}.</p>
   <div class="grid">${F('Fecha', 'fecha', dayKey(new Date()), { type: 'date' })}${F('Alcance', 'alcance', 'Total', { type: 'select', opts: ['Total', 'Parcial'] })}${F('Detalle (si es parcial)', 'detalle', '', { ph: 'Ej.: no autoriza la atención por videollamada' })}
@@ -192,7 +192,7 @@ ACT.cancelIncorp = () => { S.newIncorp = false; render(); };
 ACT.viewIncorp = b => { const p = curPatient(), c = p.incorporaciones[+b.dataset.i]; showDoc('Constancia de incorporación · ' + fullName(p), docIncorp(p, c), 'constancia-incorporacion-' + slug(fullName(p)) + '-' + dayKey(new Date(c.signedAt)) + '.html'); };
 ACT.saveIncorp = async b => {
   const p = curPatient(), files = [...($('#in_files').files || [])], o = readForm($('#incform'), {});
-  if (!canSign()) { toast('Primero guarde su nombre y firma en «Mi perfil y firma».'); return; }
+  if (!canSign()) { toast('Primero guarde su nombre y firma en «Mi perfil».'); return; }
   if (!files.length) { toast('Elija los archivos escaneados.'); return; }
   if (files.length > 30) { toast('Máximo 30 archivos por constancia.'); return; }
   const badf = files.find(f => !FILE_TYPES[f.type] || upTooBig(f));

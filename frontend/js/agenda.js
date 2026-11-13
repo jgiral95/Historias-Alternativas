@@ -311,7 +311,7 @@ function tabCierre(p) {
 }
 ACT.saveCierre = async b => {
   const p = curPatient(), o = readForm($('#cierreform'), {});
-  if (!canSign()) { toast('Primero guarde su nombre y firma en «Mi perfil y firma».'); return; }
+  if (!canSign()) { toast('Primero guarde su nombre y firma en «Mi perfil».'); return; }
   if (!o.fecha) { toast('Indique la fecha del cierre.'); return; }
   if (!reqCheck($('#cierreform'), o, CIERRE_FIELDS.map(f => f[0]))) return;
   const snap = clone(p);

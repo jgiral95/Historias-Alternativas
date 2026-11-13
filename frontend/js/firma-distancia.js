@@ -45,7 +45,7 @@ function remoteModal(f) {
 }
 ACT.remoteConsent = async b => {
   const p = curPatient();
-  if (!canSign()) { toast('Primero guarde su nombre y firma en «Mi perfil y firma».'); return; }
+  if (!canSign()) { toast('Primero guarde su nombre y firma en «Mi perfil».'); return; }
   const o = readForm($('#tabbody'), {});
   if (!o.signerName) { toast('Escriba el nombre de quien firma.'); return; }
   if (!o.signerDoc) { toast('Escriba el documento de quien firma: se le pedirá para abrir el enlace.'); return; }
@@ -79,7 +79,7 @@ ACT.saveConsentDraft = async b => {
 };
 ACT.signConsent = async b => {
   const p = curPatient();
-  if (!canSign()) { toast('Primero guarde su nombre y firma en «Mi perfil y firma».'); return; }
+  if (!canSign()) { toast('Primero guarde su nombre y firma en «Mi perfil».'); return; }
   const o = readForm($('#tabbody'), {});
   if (!$('#c_ok').checked) { toast('Marque la confirmación de lectura y aceptación.'); return; }
   if (!o.copia) { toast('Indique si se le entregó copia al usuario.'); const f = $('#f_copia'); if (f) { f.closest('.fld').classList.add('miss'); f.focus(); } return; }

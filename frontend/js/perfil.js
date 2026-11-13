@@ -70,7 +70,7 @@ ACT.team = async () => {
 ACT.profile = () => {
   if (TEAM()) return accountModal();
   const pr = S.profile, root = $('#modal-root');
-  root.innerHTML = `<div class="modal" role="dialog" aria-modal="true" aria-label="Mi perfil"><div class="box" id="profform"><div class="row" style="justify-content:space-between"><h3>Mi perfil y firma</h3><button class="btn sm" id="pcl">Cerrar</button></div>
+  root.innerHTML = `<div class="modal" role="dialog" aria-modal="true" aria-label="Mi perfil"><div class="box" id="profform"><div class="row" style="justify-content:space-between"><h3>Mi perfil</h3><button class="btn sm" id="pcl">Cerrar</button></div>
   <div class="grid">${F('Nombre completo', 'nombre', pr.nombre)}${F('Cédula (documento de identidad)', 'cedula', pr.cedula || '')}${F('Título', 'titulo', pr.titulo)}${F('Registro (si lo tiene)', 'registro', pr.registro)}${F('Lugar de práctica', 'consultorio', pr.consultorio)}${F('Plataforma habitual de teleterapia', 'plataforma', pr.plataforma || '', { ph: 'Ej.: Google Meet' })}${F('Ciudad', 'ciudad', pr.ciudad)}${F('Teléfono', 'telefono', pr.telefono, { type: 'tel' })}${F('Correo', 'correo', pr.correo, { type: 'email' })}${F('Idioma de la app', 'idioma', pr.idioma === 'en' ? 'English' : 'Español', { type: 'select', opts: ['Español', 'English'] })}</div>
   <div class="fld"><span class="lbl">Logo para sus informes (opcional)</span>
   <div class="row" style="align-items:center"><span id="plogo">${pr.logo ? `<img class="logoprev" src="${pr.logo}" alt="Logo guardado">` : '<span style="font-size:13px;color:var(--muted)">Sin logo</span>'}</span>

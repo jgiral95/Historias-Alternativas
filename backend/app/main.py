@@ -1985,7 +1985,7 @@ def remote_create(body: RemoteConsentIn, request: Request, user: User = Depends(
     prof_row = db.get(Record, (user.id, "profile"))
     prof = decrypt(prof_row.payload) if prof_row else {}
     if not (prof.get("nombre") and prof.get("firma")):
-        raise HTTPException(400, "Primero guarde su nombre y firma en «Mi perfil y firma».")
+        raise HTTPException(400, "Primero guarde su nombre y firma en «Mi perfil».")
     text, tipo = body.text.strip(), body.tipo.strip()[:200]
     if not text or len(text) > 60_000 or not tipo:
         raise HTTPException(400, "El documento está vacío o es demasiado largo")
@@ -2514,7 +2514,7 @@ def public_form_submit(token: str, body: FormSubmitIn, request: Request, db: Ses
 # ---------- Comentarios de la versión beta ----------
 FB_TEMAS = ("Datos del consultante", "Consentimiento", "Firma a distancia", "Primera vez", "Sesión", "Impresión / motivo", "Escalas",
             "Informes", "Cierre", "Archivo y adjuntos", "Agenda y calendario", "Recordatorios", "Mis formatos", "Resumen y pendientes",
-            "Estadísticas", "Encuesta de satisfacción", "Mi perfil y firma", "Cuenta, equipo y acceso", "Celular", "Otro")
+            "Estadísticas", "Encuesta de satisfacción", "Mi perfil", "Cuenta, equipo y acceso", "Celular", "Otro")
 FB_TIPOS = ("Error", "Sugerencia", "Duda")
 FB_ESTADOS = ("Nuevo", "En revisión", "Resuelto", "Descartado")
 IMG_RE = re.compile(r"^data:image/(jpeg|png|webp);base64,([A-Za-z0-9+/=]+)$")

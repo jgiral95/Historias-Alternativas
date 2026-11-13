@@ -31,7 +31,7 @@ async function stepDone(k) {
 function stepsList() {
   const real = S.patients.filter(x => !x.demo), ps = (S.profile && S.profile.pasos) || {}, demo = S.patients.some(x => x.demo);
   return [
-    ['perfil', !!(S.profile.nombre && S.profile.firma), 'Complete su perfil y dibuje su firma (opcional)', 'Con ella puede firmar acuerdos, sesiones e informes.', '<button class="btn sm pri" data-act="profile">Mi perfil y firma</button>'],
+    ['perfil', !!(S.profile.nombre && S.profile.firma), 'Complete su perfil y dibuje su firma (opcional)', 'Con ella puede firmar acuerdos, sesiones e informes.', '<button class="btn sm pri" data-act="profile">Mi perfil</button>'],
     ['ejemplo', demo || !!ps.ejemplo, 'Explore con consultantes de ejemplo', 'Cargamos 3 consultantes ficticios con acuerdos, primera vez, sesiones, citas y notas de proceso. Los borra con un clic.', demo ? '<button class="btn sm" data-act="demoDel">Borrar los ejemplos</button>' : '<button class="btn sm pri" data-act="demoLoad">Cargar ejemplos</button>'],
     ['formatos', !!ps.formatos, 'Revise sus formatos', 'Acuerdo, primera vez, sesión y datos del consultante: cambie, oculte o cree los apartados que necesite.', '<button class="btn sm" data-act="formats">Mis formatos</button>'],
     ['paciente', real.length > 0, 'Cree su primer consultante', 'Con datos ficticios mientras sea una prueba.', '<button class="btn sm" data-act="newPatient">Nuevo consultante</button>'],

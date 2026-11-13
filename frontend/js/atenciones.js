@@ -162,7 +162,7 @@ ACT.saveIntake = async b => {
   o.sessionAt = toISO(o.sessionAt);
   if (geno) o.genograma = geno.data();
   if (sign) {
-    if (!canSign()) { toast('Primero guarde su nombre y firma en «Mi perfil y firma».'); return; }
+    if (!canSign()) { toast('Primero guarde su nombre y firma en «Mi perfil».'); return; }
     const sc = intakeSchema(p.intake || {});
     if (!reqCheck($('#intakeform'), o, intakeKeys(sc).concat(['presentes']))) return;
     if (!atencionChecks(o)) return;
@@ -260,7 +260,7 @@ ACT.saveNote = async b => {
   const p = curPatient(), sign = b.dataset.sign === '1', o = readForm($('#noteform'), {});
   o.sessionAt = toISO(o.sessionAt);
   if (sign) {
-    if (!canSign()) { toast('Primero guarde su nombre y firma en «Mi perfil y firma».'); return; }
+    if (!canSign()) { toast('Primero guarde su nombre y firma en «Mi perfil».'); return; }
     if (!reqCheck($('#noteform'), o, evolSchema({}).map(f => f[0]).concat(['presentes']))) return;
     if (!atencionChecks(o)) return;
     if (!teleCheck(o)) return;

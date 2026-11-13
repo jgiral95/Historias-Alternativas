@@ -47,7 +47,7 @@ ACT.viewReport = b => { const p = curPatient(), r = S.reports.find(x => x.id ===
 ACT.saveReport = async b => {
   const p = curPatient(), sign = b.dataset.sign === '1', o = readForm($('#reportform'), {});
   if (sign) {
-    if (!canSign()) { toast('Primero guarde su nombre y firma en «Mi perfil y firma».'); return; }
+    if (!canSign()) { toast('Primero guarde su nombre y firma en «Mi perfil».'); return; }
     if (!o.contenido) { toast('El informe no tiene contenido.'); return; }
     if (!o.autoriza) { toast('Confirme que cuenta con la autorización de divulgación.'); return; }
   }
