@@ -495,6 +495,10 @@ ACT.savePatient = async b => {
   const nm = String(o.nombres || '').trim() || String(o.apellidos || '').trim() ? {} : deriveName(o);
   if (nm.nombres || nm.apellidos) Object.assign(o, nm);
   else if (!String(o.nombres || '').trim() && !String(o.apellidos || '').trim() && !p.nombres && !p.apellidos) { if (!dr) { toast('Escriba al menos el nombre del consultante.'); return; } o.nombres = 'Borrador sin nombre'; }
+  if (!AUTO.on) {  // Nombre, apellido y documento son obligatorios al guardar a mano (también «Guardar borrador»); el guardado automático sí admite borradores
+    const falta = FIJOS.filter(([k]) => !String(k in o ? o[k] : p[k] || '').trim());
+    if (falta.length) { toast(t('Complete {0} para guardar.', falta.map(x => t(x[1]).toLowerCase()).join(', '))); const f = $('#tabbody [data-f="' + falta[0][0] + '"]'); if (f) f.focus(); return; }
+  }
   if (S.draft && dupOf(o, p.id)) { if (!AUTO.on) dupWarn(o, p.id); return; }
   const snap = clone(p); Object.assign(p, o);
   if (!(await persist([p], b))) { restore(p, snap); return; }

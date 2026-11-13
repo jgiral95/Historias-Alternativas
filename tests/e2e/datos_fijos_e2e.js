@@ -12,7 +12,9 @@ let bad = 0; const ok = (c, m) => { console.log((c ? 'OK   ' : 'FALLA') + ' ' + 
   await page.click('[data-act="newPatient"]'); await page.waitForSelector('[data-f="nombres"]');
   const campos = await page.evaluate(() => [...document.querySelectorAll('#tabbody [data-f]')].slice(0, 3).map(e => e.dataset.f));
   ok(JSON.stringify(campos) === '["nombres","apellidos","documento"]', 'los tres campos fijos van primero: ' + campos);
-  await page.fill('[data-f="nombres"]', 'Ana'); await page.fill('[data-f="apellidos"]', 'Prueba'); await page.fill('[data-f="documento"]', '12345678');
+  await page.fill('[data-f="nombres"]', 'Ana');
+  await page.click('[data-act="savePatient"]:not([data-draft])'); await page.click('[data-act="savePatient"][data-draft="1"]'); await page.waitForTimeout(400);
+  ok(!(await page.evaluate(() => S.patients.some(x => x.nombres === 'Ana'))), 'sin apellido ni documento no se guarda'); await page.fill('[data-f="apellidos"]', 'Prueba'); await page.fill('[data-f="documento"]', '12345678');
   await page.click('[data-act="savePatient"]'); await page.waitForTimeout(600);
   const p = await page.evaluate(() => S.patients.find(x => x.nombres === 'Ana'));
   if (!p) console.log('toast:', await page.evaluate(() => [...document.querySelectorAll('.toast,[role=status],.banner')].map(e => e.textContent).join(' | ')));
