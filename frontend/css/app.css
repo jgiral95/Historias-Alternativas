@@ -562,3 +562,11 @@ h1,h2,h3{font-family:var(--f-doc);font-weight:600;letter-spacing:.1px}
 /* Nueva cita: la ✕ va pegada al borde derecho (la regla general reserva 62 px a la derecha para una ✕ flotante) */
 .modal>.box>.row.aphd:first-child:has(h3){padding-right:18px;align-items:flex-start}
 @media (max-width:560px){.modal>.box>.row.aphd:first-child:has(h3){padding-right:14px}}
+
+/* Celular: la cabecera en varias filas no puede ser una píldora; las secciones se deslizan dentro de ella */
+@media (max-width:640px){
+  .top{border-radius:22px;padding:10px 12px;gap:10px}
+  .nav{min-width:0;max-width:100%;overflow-x:auto;justify-content:flex-start;scrollbar-width:none}
+  .nav::-webkit-scrollbar{display:none}
+  .nav button{flex:none;white-space:nowrap}
+}
