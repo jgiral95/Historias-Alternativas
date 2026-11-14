@@ -202,7 +202,7 @@
 "Google": "Google",
 ", solo con los datos de citas descritos en el punto 4 y solo si el terapeuta conecta su cuenta.": ", only with the appointment data described in point 4 and only if the practitioner connects their account.",
 "Proveedor de correo": "Email provider",
-"del terapeuta (o el del servidor, si el terapeuta no configura el tuyo), que transporta las invitaciones, recordatorios, encuestas y enlaces de firma enviados por correo.": "of the practitioner (or the server's, if the practitioner doesn't set up their own), which carries the invitations, reminders, surveys and signing links sent by email.",
+"del terapeuta (o el del servidor, si el terapeuta no configura el suyo), que transporta las invitaciones, recordatorios, encuestas y enlaces de firma enviados por correo.": "of the practitioner (or the server's, if the practitioner doesn't set up their own), which carries the invitations, reminders, surveys and signing links sent by email.",
 "Quien tenga el enlace privado de calendario": "Whoever has the private calendar link",
 "que el terapeuta activó, con los datos de citas descritos en el punto 3. El terapeuta puede desactivarlo o cambiarlo cuando quiera.": "that the practitioner enabled, with the appointment data described in point 3. The practitioner can deactivate or change it whenever they wish.",
 "Quien recibe un informe:": "Whoever receives a report:",
@@ -332,12 +332,12 @@
 "Limite quién accede: nadie de tu equipo debería ver más de lo necesario.": "Limit who has access: nobody on your team should see more than necessary.",
 "Defina cuánto tiempo conserva los datos y cómo los elimina.": "Define how long you keep the data and how you delete it.",
 "Cuando usa una plataforma": "When you use a platform",
-"Tú sigue siendo responsable frente a tus consultantes. Revise que la plataforma explique cómo trata y protege los datos. En Alter-Karute puede leer la": "You remain responsible toward your clients. Check that the platform explains how it processes and protects data. In Alter-Karute you can read the",
+"Tú sigues siendo responsable frente a tus consultantes. Revisa que la plataforma explique cómo trata y protege los datos. En Alter-Karute puedes leer la": "You remain responsible toward your clients. Check that the platform explains how it processes and protects data. In Alter-Karute you can read the",
 "Para tu caso concreto, consulta a un abogado o a la Superintendencia de Industria y Comercio.": "For your specific case, consult a lawyer or the Superintendencia de Industria y Comercio.",
 "Cómo hacer seguimiento del proceso de un consultante y cerrarlo con calma · Alter-Karute": "How to follow a client's process and close it with calm · Alter-Karute",
 "Un buen acompañamiento tiene principio, desarrollo y cierre. Hacer seguimiento le ayuda a saber si el proceso sigue siendo útil y a terminarlo sin vacíos.": "Good support has a beginning, a development and a closing. Following up helps you know whether the process is still useful and to end it with no loose ends.",
 "1. Acuerde metas desde el inicio": "1. Agree on goals from the start",
-"Pregunte qué espera el consultante y escríbelo en tus propias palabras. Esas metas serán la brújula de cada revisión.": "Ask what the client expects and write it in their own words. Those goals will be the compass for each review.",
+"Pregunta qué espera el consultante y escríbelo en tus propias palabras. Esas metas serán la brújula de cada revisión.": "Ask what the client expects and write it in their own words. Those goals will be the compass for each review.",
 "2. Revisa el avance con regularidad": "2. Review progress regularly",
 "Cada cierto número de sesiones, repasa las metas con el consultante.": "Every certain number of sessions, go over the goals with the client.",
 "Usa preguntas abiertas: ¿qué ha cambiado?, ¿qué sigue difícil?": "Use open questions: what has changed? what is still difficult?",
@@ -380,5 +380,7 @@
 "Angelología": "Angelology",
 "Guía y mensajes": "Guidance and messages",
 "Doula": "Doula",
-"Acompañar el nacimiento": "Supporting birth"
+"Acompañar el nacimiento": "Supporting birth",
+"Finanzas sencillas": "Simple finances",
+"Fija tus tarifas, ve qué citas están pagadas o pendientes, registra pagos y abonos, entrega recibos y consulta el resumen de ingresos y saldos.": "Set your rates, see which appointments are paid or pending, record payments and partial payments, issue receipts and check the summary of income and balances."
 }
