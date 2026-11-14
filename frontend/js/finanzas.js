@@ -258,6 +258,8 @@ function finanzasHTML() {
   const facturado = atendidas.reduce((s, a) => s + valorCita(a, S.patients.find(x => x.id === a.patientId)), 0);
   const cartera = pacientes().map(p => ({ p, c: cuentaDe(p.id) })).filter(x => x.c.saldo > 0).sort((a, b) => b.c.saldo - a.c.saldo);
   const ahora = nowISO(), sinMarcar = S.appts.filter(a => !a.evento && (a.estado || 'Programada') === 'Programada' && a.startAt < ahora).sort((a, b) => b.startAt.localeCompare(a.startAt));
+  const cobPend = pacientes().flatMap(p => cuentaDe(p.id).cobros.filter(x => x.pend > 0).map(x => ({ p, x }))).sort((a, b) => a.x.c.fecha.localeCompare(b.x.c.fecha));
+  const cobT = cobPend.length ? `<table class="sttab"><thead><tr><th>Fecha</th><th>Consultante</th><th>Concepto</th><th>Debe</th><th></th></tr></thead><tbody>${cobPend.map(({ p, x }) => `<tr><td>${esc(fmtD(x.c.fecha))}</td><td><b>${esc(fullName(p))}</b></td><td>${esc(x.c.concepto)}</td><td class="n">${money(x.pend)}</td><td class="r"><button class="btn sm" data-act="finPago" data-id="${p.id}" data-cobro="${x.c.id}">Registrar pago</button></td></tr>`).join('')}</tbody></table>` : finVacio('No hay cobros pendientes.');
   const nombres = pid => { const p = S.patients.find(x => x.id === pid); return p ? fullName(p) : ''; };
   const totCartera = cartera.reduce((s, x) => s + x.c.saldo, 0);
   const sinT = sinMarcar.length ? `<div class="fwarn"><b>${sinMarcar.length} ${sinMarcar.length === 1 ? 'cita pasada sin marcar' : 'citas pasadas sin marcar'}.</b> Márcalas como «Atendida» o «No asistió» para que se cobren.</div><table class="sttab"><thead><tr><th>Fecha</th><th>Consultante</th><th></th></tr></thead><tbody>${sinMarcar.slice(0, 30).map(a => `<tr><td>${esc(fmtD(a.startAt))}</td><td>${esc(nombres(a.patientId) || (a.nuevo && a.nuevo.nombre) || '')}</td><td class="r"><button class="btn sm" data-act="apptEdit" data-id="${a.id}">Abrir</button></td></tr>`).join('')}</tbody></table>${sinMarcar.length > 30 ? `<p class="stnote" style="padding:8px 14px">Se muestran las 30 más recientes.</p>` : ''}` : '';
@@ -267,6 +269,7 @@ function finanzasHTML() {
   <div class="fk-grid">${finK('Cobrado en el mes', money(total), 'ok', pagos.length + (pagos.length === 1 ? ' pago' : ' pagos'))}${finK('Atendido en el mes', money(facturado), '', atendidas.length + (atendidas.length === 1 ? ' cita' : ' citas'))}${finK('Por cobrar (total)', money(totCartera), cartera.length ? 'warn' : 'ok', cartera.length ? cartera.length + (cartera.length === 1 ? ' consultante' : ' consultantes') : 'Al día')}</div>
   ${finMediosBar(porMedio)}
   ${sinMarcar.length ? finCard('Citas pasadas sin marcar', sinMarcar.length, sinT) : ''}
+  ${finCard('Cobros pendientes', cobPend.length, cobT)}
   ${finCard('Consultantes con saldo', cartera.length, carT)}
   ${finCard('Pagos del mes', pagos.length, pagT)}</div>`;
 }
