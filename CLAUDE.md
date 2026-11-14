@@ -50,6 +50,7 @@ FastAPI + SQLAlchemy. `main.py` (endpoints; registros cifrados por tipo: profile
 | Idioma EN | `i18n_e2e.js` (lista el español sin traducir), `publicas_i18n_e2e.js`, `test_traduccion.py` |
 | Reservas por enlace | `test_booking.py` |
 | Formularios de datos | `test_formularios.py` |
+| Recordatorio por cita (pestaña en el popup, días y frecuencia) | `recordatorio_cita_e2e.js`, `test_reminders.py` |
 | Recordatorios / firma a distancia / encuesta / bitácora / comentarios / inicio / caída / Google | `<nombre>_e2e.js` |
 
 ## Reglas que no cambian

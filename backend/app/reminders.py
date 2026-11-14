@@ -53,6 +53,22 @@ def config(profile: dict) -> dict:
     return {"activo": bool(c.get("activo")), "horas": h, "nota": str(c.get("nota") or "")[:300]}
 
 
+FRECS = (0, 1, 2, 3, 7)  # 0 = una sola vez; N = cada N días
+
+
+def appt_rec(a: dict) -> dict | None:
+    """Recordatorio propio de la cita (días de anticipación y frecuencia), si el terapeuta lo activó."""
+    r = a.get("rec")
+    if not isinstance(r, dict) or not r.get("activo"):
+        return None
+    try:
+        dias = int(r.get("dias"))
+    except (TypeError, ValueError):
+        dias = 1
+    frec = r.get("frec") if r.get("frec") in FRECS else 0
+    return {"dias": max(1, min(30, dias)), "frec": frec}
+
+
 def make(db, owner: int, appt: dict, channel: str) -> tuple[ApptReminder, str]:
     """Crea (o reutiliza) el enlace de confirmación de una cita."""
     for r in db.scalars(select(ApptReminder).where(ApptReminder.user_id == owner, ApptReminder.appt_id == appt["id"])):
@@ -102,18 +118,31 @@ def due(user_id: int, now: datetime | None = None) -> int:
         recs = [decrypt(r.payload) for r in db.scalars(select(Record).where(Record.user_id == user_id, Record.kind.in_(("profile", "patient", "appt"))))]
         prof = next((r for r in recs if r.get("kind") == "profile"), {})
         cfg = config(prof)
-        if not cfg["activo"]:
+        if not cfg["activo"] and not any(r.get("kind") == "appt" and appt_rec(r) for r in recs):
             return 0
         acc = survey.account(db, user_id)
         if not survey.smtp_enabled(acc):
             return 0
         pats = {r["id"]: r for r in recs if r.get("kind") == "patient"}
-        done = {r.appt_id for r in db.scalars(select(ApptReminder).where(ApptReminder.user_id == user_id)) if r.sent_at or r.error}
+        rows = list(db.scalars(select(ApptReminder).where(ApptReminder.user_id == user_id)))
+        done = {r.appt_id for r in rows if r.sent_at or r.error}
+        last = {r.appt_id: r.sent_at for r in rows if r.sent_at}
         for a in recs:
-            if a.get("kind") != "appt" or a.get("evento") or a.get("estado", "Programada") != "Programada" or a["id"] in done:
+            if a.get("kind") != "appt" or a.get("evento") or a.get("estado", "Programada") != "Programada":
                 continue
+            rec = appt_rec(a)
             start = parse(a.get("startAt"))
-            if not start or not (now < start <= now + timedelta(hours=cfg["horas"])):
+            if rec:  # recordatorio propio de la cita: desde N días antes, y se repite cada N días hasta la cita
+                if not start or not (now < start <= now + timedelta(days=rec["dias"])):
+                    continue
+                if a["id"] in done and a["id"] not in last:
+                    continue  # el envío falló: queda para envío manual
+                prev = last.get(a["id"])
+                if prev:
+                    prev = prev if prev.tzinfo else prev.replace(tzinfo=timezone.utc)
+                    if not rec["frec"] or now - prev < timedelta(days=rec["frec"]) - timedelta(minutes=30):
+                        continue
+            elif not cfg["activo"] or a["id"] in done or not start or not (now < start <= now + timedelta(hours=cfg["horas"])):
                 continue
             p = pats.get(a.get("patientId")) or a.get("nuevo") or {}
             if p.get("demo") or a.get("demo"):

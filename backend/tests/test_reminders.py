@@ -39,6 +39,23 @@ def test_email_reminders_only_for_due_appointments(monkeypatch):
     assert reminders.due(uid) == 0
 
 
+def test_per_appointment_days_and_frequency(monkeypatch):
+    uid = make_user("ana@x.co")
+    c = client_for("ana@x.co")
+    setup(c, activo=False)  # sin recordatorio general: solo cuentan las citas con recordatorio propio
+    sent = []
+    monkeypatch.setattr(survey, "account", lambda db, u: {"host": "h", "from": "ana@gmail.com", "base": "https://h.co", "propio": True})
+    monkeypatch.setattr(reminders, "send_mail", lambda to, body, prof, acc: sent.append(to))
+    c.put("/api/records/a_6", json={"id": "a_6", "kind": "appt", "patientId": "p_1", "startAt": iso(24 * 4), "estado": "Programada", "rec": {"activo": True, "dias": 5, "frec": 2}})
+    c.put("/api/records/a_7", json={"id": "a_7", "kind": "appt", "patientId": "p_1", "startAt": iso(24 * 9), "estado": "Programada", "rec": {"activo": True, "dias": 5, "frec": 2}})
+    assert reminders.due(uid) == 1 and len(sent) == 1  # a_6 entra en su ventana de 5 días; a_7 todavía no
+    assert reminders.due(uid) == 0  # aún no pasan 2 días
+    later = datetime.now(timezone.utc) + timedelta(days=2, minutes=5)
+    assert reminders.due(uid, later) == 1  # se repite cada 2 días
+    c.put("/api/records/a_6", json={"id": "a_6", "kind": "appt", "patientId": "p_1", "startAt": iso(24 * 4), "estado": "Programada", "rec": {"activo": True, "dias": 5, "frec": 0}})
+    assert reminders.due(uid, later + timedelta(days=1)) == 0  # «una sola vez»: no repite
+
+
 def test_patient_confirms_or_cancels_from_link(monkeypatch):
     make_user("ana@x.co")
     c = client_for("ana@x.co")
