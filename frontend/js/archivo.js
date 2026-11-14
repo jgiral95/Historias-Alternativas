@@ -292,7 +292,7 @@ async function doExportAll() {
   const stamp = dayKey(new Date()), used = new Set(), clean = x => String(x).replace(/[\\/:*?"<>|]+/g, '_');
   toast('Preparando la exportación… puede tardar si hay muchos adjuntos.');
   try {
-    const data = { exportadoEn: nowISO(), exportadoPor: S.profile.nombre || '', perfil: S.profile, consultantes: S.patients, atenciones: S.notes, informes: S.reports, notasProceso: S.pnotes, citas: S.appts, pagos: S.pagos, escalas: S.scales, adjuntos: S.files };
+    const data = { exportadoEn: nowISO(), exportadoPor: S.profile.nombre || '', perfil: S.profile, consultantes: S.patients, atenciones: S.notes, informes: S.reports, notasProceso: S.pnotes, citas: S.appts, pagos: S.pagos, cobros: S.cobros, escalas: S.scales, adjuntos: S.files };
     const files = [{ name: 'datos-alter-karute.json', data: JSON.stringify(data, null, 1) }];
     S.patients.forEach(p => files.push({ name: 'fichas/' + clean(slug(fullName(p))) + '-' + p.id + '.html', data: standalone('Ficha · ' + fullName(p), docFull(p, [])) }));
     for (const f of S.files) {

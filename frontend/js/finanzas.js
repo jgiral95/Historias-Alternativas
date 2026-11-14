@@ -42,19 +42,24 @@ function cuentaDe(pid) {
   const pagado = pagos.reduce((s, x) => s + x.monto, 0);
   const base = S.appts.filter(a => a.patientId === pid && cobrable(a)).sort((a, b) => a.startAt.localeCompare(b.startAt)).map(a => ({ a, valor: a.cortesia ? 0 : valorCita(a, p), cubre: 0 }));
   // 1) pagos ligados a una cita cubren esa cita (lo que sobra de su valor pasa al conjunto general); 2) lo demás, de la cita más antigua a la más nueva
+  const cb = S.cobros.filter(x => x.patientId === pid && !x.anulado).sort((a, b) => a.fecha.localeCompare(b.fecha)).map(c => ({ c, valor: c.monto, cubre: 0 }));  // cobros sueltos: solo los cubren los pagos ligados a ellos
   let resto = 0;
   pagos.forEach(x => {
     if (x.sinCita) return;  // anticipo o saldo a favor: no se aplica a ninguna cita
     const t = x.citaId && base.find(y => y.a.id === x.citaId), puesto = t ? Math.min(x.monto, t.valor - t.cubre) : 0;
+    const k = x.cobroId && cb.find(y => y.c.id === x.cobroId), pk = k ? Math.min(x.monto, k.valor - k.cubre) : 0;
     if (t) t.cubre += puesto;
-    resto += x.monto - puesto;
+    if (k) k.cubre += pk;
+    resto += x.monto - puesto - pk;
   });
   const citas = base.map(({ a, valor, cubre }) => {
     const extra = Math.min(valor - cubre, resto); resto -= extra; cubre += extra;
     return { a, valor, cubre, pend: valor - cubre, estado: a.cortesia ? 'Cortesía' : !valor ? 'Sin valor' : cubre >= valor ? 'Pagada' : cubre > 0 ? 'Abonada' : 'Pendiente' };
   });
+  const cobros = cb.map(({ c, valor, cubre }) => ({ c, valor, cubre, pend: valor - cubre, estado: cubre >= valor ? 'Pagado' : cubre > 0 ? 'Abonado' : 'Pendiente' }));
   const total = citas.reduce((s, c) => s + c.valor, 0), cubierto = citas.reduce((s, c) => s + c.cubre, 0);
-  return { citas, total, pagado, saldo: Math.max(0, total - cubierto), favor: Math.max(0, pagado - cubierto) };
+  const cobTotal = cobros.reduce((s, c) => s + c.valor, 0), cobCubierto = cobros.reduce((s, c) => s + c.cubre, 0);
+  return { citas, cobros, total, cobTotal, pagado, saldo: Math.max(0, total - cubierto) + (cobTotal - cobCubierto), favor: Math.max(0, pagado - cubierto - cobCubierto) };
 }
 const citaTxt = id => { const a = S.appts.find(x => x.id === id); return a ? fmtD(a.startAt) : ''; };
 /* Piezas visuales: tarjeta de cifra, tarjeta con tabla y estado vacío */
@@ -73,8 +78,9 @@ const finMediosBar = por => {
   const es = Object.entries(por).sort((a, b) => b[1] - a[1]), tot = es.reduce((s, x) => s + x[1], 0); if (!tot) return '';
   return `<div class="fmed"><div class="fbar">${es.map(([m, v], i) => `<i style="width:${(v / tot * 100).toFixed(1)}%;background:var(--c${(i % 8) + 1})" title="${esc(m)}: ${money(v)}"></i>`).join('')}</div><div class="fleg">${es.map(([m, v], i) => `<span><i style="background:var(--c${(i % 8) + 1})"></i>${esc(m)} <b>${money(v)}</b></span>`).join('')}</div></div>`;
 };
-const pagoSesion = x => x.citaId ? ' · cita ' + esc(citaTxt(x.citaId)) : x.sinCita ? (x.citaFecha ? ' · sesión del ' + esc(fmtD(x.citaFecha)) : ' · sin cita (a favor)') : '';
-const finChip = e => `<span class="chip ${e === 'Pagada' ? 'ok' : e === 'Pendiente' || e === 'Abonada' ? 'warn' : ''}">${esc(e)}</span>`;
+const cobroTxt = id => { const c = S.cobros.find(x => x.id === id); return c ? c.concepto : ''; };
+const pagoSesion = x => x.cobroId ? ' · cobro «' + esc(cobroTxt(x.cobroId)) + '»' : x.citaId ? ' · cita ' + esc(citaTxt(x.citaId)) : x.sinCita ? (x.citaFecha ? ' · sesión del ' + esc(fmtD(x.citaFecha)) : ' · sin cita (a favor)') : '';
+const finChip = e => `<span class="chip ${e === 'Pagada' || e === 'Pagado' ? 'ok' : e === 'Pendiente' || e === 'Abonada' || e === 'Abonado' ? 'warn' : ''}">${esc(e)}</span>`;
 const finQuien = x => x.registradoPor ? `${esc(x.registradoPor.por)}${x.registradoPor.rol === 'Equipo' ? ' (equipo)' : ''}` : '';
 
 /* ----- Pestaña del paciente ----- */
@@ -87,11 +93,14 @@ function tabFinanzas(p) {
   const inasist = noAsis.length ? finCard('Inasistencias sin cobrar', noAsis.length, `<table class="sttab"><tbody>${noAsis.map(a => `<tr><td>${esc(fmtD(a.startAt))}</td><td>${esc(a.modalidad || '')}</td><td class="r">${TEAM() ? '' : `<button class="btn sm" data-act="finCita" data-id="${a.id}">Cobrar</button>`}</td></tr>`).join('')}</tbody></table>`) : '';
   const citasT = c.citas.length ? `<table class="sttab"><thead><tr><th>Fecha</th><th>Modalidad</th><th>Valor</th><th>Estado</th><th></th></tr></thead><tbody>${c.citas.map(x => `<tr><td>${esc(fmtD(x.a.startAt))}</td><td>${esc(x.a.modalidad || '')}${x.a.estado === 'No asistió' ? ' · inasistencia' : ''}</td><td class="n">${money(x.valor)}</td><td>${finChip(x.estado)}</td><td class="r"><button class="btn sm" data-act="finCita" data-id="${x.a.id}">Valor</button></td></tr>`).join('')}</tbody></table>` : finVacio('Las citas aparecen aquí cuando se marcan como «Atendida» en la agenda.');
   const pagosT = pagos.length ? `<table class="sttab"><thead><tr><th>Fecha</th><th>Monto</th><th>Detalle</th><th>Registró</th><th></th></tr></thead><tbody>${pagos.map(x => `<tr${x.anulado ? ' class="anul"' : ''}><td>${esc(fmtD(x.fecha))}</td><td class="n">${x.anulado ? '<s>' + money(x.monto) + '</s>' : '<b>' + money(x.monto) + '</b>'}</td><td>${esc(x.medio)}${pagoSesion(x)}${x.nota ? ' · ' + esc(x.nota) : ''}</td><td>${finQuien(x)}${x.anulado ? '<br><small>Anulado: ' + esc(x.anuladoMotivo || '') + '</small>' : ''}</td><td class="r">${x.anulado ? '' : `<button class="btn sm" data-act="finRecibo" data-id="${x.id}">Recibo</button> <button class="btn sm warn" data-act="finAnular" data-id="${x.id}">Anular</button>`}</td></tr>`).join('')}</tbody></table>` : finVacio('Todavía no hay pagos registrados.');
-  return `<div class="sec fin"><div class="row" style="justify-content:space-between;flex-wrap:wrap"><h3 style="margin:0">Finanzas</h3><span class="row"><button class="btn pri" data-act="finPago" data-id="${p.id}">+ Registrar pago</button>${pr}</span></div>
+  const cobrosAll = S.cobros.filter(x => x.patientId === p.id).sort((a, b) => b.fecha.localeCompare(a.fecha) || b.createdAt.localeCompare(a.createdAt));
+  const cobrosT = cobrosAll.length ? `<table class="sttab"><thead><tr><th>Fecha</th><th>Concepto</th><th>Valor</th><th>Estado</th><th></th></tr></thead><tbody>${cobrosAll.map(x => { const k = c.cobros.find(y => y.c.id === x.id); return `<tr${x.anulado ? ' class="anul"' : ''}><td>${esc(fmtD(x.fecha))}</td><td>${esc(x.concepto)}${x.nota ? ' · ' + esc(x.nota) : ''}</td><td class="n">${x.anulado ? '<s>' + money(x.monto) + '</s>' : '<b>' + money(x.monto) + '</b>'}</td><td>${x.anulado ? '<span class="chip">Anulado</span>' : k ? finChip(k.estado) + (k.pend && k.cubre ? ' <span class="ts">debe ' + money(k.pend) + '</span>' : '') : ''}</td><td class="r">${x.anulado ? '' : `${k && k.pend > 0 ? `<button class="btn sm" data-act="finPago" data-id="${p.id}" data-cobro="${x.id}">Registrar pago</button> ` : ''}<button class="btn sm" data-act="finCobroAnular" data-id="${x.id}">Anular</button>`}</td></tr>`; }).join('')}</tbody></table>` : finVacio('Sin cobros aparte de las citas. Úsalo para una actividad o una venta.');
+  return `<div class="sec fin"><div class="row" style="justify-content:space-between;flex-wrap:wrap"><h3 style="margin:0">Finanzas</h3><span class="row"><button class="btn pri" data-act="finPago" data-id="${p.id}">+ Registrar pago</button><button class="btn" data-act="finCobro" data-id="${p.id}">Generar cobro</button>${pr}</span></div>
   <div class="fk-grid">${finK('Atendido', money(c.total))}${finK('Pagado', money(c.pagado), 'ok')}${finK('Saldo', money(c.saldo), c.saldo ? 'warn' : 'ok', c.saldo ? 'Por cobrar' : 'Al día')}${c.favor ? finK('A favor', money(c.favor), 'fav') : ''}</div>
   ${!p.tarifa && !Object.values(tar).some(Boolean) ? `<p class="stnote">Aún no hay tarifas.${TEAM() ? ' El profesional las define en Finanzas → Tarifas.' : ' Defínelas en Finanzas → Tarifas, o pon el valor en cada cita.'}</p>` : ''}
   ${finCard('Citas cobradas', c.citas.length, citasT)}
   ${inasist}
+  ${finCard('Cobros', cobrosAll.length, cobrosT)}
   ${finCard('Pagos', pagos.length, pagosT)}</div>`;
 }
 function finModal(titulo, cuerpo, ok, onOk) {
@@ -104,7 +113,7 @@ function finModal(titulo, cuerpo, ok, onOk) {
   };
 }
 /* Opciones de «Aplicar a» según el paciente (sin paciente elegido solo están las dos generales). */
-const citaOpts = pid => `<option value="">Automático: las citas más antiguas primero</option><option value="-">Sin ligar a ninguna cita (saldo a favor)</option>${(pid ? cuentaDe(pid).citas : []).filter(x => x.pend > 0).map(x => `<option value="${esc(x.a.id)}" data-pend="${x.pend}">${esc(fmtD(x.a.startAt))} · ${esc(x.a.modalidad || '')}${x.a.estado === 'No asistió' ? ' · inasistencia' : ''} · debe ${money(x.pend)}</option>`).join('')}`;
+const citaOpts = pid => `<option value="">Automático: las citas más antiguas primero</option><option value="-">Sin ligar a ninguna cita (saldo a favor)</option>${(pid ? cuentaDe(pid).cobros : []).filter(x => x.pend > 0).map(x => `<option value="cobro:${esc(x.c.id)}" data-pend="${x.pend}">Cobro: ${esc(x.c.concepto)} · debe ${money(x.pend)}</option>`).join('')}${(pid ? cuentaDe(pid).citas : []).filter(x => x.pend > 0).map(x => `<option value="${esc(x.a.id)}" data-pend="${x.pend}">${esc(fmtD(x.a.startAt))} · ${esc(x.a.modalidad || '')}${x.a.estado === 'No asistió' ? ' · inasistencia' : ''} · debe ${money(x.pend)}</option>`).join('')}`;
 /* Registrar pago: desde la ficha del paciente (data-id) o desde la vista general (sin data-id: se elige el paciente en el mismo formulario). */
 ACT.finPago = b => {
   const elegir = !b.dataset.id, p = elegir ? null : S.patients.find(x => x.id === b.dataset.id), c = p ? cuentaDe(p.id) : null;
@@ -122,10 +131,42 @@ ACT.finPago = b => {
     if (!monto || monto < 1) { toast('Escribe el monto del pago.'); return false; }
     if (!fecha || fecha > nowISO().slice(0, 10)) { toast('La fecha del pago no puede ser futura.'); return false; }
     const o = { id: newId('pa'), kind: 'pago', patientId: pat.id, monto, fecha, medio: $('#f_fpMedio').value, nota: $('#f_fpNota').value.trim().slice(0, 300), createdAt: nowISO() };
-    if ($('#fp_cita').value === '-') { o.sinCita = true; const cf = $('#f_fpCitaFecha').value; if (cf) o.citaFecha = cf; } else if ($('#fp_cita').value) o.citaId = $('#fp_cita').value;
+    if ($('#fp_cita').value.startsWith('cobro:')) o.cobroId = $('#fp_cita').value.slice(6); else if ($('#fp_cita').value === '-') { o.sinCita = true; const cf = $('#f_fpCitaFecha').value; if (cf) o.citaFecha = cf; } else if ($('#fp_cita').value) o.citaId = $('#fp_cita').value;
     if (!(await persist([o], btn))) return false;
     o.registradoPor = { por: (S.user && S.user.name) || '', rol: TEAM() ? 'Equipo' : 'Profesional' }; S.pagos.push(o);
     toast('Pago registrado.'); return true;
+  });
+  if (b.dataset.cobro) { const sel = $('#fp_cita'), op = sel && [...sel.options].find(x => x.value === 'cobro:' + b.dataset.cobro); if (op) { sel.value = op.value; $('#fp_monto').value = cop(+op.dataset.pend); } }
+};
+/* Generar cobro: algo que se cobra sin ser una cita (una actividad, una venta). Queda pendiente hasta que se le liguen pagos. */
+ACT.finCobro = b => {
+  const elegir = !b.dataset.id, p = elegir ? null : S.patients.find(x => x.id === b.dataset.id);
+  const ps = pacientes().slice().sort((x, y) => fullName(x).localeCompare(fullName(y), 'es'));
+  if (elegir && !ps.length) { toast('Aún no hay consultantes.'); return; }
+  finModal(elegir ? 'Generar cobro' : 'Generar cobro · ' + fullName(p), `${elegir ? `<div class="fld"><label for="fn_cob">Consultante</label><select id="fn_cob"><option value="">Elige un consultante…</option>${ps.map(x => `<option value="${esc(x.id)}">${esc(fullName(x))}</option>`).join('')}</select></div>` : ''}<div class="grid">
+    ${F('Concepto', 'fcConcepto', '', { ph: 'Ej.: taller, producto, kit de bienestar' })}<div class="fld"><label for="fc_monto">Valor (pesos)</label>${moneyInput('fc_monto', '')}</div>
+    ${F('Fecha', 'fcFecha', nowISO().slice(0, 10), { type: 'date' })}${F('Nota (opcional)', 'fcNota', '')}</div>
+    <p class="stnote">Queda pendiente en las cuentas del consultante. Cuando te paguen, en «Registrar pago» elige este cobro en «Aplicar a». El concepto, el valor y la fecha no se pueden cambiar después; si hay un error, anula el cobro y genera otro.</p>`, 'Generar cobro', async btn => {
+    const pat = elegir ? S.patients.find(x => x.id === $('#fn_cob').value) : p;
+    if (!pat) { toast('Elige el consultante.'); return false; }
+    const concepto = $('#f_fcConcepto').value.trim().slice(0, 120), monto = parseCop($('#fc_monto').value), fecha = $('#f_fcFecha').value;
+    if (!concepto) { toast('Escribe el concepto del cobro.'); return false; }
+    if (!monto || monto < 1) { toast('Escribe el valor del cobro.'); return false; }
+    if (!fecha || fecha > nowISO().slice(0, 10)) { toast('La fecha no puede ser futura.'); return false; }
+    const o = { id: newId('co'), kind: 'cobro', patientId: pat.id, concepto, monto, fecha, nota: $('#f_fcNota').value.trim().slice(0, 300), createdAt: nowISO() };
+    if (!(await persist([o], btn))) return false;
+    o.registradoPor = { por: (S.user && S.user.name) || '', rol: TEAM() ? 'Equipo' : 'Profesional' }; S.cobros.push(o);
+    toast('Cobro generado.'); return true;
+  });
+};
+ACT.finCobroAnular = b => {
+  const o = S.cobros.find(x => x.id === b.dataset.id);
+  finModal('Anular cobro', `<p style="margin:0">Cobro «${esc(o.concepto)}» de <b>${money(o.monto)}</b> del ${esc(fmtD(o.fecha))}. No se borra: queda marcado como anulado y en la bitácora. Los pagos ligados a él pasan a saldo general.</p>${F('Motivo de la anulación', 'faMotivo', '', { ph: 'Ej.: se generó por error' })}`, 'Anular cobro', async btn => {
+    const motivo = $('#f_faMotivo').value.trim();
+    if (!motivo) { toast('Escribe el motivo de la anulación.'); return false; }
+    const snap = clone(o); o.anulado = true; o.anuladoMotivo = motivo.slice(0, 300); o.updatedAt = nowISO();
+    if (!(await persist([o], btn))) { restore(o, snap); return false; }
+    toast('Cobro anulado.'); return true;
   });
 };
 ACT.finPagoNuevo = () => ACT.finPago({ dataset: {} });
@@ -222,7 +263,7 @@ function finanzasHTML() {
   const sinT = sinMarcar.length ? `<div class="fwarn"><b>${sinMarcar.length} ${sinMarcar.length === 1 ? 'cita pasada sin marcar' : 'citas pasadas sin marcar'}.</b> Márcalas como «Atendida» o «No asistió» para que se cobren.</div><table class="sttab"><thead><tr><th>Fecha</th><th>Consultante</th><th></th></tr></thead><tbody>${sinMarcar.slice(0, 30).map(a => `<tr><td>${esc(fmtD(a.startAt))}</td><td>${esc(nombres(a.patientId) || (a.nuevo && a.nuevo.nombre) || '')}</td><td class="r"><button class="btn sm" data-act="apptEdit" data-id="${a.id}">Abrir</button></td></tr>`).join('')}</tbody></table>${sinMarcar.length > 30 ? `<p class="stnote" style="padding:8px 14px">Se muestran las 30 más recientes.</p>` : ''}` : '';
   const carT = cartera.length ? `<table class="sttab"><thead><tr><th>Consultante</th><th>Saldo</th><th></th></tr></thead><tbody>${cartera.map(x => `<tr><td><b>${esc(fullName(x.p))}</b></td><td class="n">${money(x.c.saldo)}</td><td class="r"><button class="btn sm" data-act="finAbrir" data-id="${x.p.id}">Abrir</button></td></tr>`).join('')}</tbody></table>` : finVacio('Nadie debe nada por ahora.');
   const pagT = pagos.length ? `<table class="sttab"><thead><tr><th>Fecha</th><th>Consultante</th><th>Monto</th><th>Medio</th><th>Registró</th></tr></thead><tbody>${pagos.map(x => `<tr><td>${esc(fmtD(x.fecha))}</td><td>${esc(nombres(x.patientId))}</td><td class="n"><b>${money(x.monto)}</b></td><td>${esc(x.medio)}${pagoSesion(x)}</td><td>${finQuien(x)}</td></tr>`).join('')}</tbody></table>` : finVacio('No hay pagos en este mes.');
-  return `<div class="sec fin" style="max-width:940px;margin:0 auto"><div class="row" style="justify-content:space-between;flex-wrap:wrap"><h3 style="margin:0">Finanzas</h3><span class="row"><div class="fld" style="margin:0"><input type="month" id="fin_mes" value="${esc(mes)}" aria-label="Mes"></div>${TEAM() ? '' : '<button class="btn" data-act="finTarifas">Tarifas</button>'}<button class="btn" data-act="finCSV">Exportar CSV</button><button class="btn pri" data-act="finPagoNuevo">+ Nuevo pago</button></span></div>
+  return `<div class="sec fin" style="max-width:940px;margin:0 auto"><div class="row" style="justify-content:space-between;flex-wrap:wrap"><h3 style="margin:0">Finanzas</h3><span class="row"><div class="fld" style="margin:0"><input type="month" id="fin_mes" value="${esc(mes)}" aria-label="Mes"></div>${TEAM() ? '' : '<button class="btn" data-act="finTarifas">Tarifas</button>'}<button class="btn" data-act="finCSV">Exportar CSV</button><button class="btn" data-act="finCobro">Generar cobro</button><button class="btn pri" data-act="finPagoNuevo">+ Nuevo pago</button></span></div>
   <div class="fk-grid">${finK('Cobrado en el mes', money(total), 'ok', pagos.length + (pagos.length === 1 ? ' pago' : ' pagos'))}${finK('Atendido en el mes', money(facturado), '', atendidas.length + (atendidas.length === 1 ? ' cita' : ' citas'))}${finK('Por cobrar (total)', money(totCartera), cartera.length ? 'warn' : 'ok', cartera.length ? cartera.length + (cartera.length === 1 ? ' consultante' : ' consultantes') : 'Al día')}</div>
   ${finMediosBar(porMedio)}
   ${sinMarcar.length ? finCard('Citas pasadas sin marcar', sinMarcar.length, sinT) : ''}

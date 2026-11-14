@@ -83,3 +83,32 @@ def test_pago_sin_cita_con_fecha_de_sesion():
     assert pro.put("/api/records/pa_3", json=pago("pa_3", citaFecha="2026-10-20")).status_code == 400  # sin «sin cita»
     got = next(r for r in pro.get("/api/records").json() if r["id"] == "pa_1")
     assert pro.put("/api/records/pa_1", json={**got, "citaFecha": "2026-10-21"}).status_code == 409
+
+
+def cobro(cid="co_1", **extra):
+    return {"id": cid, "kind": "cobro", "patientId": "p_1", "concepto": "Taller de respiración", "monto": 120000, "fecha": HOY, **extra}
+
+
+def test_cobro_validations_and_link():
+    pro = setup()
+    assert pro.put("/api/records/co_1", json=cobro()).status_code == 204
+    for bad in ({"monto": 0}, {"monto": 1.5}, {"concepto": "  "}, {"fecha": "2999-01-01"}, {"patientId": "p_x"}, {"anulado": True}):
+        assert pro.put("/api/records/co_2", json=cobro("co_2", **bad)).status_code == 400, bad
+    assert pro.put("/api/records/cx_1", json=cobro("cx_1")).status_code == 400  # prefijo
+    assert pro.put("/api/records/pa_1", json=pago(cobroId="co_1", monto=50000)).status_code == 204
+    assert pro.put("/api/records/pa_2", json=pago("pa_2", cobroId="co_x")).status_code == 400  # cobro inexistente
+    assert pro.put("/api/records/pa_3", json=pago("pa_3", cobroId="co_1", sinCita=True)).status_code == 400
+    assert pro.delete("/api/records/co_1").status_code == 409
+
+
+def test_cobro_is_immutable_and_can_only_be_voided():
+    pro = setup()
+    assert pro.put("/api/records/co_1", json=cobro()).status_code == 204
+    got = next(r for r in pro.get("/api/records").json() if r["id"] == "co_1")
+    assert got["registradoPor"]["por"] == "Ana Profesional"
+    assert pro.put("/api/records/co_1", json={**got, "monto": 1}).status_code == 409
+    assert pro.put("/api/records/co_1", json={**got, "anulado": True}).status_code == 400  # falta motivo
+    assert pro.put("/api/records/co_1", json={**got, "anulado": True, "anuladoMotivo": "Error"}).status_code == 204
+    v = next(r for r in pro.get("/api/records").json() if r["id"] == "co_1")
+    assert pro.put("/api/records/co_1", json={**v, "anulado": False}).status_code == 409
+    assert pro.put("/api/records/pa_9", json=pago("pa_9", cobroId="co_1")).status_code == 400  # cobro anulado

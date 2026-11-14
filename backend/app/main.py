@@ -36,8 +36,8 @@ DEVICE_PATH = "/api/auth"
 MAX_DEVICES = 20
 CSRF_HEADER = "x-requested-with"
 CSRF_VALUE = "archivo-clinico"
-KINDS = {"profile", "patient", "note", "report", "appt", "file", "scale", "pnote", "pago"}  # pnote: notas de proceso (fuera de la historia)
-PREFIX = {"patient": "p_", "note": "n_", "report": "r_", "appt": "a_", "file": "f_", "scale": "e_", "pnote": "pn_", "pago": "pa_"}
+KINDS = {"profile", "patient", "note", "report", "appt", "file", "scale", "pnote", "pago", "cobro"}  # pnote: notas de proceso (fuera de la historia)
+PREFIX = {"patient": "p_", "note": "n_", "report": "r_", "appt": "a_", "file": "f_", "scale": "e_", "pnote": "pn_", "pago": "pa_", "cobro": "co_"}
 ID_RE = re.compile(r"^[A-Za-z0-9_-]{1,64}$")
 VERIF_RE = re.compile(r"^[2-9A-HJ-NP-Z]{4}-[2-9A-HJ-NP-Z]{4}-[2-9A-HJ-NP-Z]{4}$")
 EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
@@ -983,7 +983,7 @@ def list_records(request: Request, user: User = Depends(current_user), db: Sessi
         if r.kind == "patient":
             pat = decrypt(r.payload)
             out.append({**{k: v for k, v in pat.items() if k not in CLINICAL_KEYS}, "consentAgenda": consent_agenda(pat)})
-        elif r.kind in ("appt", "pago"):
+        elif r.kind in ("appt", "pago", "cobro"):
             out.append(decrypt(r.payload))
         elif r.kind == "profile":
             pr = decrypt(r.payload)
@@ -1002,18 +1002,23 @@ def _check_pago(old: dict | None, new: dict, user: User) -> None:
     por = {"por": user.name, "rol": "Equipo" if user.role == "asistente" else "Profesional"}
     if old is None:
         monto, medio = new.get("monto"), new.get("medio")
+        cobro = new.get("kind") == "cobro"
         if not isinstance(monto, int) or isinstance(monto, bool) or not 0 < monto <= 100_000_000:
             raise HTTPException(400, "Indica un monto válido en pesos")
-        if medio not in PAGO_MEDIOS:
+        if cobro:
+            new["concepto"] = str(new.get("concepto") or "").strip()[:120]
+            if not new["concepto"]:
+                raise HTTPException(400, "Indica el concepto del cobro")
+        elif medio not in PAGO_MEDIOS:
             raise HTTPException(400, "Medio de pago no válido")
         try:
             fecha = datetime.fromisoformat(str(new.get("fecha"))).date()
         except ValueError:
-            raise HTTPException(400, "Fecha del pago no válida")
+            raise HTTPException(400, "Fecha no válida")
         if fecha > now.date() + timedelta(days=1):
-            raise HTTPException(400, "La fecha del pago no puede ser futura")
+            raise HTTPException(400, "La fecha no puede ser futura")
         if new.get("anulado"):
-            raise HTTPException(400, "Un pago nuevo no puede estar anulado")
+            raise HTTPException(400, "Un registro nuevo no puede estar anulado")
         if new.get("citaFecha"):  # fecha de la sesión que paga, para quien no usa la agenda (solo con «sin cita»)
             try:
                 datetime.fromisoformat(str(new["citaFecha"]))
@@ -1027,9 +1032,9 @@ def _check_pago(old: dict | None, new: dict, user: User) -> None:
     for k in ("registradoEn", "registradoPor"):  # los pone el servidor: el navegador no los cambia (ni los conoce al recién crear el pago)
         new[k] = old.get(k)
     if any(old.get(k) != new.get(k) for k in set(old) | set(new) if k not in PAGO_EDITABLE):
-        raise HTTPException(409, "Un pago registrado no se modifica: anúlalo y registra otro")
+        raise HTTPException(409, "Un pago o cobro registrado no se modifica: anúlalo y registra otro")
     if old.get("anulado") and not new.get("anulado"):
-        raise HTTPException(409, "Un pago anulado no se reactiva")
+        raise HTTPException(409, "Un pago o cobro anulado no se reactiva")
     if new.get("anulado") and not old.get("anulado"):
         if not str(new.get("anuladoMotivo") or "").strip():
             raise HTTPException(400, "Indica el motivo de la anulación")
@@ -1053,7 +1058,7 @@ def put_record(rid: str, request: Request, bg: BackgroundTasks, payload: dict = 
         raise HTTPException(400, "Registro no válido")
     if kind in PREFIX and not rid.startswith(PREFIX[kind]):
         raise HTTPException(400, "Registro no válido")
-    patient_id = rid if kind == "patient" else payload.get("patientId") if kind in ("note", "report", "appt", "file", "scale", "pago") else None
+    patient_id = rid if kind == "patient" else payload.get("patientId") if kind in ("note", "report", "appt", "file", "scale", "pago", "cobro") else None
     if kind == "pnote":  # nota de proceso: el consultante es opcional
         patient_id = payload.get("patientId") or None
     if patient_id is not None and not (isinstance(patient_id, str) and ID_RE.match(patient_id)):
@@ -1066,7 +1071,7 @@ def put_record(rid: str, request: Request, bg: BackgroundTasks, payload: dict = 
     ensure_acceso(user, db, True)
     ensure_writable(user, db, kind == "patient" and db.get(Record, (oid, rid)) is None)
     payload.pop("demo", None)  # la marca de «datos de ejemplo» solo la pone el servidor (POST /api/demo)
-    if team and kind not in ("patient", "appt", "pago"):
+    if team and kind not in ("patient", "appt", "pago", "cobro"):
         raise HTTPException(403, "Tu cuenta de equipo solo puede modificar datos de consultantes, la agenda y los pagos")
     row = db.get(Record, (oid, rid))
     old = decrypt(row.payload) if row else None
@@ -1097,13 +1102,18 @@ def put_record(rid: str, request: Request, bg: BackgroundTasks, payload: dict = 
         if db.get(Verification, _hash(code)):
             raise HTTPException(409, "Código de verificación repetido; intenta de nuevo")
         db.add(Verification(code_hash=_hash(code), user_id=oid, record_id=rid))
-    if kind == "pago" and not restoring:
+    if kind in ("pago", "cobro") and not restoring:
         if not suscrito(user, db):
             raise HTTPException(402, "Las finanzas se activan con la suscripción. Suscríbete en «Mi suscripción».")
         prow = db.get(Record, (oid, patient_id or ""))
         if not prow or prow.kind != "patient":
             raise HTTPException(400, "Consultante no válido")
-        cid = payload.get("citaId")
+        cid, cob = payload.get("citaId"), payload.get("cobroId")
+        if cob and not old:  # pago ligado a un cobro: debe ser un cobro vigente de este consultante (y no a la vez a una cita)
+            crow = db.get(Record, (oid, str(cob)))
+            cd = decrypt(crow.payload) if crow and crow.kind == "cobro" else None
+            if not cd or crow.patient_id != patient_id or cd.get("anulado") or cid or payload.get("sinCita"):
+                raise HTTPException(400, "El cobro indicado no es de este consultante")
         if cid and not old:  # pago ligado a una cita: debe ser una cita de este consultante
             arow = db.get(Record, (oid, str(cid)))
             if not arow or arow.kind != "appt" or arow.patient_id != patient_id:
@@ -1147,8 +1157,8 @@ def delete_record(rid: str, bg: BackgroundTasks, user: User = Depends(current_us
     row = db.get(Record, (oid, rid))
     if row and user.role == "asistente" and row.kind != "appt":
         raise HTTPException(403, "Tu cuenta de equipo solo puede quitar citas")
-    if row and row.kind == "pago":
-        raise HTTPException(409, "Un pago no se elimina: se anula, con el motivo")
+    if row and row.kind in ("pago", "cobro"):
+        raise HTTPException(409, "Un pago o un cobro no se elimina: se anula, con el motivo")
     if row:
         old = decrypt(row.payload)
         if row.kind in ("note", "report", "scale") and old.get("signedAt"):
@@ -2937,7 +2947,7 @@ AUDIT_TXT = {"account.export": "Exportó todos sus datos", "history.view": "Abri
              "login.ok": "Ingresó", "login.fail": "Intento de ingreso fallido", "login.2fa_fail": "Código de verificación equivocado",
              "access.denied": "Intento de acceso sin permiso", "password.change": "Cambió su contraseña", "record.import": "Importó",
              }
-KIND_TXT = {"patient": "datos o documentos de la historia", "note": "una sesión", "report": "un informe", "scale": "una escala", "appt": "una cita", "file": "un adjunto", "pago": "un pago"}
+KIND_TXT = {"patient": "datos o documentos de la historia", "note": "una sesión", "report": "un informe", "scale": "una escala", "appt": "una cita", "file": "un adjunto", "pago": "un pago", "cobro": "un cobro"}
 
 
 @app.get("/api/bitacora")
