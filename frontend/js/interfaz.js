@@ -125,7 +125,7 @@ function renderMain() {
 const GROUPS = [['Activo', 'Activos'], ['En pausa', 'En pausa'], ['Remitido', 'Remitidos'], ['Alta', 'De alta'], ['Cerrado', 'Cerrados']];
 function prowHTML(p) {
   const st = sessionStats(p);
-  return `<button class="prow ${p.id === S.pid ? 'on' : ''}" data-act="open" data-id="${p.id}"><span class="dot ${p.estado === 'En pausa' ? 'pausa' : isClosed(p) ? 'alta' : ''}"></span><span><div class="nm">${esc(fullName(p))}${p.demo ? ' <span class="chip" style="font-size:10px">Ejemplo</span>' : ''}</div><div class="sub">${esc(p.documento || 'sin documento')}${st.last ? ' · últ. ' + esc(fmtD(st.last).replace(/ de /g, ' ')) : ''}</div></span></button>`;
+  return `<button class="prow ${p.id === S.pid ? 'on' : ''}" data-act="open" data-id="${p.id}"><span class="av av${avTone(p)}" aria-hidden="true">${esc(avIni(p))}</span><span class="dot ${p.estado === 'En pausa' ? 'pausa' : isClosed(p) ? 'alta' : ''}"></span><span><div class="nm">${esc(fullName(p))}${p.demo ? ' <span class="chip" style="font-size:10px">Ejemplo</span>' : ''}</div><div class="sub">${esc(p.documento || 'sin documento')}${st.last ? ' · últ. ' + esc(fmtD(st.last).replace(/ de /g, ' ')) : ''}</div></span></button>`;
 }
 const norm = v => String(v || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
 /* Búsqueda de símbolos: «virgo» también encuentra ♍ y ♍ también encuentra «virgo» (nombres del banco de símbolos, simbolos.js).
@@ -300,7 +300,7 @@ ACT.nlMore = () => { NL.n += 50; nlRedraw(); };
 /* Resumen de una cuenta de equipo: agenda y consultantes, sin acceso a lo que se habla en sesión. */
 function teamHomeHTML() {
   const act = S.patients.filter(p => !p.estado || p.estado === 'Activo').length, todayN = apptsOn(dayKey(new Date())).filter(a => a.estado !== 'Cancelada').length;
-  return `<div class="panel"><div class="body"><button class="btn sm back" data-act="back">← Consultantes</button><h2 style="font-family:var(--f-doc);font-size:22px">Resumen</h2>
+  return `<div class="panel"><div class="body"><button class="btn sm back" data-act="back">← Consultantes</button><h2 style="font-family:var(--f-doc);font-size:22px">${saludo()}</h2><p class="saludo-sub">Tu espacio para acompañar con calma.</p>
   <p class="stnote">Cuenta de equipo de ${esc((S.user && S.user.ownerName) || 'tu terapeuta')}. Puedes manejar la agenda y los datos de los consultantes; la información de las sesiones es solo del terapeuta.</p>
   ${S.user && !S.user.tieneFirma ? '<div class="banner">Registra tu documento y tu firma en «Mi cuenta» (menú arriba a la derecha): aparecen en el historial de cada cambio que hagas a los datos de un consultante.</div>' : ''}
   <div class="stats"><div class="stat"><b>${act}</b><span>consultantes activos</span></div><div class="stat"><b>${todayN}</b><span>citas hoy</span></div></div>
@@ -321,6 +321,17 @@ function homeHTML() {
   ${todayHTML()}
   ${notesListHTML()}
   <p style="color:var(--muted);margin:0">Selecciona un consultante de la lista o crea uno nuevo. Cada consentimiento, primera vez, nota de sesión e informe queda firmado con tu firma, la fecha y la hora, y no se puede modificar después; solo se pueden agregar adendas.</p></div></div>`;
+}
+
+/* Avatar de la lista: iniciales sobre un tono tierra/salvia estable por consultante. */
+const avIni = p => (fullName(p).match(/\p{L}/gu) || ['?']).slice(0, 2).join('').toUpperCase();
+const avTone = p => { let h = 0; for (const c of String(p.id || fullName(p))) h = (h * 31 + c.charCodeAt(0)) % 5; return h; };
+
+/* Saludo según la hora, con el primer nombre del terapeuta si ya lo tiene en «Mi perfil». */
+function saludo() {
+  const h = new Date().getHours(), s = h < 12 ? 'Buenos días' : h < 19 ? 'Buenas tardes' : 'Buenas noches';
+  const n = ((S.profile && S.profile.nombre) || '').trim().split(/\s+/)[0];
+  return esc(t(s)) + (n ? ', ' + esc(n) : '');
 }
 
 function fileHTML(p) {

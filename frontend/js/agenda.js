@@ -9,9 +9,9 @@ const patName = id => { const p = S.patients.find(x => x.id === id); return p ? 
 const apName = a => a.evento ? a.evento : a.patientId ? patName(a.patientId) : a.nuevo ? [a.nuevo.nombres, a.nuevo.apellidos].join(' ') + ' (nuevo)' : 'Sin consultante';
 const apptsOn = key => S.appts.filter(a => dayKey(new Date(a.startAt)) === key).sort((a, b) => a.startAt.localeCompare(b.startAt));
 const remChip = a => { const c = a.confirmacion && a.confirmacion.estado, r = S.rem && S.rem.items && S.rem.items[a.id]; return c === 'Confirmada' ? ' · ✓ confirmó' : c ? ' · canceló' : r && r.enviado ? ' · recordada' : ''; };
-function apptBtn(a) {
+function apptBtn(a, prox) {
   const fe = typeof finEstadoCita === 'function' ? finEstadoCita(a) : '', impaga = fe === 'Pendiente' || fe === 'Abonada';
-  return `<button class="ap ${esc((a.estado || 'Programada').replace(/\s/g, '-'))}${a.evento ? ' evento' : ''}${impaga ? ' impaga' : ''}" data-act="apptEdit" data-id="${a.id}"><b>${esc(hhmm(a.startAt))}</b><span>${esc(apName(a))}</span><small>${esc(remChip(a).replace(/^ · /, '') ? remChip(a).replace(/^ · /, '') + ' · ' : '')}${esc([a.duracion ? a.duracion + ' min' : '', a.modalidad, a.estado && a.estado !== 'Programada' ? a.estado : ''].filter(Boolean).join(' · '))}</small></button>`;
+  return `<button class="ap${prox ? ' prox' : ''}${!prox && a.startAt && new Date(a.startAt) < new Date() && (!a.estado || a.estado === 'Programada') ? ' pasada' : ''} ${esc((a.estado || 'Programada').replace(/\s/g, '-'))}${a.evento ? ' evento' : ''}${impaga ? ' impaga' : ''}" data-act="apptEdit" data-id="${a.id}"><b>${esc(hhmm(a.startAt))}</b><span>${esc(apName(a))}</span><small>${esc(remChip(a).replace(/^ · /, '') ? remChip(a).replace(/^ · /, '') + ' · ' : '')}${esc([a.duracion ? a.duracion + ' min' : '', a.modalidad, a.estado && a.estado !== 'Programada' ? a.estado : ''].filter(Boolean).join(' · '))}</small></button>`;
 }
 /* Vista de la agenda (día, semana o mes): preferencia de este navegador. */
 const AG_VIEWS = [['dia', 'Día'], ['semana', 'Semana'], ['mes', 'Mes']];
@@ -63,7 +63,7 @@ const foldOpen = k => FOLD.has(k) ? '' : 'open';
 function foldSave(k, open) { if (open) FOLD.delete(k); else FOLD.add(k); try { localStorage.setItem('hc_fold', JSON.stringify([...FOLD])); } catch (e) { /* sin almacenamiento */ } }
 function todayHTML() {
   const l = apptsOn(dayKey(new Date())).filter(a => a.estado !== 'Cancelada');
-  return `<details class="sec fold" data-fold="hoy" ${foldOpen('hoy')}><summary><h3>Citas de hoy</h3></summary>${l.length ? `<div class="tlist">${l.map(apptBtn).join('')}</div>` : '<p style="margin:0;color:var(--muted)">No hay citas programadas para hoy.</p>'}<div class="row"><button class="btn sm" data-act="view" data-v="agenda">Ver agenda</button></div></details>`;
+  return `<details class="sec fold" data-fold="hoy" ${foldOpen('hoy')}><summary><h3>Citas de hoy</h3></summary>${l.length ? `<div class="tlist">${(nx => l.map((a, i) => apptBtn(a, i === nx)).join(''))(l.findIndex(a => a.startAt && new Date(a.startAt) >= new Date()))}</div>` : '<p style="margin:0;color:var(--muted)">No hay citas programadas para hoy.</p>'}<div class="row"><button class="btn sm" data-act="view" data-v="agenda">Ver agenda</button></div></details>`;
 }
 function nextApptHTML(p) {
   const now = nowISO(), n = S.appts.filter(a => a.patientId === p.id && a.estado === 'Programada' && a.startAt >= now).sort((a, b) => a.startAt.localeCompare(b.startAt))[0];
