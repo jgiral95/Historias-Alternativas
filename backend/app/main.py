@@ -502,7 +502,17 @@ class UserPatch(BaseModel):
 def list_users(_: User = Depends(require_admin), db: Session = Depends(get_db)):
     users = list(db.scalars(select(User).order_by(User.name)))
     by_id = {u.id: u for u in users}
-    return [user_out(u, by_id.get(u.owner_id)) for u in users]
+    subs = {x.user_id: x for x in db.scalars(select(Subscription))}
+    now = datetime.now(timezone.utc)
+    out = []
+    for u in users:
+        o = user_out(u, by_id.get(u.owner_id))
+        if u.role == "user":  # los administradores no pagan y el equipo usa la suscripción de su terapeuta
+            sub = subs.get(u.id)
+            hasta = billing.aware(sub.paid_until) if sub and sub.paid_until else None
+            o["suscripcion"] = {"plan": sub.plan if sub else "", "hasta": _iso(hasta), "activa": billing.vigente(hasta, now)}
+        out.append(o)
+    return out
 
 
 @app.get("/api/admin/resumen")
@@ -534,6 +544,48 @@ def admin_resumen(_: User = Depends(require_admin), db: Session = Depends(get_db
             "vencidas": vencidas, "nunca": nunca, "consultantes": pacientes, "activas": sum(1 for u in users if u.active),
             "inactivas": sum(1 for u in users if not u.active), "dosPasos": sum(1 for u in users if u.totp_enabled),
             "nuevos": sum(1 for u in pros if reciente(u))}
+
+
+class GiftIn(BaseModel):
+    meses: int
+
+
+@app.post("/api/admin/users/{uid}/meses-gratis")
+def gift_months(uid: int, body: GiftIn, admin: User = Depends(require_admin), db: Session = Depends(get_db)):
+    """Regala meses de uso: se suman a lo que le quede de suscripción (cada mes cuenta 30 días)."""
+    user = db.get(User, uid)
+    if not user or user.role != "user":
+        raise HTTPException(404, "Solo los terapeutas tienen suscripción")
+    if not 1 <= body.meses <= 36:
+        raise HTTPException(400, "Escribe de 1 a 36 meses")
+    now = datetime.now(timezone.utc)
+    sub = db.get(Subscription, uid) or Subscription(user_id=uid)
+    if not billing.vigente(sub.paid_until, now):
+        sub.plan = "cortesia"
+    sub.paid_until = billing.nueva_vigencia(sub.paid_until, 30 * body.meses, now)
+    db.add(sub)
+    db.commit()
+    audit(db, admin.id, "billing.cortesia", f"{user.email}: {body.meses} meses", ip=None)
+    return {"hasta": _iso(billing.aware(sub.paid_until))}
+
+
+@app.post("/api/admin/users/{uid}/quitar-meses")
+def take_months(uid: int, body: GiftIn, admin: User = Depends(require_admin), db: Session = Depends(get_db)):
+    """Quita meses de uso (cada mes cuenta 30 días) a lo que le quede de suscripción, sin bajar de ahora."""
+    user = db.get(User, uid)
+    if not user or user.role != "user":
+        raise HTTPException(404, "Solo los terapeutas tienen suscripción")
+    if not 1 <= body.meses <= 36:
+        raise HTTPException(400, "Escribe de 1 a 36 meses")
+    now = datetime.now(timezone.utc)
+    sub = db.get(Subscription, uid)
+    if not sub or not billing.vigente(sub.paid_until, now):
+        raise HTTPException(400, "No tiene tiempo de suscripción que quitar")
+    sub.paid_until = max(now, billing.aware(sub.paid_until) - timedelta(days=30 * body.meses))
+    db.add(sub)
+    db.commit()
+    audit(db, admin.id, "billing.cortesia_quitada", f"{user.email}: {body.meses} meses", ip=None)
+    return {"hasta": _iso(billing.aware(sub.paid_until)) if billing.vigente(sub.paid_until, now) else None}
 
 
 @app.post("/api/admin/users", status_code=201)

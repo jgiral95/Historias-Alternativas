@@ -57,6 +57,12 @@ def aware(d: datetime | None) -> datetime | None:
     return d if d is None or d.tzinfo else d.replace(tzinfo=timezone.utc)
 
 
+def nueva_vigencia(actual: datetime | None, dias: int, ahora: datetime) -> datetime:
+    """Renovar antes de vencer suma al tiempo que queda; si ya venció, cuenta desde hoy."""
+    actual = aware(actual)
+    return (actual if actual and actual > ahora else ahora) + timedelta(days=dias)
+
+
 def vigente(hasta: datetime | None, ahora: datetime) -> bool:
     hasta = aware(hasta)
     return bool(hasta and hasta > ahora)
