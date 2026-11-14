@@ -7,19 +7,40 @@ const SIMBOLOS = [
   ['Otros', [['✦', 'Estrella'], ['☯', 'Yin yang'], ['☀', 'Sol radiante'], ['☾', 'Luna creciente'], ['❂', 'Rueda'], ['✿', 'Flor'], ['☘', 'Trébol'], ['→', 'Flecha'], ['✓', 'Listo']]],
 ];
 const SIM = { campo: null, abierto: false };
+const SIM_ICO = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 14.2A7.5 7.5 0 1 1 9.8 5a6 6 0 0 0 9.2 9.2z"/><path d="M17.5 3.5v3M16 5h3" stroke-width="1.5"/></svg>';
 const simCampo = el => el && (el.tagName === 'TEXTAREA' || (el.tagName === 'INPUT' && ['text', 'search', ''].includes(el.type) && !el.readOnly)) && !el.disabled && !el.closest('#simpanel');
 function simUI() {
-  let b = $('#simbtn'); if (!b) { b = document.createElement('button'); b.id = 'simbtn'; b.type = 'button'; b.className = 'btn'; b.textContent = '✦ Símbolos'; b.setAttribute('aria-haspopup', 'dialog'); b.hidden = true; document.body.appendChild(b); }
+  let b = $('#simbtn'); if (!b) { b = document.createElement('button'); b.id = 'simbtn'; b.type = 'button'; b.className = 'simcir'; b.innerHTML = SIM_ICO; b.title = 'Símbolos'; b.setAttribute('aria-label', 'Símbolos'); b.setAttribute('aria-haspopup', 'dialog'); b.hidden = true; document.body.appendChild(b); }
   let p = $('#simpanel'); if (!p) { p = document.createElement('div'); p.id = 'simpanel'; p.setAttribute('role', 'dialog'); p.setAttribute('aria-label', 'Banco de símbolos'); p.hidden = true;
     p.innerHTML = SIMBOLOS.map(([t, l]) => `<div class="simt">${t}</div><div class="simg">${l.map(([c, n]) => `<button type="button" class="simb" data-sim="${c}" title="${n}" aria-label="${n}">${c}</button>`).join('')}</div>`).join(''); document.body.appendChild(p); }
   return [b, p];
 }
-function simShow() { const [b, p] = simUI(), on = SIM.campo && document.body.contains(SIM.campo); b.hidden = !on; if (!on) p.hidden = true; }
+function simPos() {  // el botón circular va a la derecha del campo que se edita; el panel se abre debajo (o arriba si no cabe)
+  const [b, p] = simUI(), el = SIM.campo, on = el && document.body.contains(el);
+  document.querySelectorAll('.simcampo').forEach(x => { if (x !== el) x.classList.remove('simcampo'); });
+  if (!on) { b.hidden = true; p.hidden = true; return; }
+  const r = el.getBoundingClientRect(), vh = (window.visualViewport && visualViewport.height) || innerHeight, tam = 30;
+  if (r.bottom < 0 || r.top > vh) { b.hidden = true; p.hidden = true; return; }
+  el.classList.add('simcampo'); b.hidden = false;
+  const top = el.tagName === 'TEXTAREA' || r.height > 60 ? Math.max(r.top, 0) + 8 : r.top + (r.height - tam) / 2;
+  b.style.left = Math.max(4, r.right - tam - 8) + 'px'; b.style.top = Math.max(4, top) + 'px';
+  if (!p.hidden) {
+    const w = Math.min(340, innerWidth - 16), h = Math.min(p.scrollHeight + 2, vh * 0.5), debajo = vh - r.bottom - 8 >= h || r.top < h + 8;
+    p.style.width = w + 'px'; p.style.maxHeight = vh * 0.5 + 'px';
+    p.style.left = Math.min(Math.max(8, r.right - w), innerWidth - w - 8) + 'px';
+    p.style.top = debajo ? Math.min(r.bottom + 6, vh - h - 8) + 'px' : Math.max(8, r.top - h - 6) + 'px';
+  }
+}
+let simRaf = 0;
+const simShow = () => { cancelAnimationFrame(simRaf); simRaf = requestAnimationFrame(simPos); };
+['scroll', 'resize'].forEach(ev => window.addEventListener(ev, simShow, true));
+if (window.visualViewport) visualViewport.addEventListener('resize', simShow);
+document.addEventListener('input', e => { if (e.target === SIM.campo) simShow(); });
 document.addEventListener('focusin', e => { if (simCampo(e.target)) { SIM.campo = e.target; simShow(); } else if (!e.target.closest('#simbtn, #simpanel')) { SIM.campo = null; simShow(); } });
 document.addEventListener('mousedown', e => { if (e.target.closest('#simbtn, #simpanel')) e.preventDefault(); });  // no quita el foco del campo
 document.addEventListener('click', e => {
   const [b, p] = simUI();
-  if (e.target.closest('#simbtn')) { p.hidden = !p.hidden; return; }
+  if (e.target.closest('#simbtn')) { p.hidden = !p.hidden; simShow(); return; }
   const s = e.target.closest('[data-sim]'); if (s && SIM.campo) {
     const el = SIM.campo, c = s.dataset.sim + (/[♈-♓]/.test(s.dataset.sim) ? '︎' : '');
     const i = el.selectionStart ?? el.value.length, j = el.selectionEnd ?? i;
