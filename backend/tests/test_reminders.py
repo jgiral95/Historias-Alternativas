@@ -39,21 +39,30 @@ def test_email_reminders_only_for_due_appointments(monkeypatch):
     assert reminders.due(uid) == 0
 
 
-def test_per_appointment_days_and_frequency(monkeypatch):
+def test_per_appointment_custom_reminders(monkeypatch):
     uid = make_user("ana@x.co")
     c = client_for("ana@x.co")
-    setup(c, activo=False)  # sin recordatorio general: solo cuentan las citas con recordatorio propio
+    setup(c, activo=False)  # sin recordatorio general: solo cuentan las citas con recordatorios propios
     sent = []
     monkeypatch.setattr(survey, "account", lambda db, u: {"host": "h", "from": "ana@gmail.com", "base": "https://h.co", "propio": True})
     monkeypatch.setattr(reminders, "send_mail", lambda to, body, prof, acc: sent.append(to))
-    c.put("/api/records/a_6", json={"id": "a_6", "kind": "appt", "patientId": "p_1", "startAt": iso(24 * 4), "estado": "Programada", "rec": {"activo": True, "dias": 5, "frec": 2}})
-    c.put("/api/records/a_7", json={"id": "a_7", "kind": "appt", "patientId": "p_1", "startAt": iso(24 * 9), "estado": "Programada", "rec": {"activo": True, "dias": 5, "frec": 2}})
-    assert reminders.due(uid) == 1 and len(sent) == 1  # a_6 entra en su ventana de 5 días; a_7 todavía no
-    assert reminders.due(uid) == 0  # aún no pasan 2 días
-    later = datetime.now(timezone.utc) + timedelta(days=2, minutes=5)
-    assert reminders.due(uid, later) == 1  # se repite cada 2 días
-    c.put("/api/records/a_6", json={"id": "a_6", "kind": "appt", "patientId": "p_1", "startAt": iso(24 * 4), "estado": "Programada", "rec": {"activo": True, "dias": 5, "frec": 0}})
-    assert reminders.due(uid, later + timedelta(days=1)) == 0  # «una sola vez»: no repite
+    rec = {"activo": True, "items": [{"n": 1, "u": "semanas"}, {"n": 2, "u": "días"}, {"n": 3, "u": "horas"}]}
+    c.put("/api/records/a_6", json={"id": "a_6", "kind": "appt", "patientId": "p_1", "startAt": iso(24 * 8), "estado": "Programada", "rec": rec})
+    c.put("/api/records/a_7", json={"id": "a_7", "kind": "appt", "patientId": "p_1", "startAt": iso(24 * 20), "estado": "Programada", "rec": rec})
+    assert reminders.due(uid) == 0  # faltan 8 días: todavía no llega el de 1 semana (7 días antes)
+    now = datetime.now(timezone.utc)
+    assert reminders.due(uid, now + timedelta(days=1, minutes=5)) == 1  # 7 días antes
+    assert reminders.due(uid, now + timedelta(days=1, minutes=10)) == 0  # no repite el mismo
+    assert reminders.due(uid, now + timedelta(days=6, minutes=5)) == 1  # 2 días antes
+    assert reminders.due(uid, now + timedelta(days=8) - timedelta(hours=2)) == 1  # 3 horas antes
+    assert reminders.due(uid, now + timedelta(days=8) - timedelta(hours=1)) == 0
+    assert len(sent) == 3
+
+
+def test_legacy_rec_format_still_works():
+    from app.reminders import appt_rec
+    offs = appt_rec({"rec": {"activo": True, "dias": 5, "frec": 2}})
+    assert [o.days for o in offs] == [5, 3, 1] and appt_rec({"rec": {"activo": False}}) is None
 
 
 def test_patient_confirms_or_cancels_from_link(monkeypatch):

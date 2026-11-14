@@ -517,3 +517,4 @@ body:has(#fb-root .fbbtn) .modal{padding-bottom:84px}
 .hitf .chip:disabled{opacity:.45;cursor:default}
 #ap_p2{display:flex;flex-direction:column;gap:12px}#ap_p2[hidden],#ap_p1[hidden]{display:none}
 #ap_p1{display:flex;flex-direction:column;gap:14px}
+.recrow{display:flex;align-items:center;gap:8px;margin-bottom:8px}.recrow input{width:90px}.recrow select{width:auto}

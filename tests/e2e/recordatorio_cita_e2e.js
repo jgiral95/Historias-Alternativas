@@ -12,11 +12,14 @@ let bad = 0; const ok = (c, m) => { console.log((c ? 'OK   ' : 'FALLA') + ' ' + 
   await page.waitForSelector('#aptabs');
   await page.click('[data-aptab="2"]');
   ok(await page.locator('#ap_p2').isVisible() && !(await page.locator('#ap_p1').isVisible()), 'la pestaña Recordatorio se abre y oculta la de la cita');
-  await page.check('#f_recActivo'); await page.selectOption('#f_recDias', { label: '5 días antes' }); await page.selectOption('#f_recFrec', { label: 'Cada 2 días' });
+  await page.check('#f_recActivo'); await page.fill('#rc_n', '3'); await page.dispatchEvent('#rc_n', 'input');
+  ok(await page.locator('.recrow').count() === 3, 'el número de recordatorios define cuántos espacios hay');
+  await page.fill('[data-rn="0"]', '2'); await page.selectOption('[data-ru="0"]', 'semanas'); await page.fill('[data-rn="1"]', '1x'); await page.selectOption('[data-ru="1"]', 'días'); await page.fill('[data-rn="2"]', '3'); await page.selectOption('[data-ru="2"]', 'horas');
+  ok(await page.inputValue('[data-rn="1"]') === '1', 'solo admite números');
   await page.evaluate(() => { Store.save = async x => x; });
   await page.click('[data-ap="save"]'); await page.waitForTimeout(500);
   const rec = await page.evaluate(() => S.appts.find(x => x.id === 'a_rc').rec);
-  ok(rec && rec.activo && rec.dias === 5 && rec.frec === 2, 'guarda días y frecuencia en la cita: ' + JSON.stringify(rec));
+  ok(rec && rec.activo && JSON.stringify(rec.items) === JSON.stringify([{ n: 2, u: 'semanas' }, { n: 1, u: 'días' }, { n: 3, u: 'horas' }]), 'guarda días y frecuencia en la cita: ' + JSON.stringify(rec));
   ok(errors.length === 0, 'sin errores de JavaScript' + (errors.length ? ': ' + errors[0] : ''));
   await b.close(); process.exit(bad);
 })().catch(e => { console.error(e); process.exit(1); });

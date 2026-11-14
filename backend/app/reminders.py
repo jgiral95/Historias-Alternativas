@@ -53,20 +53,33 @@ def config(profile: dict) -> dict:
     return {"activo": bool(c.get("activo")), "horas": h, "nota": str(c.get("nota") or "")[:300]}
 
 
-FRECS = (0, 1, 2, 3, 7)  # 0 = una sola vez; N = cada N días
+UNIDADES = {"horas": timedelta(hours=1), "días": timedelta(days=1), "semanas": timedelta(weeks=1), "meses": timedelta(days=30)}
+MAX_RECS = 10
 
 
-def appt_rec(a: dict) -> dict | None:
-    """Recordatorio propio de la cita (días de anticipación y frecuencia), si el terapeuta lo activó."""
+def appt_rec(a: dict) -> list[timedelta] | None:
+    """Recordatorios propios de la cita: lista de «tanto tiempo antes» (cantidad + unidad), de mayor a menor.
+    También entiende el formato anterior (dias + frec)."""
     r = a.get("rec")
     if not isinstance(r, dict) or not r.get("activo"):
         return None
-    try:
-        dias = int(r.get("dias"))
-    except (TypeError, ValueError):
-        dias = 1
-    frec = r.get("frec") if r.get("frec") in FRECS else 0
-    return {"dias": max(1, min(30, dias)), "frec": frec}
+    offs = []
+    if isinstance(r.get("items"), list):
+        for it in r["items"][:MAX_RECS]:
+            try:
+                n, u = int(it.get("n")), UNIDADES.get(it.get("u"))
+            except (TypeError, ValueError, AttributeError):
+                continue
+            if u and 1 <= n <= 999:
+                offs.append(n * u)
+    else:  # formato anterior
+        try:
+            dias = max(1, min(30, int(r.get("dias"))))
+        except (TypeError, ValueError):
+            dias = 1
+        frec = r.get("frec") if r.get("frec") in (1, 2, 3, 7) else 0
+        offs = [timedelta(days=d) for d in (range(dias, 0, -frec) if frec else [dias])]
+    return sorted(set(offs), reverse=True) or None
 
 
 def make(db, owner: int, appt: dict, channel: str) -> tuple[ApptReminder, str]:
@@ -126,22 +139,21 @@ def due(user_id: int, now: datetime | None = None) -> int:
         pats = {r["id"]: r for r in recs if r.get("kind") == "patient"}
         rows = list(db.scalars(select(ApptReminder).where(ApptReminder.user_id == user_id)))
         done = {r.appt_id for r in rows if r.sent_at or r.error}
-        last = {r.appt_id: r.sent_at for r in rows if r.sent_at}
+        errored = {r.appt_id for r in rows if r.error}
+        sent = {r.appt_id: set(decrypt(r.payload).get("sent") or []) for r in rows}
         for a in recs:
             if a.get("kind") != "appt" or a.get("evento") or a.get("estado", "Programada") != "Programada":
                 continue
             rec = appt_rec(a)
             start = parse(a.get("startAt"))
-            if rec:  # recordatorio propio de la cita: desde N días antes, y se repite cada N días hasta la cita
-                if not start or not (now < start <= now + timedelta(days=rec["dias"])):
+            mark = None
+            if rec:  # recordatorios propios: cada uno sale al llegar su momento (si ya pasaron varios, solo el último)
+                if not start or now >= start or a["id"] in errored:
                     continue
-                if a["id"] in done and a["id"] not in last:
-                    continue  # el envío falló: queda para envío manual
-                prev = last.get(a["id"])
-                if prev:
-                    prev = prev if prev.tzinfo else prev.replace(tzinfo=timezone.utc)
-                    if not rec["frec"] or now - prev < timedelta(days=rec["frec"]) - timedelta(minutes=30):
-                        continue
+                passed = [i for i, off in enumerate(rec) if start - off <= now]
+                if not [i for i in passed if i not in sent.get(a["id"], set())]:
+                    continue
+                mark = passed
             elif not cfg["activo"] or a["id"] in done or not start or not (now < start <= now + timedelta(hours=cfg["horas"])):
                 continue
             p = pats.get(a.get("patientId")) or a.get("nuevo") or {}
@@ -152,10 +164,10 @@ def due(user_id: int, now: datetime | None = None) -> int:
                 continue  # sin correo: queda para WhatsApp desde Pendientes
             r, token = make(db, user_id, a, "correo")
             r.channel = "correo"
-            jobs.append((r.id, mail, text(p, a, prof, link(token, acc.get("base") or ""), cfg["nota"])))
+            jobs.append((r.id, mail, text(p, a, prof, link(token, acc.get("base") or ""), cfg["nota"]), mark))
         db.commit()
     n = 0
-    for rid, mail, body in jobs:
+    for rid, mail, body, mark in jobs:
         err = None
         try:
             send_mail(mail, body, prof, acc)
@@ -169,6 +181,10 @@ def due(user_id: int, now: datetime | None = None) -> int:
                     r.channel, r.error = "manual", err
                 else:
                     r.sent_at = utcnow()
+                    if mark is not None:
+                        d = decrypt(r.payload)
+                        d["sent"] = sorted(set(d.get("sent") or []) | set(mark))
+                        r.payload = encrypt(d)
                 db.commit()
     return n
 
