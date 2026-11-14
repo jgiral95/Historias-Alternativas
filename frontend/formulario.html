@@ -3,12 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Sus datos para la primera atención</title>
+<title>Tus datos para la primera atención</title>
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Alter-Karute">
 <meta property="og:locale" content="es_CO">
 <meta property="og:title" content="Formulario de datos · Alter-Karute">
-<meta property="og:description" content="Abra el enlace para registrar sus datos antes de la primera atención.">
+<meta property="og:description" content="Abre el enlace para registrar tus datos antes de la primera atención.">
 <meta property="og:image" content="__ORIGIN__/og.png">
 <meta property="og:image:secure_url" content="__ORIGIN__/og.png">
 <meta property="og:image:type" content="image/png">
@@ -92,7 +92,7 @@ let d;
 const COUNTRIES = (() => { const codes = 'AF AX AL DE AD AO AI AQ AG SA DZ AR AM AW AU AT AZ BS BD BB BH BE BZ BJ BM BY BO BA BW BR BN BG BF BI BT CV KH CM CA BQ QA TD CZ CL CN CY CO KM CG CD KP KR CI CR HR CU CW DK DM EC EG SV AE ER SK SI ES US EE SZ ET PH FI FJ FR GA GM GE GH GI GD GR GL GP GU GT GF GG GN GQ GW GY HT HN HK HU IN ID IQ IR IE IS IL IT JM JP JE JO KZ KE KG KI KW LA LS LV LB LR LY LI LT LU MO MK MG MY MW MV ML MT MA MQ MU MR YT MX FM MD MC MN ME MS MZ MM NA NR NP NI NE NG NO NC NZ OM NL PK PW PS PA PG PY PE PF PL PT PR GB CF CD DO RE RW RO RU WS SM KN VC LC SN RS SC SL SG SY SO LK ZA SD SS SE CH SR TH TW TZ TJ TL TG TO TT TN TR TM TV UA UG UY UZ VU VA VE VN YE DJ ZM ZW'.split(' ');
   let n; try { const dn = new Intl.DisplayNames(['es'], { type: 'region' }); n = codes.map(c => dn.of(c)); } catch (e) { n = ['Venezuela', 'Ecuador', 'Perú', 'Panamá', 'México', 'España', 'Estados Unidos', 'Argentina', 'Chile']; }
   return ['Colombia', ...[...new Set(n)].filter(x => x && x !== 'Colombia' && x.length > 2).sort((a, b) => a.localeCompare(b, 'es'))]; })();
-const head = () => `<h1>${logo}Sus datos para la primera atención</h1><p>${d.nombre ? `<b>${esc(d.nombre)}</b> · ` : ''}${esc(d.profesional)} le pide que registre estos datos antes de su primera atención.</p>`;
+const head = () => `<h1>${logo}Tus datos para la primera atención</h1><p>${d.nombre ? `<b>${esc(d.nombre)}</b> · ` : ''}${esc(d.profesional)} le pide que registre estos datos antes de tu primera atención.</p>`;
 const field = c => {
   const id = 'f_' + c.k, lab = `<label for="${id}">${esc(c.l)}${c.r ? ' <span class="req" aria-hidden="true">*</span>' : ''}</label>`;
   const val = '';
@@ -103,7 +103,7 @@ const field = c => {
 };
 function form() {
   card(head() + `<form id="f" class="btns" autocomplete="off" novalidate><div id="err" role="alert"></div><div class="fs">${d.campos.map(field).join('')}</div>
-    <p class="muted">Los campos con <span class="req">*</span> son obligatorios. Solo se registran los datos que le pide su terapeuta; el consentimiento informado y la autorización de uso de sus datos los firmará con su terapeuta en la primera atención. Si es menor de edad, escriba los datos del menor: su profesional le pedirá los del acudiente.</p>
+    <p class="muted">Los campos con <span class="req">*</span> son obligatorios. Solo se registran los datos que le pide tu terapeuta; el consentimiento informado y la autorización de uso de tus datos los firmará con tu terapeuta en la primera atención. Si es menor de edad, escribe los datos del menor: tu profesional le pedirá los del acudiente.</p>
     <button type="submit">Enviar mis datos</button></form>`);
   $('#f').onsubmit = async e => {
     e.preventDefault();
@@ -116,10 +116,10 @@ function form() {
     try {
       const r = await fetch('/api/formulario/' + encodeURIComponent(token), { method: 'POST', headers: H, body: JSON.stringify({ datos }) });
       const j = await r.json().catch(() => ({}));
-      if (r.ok) return card(head().replace(/<p>.*<\/p>/, '') + '<div class="res ok">Listo, recibimos sus datos. Su terapeuta los revisará antes de la primera atención. Ya puede cerrar esta página. Gracias.</div>');
+      if (r.ok) return card(head().replace(/<p>.*<\/p>/, '') + '<div class="res ok">Listo, recibimos tus datos. Tu terapeuta los revisará antes de la primera atención. Ya puedes cerrar esta página. Gracias.</div>');
       if (r.status === 409) return card(`<h1>${logo}Alter-Karute</h1><div class="res bad">${esc(j.detail || 'Este enlace ya no está disponible.')}</div>`);
-      bad(typeof j.detail === 'string' ? j.detail : 'No se pudo enviar. Revise los datos.');
-    } catch (err) { bad('No hay conexión. Intente de nuevo.'); }
+      bad(typeof j.detail === 'string' ? j.detail : 'No se pudo enviar. Revisa los datos.');
+    } catch (err) { bad('No hay conexión. Intenta de nuevo.'); }
   };
 }
 (async function load() {
@@ -128,7 +128,7 @@ function form() {
     const j = await r.json().catch(() => ({}));
     if (!r.ok) return card(`<h1>${logo}Alter-Karute</h1><div class="res bad">${esc(typeof j.detail === 'string' ? j.detail : 'Este enlace no es válido.')}</div>`);
     d = j; form();
-  } catch (e) { card(`<h1>${logo}Alter-Karute</h1><div class="res bad">No hay conexión. Intente de nuevo.</div>`); }
+  } catch (e) { card(`<h1>${logo}Alter-Karute</h1><div class="res bad">No hay conexión. Intenta de nuevo.</div>`); }
 })();
 </script>
 </body>

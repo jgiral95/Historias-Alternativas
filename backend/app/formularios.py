@@ -1,6 +1,6 @@
 """Formulario de datos previo a la atención.
 
-El terapeuta envía un enlace personal (por correo o para copiar; nunca por WhatsApp). El consultante llena sus datos de
+El terapeuta envía un enlace personal (por correo o para copiar; nunca por WhatsApp). El consultante llena tus datos de
 identificación y contacto, sin iniciar sesión. Lo recibido NO crea al consultante: queda pendiente de revisión y el terapeuta
 lo convierte en consultante con un clic (con las mismas reglas de siempre). El enlace sirve una sola vez y vence en 7 días."""
 import re
@@ -70,7 +70,7 @@ def spec(fmt: dict | None = None) -> list[dict]:
 
 
 def clean(raw: dict, fmt: dict | None = None) -> dict:
-    """Valida lo que el consultante envió: solo los campos del formulario, con su tipo y límites. ValueError con el motivo."""
+    """Valida lo que el consultante envió: solo los campos del formulario, con tu tipo y límites. ValueError con el motivo."""
     out = {}
     for k, l, t, opts, req, _s in fields(fmt):
         v = str((raw or {}).get(k) or "").strip()
@@ -82,7 +82,7 @@ def clean(raw: dict, fmt: dict | None = None) -> dict:
         if len(v) > 200:
             raise ValueError(f"«{label}» es demasiado largo")
         if t == "select" and v not in opts:
-            raise ValueError(f"Elija una opción válida en «{label}»")
+            raise ValueError(f"Elige una opción válida en «{label}»")
         if t == "email" and not EMAIL_RE.match(v):
             raise ValueError("El correo no es válido")
         if t == "date":
@@ -110,24 +110,24 @@ def link(token: str, base: str = "") -> str:
 
 def message(nombre: str, prof: dict, url: str) -> str:
     first = str(nombre or "").split(" ")[0]
-    who = prof.get("nombre") or "su terapeuta"
-    return (f"Hola{(' ' + first) if first else ''}, {who} le envía un formulario para que registre sus datos antes de la primera atención: {url} "
+    who = prof.get("nombre") or "tu terapeuta"
+    return (f"Hola{(' ' + first) if first else ''}, {who} le envía un formulario para que registre tus datos antes de la primera atención: {url} "
             f"Solo toma unos minutos. El enlace se puede usar una vez y vence en {DAYS} días.")
 
 
 def send_mail(to: str, body: str, prof: dict, acc: dict) -> None:
     """Envía el enlace desde el correo del terapeuta. Se reemplaza en las pruebas."""
     m = EmailMessage()
-    place = prof.get("consultorio") or prof.get("nombre") or "su consulta"
-    m["Subject"] = f"Formulario de datos para su primera atención — {place}"
+    place = prof.get("consultorio") or prof.get("nombre") or "tu consulta"
+    m["Subject"] = f"Formulario de datos para tu primera atención — {place}"
     m["From"] = formataddr((prof.get("nombre") or "", acc.get("from"))) if acc.get("propio") else acc.get("from")
     m["To"] = to
     reply = acc.get("from") if acc.get("propio") else prof.get("correo")
     if reply:
         m["Reply-To"] = reply
-    m.set_content(body + "\n\nSi no esperaba este mensaje, ignórelo o comuníquese con el consultorio.\n")
+    m.set_content(body + "\n\nSi no esperaba este mensaje, ignórelo o comunícate con el consultorio.\n")
     antes, url, despues = correo.separar_enlace(body)
-    correo.agregar(m, correo.layout("Complete sus datos", [antes, despues], boton=("Llenar el formulario", url) if url else None,
-                                    notas=["Si no esperaba este mensaje, ignórelo o comuníquese con el consultorio."], firma=("Atentamente,", prof.get("nombre") or place)), prof.get("idioma"))
+    correo.agregar(m, correo.layout("Completa tus datos", [antes, despues], boton=("Llenar el formulario", url) if url else None,
+                                    notas=["Si no esperaba este mensaje, ignórelo o comunícate con el consultorio."], firma=("Atentamente,", prof.get("nombre") or place)), prof.get("idioma"))
     with survey.smtp_open(acc) as s:
         s.send_message(m)

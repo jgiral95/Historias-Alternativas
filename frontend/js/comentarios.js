@@ -30,12 +30,12 @@ function fbMount() {
 function fbDraw() {
   const root = $('#fb-root');
   let seen = true; try { seen = !!localStorage.getItem('fb_seen'); } catch (e) { /* sin almacenamiento */ }
-  if (!FB.open) { root.innerHTML = `<button class="fbbtn ${seen ? '' : 'pulse'}" id="fb_btn" aria-expanded="false" aria-controls="fb_panel" title="Enviar un comentario sobre la versión beta">${FB_ICON}<span class="fbl">Comentarios</span><span class="beta">Beta</span></button>`; $('#fb_btn').onclick = fbOpen; return; }
+  if (!FB.open) { root.innerHTML = `<button class="fbbtn ${seen ? '' : 'pulsa'}" id="fb_btn" aria-expanded="false" aria-controls="fb_panel" title="Enviar un comentario sobre la versión beta">${FB_ICON}<span class="fbl">Comentarios</span><span class="beta">Beta</span></button>`; $('#fb_btn').onclick = fbOpen; return; }
   const d = FB.draft, mine = FB.items;
   root.innerHTML = `<div class="fbpanel" id="fb_panel" role="dialog" aria-label="Comentarios de la beta">
     <div class="row" style="justify-content:space-between"><h3>Comentarios · Beta</h3><button class="btn sm" id="fb_close" aria-label="Cerrar comentarios">Cerrar</button></div>
-    <p class="stnote" style="margin:0">Cuéntenos qué falla, qué no entiende o qué mejoraría. <b>No escriba datos reales de consultantes.</b></p>
-    <div class="fld"><label for="fb_tema">Apartado del programa</label><select id="fb_tema"><option value="">Elija el apartado al que se refiere…</option>${FB.temas.map(t => `<option ${t === d.tema ? 'selected' : ''}>${esc(t)}</option>`).join('')}</select></div>
+    <p class="stnote" style="margin:0">Cuéntanos qué falla, qué no entiende o qué mejoraría. <b>No escribas datos reales de consultantes.</b></p>
+    <div class="fld"><label for="fb_tema">Apartado del programa</label><select id="fb_tema"><option value="">Elige el apartado al que se refiere…</option>${FB.temas.map(t => `<option ${t === d.tema ? 'selected' : ''}>${esc(t)}</option>`).join('')}</select></div>
     <div class="fbtipos" role="radiogroup" aria-label="Tipo de comentario">${FB.tipos.map(t => `<label><input type="radio" name="fb_tipo" value="${t}" ${t === d.tipo ? 'checked' : ''}> ${t === 'Error' ? 'Algo falla' : t === 'Duda' ? 'Tengo una duda' : 'Sugerencia'}</label>`).join('')}</div>
     <div class="fld"><label for="fb_txt">Comentario</label><textarea id="fb_txt" maxlength="5000" placeholder="Qué hizo, qué esperaba que pasara y qué pasó.">${esc(d.texto)}</textarea></div>
     <div class="fbshot">${FB.img ? `<img src="${FB.img}" alt="Captura adjunta"><button class="btn sm" id="fb_noimg">Quitar captura</button>` : `<label class="btn sm" for="fb_file" style="cursor:pointer">Adjuntar captura</label><input type="file" id="fb_file" accept="image/png,image/jpeg,image/webp" hidden><span>opcional · también puede pegarla en el comentario</span>`}</div>
@@ -69,13 +69,13 @@ async function fbOpen() {
 }
 async function fbSend() {
   const d = FB.draft;
-  if (!d.tema) { toast('Elija el apartado del programa al que se refiere su comentario.'); $('#fb_tema').focus(); return; }
-  if (!d.texto.trim()) { toast('Escriba el comentario.'); $('#fb_txt').focus(); return; }
+  if (!d.tema) { toast('Elige el apartado del programa al que se refiere tu comentario.'); $('#fb_tema').focus(); return; }
+  if (!d.texto.trim()) { toast('Escribe el comentario.'); $('#fb_txt').focus(); return; }
   setBusy($('#fb_send'), true);
   try {
     await api('/comentarios', { method: 'POST', body: { tema: d.tema, tipo: d.tipo, texto: d.texto.trim(), contexto: FB.ctx || fbContext(), imagen: FB.img || null } });
     FB.draft = { tema: '', tipo: 'Error', texto: '' }; FB.img = ''; FB.open = false; fbDraw();
-    toast('¡Gracias! Su comentario quedó enviado.'); stepDone('comentario'); try { localStorage.setItem('fb_seen', '1'); } catch (e) { /* sin almacenamiento */ }
+    toast('¡Gracias! Tu comentario quedó enviado.'); stepDone('comentario'); try { localStorage.setItem('fb_seen', '1'); } catch (e) { /* sin almacenamiento */ }
   } catch (e) { toast(e.message); const b = $('#fb_send'); if (b) setBusy(b, false); }
 }
 /* Bandeja del administrador */
@@ -93,7 +93,7 @@ ACT.fbAdmin = async () => {
     const list = data.items.filter(x => filtro === 'todos' ? true : filtro === 'abiertos' ? open(x) : x.estado === filtro);
     const nOpen = data.items.filter(open).length;
     root.innerHTML = `<div class="modal" role="dialog" aria-modal="true" aria-label="Comentarios de la beta (administración)"><div class="box" id="fbadm" style="max-width:820px"><div class="row" style="justify-content:space-between"><h3>Comentarios de la beta</h3><button class="btn sm" data-fa="close">Cerrar</button></div>
-    <div class="card"><b>Para pasárselos a Claude</b><p class="stnote" style="margin:0">Descargue el .zip (trae <code>comentarios.md</code> con todos los comentarios abiertos, agrupados por tema y con instrucciones, y la carpeta de capturas) y adjúntelo en el chat. O copie el texto y péguelo directamente.</p>
+    <div class="card"><b>Para pasárselos a Claude</b><p class="stnote" style="margin:0">Descarga el .zip (trae <code>comentarios.md</code> con todos los comentarios abiertos, agrupados por tema y con instrucciones, y la carpeta de capturas) y adjúntalo en el chat. O copia el texto y pégalo directamente.</p>
       <div class="row"><button class="btn pri" data-fa="zip" ${nOpen ? '' : 'disabled'}>Descargar abiertos (.zip)</button><button class="btn" data-fa="copy" ${nOpen ? '' : 'disabled'}>Copiar texto de los abiertos</button><span class="ts">${nOpen} abierto(s) de ${data.items.length}</span></div></div>
     <div class="row"><label for="fa_f" class="ts">Mostrar</label><select id="fa_f" style="width:auto">${[['abiertos', 'Abiertos (nuevos y en revisión)'], ['todos', 'Todos'], ...data.estados.map(e => [e, e])].map(([v, l]) => `<option value="${v}" ${v === filtro ? 'selected' : ''}>${esc(l)}</option>`).join('')}</select></div>
     ${list.length ? list.map(x => `<div class="card" data-id="${x.id}"><div class="row" style="justify-content:space-between"><span><b>#${x.id} · ${esc(x.tema)}</b> <span class="chip ${x.tipo === 'Error' ? 'warn' : ''}">${esc(x.tipo)}</span></span><select data-fa="estado" style="width:auto" aria-label="Estado del comentario ${x.id}">${data.estados.map(e => `<option ${e === x.estado ? 'selected' : ''}>${e}</option>`).join('')}</select></div>
@@ -113,7 +113,7 @@ ACT.fbAdmin = async () => {
         const r = await fbRaw('/admin/comentarios/exportar'), blob = await r.blob(), name = (r.headers.get('content-disposition') || '').match(/filename="([^"]+)"/);
         const u = URL.createObjectURL(blob), l = document.createElement('a'); l.href = u; l.download = name ? name[1] : 'comentarios-beta-' + dayKey(new Date()) + '.zip'; document.body.appendChild(l); l.click(); l.remove(); setTimeout(() => URL.revokeObjectURL(u), 4000); return;
       }
-      if (a === 'copy') { const t = (await api('/admin/comentarios/texto')).texto; try { await navigator.clipboard.writeText(t); toast('Texto copiado: péguelo en el chat con Claude.'); } catch (err) { showDoc('Comentarios de la beta', `<pre style="white-space:pre-wrap">${esc(t)}</pre>`, 'comentarios-beta.md'); } return; }
+      if (a === 'copy') { const t = (await api('/admin/comentarios/texto')).texto; try { await navigator.clipboard.writeText(t); toast('Texto copiado: pégalo en el chat con Claude.'); } catch (err) { showDoc('Comentarios de la beta', `<pre style="white-space:pre-wrap">${esc(t)}</pre>`, 'comentarios-beta.md'); } return; }
       if (a === 'img') { const u = URL.createObjectURL(await (await fbRaw('/comentarios/' + id + '/captura')).blob()); window.open(u, '_blank', 'noopener'); return; }
       if (a === 'save') { await api('/admin/comentarios/' + id, { method: 'PATCH', body: { respuesta: card.querySelector('[data-fa="resp"]').value } }); toast('Respuesta guardada.'); }
     } catch (err) { toast(err.message); }

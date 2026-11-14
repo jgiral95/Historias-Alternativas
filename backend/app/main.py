@@ -117,11 +117,11 @@ def current_user(request: Request, response: Response, db: Session = Depends(get
     idle = time.time() - tok.get("act", 0)
     if idle > IDLE_MINUTES * 60:
         response.delete_cookie(COOKIE, path="/")
-        raise HTTPException(401, "Su sesión se cerró por inactividad")
+        raise HTTPException(401, "Tu sesión se cerró por inactividad")
     if idle > 60:  # sesión deslizante: renueva la marca de actividad
         set_session(request, response, user.id, tok["exp"])
     if user.must_change_password and request.url.path not in PASSWORD_FIRST_OK:
-        raise HTTPException(403, "Debe elegir su propia contraseña antes de continuar")
+        raise HTTPException(403, "Debe elegir tu propia contraseña antes de continuar")
     return user
 
 
@@ -133,7 +133,7 @@ def pro_user(request: Request, user: User = Depends(current_user), db: Session =
     """Funciones del terapeuta. Las subcuentas de equipo solo usan los datos de consultantes y la agenda."""
     if user.role == "asistente":
         audit(db, user.id, "access.denied", f"{request.method} {request.url.path}", ip=client_ip(request))
-        raise HTTPException(403, "Su cuenta de equipo no tiene acceso a esta función")
+        raise HTTPException(403, "Tu cuenta de equipo no tiene acceso a esta función")
     return user
 
 
@@ -161,9 +161,9 @@ def ensure_acceso(user: User, db: Session, escritura: bool = False) -> None:
     hasta = billing.aware(sub.paid_until)
     if hasta and datetime.now(timezone.utc) - hasta <= timedelta(days=GRACIA_DIAS):
         if escritura:
-            raise HTTPException(402, "Su suscripción venció: por 30 días puede ver y descargar sus fichas, pero no modificarlas. Renueve en «Mi suscripción».")
+            raise HTTPException(402, "Tu suscripción venció: por 30 días puede ver y descargar tus fichas, pero no modificarlas. Renueva en «Mi suscripción».")
         return
-    raise HTTPException(402, "Su suscripción venció hace más de 30 días. Sus fichas están guardadas: vuelva a suscribirse en «Mi suscripción» para verlas y descargarlas.")
+    raise HTTPException(402, "Tu suscripción venció hace más de 30 días. Tus fichas están guardadas: vuelve a suscribirse en «Mi suscripción» para verlas y descargarlas.")
 
 
 def ensure_writable(user: User, db: Session, nuevo_consultante: bool = False) -> None:
@@ -172,21 +172,21 @@ def ensure_writable(user: User, db: Session, nuevo_consultante: bool = False) ->
         return
     n = sum(1 for r in db.scalars(select(Record).where(Record.user_id == owner_id(user), Record.kind == "patient")) if not decrypt(r.payload).get("demo"))
     if nuevo_consultante and n >= 1:
-        raise HTTPException(402, "Sin suscripción solo puede probar con un consultante. Suscríbase en «Mi suscripción» para tener más.")
+        raise HTTPException(402, "Sin suscripción solo puede probar con un consultante. Suscríbete en «Mi suscripción» para tener más.")
     if n > 1:
-        raise HTTPException(402, "Su suscripción no está activa: puede consultar sus fichas, pero no modificarlas. Renueve en «Mi suscripción».")
+        raise HTTPException(402, "Tu suscripción no está activa: puedes consultar tus fichas, pero no modificarlas. Renueva en «Mi suscripción».")
 
 
 def ensure_puede_eliminar(user: User, db: Session, pat: dict) -> None:
     """Eliminar consultantes solo con suscripción vigente (los de ejemplo se pueden borrar siempre): evita abusar de la prueba gratuita."""
     if not pat.get("demo") and not suscrito(user, db):
-        raise HTTPException(402, "Eliminar consultantes es una función de la suscripción. Suscríbase en «Mi suscripción».")
+        raise HTTPException(402, "Eliminar consultantes es una función de la suscripción. Suscríbete en «Mi suscripción».")
 
 
 def sub_user(user: User = Depends(pro_user), db: Session = Depends(get_db)) -> User:
     """Funciones solo para suscriptores (cuentas de ayudantes)."""
     if not suscrito(user, db):
-        raise HTTPException(402, "Esta función requiere una suscripción activa. Suscríbase en «Mi suscripción».")
+        raise HTTPException(402, "Esta función requiere una suscripción activa. Suscríbete en «Mi suscripción».")
     return user
 
 
@@ -300,7 +300,7 @@ def login(body: LoginIn, request: Request, response: Response, db: Session = Dep
     email = body.email.strip().lower()
     ip = request.client.host if request.client else "?"
     if _locked(email, ip):
-        raise HTTPException(429, "Demasiados intentos. Espere unos minutos e intente de nuevo.")
+        raise HTTPException(429, "Demasiados intentos. Espera unos minutos e intenta de nuevo.")
     user = db.scalar(select(User).where(User.email == email))
     ok = check_password(user.password_hash if user else DUMMY_HASH, body.password)
     if not (user and user.active and ok):
@@ -352,16 +352,16 @@ def register(body: RegisterIn, request: Request, db: Session = Depends(get_db)):
     """Cuenta nueva con correo: los datos viajan firmados en el enlace y la cuenta se crea al confirmar el correo."""
     email, name, ip = body.email.strip().lower(), body.name.strip()[:200], client_ip(request)
     if not name:
-        raise HTTPException(400, "Escriba su nombre")
+        raise HTTPException(400, "Escribe tu nombre")
     if not EMAIL_RE.match(email):
         raise HTTPException(400, "Correo no válido")
     if len(body.password) < MIN_PASSWORD:
         raise HTTPException(400, f"La contraseña debe tener al menos {MIN_PASSWORD} caracteres")
     acc = survey.server_account()
     if not survey.smtp_enabled(acc):
-        raise HTTPException(503, "El envío de correos no está disponible por ahora. Intente más tarde.")
+        raise HTTPException(503, "El envío de correos no está disponible por ahora. Intenta más tarde.")
     if _locked(email, ip):
-        raise HTTPException(429, "Demasiados intentos. Espere unos minutos e intente de nuevo.")
+        raise HTTPException(429, "Demasiados intentos. Espera unos minutos e intenta de nuevo.")
     _register_fail(email, ip)
     if not db.scalar(select(User).where(User.email == email)):  # si ya existe no se revela: la respuesta es la misma
         en = body.idioma.lower().startswith("en")
@@ -370,7 +370,7 @@ def register(body: RegisterIn, request: Request, db: Session = Depends(get_db)):
         try:
             survey.send_verify(email, name, f"{acc.get('base') or PUBLIC_URL}/app?verificar={tok}" + ("&lang=en" if en else ""), acc, "en" if en else None)
         except Exception:
-            raise HTTPException(502, "No se pudo enviar el correo. Revise la dirección e intente de nuevo.")
+            raise HTTPException(502, "No se pudo enviar el correo. Revisa la dirección e intenta de nuevo.")
     return {"ok": True}
 
 
@@ -384,11 +384,11 @@ def verify_email(body: VerifyIn, request: Request, response: Response, db: Sessi
         t = jwt.decode(body.token, SESSION_SECRET, algorithms=["HS256"])
         assert t.get("p") == "reg"
     except Exception:
-        raise HTTPException(400, "El enlace venció o no es válido. Cree la cuenta de nuevo.")
+        raise HTTPException(400, "El enlace venció o no es válido. Crea la cuenta de nuevo.")
     if db.scalar(select(User).where(User.email == t["e"])):  # el enlace sirve una sola vez: no vuelve a abrir sesión
-        raise HTTPException(409, "Su cuenta ya está activa: ingrese con su correo y contraseña.")
+        raise HTTPException(409, "Tu cuenta ya está activa: ingresa con tu correo y contraseña.")
     if _signup_limit(client_ip(request) or "?"):
-        raise HTTPException(429, "Se crearon demasiadas cuentas desde esta conexión hoy. Intente de nuevo mañana.")
+        raise HTTPException(429, "Se crearon demasiadas cuentas desde esta conexión hoy. Intenta de nuevo mañana.")
     user = User(email=t["e"], name=t["n"], password_hash=t["h"], role="user")
     db.add(user)
     db.commit()
@@ -432,12 +432,12 @@ def login_2fa(body: TwoFAIn, request: Request, response: Response, db: Session =
         assert t.get("p") == "2fa"
         user = db.get(User, int(t["sub"]))
     except Exception:
-        raise HTTPException(401, "El ingreso venció. Escriba de nuevo su correo y contraseña.")
+        raise HTTPException(401, "El ingreso venció. Escribe de nuevo tu correo y contraseña.")
     ip = request.client.host if request.client else "?"
     if not user or not user.active or not user.totp_enabled:
-        raise HTTPException(401, "El ingreso venció. Escriba de nuevo su correo y contraseña.")
+        raise HTTPException(401, "El ingreso venció. Escribe de nuevo tu correo y contraseña.")
     if _locked(user.email, ip):
-        raise HTTPException(429, "Demasiados intentos. Espere unos minutos e intente de nuevo.")
+        raise HTTPException(429, "Demasiados intentos. Espera unos minutos e intenta de nuevo.")
     if not _second_factor(db, user, body.code):
         _register_fail(user.email, ip)
         audit(db, user.id, "login.2fa_fail")
@@ -542,7 +542,7 @@ def create_user(body: UserCreate, admin: User = Depends(require_admin), db: Sess
     if not EMAIL_RE.match(email):
         raise HTTPException(400, "Correo no válido")
     if not body.name.strip():
-        raise HTTPException(400, "Escriba el nombre")
+        raise HTTPException(400, "Escribe el nombre")
     if body.role not in ("admin", "user"):
         raise HTTPException(400, "Rol no válido")
     if len(body.password) < MIN_PASSWORD:
@@ -566,7 +566,7 @@ def patch_user(uid: int, body: UserPatch, admin: User = Depends(require_admin), 
     if new_role not in ("admin", "user") and not (user.role == "asistente" and new_role == "asistente"):
         raise HTTPException(400, "Rol no válido")
     if user.id == admin.id and (new_role != "admin" or not new_active):
-        raise HTTPException(400, "No puede quitarse el rol de administrador ni desactivar su propia cuenta")
+        raise HTTPException(400, "No puede quitarse el rol de administrador ni desactivar tu propia cuenta")
     if user.role == "admin" and user.active and (new_role != "admin" or not new_active):
         others = db.scalar(select(func.count()).select_from(User).where(
             User.role == "admin", User.active.is_(True), User.id != user.id))
@@ -650,7 +650,7 @@ def _check_clock(stamps: list) -> None:
         except ValueError:
             raise HTTPException(400, "La hora de la firma no es válida")
         if abs(now - t) > SIGN_TOLERANCE:
-            raise HTTPException(400, "La hora de la firma no coincide con la hora del servidor. Recargue la página e intente de nuevo.")
+            raise HTTPException(400, "La hora de la firma no coincide con la hora del servidor. Recarga la página e intenta de nuevo.")
 
 
 def _check_dx(doc: dict) -> None:
@@ -691,8 +691,8 @@ def _check_appt_consent(db: Session, oid: int, old: dict | None, new: dict) -> N
     ca = consent_agenda(decrypt(prow.payload))
     remote = new.get("modalidad") in REMOTE_MODS
     if not ca["distancia" if remote else "presencial"]:
-        raise HTTPException(400, "El consultante tiene pendiente el consentimiento informado de teleterapia: fírmelo antes de agendar una cita virtual o telefónica"
-                            if remote else "El consultante tiene pendiente el consentimiento informado de atención presencial: fírmelo antes de agendar la cita")
+        raise HTTPException(400, "El consultante tiene pendiente el consentimiento informado de teleterapia: fírmalo antes de agendar una cita virtual o telefónica"
+                            if remote else "El consultante tiene pendiente el consentimiento informado de atención presencial: fírmalo antes de agendar la cita")
 IDENTITY_KEYS = {"nombres": "Nombres", "apellidos": "Apellidos", "tipoDoc": "Tipo de documento", "documento": "Número de documento",
                  "nacimiento": "Fecha de nacimiento", "paisNac": "País de nacimiento"}
 SERVER_KEYS = {"abiertaEl", "cambios", "firmasCambios"}
@@ -711,7 +711,7 @@ def _signer(db: Session, user: User) -> dict:
 
 
 def _opened_from(doc: dict) -> str | None:
-    """Fecha de apertura de una historia anterior a este registro: su documento más antiguo."""
+    """Fecha de apertura de una historia anterior a este registro: tu documento más antiguo."""
     ds = [c.get("signedAt") for c in doc.get("consents") or []] + [(doc.get("intake") or {}).get("sessionAt")]
     ds += [i.get("desde") for i in doc.get("incorporaciones") or []] + [i.get("signedAt") for i in doc.get("incorporaciones") or []]
     ds = sorted(str(d) for d in ds if d)
@@ -758,7 +758,7 @@ def _patient_rules(old: dict | None, new: dict, user: User, restoring: bool, sig
 
 def _keep_remote(old: dict, new: dict) -> tuple[dict, bool]:
     """Un consentimiento firmado a distancia llega a la historia mientras el terapeuta puede tenerla abierta.
-    Si un guardado viene sin él (pantalla desactualizada), se conserva en su lugar en vez de rechazar el guardado."""
+    Si un guardado viene sin él (pantalla desactualizada), se conserva en tu lugar en vez de rechazar el guardado."""
     oc, nc = old.get("consents") or [], new.get("consents") or []
     ids = {(c.get("remoto") or {}).get("id") for c in nc if isinstance(c, dict)}
     missing = [c for c in oc if (c.get("remoto") or {}).get("id") and c["remoto"]["id"] not in ids]
@@ -951,7 +951,7 @@ def _check_pago(old: dict | None, new: dict, user: User) -> None:
     if old is None:
         monto, medio = new.get("monto"), new.get("medio")
         if not isinstance(monto, int) or isinstance(monto, bool) or not 0 < monto <= 100_000_000:
-            raise HTTPException(400, "Indique un monto válido en pesos")
+            raise HTTPException(400, "Indica un monto válido en pesos")
         if medio not in PAGO_MEDIOS:
             raise HTTPException(400, "Medio de pago no válido")
         try:
@@ -975,12 +975,12 @@ def _check_pago(old: dict | None, new: dict, user: User) -> None:
     for k in ("registradoEn", "registradoPor"):  # los pone el servidor: el navegador no los cambia (ni los conoce al recién crear el pago)
         new[k] = old.get(k)
     if any(old.get(k) != new.get(k) for k in set(old) | set(new) if k not in PAGO_EDITABLE):
-        raise HTTPException(409, "Un pago registrado no se modifica: anúlelo y registre otro")
+        raise HTTPException(409, "Un pago registrado no se modifica: anúlalo y registra otro")
     if old.get("anulado") and not new.get("anulado"):
         raise HTTPException(409, "Un pago anulado no se reactiva")
     if new.get("anulado") and not old.get("anulado"):
         if not str(new.get("anuladoMotivo") or "").strip():
-            raise HTTPException(400, "Indique el motivo de la anulación")
+            raise HTTPException(400, "Indica el motivo de la anulación")
         new["anuladoEn"], new["anuladoPor"] = now.isoformat(), por
     else:
         for k in ("anuladoEn", "anuladoPor"):
@@ -1010,12 +1010,12 @@ def put_record(rid: str, request: Request, bg: BackgroundTasks, payload: dict = 
         raise HTTPException(413, "El registro es demasiado grande")
     oid, team = owner_id(user), user.role == "asistente"
     if kind == "appt" and not (patient_id or (isinstance(payload.get("nuevo"), dict) and str(payload["nuevo"].get("nombres") or "").strip()) or (isinstance(payload.get("evento"), str) and payload["evento"].strip())):
-        raise HTTPException(400, "Elija un consultante, escriba los datos de uno nuevo o el título del evento")
+        raise HTTPException(400, "Elige un consultante, escribe los datos de uno nuevo o el título del evento")
     ensure_acceso(user, db, True)
     ensure_writable(user, db, kind == "patient" and db.get(Record, (oid, rid)) is None)
     payload.pop("demo", None)  # la marca de «datos de ejemplo» solo la pone el servidor (POST /api/demo)
     if team and kind not in ("patient", "appt", "pago"):
-        raise HTTPException(403, "Su cuenta de equipo solo puede modificar datos de consultantes, la agenda y los pagos")
+        raise HTTPException(403, "Tu cuenta de equipo solo puede modificar datos de consultantes, la agenda y los pagos")
     row = db.get(Record, (oid, rid))
     old = decrypt(row.payload) if row else None
     restoring = request.headers.get("x-import") == "1" and not team
@@ -1031,7 +1031,7 @@ def put_record(rid: str, request: Request, bg: BackgroundTasks, payload: dict = 
         if old is None and not restoring:
             dup = _same_document(db, oid, rid, payload.get("documento"))
             if dup:
-                raise HTTPException(409, f"Ya existe una historia con ese número de documento ({dup}). Ábrala en vez de crear otra: debe haber una sola historia por persona.")
+                raise HTTPException(409, f"Ya existe una historia con ese número de documento ({dup}). Ábrela en vez de crear otra: debe haber una sola historia por persona.")
     if not restoring:
         _keep_folios(kind, old, payload)
     _check_immutable(kind, old, payload)
@@ -1043,11 +1043,11 @@ def put_record(rid: str, request: Request, bg: BackgroundTasks, payload: dict = 
         if not VERIF_RE.match(code):
             raise HTTPException(400, "Código de verificación no válido")
         if db.get(Verification, _hash(code)):
-            raise HTTPException(409, "Código de verificación repetido; intente de nuevo")
+            raise HTTPException(409, "Código de verificación repetido; intenta de nuevo")
         db.add(Verification(code_hash=_hash(code), user_id=oid, record_id=rid))
     if kind == "pago" and not restoring:
         if not suscrito(user, db):
-            raise HTTPException(402, "Las finanzas se activan con la suscripción. Suscríbase en «Mi suscripción».")
+            raise HTTPException(402, "Las finanzas se activan con la suscripción. Suscríbete en «Mi suscripción».")
         prow = db.get(Record, (oid, patient_id or ""))
         if not prow or prow.kind != "patient":
             raise HTTPException(400, "Consultante no válido")
@@ -1094,7 +1094,7 @@ def delete_record(rid: str, bg: BackgroundTasks, user: User = Depends(current_us
     oid = owner_id(user)
     row = db.get(Record, (oid, rid))
     if row and user.role == "asistente" and row.kind != "appt":
-        raise HTTPException(403, "Su cuenta de equipo solo puede quitar citas")
+        raise HTTPException(403, "Tu cuenta de equipo solo puede quitar citas")
     if row and row.kind == "pago":
         raise HTTPException(409, "Un pago no se elimina: se anula, con el motivo")
     if row:
@@ -1129,7 +1129,7 @@ def delete_patient(pid: str, bg: BackgroundTasks, user: User = Depends(current_u
         raise HTTPException(400, "Identificador no válido")
     ensure_acceso(user, db, True)
     if user.role == "asistente":
-        raise HTTPException(403, "Su cuenta de equipo no puede eliminar consultantes")
+        raise HTTPException(403, "Tu cuenta de equipo no puede eliminar consultantes")
     oid = owner_id(user)
     prow = db.get(Record, (oid, pid))
     if not prow or prow.kind != "patient":
@@ -1325,12 +1325,12 @@ _vhits: dict[str, list[float]] = {}
 
 @app.get("/api/verify/{code}")
 def verify(code: str, request: Request, db: Session = Depends(get_db)):
-    """Cualquiera con el código impreso en un informe puede comprobar que es auténtico y ver su contenido firmado."""
+    """Cualquiera con el código impreso en un informe puede comprobar que es auténtico y ver tu contenido firmado."""
     ip = request.headers.get("cf-connecting-ip") or (request.client.host if request.client else "?")
     with _lock:
         hits = [t for t in _vhits.get(ip, []) if t > time.time() - WINDOW]
         if len(hits) >= 30:
-            raise HTTPException(429, "Demasiadas consultas. Intente más tarde.")
+            raise HTTPException(429, "Demasiadas consultas. Intenta más tarde.")
         hits.append(time.time())
         _vhits[ip] = hits
     code = code.strip().upper()
@@ -1426,17 +1426,17 @@ def google_session(body: GSessionIn, request: Request, response: Response, db: S
         t = jwt.decode(body.ticket, SESSION_SECRET, algorithms=["HS256"])
         assert t.get("p") == "gsess"
     except Exception:
-        raise HTTPException(400, "El ingreso con Google venció. Intente de nuevo.")
+        raise HTTPException(400, "El ingreso con Google venció. Intenta de nuevo.")
     with _lock:
         now = int(time.time())
         for k in [k for k, e in _g_used.items() if e < now]:
             del _g_used[k]
         if t["jti"] in _g_used:
-            raise HTTPException(400, "El ingreso con Google venció. Intente de nuevo.")
+            raise HTTPException(400, "El ingreso con Google venció. Intenta de nuevo.")
         _g_used[t["jti"]] = int(t["exp"])
     user = db.get(User, int(t["sub"]))
     if not user or not user.active:
-        raise HTTPException(400, "El ingreso con Google venció. Intente de nuevo.")
+        raise HTTPException(400, "El ingreso con Google venció. Intenta de nuevo.")
     if user.totp_enabled:
         # Con dos pasos activos, Google solo confirma la identidad: en un dispositivo de confianza entra directo; si no, falta el segundo paso.
         if _trusted_device(request, response, db, user):
@@ -1568,7 +1568,7 @@ def twofa_confirm(body: CodeIn, request: Request, user: User = Depends(current_u
     """Confirma una acción delicada (exportar todos los datos) con un código de dos pasos; no cambia nada."""
     ip = client_ip(request) or "?"
     if _locked(user.email, ip):
-        raise HTTPException(429, "Demasiados intentos. Espere unos minutos e intente de nuevo.")
+        raise HTTPException(429, "Demasiados intentos. Espera unos minutos e intenta de nuevo.")
     if not user.totp_enabled or not _second_factor(db, user, body.code):
         _register_fail(user.email, ip)
         raise HTTPException(400, "El código no es válido o ya se usó")
@@ -1576,8 +1576,8 @@ def twofa_confirm(body: CodeIn, request: Request, user: User = Depends(current_u
 
 @app.post("/api/audit/export-all", status_code=204)
 def audit_export_all(user: User = Depends(pro_user), db: Session = Depends(get_db)):
-    """Constancia (sin contenido de las fichas) de que el terapeuta exportó todos sus datos."""
-    audit(db, user.id, "account.export", "Exportó sus datos")
+    """Constancia (sin contenido de las fichas) de que el terapeuta exportó todos tus datos."""
+    audit(db, user.id, "account.export", "Exportó tus datos")
 
 
 @app.post("/api/auth/2fa/recovery")
@@ -1620,7 +1620,7 @@ def _public_throttle(request: Request, limit: int = 40) -> None:
     with _lock:
         hits = [t for t in _shits.get(ip, []) if t > time.time() - WINDOW]
         if len(hits) >= limit:
-            raise HTTPException(429, "Demasiadas consultas. Intente más tarde.")
+            raise HTTPException(429, "Demasiadas consultas. Intenta más tarde.")
         hits.append(time.time())
         _shits[ip] = hits
 
@@ -1752,11 +1752,11 @@ def surveys_test(body: SurveyTestIn, user: User = Depends(pro_user), db: Session
     """Encuesta de prueba: llega al correo indicado, usa las preguntas actuales y no cuenta en las estadísticas."""
     to = body.correo.strip()
     if not EMAIL_RE.match(to):
-        raise HTTPException(400, "Escriba un correo válido")
+        raise HTTPException(400, "Escribe un correo válido")
     with _lock:  # máximo 10 pruebas por hora por cuenta
         hits = [t for t in _shits.get(f"t{user.id}", []) if t > time.time() - 3600]
         if len(hits) >= 10:
-            raise HTTPException(429, "Ya envió varias pruebas. Espere un rato.")
+            raise HTTPException(429, "Ya envió varias pruebas. Espera un rato.")
         hits.append(time.time())
         _shits[f"t{user.id}"] = hits
     prof = next((decrypt(r.payload) for r in db.scalars(select(Record).where(Record.user_id == user.id, Record.kind == "profile"))), {})
@@ -1771,7 +1771,7 @@ def surveys_test(body: SurveyTestIn, user: User = Depends(pro_user), db: Session
     audit(db, user.id, "survey.test", "")
     acc = survey.account(db, user.id)
     if not survey.smtp_enabled(acc):
-        return {"enviado": False, "enlace": token, "motivo": "Aún no ha configurado su correo de envío (más arriba, en «Correo de envío»)."}
+        return {"enviado": False, "enlace": token, "motivo": "Aún no ha configurado tu correo de envío (más arriba, en «Correo de envío»)."}
     try:
         survey.send_mail(to, token, {"nombres": "Prueba"}, prof, acc)
     except Exception as e:  # noqa: BLE001 — se muestra al terapeuta para que corrija la configuración
@@ -1781,7 +1781,7 @@ def surveys_test(body: SurveyTestIn, user: User = Depends(pro_user), db: Session
 
 @app.post("/api/encuestas/borrar-pruebas", status_code=204)
 def surveys_delete_tests(user: User = Depends(pro_user), db: Session = Depends(get_db)):
-    """Borra las encuestas de prueba y sus respuestas (antes de empezar con consultantes reales)."""
+    """Borra las encuestas de prueba y tus respuestas (antes de empezar con consultantes reales)."""
     for r in db.scalars(select(SurveyResponse).where(SurveyResponse.user_id == user.id)):
         if decrypt(r.payload).get("prueba"):
             db.delete(r)
@@ -1818,15 +1818,15 @@ def mail_put(body: MailIn, request: Request, user: User = Depends(pro_user), db:
     """Guarda el correo del terapeuta después de comprobar que el servidor de correo acepta la contraseña."""
     email = body.correo.strip()
     if not EMAIL_RE.match(email):
-        raise HTTPException(400, "Escriba un correo válido")
+        raise HTTPException(400, "Escribe un correo válido")
     pw = body.password.replace(" ", "") if "gmail" in email.lower() else body.password.strip()
     if not pw:
-        raise HTTPException(400, "Escriba la contraseña de aplicación")
+        raise HTTPException(400, "Escribe la contraseña de aplicación")
     pre = survey.preset(email)
     host = (body.host.strip() or (pre[0] if pre else "")).lower()
     port = body.port or (pre[1] if pre else 587)
     if not re.match(r"^[a-z0-9.-]{3,253}$", host) or port not in (25, 465, 587, 2525):
-        raise HTTPException(400, "No reconocemos el proveedor de ese correo: escriba el servidor SMTP y el puerto (465 o 587).")
+        raise HTTPException(400, "No reconocemos el proveedor de ese correo: escribe el servidor SMTP y el puerto (465 o 587).")
     proto = (request.headers.get("x-forwarded-proto") or request.url.scheme or "https").split(",")[0].strip()
     base = PUBLIC_URL or f"{proto}://{request.headers.get('host') or ''}"
     acc = {"host": host, "port": port, "user": email, "password": pw, "from": email, "base": base}
@@ -1834,7 +1834,7 @@ def mail_put(body: MailIn, request: Request, user: User = Depends(pro_user), db:
         survey.check_login(acc)
     except Exception as e:  # noqa: BLE001 — se muestra el motivo para que lo corrija
         msg = str(e)
-        hint = (" Use una «contraseña de aplicación», no la contraseña normal del correo." if re.search(r"535|534|auth|password|credentials", msg, re.I) else "")
+        hint = (" Usa una «contraseña de aplicación», no la contraseña normal del correo." if re.search(r"535|534|auth|password|credentials", msg, re.I) else "")
         raise HTTPException(400, "El servidor de correo no aceptó el ingreso: " + msg[:200] + hint)
     row = db.get(MailAccount, user.id)
     if row:
@@ -1882,7 +1882,7 @@ def team_create(body: TeamIn, user: User = Depends(sub_user), db: Session = Depe
     if not EMAIL_RE.match(email):
         raise HTTPException(400, "Correo no válido")
     if not body.name.strip():
-        raise HTTPException(400, "Escriba el nombre")
+        raise HTTPException(400, "Escribe el nombre")
     if len(body.password) < MIN_PASSWORD:
         raise HTTPException(400, f"La contraseña debe tener al menos {MIN_PASSWORD} caracteres")
     if db.scalar(select(User).where(User.email == email)):
@@ -1951,9 +1951,9 @@ def billing_cancelar(user: User = Depends(pro_user), db: Session = Depends(get_d
             billing.cancelar(s["_id"], cli)
     except Exception as e:
         logging.getLogger("uvicorn.error").warning("ePayco: no se pudo cancelar (%s)", type(e).__name__)
-        raise HTTPException(502, "No se pudo cancelar en ePayco. Intente de nuevo en unos minutos.")
+        raise HTTPException(502, "No se pudo cancelar en ePayco. Intenta de nuevo en unos minutos.")
     if not subs:
-        raise HTTPException(404, "No encontramos una suscripción recurrente con el correo de su cuenta. Si pagó con otro correo, cancélela desde el enlace del correo de ePayco.")
+        raise HTTPException(404, "No encontramos una suscripción recurrente con el correo de tu cuenta. Si pagó con otro correo, cancélala desde el enlace del correo de ePayco.")
     audit(db, user.id, "billing.cancelada", f"{len(subs)} suscripción(es)")
     return {"canceladas": len(subs)}
 
@@ -2087,21 +2087,21 @@ def remote_list(user: User = Depends(pro_user), db: Session = Depends(get_db)):
 
 @app.post("/api/firmas")
 def remote_create(body: RemoteConsentIn, request: Request, user: User = Depends(pro_user), db: Session = Depends(get_db)):
-    """Prepara un consentimiento para que el consultante lo firme desde su celular."""
+    """Prepara un consentimiento para que el consultante lo firme desde tu celular."""
     prow = db.get(Record, (user.id, body.patientId)) if ID_RE.match(body.patientId or "") else None
     if not prow or prow.kind != "patient":
         raise HTTPException(404, "Consultante no encontrado")
     prof_row = db.get(Record, (user.id, "profile"))
     prof = decrypt(prof_row.payload) if prof_row else {}
     if not (prof.get("nombre") and prof.get("firma")):
-        raise HTTPException(400, "Primero guarde su nombre y firma en «Mi perfil».")
+        raise HTTPException(400, "Primero guarda tu nombre y firma en «Mi perfil».")
     text, tipo = body.text.strip(), body.tipo.strip()[:200]
     if not text or len(text) > 60_000 or not tipo:
         raise HTTPException(400, "El documento está vacío o es demasiado largo")
     if body.signerType not in firmas.SIGNER_TYPES or not body.signerName.strip():
-        raise HTTPException(400, "Escriba quién firma")
+        raise HTTPException(400, "Escribe quién firma")
     if len(firmas.norm_doc(body.signerDoc)) < 3:
-        raise HTTPException(400, "Escriba el número de documento de quien firma: se le pedirá para abrir el enlace")
+        raise HTTPException(400, "Escribe el número de documento de quien firma: se le pedirá para abrir el enlace")
     token, now = firmas.new_token(), datetime.now(timezone.utc)
     data = {"token": token, "tipo": tipo, "plantilla": (body.plantilla or None), "text": text, "signerType": body.signerType,
             "signerName": body.signerName.strip()[:200], "signerDoc": body.signerDoc.strip()[:40],
@@ -2122,10 +2122,10 @@ def _remote_mail(db: Session, user: User, r: ConsentRequest, request: Request) -
     p = decrypt(db.get(Record, (user.id, r.patient_id)).payload)
     to = str(p.get("correo") or "").strip()
     if not EMAIL_RE.match(to):
-        return {"correoEnviado": False, "motivo": "El consultante no tiene un correo válido en sus datos."}
+        return {"correoEnviado": False, "motivo": "El consultante no tiene un correo válido en tus datos."}
     acc = survey.account(db, user.id)
     if not survey.smtp_enabled(acc):
-        return {"correoEnviado": False, "motivo": "Aún no ha configurado su correo de envío."}
+        return {"correoEnviado": False, "motivo": "Aún no ha configurado tu correo de envío."}
     prof_row = db.get(Record, (user.id, "profile"))
     prof = decrypt(prof_row.payload) if prof_row else {}
     d = decrypt(r.payload)
@@ -2158,7 +2158,7 @@ def remote_mail(ref: str, request: Request, user: User = Depends(pro_user), db: 
 def remote_cancel(ref: str, user: User = Depends(pro_user), db: Session = Depends(get_db)):
     r = _my_request(db, user, ref)
     if r.signed_at:
-        raise HTTPException(409, "Ya fue firmado: si el consultante lo retira, registre una revocación")
+        raise HTTPException(409, "Ya fue firmado: si el consultante lo retira, registra una revocación")
     r.cancelled_at = r.cancelled_at or datetime.now(timezone.utc)
     db.commit()
     audit(db, user.id, "consent.remote.cancel", ref)
@@ -2198,14 +2198,14 @@ class RemoteSignIn(BaseModel):
 def _unlock(db: Session, r: ConsentRequest, documento: str) -> dict:
     st = _cr_state(r)
     if st != "pendiente":
-        raise HTTPException(409, {"vencido": "El enlace venció. Pida uno nuevo al consultorio.", "anulado": "Este enlace fue anulado por el consultorio.",
-                                  "firmado": "Este documento ya fue firmado.", "bloqueado": "Se superó el número de intentos. Pida un enlace nuevo al consultorio."}[st])
+        raise HTTPException(409, {"vencido": "El enlace venció. Pide uno nuevo al consultorio.", "anulado": "Este enlace fue anulado por el consultorio.",
+                                  "firmado": "Este documento ya fue firmado.", "bloqueado": "Se superó el número de intentos. Pide un enlace nuevo al consultorio."}[st])
     d = decrypt(r.payload)
     if firmas.norm_doc(documento) != firmas.norm_doc(d.get("signerDoc")):
         r.attempts = (r.attempts or 0) + 1
         db.commit()
         left = firmas.MAX_ATTEMPTS - r.attempts
-        raise HTTPException(403, "El número de documento no coincide." + (f" Le quedan {left} intentos." if left > 0 else " El enlace quedó bloqueado; pida uno nuevo."))
+        raise HTTPException(403, "El número de documento no coincide." + (f" Le quedan {left} intentos." if left > 0 else " El enlace quedó bloqueado; pide uno nuevo."))
     return d
 
 
@@ -2221,20 +2221,20 @@ def public_consent_open(token: str, body: RemoteOpenIn, request: Request, db: Se
 
 @app.post("/api/firma/{token}")
 def public_consent_sign(token: str, body: RemoteSignIn, request: Request, db: Session = Depends(get_db)):
-    """El consultante firma: el consentimiento se agrega a su historia con la hora del servidor."""
+    """El consultante firma: el consentimiento se agrega a tu historia con la hora del servidor."""
     _public_throttle(request)
     r = _public_request(db, token)
     d = _unlock(db, r, body.documento)
     if not body.acepto:
         raise HTTPException(400, "Marque que leyó y acepta el documento")
     if not SIG_RE.match(body.firma or "") or len(body.firma) > 400_000:
-        raise HTTPException(400, "Dibuje su firma")
+        raise HTTPException(400, "Dibuja tu firma")
     sha = firmas.text_hash(d["text"])
     if body.sha256 and body.sha256 != sha:
-        raise HTTPException(409, "El documento cambió mientras lo leía. Recargue la página.")
+        raise HTTPException(409, "El documento cambió mientras lo leía. Recarga la página.")
     prow = db.get(Record, (r.user_id, r.patient_id))
     if not prow:
-        raise HTTPException(404, "La historia ya no existe. Comuníquese con el consultorio.")
+        raise HTTPException(404, "La historia ya no existe. Comunícate con el consultorio.")
     now = datetime.now(timezone.utc)
     ip = request.headers.get("cf-connecting-ip") or (request.client.host if request.client else "")
     c = {"tipo": d["tipo"], "text": d["text"], "signerType": d["signerType"], "signerName": d["signerName"], "signerDoc": d["signerDoc"],
@@ -2243,8 +2243,8 @@ def public_consent_sign(token: str, body: RemoteSignIn, request: Request, db: Se
          "consultorio": d.get("consultorio"),
          "remoto": {"id": r.ref, "enviadoAt": d.get("enviadoAt"), "firmadoAt": now.isoformat(), "ip": ip[:64],
                     "navegador": (request.headers.get("user-agent") or "")[:300], "sha256": sha,
-                    "verificacion": "El firmante abrió su enlace personal y escribió su número de documento"},
-         "copia": "Disponible para el usuario en su enlace de firma, donde puede guardarla o imprimirla"}
+                    "verificacion": "El firmante abrió tu enlace personal y escribió tu número de documento"},
+         "copia": "Disponible para el usuario en tu enlace de firma, donde puede guardarla o imprimirla"}
     if d.get("plantilla"):
         c["plantilla"] = d["plantilla"]
     if d.get("therapistDocId"):
@@ -2254,7 +2254,7 @@ def public_consent_sign(token: str, body: RemoteSignIn, request: Request, db: Se
     p["consents"] = list(p.get("consents") or []) + [c]
     p["abiertaEl"] = p.get("abiertaEl") or now.isoformat()
     if len(json.dumps(p, ensure_ascii=False)) > MAX_RECORD_BYTES:
-        raise HTTPException(413, "La historia es demasiado grande. Comuníquese con el consultorio.")
+        raise HTTPException(413, "La historia es demasiado grande. Comunícate con el consultorio.")
     prow.payload = encrypt(p)
     r.signed_at = now
     d.pop("token", None)
@@ -2313,7 +2313,7 @@ def booking_put(body: BookCfgIn, user: User = Depends(pro_user), db: Session = D
 
 
 def _booking_link(db: Session, slug: str) -> tuple[Booking, User, dict, dict]:
-    """El enlace público activo, su profesional (con suscripción vigente), su perfil y el correo de envío."""
+    """El enlace público activo, tu profesional (con suscripción vigente), tu perfil y el correo de envío."""
     b = db.scalar(select(Booking).where(Booking.slug == slug, Booking.active.is_(True))) if re.match(r"^[A-Za-z0-9_-]{10,64}$", slug or "") else None
     u = db.get(User, b.user_id) if b else None
     if not b or not u or not u.active or not suscrito(u, db):
@@ -2360,13 +2360,13 @@ def public_booking_create(slug: str, body: BookIn, request: Request, bg: Backgro
     cfg = decrypt(b.payload)
     nombres, apellidos, correo, tel = body.nombres.strip()[:80], body.apellidos.strip()[:80], body.correo.strip().lower()[:120], body.telefono.strip()[:20]
     if not nombres or not apellidos or not EMAIL_RE.match(correo):
-        raise HTTPException(400, "Escriba nombres, apellidos y un correo válido")
+        raise HTTPException(400, "Escribe nombres, apellidos y un correo válido")
     if not booking.modalidad_ok(cfg, body.inicio[:10], body.modalidad):
         raise HTTPException(400, "Modalidad no válida")
     if body.nuevo and len(_norm(tel)) < 7:
-        raise HTTPException(400, "Escriba un teléfono de contacto")
+        raise HTTPException(400, "Escribe un teléfono de contacto")
     if not body.nuevo and not _norm(body.documento):
-        raise HTTPException(400, "Escriba su número de documento")
+        raise HTTPException(400, "Escribe tu número de documento")
     try:
         start = datetime.strptime(body.inicio, "%Y-%m-%dT%H:%M").replace(tzinfo=booking.TZ)
     except ValueError:
@@ -2381,10 +2381,10 @@ def public_booking_create(slug: str, body: BookIn, request: Request, bg: Backgro
                 pid, pat = r.id, p
                 break
         if not pid:
-            raise HTTPException(404, "No encontramos su ficha con esos datos. Si es su primera vez, marque «Soy consultante nuevo».")
+            raise HTTPException(404, "No encontramos tu ficha con esos datos. Si es tu primera vez, marca «Soy consultante nuevo».")
     with _book_lock:
         if body.inicio[11:] not in booking.slots(cfg, booking.busy_of(_appts_of(db, u.id))).get(body.inicio[:10], []):
-            raise HTTPException(409, "Ese horario ya no está disponible. Elija otro.")
+            raise HTTPException(409, "Ese horario ya no está disponible. Elige otro.")
         aid, now_iso = "a_" + secrets.token_hex(8), datetime.now(timezone.utc).isoformat()
         payload = {"id": aid, "kind": "appt", "createdAt": now_iso, "updatedAt": now_iso, "startAt": start.astimezone(timezone.utc).isoformat(),
                    "duracion": cfg["duracion"], "modalidad": body.modalidad, "estado": "Programada", "origen": "enlace",
@@ -2431,7 +2431,7 @@ def public_appt_answer(token: str, body: ApptAnswer, request: Request, bg: Backg
     a = decrypt(row.payload)
     start = reminders.parse(a.get("startAt"))
     if not start or start < datetime.now(timezone.utc) or a.get("estado") not in (None, "Programada"):
-        raise HTTPException(409, "Esta cita ya no se puede confirmar ni cancelar desde aquí. Comuníquese con el consultorio.")
+        raise HTTPException(409, "Esta cita ya no se puede confirmar ni cancelar desde aquí. Comunícate con el consultorio.")
     now = datetime.now(timezone.utc).isoformat()
     estado = "Confirmada" if body.accion == "confirmar" else "Cancelada por el consultante"
     a["confirmacion"] = {"estado": estado, "at": now}
@@ -2478,10 +2478,10 @@ def _form_mail(db: Session, user: User, r: IntakeForm, request: Request) -> dict
     d = decrypt(r.payload)
     to = str(d.get("correo") or "").strip()
     if not EMAIL_RE.match(to):
-        return {"correoEnviado": False, "motivo": "Escriba un correo válido para enviarlo."}
+        return {"correoEnviado": False, "motivo": "Escribe un correo válido para enviarlo."}
     acc = survey.account(db, user.id)
     if not survey.smtp_enabled(acc):
-        return {"correoEnviado": False, "motivo": "Aún no ha configurado su correo de envío."}
+        return {"correoEnviado": False, "motivo": "Aún no ha configurado tu correo de envío."}
     prof_row = db.get(Record, (user.id, "profile"))
     prof = decrypt(prof_row.payload) if prof_row else {}
     try:
@@ -2511,10 +2511,10 @@ def form_list(user: User = Depends(pro_user), db: Session = Depends(get_db)):
 def form_create(body: FormIn, request: Request, user: User = Depends(pro_user), db: Session = Depends(get_db)):
     correo_p = body.correo.strip()
     if body.enviar and not EMAIL_RE.match(correo_p):
-        raise HTTPException(400, "Escriba un correo válido para enviarlo")
+        raise HTTPException(400, "Escribe un correo válido para enviarlo")
     prow = db.get(Record, (user.id, "profile"))
     if not formularios.spec((decrypt(prow.payload).get("formatos") or {}) if prow else {}):
-        raise HTTPException(400, "Agregue campos en Mis formatos > Datos del consultante (y márquelos para el formulario) antes de enviarlo.")
+        raise HTTPException(400, "Agrega campos en Mis formatos > Datos del consultante (y márcalos para el formulario) antes de enviarlo.")
     token, now = firmas.new_token(), datetime.now(timezone.utc)
     data = {"token": token, "nombre": body.nombre.strip()[:120] or None, "correo": correo_p[:200] or None}
     r = IntakeForm(id=firmas.token_hash(token), ref=secrets.token_hex(12), user_id=user.id, created_at=now, expires_at=now + formularios.ttl(), payload=encrypt(data))
@@ -2585,7 +2585,7 @@ def _public_form(db: Session, token: str) -> IntakeForm:
         raise HTTPException(404, "Enlace no válido")
     st = _fr_state(r)
     if st != "pendiente":
-        raise HTTPException(409, {"vencido": "El enlace venció. Pida uno nuevo al consultorio.", "anulado": "Este enlace fue anulado por el consultorio."}.get(st, "Este formulario ya fue enviado. Gracias."))
+        raise HTTPException(409, {"vencido": "El enlace venció. Pide uno nuevo al consultorio.", "anulado": "Este enlace fue anulado por el consultorio."}.get(st, "Este formulario ya fue enviado. Gracias."))
     return r
 
 
@@ -2595,7 +2595,7 @@ def public_form(token: str, request: Request, db: Session = Depends(get_db)):
     r = _public_form(db, token)
     row = db.get(Record, (r.user_id, "profile"))
     prof = decrypt(row.payload) if row else {}
-    return {"profesional": prof.get("nombre") or "su terapeuta", "consultorio": prof.get("consultorio") or "", "idioma": prof.get("idioma") or "", "nombre": decrypt(r.payload).get("nombre"), "campos": formularios.spec((prof.get("formatos") or {}))}
+    return {"profesional": prof.get("nombre") or "tu terapeuta", "consultorio": prof.get("consultorio") or "", "idioma": prof.get("idioma") or "", "nombre": decrypt(r.payload).get("nombre"), "campos": formularios.spec((prof.get("formatos") or {}))}
 
 
 class FormSubmitIn(BaseModel):
@@ -2660,14 +2660,14 @@ def feedback_create(body: FeedbackIn, user: User = Depends(current_user), db: Se
     with _lock:
         hits = [t for t in _fbhits.get(user.id, []) if t > time.time() - 3600]
         if len(hits) >= 30:
-            raise HTTPException(429, "Ha enviado muchos comentarios en la última hora. Intente más tarde.")
+            raise HTTPException(429, "Ha enviado muchos comentarios en la última hora. Intenta más tarde.")
         hits.append(time.time())
         _fbhits[user.id] = hits
     texto = body.texto.strip()
     if body.tema not in FB_TEMAS or body.tipo not in FB_TIPOS:
-        raise HTTPException(400, "Elija el tema y el tipo de comentario")
+        raise HTTPException(400, "Elige el tema y el tipo de comentario")
     if not texto or len(texto) > 5000:
-        raise HTTPException(400, "Escriba el comentario (máximo 5000 caracteres)")
+        raise HTTPException(400, "Escribe el comentario (máximo 5000 caracteres)")
     ctx = {k: str(v)[:300] for k, v in (body.contexto or {}).items() if isinstance(k, str) and len(k) <= 40}
     ctx = dict(list(ctx.items())[:12])
     img = None
@@ -2816,7 +2816,7 @@ def demo_load(body: DemoIn, user: User = Depends(pro_user), db: Session = Depend
         raise HTTPException(400, "Datos de ejemplo no válidos")
     pats = {r.get("id") for r in recs if r.get("kind") == "patient"}
     if _demo_ids(db, user.id)[1]:
-        raise HTTPException(409, "Ya tiene datos de ejemplo cargados")
+        raise HTTPException(409, "Ya tienes datos de ejemplo cargados")
     signer = _signer(db, user)
     rows = []
     for r in recs:
@@ -2879,18 +2879,18 @@ def access_log(body: AccessIn, request: Request, user: User = Depends(current_us
     audit(db, user.id, "history.view", vista, patient_id=body.patientId, ip=client_ip(request))
 
 
-AUDIT_TXT = {"account.export": "Exportó todos sus datos", "history.view": "Abrió la historia", "record.put": "Guardó", "record.delete": "Eliminó", "history.export": "Descargó la historia completa",
-             "blob.put": "Subió un adjunto", "blob.get": "Abrió un adjunto", "verify": "Se verificó un informe con su código", "records.list": "Cargó la lista de consultantes",
+AUDIT_TXT = {"account.export": "Exportó todos tus datos", "history.view": "Abrió la historia", "record.put": "Guardó", "record.delete": "Eliminó", "history.export": "Descargó la historia completa",
+             "blob.put": "Subió un adjunto", "blob.get": "Abrió un adjunto", "verify": "Se verificó un informe con tu código", "records.list": "Cargó la lista de consultantes",
              "consent.remote.create": "Envió un consentimiento para firmar a distancia", "consent.remote.sign": "El consultante firmó a distancia",
              "login.ok": "Ingresó", "login.fail": "Intento de ingreso fallido", "login.2fa_fail": "Código de verificación equivocado",
-             "access.denied": "Intento de acceso sin permiso", "password.change": "Cambió su contraseña", "record.import": "Importó",
+             "access.denied": "Intento de acceso sin permiso", "password.change": "Cambió tu contraseña", "record.import": "Importó",
              }
 KIND_TXT = {"patient": "datos o documentos de la historia", "note": "una sesión", "report": "un informe", "scale": "una escala", "appt": "una cita", "file": "un adjunto", "pago": "un pago"}
 
 
 @app.get("/api/bitacora")
 def access_list(patientId: str = "", limit: int = 300, user: User = Depends(pro_user), db: Session = Depends(get_db)):
-    """Quién entró y qué hizo: el terapeuta y su equipo. Por historia (patientId) o en general (incluye ingresos)."""
+    """Quién entró y qué hizo: el terapeuta y tu equipo. Por historia (patientId) o en general (incluye ingresos)."""
     team = {u.id: u for u in db.scalars(select(User).where((User.id == user.id) | (User.owner_id == user.id)))}
     q = select(Audit).where(Audit.user_id.in_(team)).order_by(Audit.id.desc()).limit(max(1, min(limit, 1000)))
     if patientId:

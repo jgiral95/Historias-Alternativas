@@ -41,7 +41,7 @@ const DIRTY_SEL = '#noteform, #intakeform, #reportform, #cierreform, #scaleform,
 function askDiscard(go) {
   if ($('#discardask')) return;
   const d = document.createElement('div'); d.className = 'idle'; d.id = 'discardask';
-  d.innerHTML = '<div class="box" role="alertdialog" aria-labelledby="dk_t"><b id="dk_t">Tiene cambios sin guardar</b><p style="margin:0">Si sale ahora, lo que escribió se pierde. Guárdelo como borrador o pulse «Seguir escribiendo».</p><div class="row end"><button class="btn warn" id="dk_go">Descartar y salir</button><button class="btn" id="dk_draft">Guardar borrador y salir</button><button class="btn pri" id="dk_stay">Seguir escribiendo</button></div></div>';
+  d.innerHTML = '<div class="box" role="alertdialog" aria-labelledby="dk_t"><b id="dk_t">Tienes cambios sin guardar</b><p style="margin:0">Si sale ahora, lo que escribió se pierde. Guárdalo como borrador o pulsa «Seguir escribiendo».</p><div class="row end"><button class="btn warn" id="dk_go">Descartar y salir</button><button class="btn" id="dk_draft">Guardar borrador y salir</button><button class="btn pri" id="dk_stay">Seguir escribiendo</button></div></div>';
   document.body.appendChild(d);
   $('#dk_stay').onclick = () => d.remove();
   $('#dk_go').onclick = () => { d.remove(); go(); };
@@ -112,8 +112,8 @@ function renderMain() {
     ${TEAM() ? '<button role="menuitem" data-act="profile">Mi cuenta</button>' : `<button role="menuitem" data-act="profile">Mi perfil</button><button role="menuitem" data-act="formats">Mis formatos</button>${S.mode === 'server' ? '<button role="menuitem" data-act="survey">Mi encuesta de satisfacción</button><button role="menuitem" data-act="team">Mi equipo</button><button role="menuitem" data-act="suscripcion">Mi suscripción</button>' : ''}`}${S.mode === 'server' && S.user && S.user.role === 'admin' ? '<button role="menuitem" data-act="users">Usuarios</button><button role="menuitem" data-act="fbAdmin">Comentarios de la beta</button>' : ''}${TEAM() || S.mode !== 'server' ? '' : '<button role="menuitem" data-act="accessLog">Bitácora de accesos</button>'}${TEAM() ? '' : '<button role="menuitem" data-act="stepsShow">Ayuda: primeros pasos</button>'}<button role="menuitem" data-act="privacy">Política de privacidad</button>${S.mode === 'server' ? '<hr><button role="menuitem" data-act="exportAll">Exportar todos mis datos</button><button role="menuitem" class="out" data-act="logout">Salir</button>' : ''}</div></div></div></header>
   ${S.mode === 'local' ? '<div class="banner">Modo local: los datos quedan solo en este navegador.</div>' : ''}
   ${S.mode === 'server' && hasLocal() ? '<div class="banner">Hay datos guardados en este navegador de antes de usar el servidor. <span class="row" style="display:inline-flex;margin-left:6px"><button class="btn sm" data-act="importLocal">Importar al servidor</button><button class="btn sm warn" data-act="dropLocal">Borrar copia local</button></span></div>' : ''}
-  ${S.patients.some(x => x.demo) ? `<div class="banner demo">Está viendo <b>consultantes de ejemplo</b> (ficticios), marcados «Ejemplo». Pruebe lo que quiera con ellos; nunca se les envía nada.${TEAM() ? '' : ' <button class="btn sm" data-act="demoDel">Borrar los datos de ejemplo</button>'}</div>` : ''}
-  ${incomplete && !TEAM() ? '<div class="banner">Complete su perfil y dibuje su firma en «Mi perfil». Sin ella no podrá firmar consentimientos, notas ni informes.</div>' : ''}
+  ${S.patients.some(x => x.demo) ? `<div class="banner demo">Está viendo <b>consultantes de ejemplo</b> (ficticios), marcados «Ejemplo». Prueba lo que quiera con ellos; nunca se les envía nada.${TEAM() ? '' : ' <button class="btn sm" data-act="demoDel">Borrar los datos de ejemplo</button>'}</div>` : ''}
+  ${incomplete && !TEAM() ? '<div class="banner">Completa tu perfil y dibuja tu firma en «Mi perfil». Sin ella no podrá firmar consentimientos, notas ni informes.</div>' : ''}
   ${S.view === 'agenda' ? agendaHTML() : S.view === 'finanzas' ? finanzasHTML() : S.view === 'cuaderno' && !TEAM() ? pnHTML() : `<div class="layout ${p || S.homeOpen ? 'in-file' : ''}"><div class="plist-wrap">${listHTML()}</div><div class="file-wrap">${p ? fileHTML(p) : homeHTML()}</div></div>`}`;
   if (S.view === 'agenda' || S.view === 'finanzas') return;
   if (S.view === 'cuaderno') { pnMount(); return; }
@@ -207,7 +207,7 @@ function rowsHTML() {
   const list = S.patients.filter(p => !q || norm(fullName(p) + ' ' + (p.documento || '')).includes(norm(q)))
     .sort((a, b) => (a.apellidos || '').localeCompare(b.apellidos || '') || (a.nombres || '').localeCompare(b.nombres || ''));
   const home = `<button class="prow home ${!S.pid ? 'on' : ''}" data-act="home"><span class="ico" aria-hidden="true">⌂</span><span class="nm">Resumen</span></button>`;
-  if (!list.length) return home + (hitsHTML(S.q) || `<div class="empty">${S.patients.length ? 'Ningún consultante ni nota coincide.' : 'Aún no hay consultantes. Cree el primero con «Nuevo consultante».'}</div>`);
+  if (!list.length) return home + (hitsHTML(S.q) || `<div class="empty">${S.patients.length ? 'Ningún consultante ni nota coincide.' : 'Aún no hay consultantes. Crea el primero con «Nuevo consultante».'}</div>`);
   S.openGroups = S.openGroups || ['Activo'];
   const cur = S.patients.find(x => x.id === S.pid);
   return home + hitsHTML(S.q) + GROUPS.map(([k, label]) => {
@@ -231,14 +231,14 @@ function todoHTML() {
   const active = S.patients.filter(p => !p.estado || p.estado === 'Activo');
   active.forEach(p => {
     const cs = p.consents || [];
-    if (!(p.intake && p.intake.signedAt) && !(p.incorporaciones || []).length && (cs.length || S.notes.some(n => n.patientId === p.id))) items.push({ k: 'Primera vez sin firmar', t: fullName(p), d: 'Aún no tiene la consulta de primera vez', act: `data-act="open" data-id="${p.id}" data-tab="intake"`, btn: 'Abrir', w: 3 });
+    if (!(p.intake && p.intake.signedAt) && !(p.incorporaciones || []).length && (cs.length || S.notes.some(n => n.patientId === p.id))) items.push({ k: 'Primera vez sin firmar', t: fullName(p), d: 'Aún no tienes la consulta de primera vez', act: `data-act="open" data-id="${p.id}" data-tab="intake"`, btn: 'Abrir', w: 3 });
     const last = lastAttention(p), next = S.appts.some(a => a.patientId === p.id && a.estado === 'Programada' && a.startAt >= nowI);
     if (last && !next && now - new Date(last).getTime() > 28 * 864e5) items.push({ k: 'Sin cita', t: fullName(p), d: 'Última atención ' + fmtD(last) + '; no tiene próxima cita', act: `data-act="apptEdit" data-patient="${p.id}"`, btn: 'Agendar', w: 5 });
   });
   const today = dayKey(new Date());
   S.patients.forEach(p => (p.solicitudes || []).forEach(r => { if (r.entrega) return; const lim = addBusinessDays(r.fecha, 10); items.push({ k: today > lim ? 'Copia vencida' : 'Copia por entregar', t: fullName(p), d: 'Pedida por ' + r.solicitante + ' · límite ' + fmtD(lim), act: `data-act="open" data-id="${p.id}" data-tab="archivo"`, btn: 'Abrir', w: today > lim ? -1 : 4 }); }));
   ((S.sv && S.sv.invitaciones) || []).filter(i => i.estado === 'abierta' && i.canal === 'manual' && !i.enviada).forEach(i => { const p = pat(i.patientId); if (p) items.push({ k: 'Encuesta por enviar', t: fullName(p), d: (i.error ? 'No se pudo enviar el correo · ' : 'Encuesta de satisfacción · ') + 'vence ' + fmtD(i.vence), act: `data-act="svSend" data-id="${i.id}"`, btn: 'Enviar', w: 6 }); });
-  (S.firmas || []).filter(f => f.estado === 'pendiente' || ((f.estado === 'vencido' || f.estado === 'bloqueado') && !(S.patients.find(x => x.id === f.patientId) || {}).consents?.some(c => c.tipo === f.tipo && c.signedAt > f.creado))).forEach(f => { const p = pat(f.patientId); if (p) items.push({ k: f.estado === 'pendiente' ? 'Firma a distancia pendiente' : 'Enlace de firma ' + f.estado, t: fullName(p), d: f.tipo + (f.estado === 'pendiente' ? ' · vence ' + fmtD(f.vence) : ' · envíe uno nuevo'), act: `data-act="open" data-id="${p.id}" data-tab="consent"`, btn: 'Abrir', w: f.estado === 'pendiente' ? 7 : 2 }); });
+  (S.firmas || []).filter(f => f.estado === 'pendiente' || ((f.estado === 'vencido' || f.estado === 'bloqueado') && !(S.patients.find(x => x.id === f.patientId) || {}).consents?.some(c => c.tipo === f.tipo && c.signedAt > f.creado))).forEach(f => { const p = pat(f.patientId); if (p) items.push({ k: f.estado === 'pendiente' ? 'Firma a distancia pendiente' : 'Enlace de firma ' + f.estado, t: fullName(p), d: f.tipo + (f.estado === 'pendiente' ? ' · vence ' + fmtD(f.vence) : ' · envía uno nuevo'), act: `data-act="open" data-id="${p.id}" data-tab="consent"`, btn: 'Abrir', w: f.estado === 'pendiente' ? 7 : 2 }); });
   S.pnotes.filter(n => n.revisar && n.revisar <= today && n.estado !== 'Cerrada').forEach(n => { const pp = n.patientId && pat(n.patientId); items.push({ k: 'Nota de proceso por revisar', t: n.titulo || 'Sin título', d: (pp ? fullName(pp) + ' · ' : '') + 'revisar el ' + fmtD(n.revisar), act: `data-act="pnOpen" data-id="${n.id}"`, btn: 'Abrir', w: 2 }); });
   remDue().forEach(a => { const p = pat(a.patientId); if (p) items.push({ k: 'Recordatorio por enviar', t: fullName(p), d: 'Cita ' + fmtShort(a.startAt) + (S.rem.items[a.id] && S.rem.items[a.id].error ? ' · no se pudo enviar el correo' : ''), act: `data-act="remSend" data-id="${a.id}"`, btn: 'Enviar', w: 1 }); });
   if (TEAM()) { const keep = items.filter(x => x.k === 'Sin cita' || x.k === 'Recordatorio por enviar'); items.length = 0; items.push(...keep); }
@@ -301,8 +301,8 @@ ACT.nlMore = () => { NL.n += 50; nlRedraw(); };
 function teamHomeHTML() {
   const act = S.patients.filter(p => !p.estado || p.estado === 'Activo').length, todayN = apptsOn(dayKey(new Date())).filter(a => a.estado !== 'Cancelada').length;
   return `<div class="panel"><div class="body"><button class="btn sm back" data-act="back">← Consultantes</button><h2 style="font-family:var(--f-doc);font-size:22px">Resumen</h2>
-  <p class="stnote">Cuenta de equipo de ${esc((S.user && S.user.ownerName) || 'su terapeuta')}. Puede manejar la agenda y los datos de los consultantes; la información de las sesiones es solo del terapeuta.</p>
-  ${S.user && !S.user.tieneFirma ? '<div class="banner">Registre su documento y su firma en «Mi cuenta» (menú arriba a la derecha): aparecen en el historial de cada cambio que haga a los datos de un consultante.</div>' : ''}
+  <p class="stnote">Cuenta de equipo de ${esc((S.user && S.user.ownerName) || 'tu terapeuta')}. Puedes manejar la agenda y los datos de los consultantes; la información de las sesiones es solo del terapeuta.</p>
+  ${S.user && !S.user.tieneFirma ? '<div class="banner">Registra tu documento y tu firma en «Mi cuenta» (menú arriba a la derecha): aparecen en el historial de cada cambio que haga a los datos de un consultante.</div>' : ''}
   <div class="stats"><div class="stat"><b>${act}</b><span>consultantes activos</span></div><div class="stat"><b>${todayN}</b><span>citas hoy</span></div></div>
   ${todoHTML()}${todayHTML()}</div></div>`;
 }
@@ -320,7 +320,7 @@ function homeHTML() {
   ${todoHTML()}
   ${todayHTML()}
   ${notesListHTML()}
-  <p style="color:var(--muted);margin:0">Seleccione un consultante de la lista o cree uno nuevo. Cada consentimiento, primera vez, nota de sesión e informe queda firmado con su firma, la fecha y la hora, y no se puede modificar después; solo se pueden agregar adendas.</p></div></div>`;
+  <p style="color:var(--muted);margin:0">Selecciona un consultante de la lista o crea uno nuevo. Cada consentimiento, primera vez, nota de sesión e informe queda firmado con tu firma, la fecha y la hora, y no se puede modificar después; solo se pueden agregar adendas.</p></div></div>`;
 }
 
 function fileHTML(p) {
@@ -343,8 +343,8 @@ function tabHTML(p) {
   if (S.tab === 'archivo') return tabArchivo(p);
   return tabInformes(p);
 }
-function sigNeeded() { return canSign() ? '' : '<div class="banner">Necesita su nombre y su firma en «Mi perfil» para firmar.</div>'; }
-function therPreview() { return S.profile.firma ? `<img class="sigimg" src="${S.profile.firma}" alt="Su firma guardada">` : '<span class="chip warn">Sin firma guardada</span>'; }
+function sigNeeded() { return canSign() ? '' : '<div class="banner">Necesitas tu nombre y tu firma en «Mi perfil» para firmar.</div>'; }
+function therPreview() { return S.profile.firma ? `<img class="sigimg" src="${S.profile.firma}" alt="Tu firma guardada">` : '<span class="chip warn">Sin firma guardada</span>'; }
 
 /* ----- Datos ----- */
 const hasDocs = p => (p.incorporaciones || []).length || S.scales.some(e => e.patientId === p.id) || (p.consents || []).length || (p.cierres || []).length || (p.solicitudes || []).length || S.files.some(f => f.patientId === p.id) || (p.intake && p.intake.signedAt) || S.notes.some(n => n.patientId === p.id) || S.reports.some(r => r.patientId === p.id);
@@ -364,10 +364,10 @@ document.addEventListener('mousedown', e => { if (e.target.closest('[data-nafill
 document.addEventListener('click', e => {
   const b = e.target.closest('[data-nafill]'); if (!b) return;
   const box = b.closest('.card, .sec'), v = b.dataset.nafill, el = naLast;
-  if (!el || !el.isConnected || !box.contains(el) || !visibleField(el)) { toast('Primero haga clic en el campo de este apartado que no aplica o que la persona no responde.'); return; }
+  if (!el || !el.isConnected || !box.contains(el) || !visibleField(el)) { toast('Primero haz clic en el campo de este apartado que no aplica o que la persona no responde.'); return; }
   if (el.tagName === 'SELECT') {
     const o = [...el.options].find(x => x.value === v || (v === 'No responde' && /no respond/i.test(x.value)) || (v === 'No aplica' && /^No aplica/.test(x.value)));
-    if (!o) { toast('Esta lista no tiene la opción «' + v + '»: elija una de la lista.'); return; }
+    if (!o) { toast('Esta lista no tiene la opción «' + v + '»: elige una de la lista.'); return; }
     el.value = o.value;
   } else { if (el.type === 'date') el.type = 'text'; el.value = v; }
   el.dispatchEvent(new Event('input', { bubbles: true })); el.dispatchEvent(new Event('change', { bubbles: true }));
@@ -385,9 +385,9 @@ function tabDatos(p) {
   const age = ageOf(p.nacimiento), minor = age !== null && age < 18;
   const lk = k => !S.draft && String(p[k] || '').trim() !== '';
   const cuid = `${cuidadorHTML(p, 1, 'acud')}${cuidadorHTML(p, 2, 'acud2')}`;
-  const reabrir = !S.draft && (p.estado || 'Activo') !== 'Activo' ? `<div class="sec"><h3>Estado del proceso</h3><div class="grid">${F('Estado del proceso', 'estado', p.estado || 'Activo', { type: 'select', opts: OPT.estado })}<div id="razonwrap">${F('Razón de inactividad', 'razonInactividad', p.razonInactividad || '', { type: 'select', opts: OPT.razon })}</div></div><p class="stnote">Para volver a atender a este consultante, cambie el estado a «Activo».</p></div>` : '';
+  const reabrir = !S.draft && (p.estado || 'Activo') !== 'Activo' ? `<div class="sec"><h3>Estado del proceso</h3><div class="grid">${F('Estado del proceso', 'estado', p.estado || 'Activo', { type: 'select', opts: OPT.estado })}<div id="razonwrap">${F('Razón de inactividad', 'razonInactividad', p.razonInactividad || '', { type: 'select', opts: OPT.razon })}</div></div><p class="stnote">Para volver a atender a este consultante, cambia el estado a «Activo».</p></div>` : '';
   return `${reabrir}${secOculta('contacto') ? '' : `<div class="sec"><h3>Contacto</h3><div class="grid">${countryF('País de residencia', 'paisRes', p.paisRes)}${cityF(p)}${F('Zona de residencia', 'zona', p.zona || '', { type: 'select', opts: OPT.zona })}${F('Localidad / comuna / barrio', 'localidad', p.localidad)}${F('Dirección', 'direccion', p.direccion)}${telF('Teléfono', 'telefono', 'telInd', p)}${F('Correo electrónico', 'correo', p.correo, { type: 'email' })}</div>${naRow()}</div>`}
-  ${secOculta('cuidadores') ? '' : minor ? `<div class="sec"><h3>Cuidadores o acudientes</h3>${cuid}</div>` : `<div class="sec"><h3>Cuidadores o acudientes</h3><p class="stnote">En adultos sin cuidador, marque «No aplica».</p>${cuid}</div>`}
+  ${secOculta('cuidadores') ? '' : minor ? `<div class="sec"><h3>Cuidadores o acudientes</h3>${cuid}</div>` : `<div class="sec"><h3>Cuidadores o acudientes</h3><p class="stnote">En adultos sin cuidador, marca «No aplica».</p>${cuid}</div>`}
   ${secOculta('emergencia') ? '' : `<div class="sec"><h3>Contacto de emergencia</h3><div class="grid">${F('Nombre', 'emergNombre', p.emergNombre)}${F('Parentesco', 'emergParentesco', p.emergParentesco)}${telF('Teléfono', 'emergTelefono', 'emergInd', p)}</div>${naRow()}</div>`}
   <div class="sec"><h3>Datos base</h3><div class="grid">${FIJOS.map(([k, l]) => F(l, k, p[k] || '', { rq: true })).join('')}</div></div>
   ${datosSchema().map(([t, fs]) => `<div class="sec"><h3>${esc(t)}</h3><div class="grid">${fs.filter(f => !FIJOS.some(x => x[0] === f[0])).map(f => F(f[1], f[0], p[f[0]], Object.assign(f[1] ? {} : { wide: true, aria: t }, ['date', 'time', 'number'].includes(f[3]) ? { type: f[3] } : {}))).join('')}</div>${naRow()}</div>`).join('')}
@@ -482,12 +482,12 @@ function linksHTML(p) {
   const ls = linked(p), others = S.patients.filter(x => x.id !== p.id && !ls.includes(x)).sort((a, b) => fullName(a).localeCompare(fullName(b), 'es'));
   return `<div class="sec" id="lkbox"><h3>Personas vinculadas${tipo && tipo !== 'Otro' ? ' · ' + esc(tipo.toLowerCase()) : ''}</h3>
   <p style="margin:0;font-size:13px;color:var(--muted)">Cada persona tiene su propia ficha, sus consentimientos y sus notas. El vínculo solo las relaciona para encontrarlas juntas.</p>
-  ${S.draft ? '<p class="stnote">Guarde primero los datos de este consultante para poder vincularlo.</p>' : `
+  ${S.draft ? '<p class="stnote">Guarda primero los datos de este consultante para poder vincularlo.</p>' : `
   ${ls.length ? `<div class="row">${ls.map(x => `<span class="lkchip"><button class="btn sm" data-act="open" data-id="${x.id}">${esc(fullName(x))}</button><button class="btn sm warn" data-act="lkDel" data-id="${x.id}" aria-label="Desvincular a ${esc(fullName(x))}">✕</button></span>`).join('')}</div>` : '<p class="stnote">Aún no hay personas vinculadas.</p>'}
-  ${others.length ? `<div class="row"><select id="lk_sel" aria-label="Consultante para vincular" style="flex:1;min-width:200px"><option value="">Elegir un consultante para vincular…</option>${others.map(x => `<option value="${x.id}">${esc(fullName(x))}${x.vinculo ? ' (ya en otro vínculo)' : ''}</option>`).join('')}</select><button class="btn" data-act="lkAdd">Vincular</button></div>` : '<p class="stnote">Cree a las otras personas como consultantes para vincularlas.</p>'}`}</div>`;
+  ${others.length ? `<div class="row"><select id="lk_sel" aria-label="Consultante para vincular" style="flex:1;min-width:200px"><option value="">Elegir un consultante para vincular…</option>${others.map(x => `<option value="${x.id}">${esc(fullName(x))}${x.vinculo ? ' (ya en otro vínculo)' : ''}</option>`).join('')}</select><button class="btn" data-act="lkAdd">Vincular</button></div>` : '<p class="stnote">Crea a las otras personas como consultantes para vincularlas.</p>'}`}</div>`;
 }
 ACT.lkAdd = async b => {
-  const p = curPatient(), o = S.patients.find(x => x.id === $('#lk_sel').value); if (!o) { toast('Elija un consultante.'); return; }
+  const p = curPatient(), o = S.patients.find(x => x.id === $('#lk_sel').value); if (!o) { toast('Elige un consultante.'); return; }
   const g = p.vinculo || o.vinculo || newId('v'), move = S.patients.filter(x => x === p || x === o || (o.vinculo && x.vinculo === o.vinculo) || (p.vinculo && x.vinculo === p.vinculo));
   const tipo = $('#f_servicio') ? $('#f_servicio').value : p.servicio, snaps = move.map(x => [x, clone(x)]);
   move.forEach(x => { x.vinculo = g; if (tipo && (!x.servicio || x.servicio === 'Individual')) x.servicio = tipo; });
@@ -514,10 +514,10 @@ ACT.savePatient = async b => {
   // El nombre de la ficha sale de los campos propios (Mis formatos): «Nombre»/«Apellido»; si no hay, del primer campo con datos.
   const nm = String(o.nombres || '').trim() || String(o.apellidos || '').trim() ? {} : deriveName(o);
   if (nm.nombres || nm.apellidos) Object.assign(o, nm);
-  else if (!String(o.nombres || '').trim() && !String(o.apellidos || '').trim() && !p.nombres && !p.apellidos) { if (!dr) { toast('Escriba al menos el nombre del consultante.'); return; } o.nombres = 'Borrador sin nombre'; }
+  else if (!String(o.nombres || '').trim() && !String(o.apellidos || '').trim() && !p.nombres && !p.apellidos) { if (!dr) { toast('Escribe al menos el nombre del consultante.'); return; } o.nombres = 'Borrador sin nombre'; }
   if (!AUTO.on) {  // Nombre, apellido y documento son obligatorios al guardar a mano (también «Guardar borrador»); el guardado automático sí admite borradores
     const falta = FIJOS.filter(([k]) => !String(k in o ? o[k] : p[k] || '').trim());
-    if (falta.length) { toast(t('Complete {0} para guardar.', falta.map(x => t(x[1]).toLowerCase()).join(', '))); const f = $('#tabbody [data-f="' + falta[0][0] + '"]'); if (f) f.focus(); return; }
+    if (falta.length) { toast(t('Completa {0} para guardar.', falta.map(x => t(x[1]).toLowerCase()).join(', '))); const f = $('#tabbody [data-f="' + falta[0][0] + '"]'); if (f) f.focus(); return; }
   }
   if (S.draft && dupOf(o, p.id)) { if (!AUTO.on) dupWarn(o, p.id); return; }
   const snap = clone(p); Object.assign(p, o);
@@ -543,7 +543,7 @@ ACT.delPatient = () => {
 function chooseParts(p, title, go) {
   const root = $('#modal-root');
   root.innerHTML = `<div class="modal" role="dialog" aria-modal="true" aria-label="${esc(title)}"><div class="box" id="partsform" style="width:min(520px,100%)"><div class="row" style="justify-content:space-between"><h3>${esc(title)}</h3><button class="btn sm" id="pt_cl">Cerrar</button></div>
-  <p style="margin:0;font-size:14px">Marque lo que quiere incluir. Si quita algo, el documento lo indica al inicio como copia parcial.</p>
+  <p style="margin:0;font-size:14px">Marca lo que quiere incluir. Si quita algo, el documento lo indica al inicio como copia parcial.</p>
   <div class="sec">${FULL_PARTS.map(([k, l]) => { const n = partCount(p, k); return `<label class="check"><input type="checkbox" data-part="${k}" ${n ? 'checked' : 'disabled'}> <span>${esc(l)} <span style="color:var(--muted)">(${n})</span></span></label>`; }).join('')}</div>
   <div class="row end"><button class="btn pri" id="pt_go">Generar</button></div></div></div>`;
   $('#pt_cl').onclick = () => { root.innerHTML = ''; };
@@ -568,10 +568,10 @@ function tabConsent(p) {
   if (cs.length && !S.reconsent) {
     const hasCare = cs.some(c => c.tipo !== DATA_TIPO && !(c.revocacion && c.revocacion.alcance === 'Total'));
     const remote = /Virtual|Mixta/.test(p.modalidadAt || ''), hasTele = cs.some(c => (/tele/i.test(c.tipo || '') || /TELETERAPIA/i.test(c.text || '')) && !(c.revocacion && c.revocacion.alcance === 'Total'));
-    const teleWarn = remote && !hasTele ? `<div class="banner">En los datos, la modalidad de atención es «${esc(p.modalidadAt)}», pero ningún consentimiento vigente incluye teleterapia. Registre uno de tipo «${p.modalidadAt === 'Virtual' ? 'Teleterapia' : 'Presencial y teleterapia'}».</div>` : '';
-    return `<div class="sec">${remotePending(p)}${dataBanner}${p.consentDraft ? '<div class="banner">Tiene un consentimiento en borrador (sin firmar). <button class="btn sm pri" data-act="reConsent">Continuar</button></div>' : ''}${hasCare ? '' : '<div class="banner">No hay un consentimiento de atención vigente.</div>'}${teleWarn}<div class="row" style="justify-content:space-between"><h3 style="flex:1">Consentimientos y autorizaciones (${cs.length})</h3><button class="btn" data-act="formats" data-hub="consent">Editar modelos</button><button class="btn pri" data-act="reConsent">Nuevo consentimiento</button></div>
+    const teleWarn = remote && !hasTele ? `<div class="banner">En los datos, la modalidad de atención es «${esc(p.modalidadAt)}», pero ningún consentimiento vigente incluye teleterapia. Registra uno de tipo «${p.modalidadAt === 'Virtual' ? 'Teleterapia' : 'Presencial y teleterapia'}».</div>` : '';
+    return `<div class="sec">${remotePending(p)}${dataBanner}${p.consentDraft ? '<div class="banner">Tienes un consentimiento en borrador (sin firmar). <button class="btn sm pri" data-act="reConsent">Continuar</button></div>' : ''}${hasCare ? '' : '<div class="banner">No hay un consentimiento de atención vigente.</div>'}${teleWarn}<div class="row" style="justify-content:space-between"><h3 style="flex:1">Consentimientos y autorizaciones (${cs.length})</h3><button class="btn" data-act="formats" data-hub="consent">Editar modelos</button><button class="btn pri" data-act="reConsent">Nuevo consentimiento</button></div>
     ${cs.map((c, i) => [c, i]).reverse().map(([c, i]) => consentCard(p, c, i)).join('')}
-    <p style="margin:0;font-size:13px;color:var(--muted)">Si el consultante empieza a atenderse por videollamada, registre un consentimiento nuevo de tipo «Teleterapia».</p></div>`;
+    <p style="margin:0;font-size:13px;color:var(--muted)">Si el consultante empieza a atenderse por videollamada, registra un consentimiento nuevo de tipo «Teleterapia».</p></div>`;
   }
   const mine = myConsents();
   const byMod = { Virtual: 'Teleterapia (atención a distancia)', 'Mixta (presencial y virtual)': 'Presencial y teleterapia' }[p.modalidadAt] || 'Atención presencial';
@@ -589,10 +589,10 @@ function tabConsent(p) {
     <div class="card" id="assentblock"><label class="check"><input type="checkbox" id="f_as_firma" data-f="as_firma" checked> <span>El menor (${esc(fullName(p))}) también firma el asentimiento</span></label>
     <div class="sigbox" data-pad="assentSig"></div><div class="row"><button class="btn sm" data-clear="assentSig">Borrar firma</button></div>
     ${F('Observaciones sobre el asentimiento (opcional)', 'as_obs', '', { type: 'area', rows: 2, wide: true })}</div></div>
-    <div class="fld"><span class="lbl">Firma del terapeuta (guardada en su perfil)</span>${therPreview()}</div>`
+    <div class="fld"><span class="lbl">Firma del terapeuta (guardada en tu perfil)</span>${therPreview()}</div>`
   : `<div class="grid">${F('Firma quien', 'signerType', dr.signerType || 'Consultante', { type: 'select', opts: ['Consultante', 'Acudiente'] })}${F('Nombre del firmante', 'signerName', dr.signerName || fullName(p))}${F('Documento del firmante', 'signerDoc', dr.signerDoc || p.documento)}</div>
   <div class="grid"><div class="fld"><span class="lbl">Firma del consultante o acudiente</span><div class="sigbox" data-pad="consentSig"></div><div class="row"><button class="btn sm" data-clear="consentSig">Borrar firma</button></div></div>
-  <div class="fld"><span class="lbl">Firma del terapeuta (guardada en su perfil)</span>${therPreview()}</div></div>`}
+  <div class="fld"><span class="lbl">Firma del terapeuta (guardada en tu perfil)</span>${therPreview()}</div></div>`}
   <div class="grid">${F('Copia para el usuario', 'copia', dr.copia || '', { type: 'select', opts: [''].concat(COPIA), req: true })}</div>
   <label class="check"><input type="checkbox" id="c_ok"> <span><b>Quien firma leyó el documento, recibió respuestas a sus preguntas y acepta de forma libre y voluntaria.</b></span></label>
   <div class="row end">${btns}</div>

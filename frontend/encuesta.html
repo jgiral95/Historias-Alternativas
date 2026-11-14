@@ -4,12 +4,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Encuesta de satisfacción</title>
-<meta name="description" content="Cuéntenos cómo le fue: toma menos de un minuto.">
+<meta name="description" content="Cuéntanos cómo le fue: toma menos de un minuto.">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Alter-Karute">
 <meta property="og:locale" content="es_CO">
 <meta property="og:title" content="Encuesta de satisfacción · Alter-Karute">
-<meta property="og:description" content="Cuéntenos cómo le fue: toma menos de un minuto.">
+<meta property="og:description" content="Cuéntanos cómo le fue: toma menos de un minuto.">
 <meta property="og:image" content="__ORIGIN__/og.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
@@ -66,26 +66,26 @@ const q = new URLSearchParams(location.search), token = q.get('t') || '';
 const logo = '<svg width="30" height="30" viewBox="0 0 120 120" aria-hidden="true"><rect x="6" y="6" width="108" height="108" rx="16" fill="#4E6B58"/><rect x="34" y="22" width="52" height="64" rx="6" fill="#FFFFFF"/><rect x="46" y="14" width="28" height="16" rx="4" fill="#FFFFFF" stroke="#4E6B58" stroke-width="4"/><rect x="42" y="46" width="36" height="6" rx="3" fill="#4E6B58"/><rect x="42" y="58" width="36" height="6" rx="3" fill="#4E6B58"/><rect x="42" y="70" width="22" height="6" rx="3" fill="#4E6B58"/></svg>';
 const card = html => { $('#m').innerHTML = `<div class="card">${html}</div>`; };
 async function start() {
-  if (!token) return card('<div class="res bad">El enlace está incompleto. Ábralo de nuevo desde el mensaje que recibió.</div>');
+  if (!token) return card('<div class="res bad">El enlace está incompleto. Ábrelo de nuevo desde el mensaje que recibió.</div>');
   let d;
   try {
     const r = await fetch('/api/encuesta/' + encodeURIComponent(token), { headers: H });
-    if (r.status === 404) return card('<div class="res bad">Este enlace no es válido. Ábralo de nuevo desde el mensaje que recibió.</div>');
+    if (r.status === 404) return card('<div class="res bad">Este enlace no es válido. Ábrelo de nuevo desde el mensaje que recibió.</div>');
     if (!r.ok) throw new Error();
     d = await r.json();
-  } catch (e) { return card('<div class="res bad">No se pudo cargar la encuesta. Intente de nuevo en unos minutos.</div>'); }
-  const who = esc(d.consultorio || d.profesional || 'su terapeuta');
+  } catch (e) { return card('<div class="res bad">No se pudo cargar la encuesta. Intenta de nuevo en unos minutos.</div>'); }
+  const who = esc(d.consultorio || d.profesional || 'tu terapeuta');
   if (q.get('baja') === '1') return optout(who);
   if (d.estado === 'respondida') return card(`<h1>${logo}Encuesta de satisfacción</h1><div class="res ok">Esta encuesta ya fue respondida. ¡Gracias!</div>`);
   if (d.estado === 'vencida') return card(`<h1>${logo}Encuesta de satisfacción</h1><div class="res bad">Esta encuesta ya cerró.</div>`);
-  let dim = '', html = `<div class="card"><h1>${logo}Encuesta de satisfacción</h1><p>Atención en <b>${who}</b>${d.profesional && d.consultorio ? ' con ' + esc(d.profesional) : ''}.</p><p class="muted">${esc(d.intro)}</p>${d.prueba ? '<div class="res ok">Esta es una <b>encuesta de prueba</b>: sus respuestas quedan marcadas como prueba y no se mezclan con las de los consultantes.</div>' : ''}</div><form id="f" novalidate>`;
+  let dim = '', html = `<div class="card"><h1>${logo}Encuesta de satisfacción</h1><p>Atención en <b>${who}</b>${d.profesional && d.consultorio ? ' con ' + esc(d.profesional) : ''}.</p><p class="muted">${esc(d.intro)}</p>${d.prueba ? '<div class="res ok">Esta es una <b>encuesta de prueba</b>: tus respuestas quedan marcadas como prueba y no se mezclan con las de los consultantes.</div>' : ''}</div><form id="f" novalidate>`;
   d.preguntas.forEach((p, k) => {
     if (p.dim !== dim) { dim = p.dim; html += `<h2>${esc(dim)}</h2>`; }
     html += `<fieldset id="q_${k}" data-id="${esc(p.id)}" data-tipo="${esc(p.tipo)}"><legend>${k + 1}. ${esc(p.texto)}${p.tipo === 'texto' ? '' : ' <span aria-hidden="true" style="color:var(--danger)">*</span>'}</legend>` +
       (p.tipo === 'texto' ? `<textarea name="r_${k}" rows="3" maxlength="1500" aria-label="${esc(p.texto)}"></textarea>`
         : `<div class="opts">${p.opciones.map((o, j) => `<label><input type="radio" name="r_${k}" value="${j}" ${j === 0 ? 'required' : ''}> ${esc(o)}</label>`).join('')}</div>`) + '</fieldset>';
   });
-  html += `<div id="err" aria-live="polite"></div><button id="send">Enviar respuestas</button><p class="muted">* Obligatoria. Sus respuestas se guardan sin su nombre. <a href="?t=${encodeURIComponent(token)}&baja=1" style="color:var(--muted)">No quiero recibir más encuestas</a></p></form>`;
+  html += `<div id="err" aria-live="polite"></div><button id="send">Enviar respuestas</button><p class="muted">* Obligatoria. Tus respuestas se guardan sin tu nombre. <a href="?t=${encodeURIComponent(token)}&baja=1" style="color:var(--muted)">No quiero recibir más encuestas</a></p></form>`;
   $('#m').innerHTML = html;
   $('#f').addEventListener('change', e => { const fs = e.target.closest('fieldset'); if (fs) fs.classList.remove('miss'); if (!document.querySelector('fieldset.miss')) $('#err').innerHTML = ''; });
   $('#f').onsubmit = async e => {
@@ -100,18 +100,18 @@ async function start() {
     const b = $('#send'); b.disabled = true; b.textContent = 'Enviando…';
     try {
       const r = await fetch('/api/encuesta/' + encodeURIComponent(token), { method: 'POST', headers: H, body: JSON.stringify({ respuestas: resp }) });
-      if (r.status === 204) { card(`<h1>${logo}¡Gracias!</h1><div class="res ok">Sus respuestas quedaron guardadas. Nos ayudan a mejorar la atención.</div>`); scrollTo(0, 0); return; }
-      let m = 'No se pudo enviar. Intente de nuevo.'; try { const j = await r.json(); if (j.detail) m = j.detail; } catch (x) { /* sin cuerpo */ }
+      if (r.status === 204) { card(`<h1>${logo}¡Gracias!</h1><div class="res ok">Tus respuestas quedaron guardadas. Nos ayudan a mejorar la atención.</div>`); scrollTo(0, 0); return; }
+      let m = 'No se pudo enviar. Intenta de nuevo.'; try { const j = await r.json(); if (j.detail) m = j.detail; } catch (x) { /* sin cuerpo */ }
       $('#err').innerHTML = `<div class="res bad">${esc(m)}</div>`;
-    } catch (x) { $('#err').innerHTML = '<div class="res bad">No hay conexión. Sus respuestas siguen aquí: intente de nuevo.</div>'; }
+    } catch (x) { $('#err').innerHTML = '<div class="res bad">No hay conexión. Tus respuestas siguen aquí: intenta de nuevo.</div>'; }
     b.disabled = false; b.textContent = 'Enviar respuestas';
   };
 }
 function optout(who) {
-  card(`<h1>${logo}No recibir más encuestas</h1><p>¿Quiere dejar de recibir encuestas de satisfacción de <b>${who}</b>? Esto no afecta su atención.</p><div id="err"></div><div style="display:flex;gap:8px;flex-wrap:wrap"><button id="yes">Sí, no enviarme más</button><a href="?t=${encodeURIComponent(token)}"><button class="sec" type="button">Volver a la encuesta</button></a></div>`);
+  card(`<h1>${logo}No recibir más encuestas</h1><p>¿Quieres dejar de recibir encuestas de satisfacción de <b>${who}</b>? Esto no afecta tu atención.</p><div id="err"></div><div style="display:flex;gap:8px;flex-wrap:wrap"><button id="yes">Sí, no enviarme más</button><a href="?t=${encodeURIComponent(token)}"><button class="sec" type="button">Volver a la encuesta</button></a></div>`);
   $('#yes').onclick = async () => {
     try { const r = await fetch('/api/encuesta/' + encodeURIComponent(token) + '/baja', { method: 'POST', headers: H }); if (r.status !== 204) throw new Error(); card(`<h1>${logo}Listo</h1><div class="res ok">No le enviaremos más encuestas.</div>`); }
-    catch (e) { $('#err').innerHTML = '<div class="res bad">No se pudo guardar. Intente de nuevo.</div>'; }
+    catch (e) { $('#err').innerHTML = '<div class="res bad">No se pudo guardar. Intenta de nuevo.</div>'; }
   };
 }
 start();

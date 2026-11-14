@@ -1,6 +1,6 @@
 """Diseño común de los correos de Alter-Karute: logo, título, tarjeta de datos, botón y pie.
 
-Cada correo conserva su versión en texto plano y le suma esta versión HTML. El logo es la imagen pública
+Cada correo conserva tu versión en texto plano y le suma esta versión HTML. El logo es la imagen pública
 /logo-email.png del sitio (PUBLIC_URL); si PUBLIC_URL no está configurado, el correo sale sin logo."""
 import re
 from email.message import EmailMessage
@@ -12,7 +12,7 @@ from .config import PUBLIC_URL
 URL_RE = re.compile(r"https?://[^\s]+")
 _P = 'style="padding:16px 32px 0;font-size:15px;line-height:1.6"'
 BOSQUE, SALVIA, ARENA, CREMA, SUAVE, LINEA, TINTA = "#2F4A3A", "#7C9A83", "#F6F1E7", "#FBF8F2", "#6A675C", "#E3DBCB", "#2B2A25"
-ACERCA = ("Alter-Karute es un espacio sereno para que terapeutas de terapias alternativas lleven el seguimiento de sus consultantes: "
+ACERCA = ("Alter-Karute es un espacio sereno para que terapeutas de terapias alternativas lleven el seguimiento de tus consultantes: "
           "sesiones, agenda y acuerdos en un solo lugar. No es una herramienta clínica.")
 
 
@@ -40,7 +40,7 @@ def layout(titulo: str, intro=(), filas=(), cierre=(), boton: tuple[str, str] | 
     if boton:
         u = e(boton[1], quote=True)
         btn = (f'<tr><td style="padding:24px 32px 0"><a href="{u}" style="background:{BOSQUE};color:#FFFFFF;text-decoration:none;padding:14px 28px;border-radius:99px;font-weight:bold;font-size:15px;display:inline-block">{e(boton[0])}</a></td></tr>'
-               f'<tr><td style="padding:16px 32px 0;font-size:13px;line-height:1.6;color:{SUAVE}">Si el botón no funciona, copie y pegue esta dirección en su navegador:<br><a href="{u}" style="color:{BOSQUE};word-break:break-all">{e(boton[1])}</a></td></tr>')
+               f'<tr><td style="padding:16px 32px 0;font-size:13px;line-height:1.6;color:{SUAVE}">Si el botón no funciona, copia y pega esta dirección en tu navegador:<br><a href="{u}" style="color:{BOSQUE};word-break:break-all">{e(boton[1])}</a></td></tr>')
     if boton2:
         u2 = e(boton2[1], quote=True)
         btn += (f'<tr><td style="padding:12px 32px 0"><a href="{u2}" style="background:#FFFFFF;color:{BOSQUE};border:2px solid {BOSQUE};text-decoration:none;padding:12px 26px;border-radius:99px;font-weight:bold;font-size:15px;display:inline-block">{e(boton2[0])}</a></td></tr>')
@@ -51,7 +51,7 @@ def layout(titulo: str, intro=(), filas=(), cierre=(), boton: tuple[str, str] | 
         txt = f'{e(n[0])} <a href="{e(n[2], quote=True)}" style="color:{BOSQUE}">{e(n[1])}</a>.' if isinstance(n, tuple) else e(n)
         nts += f'<tr><td style="padding:16px 32px 0;font-size:13px;line-height:1.6;color:{SUAVE}">{txt}</td></tr>'
     logo = f'<img src="{e(PUBLIC_URL, quote=True)}/logo-email.png" width="64" height="64" alt="Alter-Karute" style="display:block;border:0">' if PUBLIC_URL else f'<b style="font-size:20px;color:{BOSQUE}">Alter-Karute</b>'
-    sitio = f'<br><a href="{e(PUBLIC_URL, quote=True)}" style="color:{BOSQUE};font-weight:bold;text-decoration:none">Conozca Alter-Karute →</a>' if PUBLIC_URL else ""
+    sitio = f'<br><a href="{e(PUBLIC_URL, quote=True)}" style="color:{BOSQUE};font-weight:bold;text-decoration:none">Conoce Alter-Karute →</a>' if PUBLIC_URL else ""
     return f"""<!doctype html><html lang="es"><body style="margin:0;padding:0;background:{ARENA}">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:{ARENA};padding:32px 12px"><tr><td align="center">
 <table role="presentation" width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;background:#FFFFFF;border-radius:16px;border-top:6px solid {BOSQUE};font-family:Arial,Helvetica,sans-serif;color:{TINTA}">
@@ -66,7 +66,7 @@ def layout(titulo: str, intro=(), filas=(), cierre=(), boton: tuple[str, str] | 
 
 
 def agregar(m: EmailMessage, html: str, lang: str | None = None) -> EmailMessage:
-    """Suma al correo (ya con su texto plano) la versión HTML y, en ambas, la descripción de Alter-Karute.
+    """Suma al correo (ya con tu texto plano) la versión HTML y, en ambas, la descripción de Alter-Karute.
     Con lang="en" traduce asunto, texto y HTML (traduccion.py)."""
     if lang == "en":
         asunto = traduccion.tr(m["Subject"] or "", "en")

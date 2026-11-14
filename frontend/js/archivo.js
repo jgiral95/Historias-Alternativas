@@ -49,7 +49,7 @@ function tabArchivo(p) {
 }
 ACT.uploadFile = async b => {
   const p = curPatient(), inp = $('#f_upfile'), f = inp && inp.files[0], o = readForm($('#fileform'), {});
-  if (!f) { toast('Elija un archivo.'); return; }
+  if (!f) { toast('Elige un archivo.'); return; }
   if (!FILE_TYPES[f.type]) { toast('Solo se admiten PDF, PNG, JPG o WEBP.'); return; }
   if (upTooBig(f)) { toast('El archivo supera ' + (/^image\//.test(f.type) ? '40' : '8') + ' MB.'); return; }
   const id = newId('f'); b.disabled = true; b.textContent = 'Comprimiendo…';
@@ -84,7 +84,7 @@ ACT.newSol = () => { S.newSol = true; render(); };
 ACT.cancelSol = () => { S.newSol = false; render(); };
 ACT.saveSol = async b => {
   const p = curPatient(), o = readForm($('#solform'), {});
-  if (!o.solicitante || !o.fecha) { toast('Indique el solicitante y la fecha.'); return; }
+  if (!o.solicitante || !o.fecha) { toast('Indica el solicitante y la fecha.'); return; }
   if (!o.verificado) { toast('Confirme que verificó la identidad y la autorización del solicitante.'); return; }
   const snap = clone(p); dropBorrador(p, 'solform');
   p.solicitudes = (p.solicitudes || []).concat([{ id: newId('s'), fecha: o.fecha, calidad: o.calidad, solicitante: o.solicitante, documento: o.documento, medio: o.medio, observaciones: o.observaciones, verificado: true, registradoAt: nowISO(), registradoPor: S.profile.nombre }]);
@@ -99,7 +99,7 @@ ACT.deliverSol = b => {
   <p class="lock-note">La entrega queda registrada y no se puede modificar.</p><div class="row end"><button class="btn pri" id="ensave">Registrar entrega</button></div></div></div>`;
   $('#encl').onclick = () => { root.innerHTML = ''; };
   $('#ensave').onclick = async () => {
-    const o = readForm($('#entform'), {}); if (!o.fecha) { toast('Indique la fecha.'); return; }
+    const o = readForm($('#entform'), {}); if (!o.fecha) { toast('Indica la fecha.'); return; }
     p.solicitudes[i] = Object.assign({}, r, { entrega: { fecha: o.fecha, medio: o.medio, nota: o.nota, registradoAt: nowISO(), registradoPor: S.profile.nombre } });
     if (!(await persist([p], $('#ensave')))) { p.solicitudes[i] = r; return; }
     root.innerHTML = ''; toast('Entrega registrada.'); render();
@@ -107,7 +107,7 @@ ACT.deliverSol = b => {
 };
 ACT.revokeConsent = b => {
   const p = curPatient(), i = +b.dataset.i, c = p.consents[i], root = $('#modal-root');
-  if (!canSign()) { toast('Primero guarde su nombre y firma en «Mi perfil».'); return; }
+  if (!canSign()) { toast('Primero guarda tu nombre y firma en «Mi perfil».'); return; }
   root.innerHTML = `<div class="modal" role="dialog" aria-modal="true" aria-label="Revocación"><div class="box" id="revform" style="width:min(640px,100%)"><div class="row" style="justify-content:space-between"><h3>Revocación del consentimiento</h3><button class="btn sm" id="rvcl">Cerrar</button></div>
   <p style="margin:0;font-size:14px">Consentimiento de ${esc(c.tipo || 'atención presencial').toLowerCase()} firmado el ${esc(fmtD(c.signedAt))}.</p>
   <div class="grid">${F('Fecha', 'fecha', dayKey(new Date()), { type: 'date' })}${F('Alcance', 'alcance', 'Total', { type: 'select', opts: ['Total', 'Parcial'] })}${F('Detalle (si es parcial)', 'detalle', '', { ph: 'Ej.: no autoriza la atención por videollamada' })}
@@ -119,13 +119,13 @@ ACT.revokeConsent = b => {
   $('#rvclr').onclick = () => pad.clear(); $('#rvcl').onclick = () => { root.innerHTML = ''; };
   $('#rvsave').onclick = async () => {
     const o = readForm($('#revform'), {});
-    if (!o.signerName || !o.fecha) { toast('Indique la fecha y el nombre de quien revoca.'); return; }
-    if (o.alcance === 'Parcial' && !o.detalle) { toast('Describa el alcance de la revocación parcial.'); return; }
+    if (!o.signerName || !o.fecha) { toast('Indica la fecha y el nombre de quien revoca.'); return; }
+    if (o.alcance === 'Parcial' && !o.detalle) { toast('Describe el alcance de la revocación parcial.'); return; }
     if (pad.isEmpty()) { toast('Falta la firma de quien revoca.'); return; }
     p.consents[i] = Object.assign({}, c, { revocacion: Object.assign(o, { signerSig: pad.data(), signedAt: nowISO() }, therSnap()) });
     if (!(await persist([p], $('#rvsave')))) { p.consents[i] = c; return; }
     root.innerHTML = '';
-    toast(o.alcance === 'Total' ? 'Revocación registrada. Si el proceso termina, registre la nota de cierre.' : 'Revocación parcial registrada.'); render();
+    toast(o.alcance === 'Total' ? 'Revocación registrada. Si el proceso termina, registra la nota de cierre.' : 'Revocación parcial registrada.'); render();
   };
 };
 
@@ -169,7 +169,7 @@ function docIncorp(p, c) {
   <tr><td><b>Ubicación de los originales</b></td><td>${esc(c.originales || '')}</td></tr></table>
   <h2>Archivos digitalizados</h2><table>${c.archivos.map((f, i) => `<tr><td>${i + 1}. ${esc(f.nombre)} (${esc(fmtSize(f.size))})</td><td style="font-family:monospace;font-size:11px;word-break:break-all">${f.sha256 ? 'SHA-256: ' + esc(f.sha256) : ''}</td></tr>`).join('')}</table>
   ${c.observaciones ? `<p><b>Observaciones.</b> ${esc(c.observaciones)}</p>` : ''}
-  <p>Declaro que las copias digitales corresponden fielmente a los documentos originales. La huella SHA-256 de cada archivo permite comprobar que no ha sido modificado desde su incorporación.</p>
+  <p>Declaro que las copias digitales corresponden fielmente a los documentos originales. La huella SHA-256 de cada archivo permite comprobar que no ha sido modificado desde tu incorporación.</p>
   ${sigBlock([therSig(c, c.signedAt)])}</div>`;
 }
 function incorpHTML(p) {
@@ -178,27 +178,27 @@ function incorpHTML(p) {
     <span class="ts">${c.archivos.length} archivo${c.archivos.length > 1 ? 's' : ''}${c.desde || c.hasta ? ' · atenciones ' + esc([c.desde && fmtD(c.desde), c.hasta && fmtD(c.hasta)].filter(Boolean).join(' a ')) : ''}${c.folios ? ' · ' + esc(c.folios) + ' folios' : ''}</span>
     <div class="row"><button class="btn sm pri" data-act="viewIncorp" data-i="${i}">Ver constancia</button>${c.archivos.map(f => `<button class="btn sm" data-act="openFile" data-id="${esc(f.id)}">${esc(f.nombre.length > 28 ? f.nombre.slice(0, 26) + '…' : f.nombre)}</button>`).join('')}</div></div>`).join('');
   const form = S.newIncorp ? `<div class="card" id="incform"><h3>Incorporar historia en papel</h3>${sigNeeded()}
-    <div class="fld"><label for="in_files">Archivos escaneados (PDF hasta 8 MB o imágenes; puede elegir varios). Se comprimen al subir, sin perder legibilidad.</label><input type="file" id="in_files" multiple accept="application/pdf,image/png,image/jpeg,image/webp"></div>
+    <div class="fld"><label for="in_files">Archivos escaneados (PDF hasta 8 MB o imágenes; puedes elegir varios). Se comprimen al subir, sin perder legibilidad.</label><input type="file" id="in_files" multiple accept="application/pdf,image/png,image/jpeg,image/webp"></div>
     <div class="grid">${F('Fecha de la primera atención', 'desde', '', { type: 'date' })}${F('Fecha de la última atención', 'hasta', '', { type: 'date' })}${F('Elaborados por', 'autor', S.profile.nombre || '')}${F('Número de folios en físico', 'folios', '', { type: 'number' })}
     ${F('Ubicación o destino de los originales', 'originales', 'Archivo físico del consultorio', { wide: true })}${F('Observaciones (opcional)', 'observaciones', '', { type: 'area', rows: 2, wide: true })}</div>
     <label class="check"><input type="checkbox" id="in_fiel" data-f="fiel"> <span>Declaro que las copias digitales corresponden fielmente a los documentos originales.</span></label>
     <p class="lock-note">Se firmará una constancia con la fecha y hora de hoy y la huella de cada archivo. No se podrá modificar.</p>
     <div class="row end"><button class="btn" data-act="cancelIncorp">Cancelar</button><button class="btn pri" data-act="saveIncorp">Subir y firmar constancia</button></div></div>` : '';
   return `<div class="sec"><div class="row" style="justify-content:space-between"><h3 style="flex:1">Historia en papel</h3>${S.newIncorp ? '' : '<button class="btn" data-act="newIncorp">Incorporar documentos en físico</button>'}</div>
-  ${list || S.newIncorp ? '' : '<p style="margin:0;font-size:13px;color:var(--muted)">Si este consultante tiene ficha en papel de antes de usar la app, escanéela y súbala aquí. Queda una constancia firmada de la fecha en que se incorporó.</p>'}${form}${list}</div>`;
+  ${list || S.newIncorp ? '' : '<p style="margin:0;font-size:13px;color:var(--muted)">Si este consultante tiene ficha en papel de antes de usar la app, escanéala y súbela aquí. Queda una constancia firmada de la fecha en que se incorporó.</p>'}${form}${list}</div>`;
 }
 ACT.newIncorp = () => { S.newIncorp = true; render(); };
 ACT.cancelIncorp = () => { S.newIncorp = false; render(); };
 ACT.viewIncorp = b => { const p = curPatient(), c = p.incorporaciones[+b.dataset.i]; showDoc('Constancia de incorporación · ' + fullName(p), docIncorp(p, c), 'constancia-incorporacion-' + slug(fullName(p)) + '-' + dayKey(new Date(c.signedAt)) + '.html'); };
 ACT.saveIncorp = async b => {
   const p = curPatient(), files = [...($('#in_files').files || [])], o = readForm($('#incform'), {});
-  if (!canSign()) { toast('Primero guarde su nombre y firma en «Mi perfil».'); return; }
-  if (!files.length) { toast('Elija los archivos escaneados.'); return; }
+  if (!canSign()) { toast('Primero guarda tu nombre y firma en «Mi perfil».'); return; }
+  if (!files.length) { toast('Elige los archivos escaneados.'); return; }
   if (files.length > 30) { toast('Máximo 30 archivos por constancia.'); return; }
   const badf = files.find(f => !FILE_TYPES[f.type] || upTooBig(f));
   if (badf) { toast('«' + badf.name + '» no es PDF o imagen, o es demasiado grande (PDF hasta 8 MB, imágenes hasta 40 MB).'); return; }
   if (o.desde && o.hasta && o.desde > o.hasta) { toast('La primera atención no puede ser posterior a la última.'); return; }
-  if (!o.fiel) { toast('Marque la declaración de que las copias corresponden a los originales.'); return; }
+  if (!o.fiel) { toast('Marca la declaración de que las copias corresponden a los originales.'); return; }
   const incId = newId('i'), recs = [];
   setBusy(b, true);
   try {
@@ -216,7 +216,7 @@ ACT.saveIncorp = async b => {
     try { await Store.save(p, { strict: true }); } catch (e) { restore(p, snap); throw e; }
   } catch (e) {
     setBusy(b, false); saveError(e);
-    if (recs.length) toast(recs.length + ' archivo(s) quedaron subidos como adjuntos sin constancia. Puede quitarlos en los próximos 15 minutos desde «Adjuntos».');
+    if (recs.length) toast(recs.length + ' archivo(s) quedaron subidos como adjuntos sin constancia. Puedes quitarlos en los próximos 15 minutos desde «Adjuntos».');
     render(); return;
   }
   setBusy(b, false); S.newIncorp = false; toast('Documentos incorporados y constancia firmada.'); render();
@@ -251,7 +251,7 @@ async function buildZip(b, p, sin) {
       while (used.has(fn)) fn = fn.replace(/(\.[^.]*)?$/, '-1$1'); used.add(fn);
       files.push({ name: fn, data: new Uint8Array(await (await fetchBlob(f.id)).arrayBuffer()) });
     }
-    files.push({ name: 'LEAME.txt', data: `Copia de la ficha de ${fullName(p)}\nGenerada el ${fmtDT(nowISO())} por ${S.profile.nombre || ''}.\n\nAbra el archivo .html en un navegador; desde allí puede imprimirlo o guardarlo como PDF.\nLa carpeta «anexos» contiene los documentos adjuntos.\n\nInformación reservada. Entréguela solo a quien tiene derecho a recibirla.\n` });
+    files.push({ name: 'LEAME.txt', data: `Copia de la ficha de ${fullName(p)}\nGenerada el ${fmtDT(nowISO())} por ${S.profile.nombre || ''}.\n\nAbra el archivo .html en un navegador; desde allí puede imprimirlo o guardarlo como PDF.\nLa carpeta «anexos» contiene los documentos adjuntos.\n\nInformación reservada. Entrégala solo a quien tiene derecho a recibirla.\n` });
     const zip = makeZip(files), url = URL.createObjectURL(zip), a = document.createElement('a');
     a.href = url; a.download = 'historia-clinica-' + name + (sin.length ? '-parcial' : '') + '-' + stamp + '.zip'; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 10000);
     if (S.mode === 'server') api('/audit/export', { method: 'POST', body: { patientId: p.id } }).catch(() => { });
@@ -268,9 +268,9 @@ ACT.exportAll = async () => {
   const root = $('#modal-root'), close = () => { root.innerHTML = ''; root.onclick = null; };
   const dos = S.mode === 'server' && S.user && S.user.totp;   // con dos pasos activos se pide un código
   root.innerHTML = `<div class="modal" role="dialog" aria-modal="true" aria-label="Exportar todos mis datos"><div class="box" style="width:min(520px,100%)"><h3>Exportar todos mis datos</h3>
-    <p style="margin:0">Se descargará un archivo ZIP con todos sus datos de Alter-Karute: perfil, consultantes, fichas, notas de proceso, citas, escalas, informes y adjuntos. Puede tardar si tiene muchos adjuntos.</p>
-    <div class="banner" role="alert" style="margin:0"><b>Usted es la persona responsable de estos datos.</b> Son datos de sus consultantes: guarde la copia en un lugar seguro (dispositivo suyo, protegido con contraseña o cifrado) y no la envíe por canales abiertos. Esta descarga queda registrada en su bitácora de accesos.</div>
-    ${dos ? `<div class="fld"><label for="xa_code">Para continuar, escriba su código de verificación en dos pasos (de la app o de recuperación)</label>${CODE_INPUT('xa_code')}</div>` : ''}
+    <p style="margin:0">Se descargará un archivo ZIP con todos tus datos de Alter-Karute: perfil, consultantes, fichas, notas de proceso, citas, escalas, informes y adjuntos. Puedes tardar si tienes muchos adjuntos.</p>
+    <div class="banner" role="alert" style="margin:0"><b>Tú eres la persona responsable de estos datos.</b> Son datos de tus consultantes: guarda la copia en un lugar seguro (dispositivo suyo, protegido con contraseña o cifrado) y no la envíes por canales abiertos. Esta descarga queda registrada en tu bitácora de accesos.</div>
+    ${dos ? `<div class="fld"><label for="xa_code">Para continuar, escribe tu código de verificación en dos pasos (de la app o de recuperación)</label>${CODE_INPUT('xa_code')}</div>` : ''}
     <label class="check"><input type="checkbox" id="xa_ok"> <span>Entiendo que soy responsable de proteger esta copia y de los datos de mis consultantes.</span></label>
     <p class="merr" id="xa_err" role="alert" hidden></p>
     <div class="row end"><button class="btn" data-xa="no">Cancelar</button><button class="btn pri" data-xa="si" disabled>Exportar</button></div></div></div>`;
@@ -301,7 +301,7 @@ async function doExportAll() {
       while (used.has(fn)) fn = fn.replace(/(\.[^.]*)?$/, '-1$1'); used.add(fn);
       files.push({ name: fn, data: new Uint8Array(await (await fetchBlob(f.id)).arrayBuffer()) });
     }
-    files.push({ name: 'LEAME.txt', data: `Exportación de todos los datos de ${S.profile.nombre || 'su cuenta'} en Alter-Karute\nGenerada el ${fmtDT(nowISO())}.\n\ndatos-alter-karute.json: todos los registros (perfil, consultantes, atenciones, informes, notas de proceso, citas, escalas y lista de adjuntos).\nfichas/: una ficha legible por consultante (ábrala en un navegador; puede imprimirla o guardarla como PDF).\nanexos/: los documentos adjuntos, por consultante.\n\nInformación reservada de sus consultantes. Guárdela cifrada y solo en dispositivos de su control.\n` });
+    files.push({ name: 'LEAME.txt', data: `Exportación de todos los datos de ${S.profile.nombre || 'tu cuenta'} en Alter-Karute\nGenerada el ${fmtDT(nowISO())}.\n\ndatos-alter-karute.json: todos los registros (perfil, consultantes, atenciones, informes, notas de proceso, citas, escalas y lista de adjuntos).\nfichas/: una ficha legible por consultante (ábrela en un navegador; puedes imprimirla o guardarla como PDF).\nanexos/: los documentos adjuntos, por consultante.\n\nInformación reservada de tus consultantes. Guárdala cifrada y solo en dispositivos de tu control.\n` });
     const url = URL.createObjectURL(makeZip(files)), a = document.createElement('a');
     a.href = url; a.download = 'alter-karute-mis-datos-' + stamp + '.zip'; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 10000);
     if (S.mode === 'server') api('/audit/export-all', { method: 'POST' }).catch(() => { });

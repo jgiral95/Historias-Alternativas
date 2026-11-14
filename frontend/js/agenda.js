@@ -84,15 +84,15 @@ ACT.apptEdit = b => {
   const recPanel = recOn ? `<div id="ap_p2" hidden><label class="check"><input type="checkbox" id="f_recActivo" data-f="recActivo" ${rc.activo ? 'checked' : ''}> <span>Enviar recordatorios de esta cita por correo al consultante</span></label>
   <div id="rc_body" ${rc.activo ? '' : 'hidden'}><div class="fld" style="max-width:220px"><label for="rc_n">Cuántos recordatorios enviar</label><input id="rc_n" type="text" inputmode="numeric" maxlength="2" value="${recItems.length || 1}"></div>
   <div id="rc_rows">${Array.from({ length: recItems.length || 1 }, (_, i) => recRow(i, recItems[i])).join('')}</div></div>
-  <p class="stnote" style="margin:0">Cada recordatorio sale cuando falta ese tiempo para la cita. Solo se envía si el consultante tiene correo y usted configuró su correo de envío (botón «Recordatorios»).</p></div>` : '';
-  root.innerHTML = `<div class="modal" role="dialog" aria-modal="true" aria-label="Cita"><div class="box" id="apform" style="width:min(560px,100%)"><div class="row aphd"><div><h3>${a ? esc(apName(a)) : 'Nueva cita'}</h3>${a ? '' : '<p class="apsub">Elija consultante, día y hora</p>'}</div><button class="apx" id="apcl" aria-label="Cerrar" title="Cerrar">✕</button></div>
+  <p class="stnote" style="margin:0">Cada recordatorio sale cuando falta ese tiempo para la cita. Solo se envía si el consultante tiene correo y configuraste tu correo de envío (botón «Recordatorios»).</p></div>` : '';
+  root.innerHTML = `<div class="modal" role="dialog" aria-modal="true" aria-label="Cita"><div class="box" id="apform" style="width:min(560px,100%)"><div class="row aphd"><div><h3>${a ? esc(apName(a)) : 'Nueva cita'}</h3>${a ? '' : '<p class="apsub">Elige consultante, día y hora</p>'}</div><button class="apx" id="apcl" aria-label="Cerrar" title="Cerrar">✕</button></div>
   ${recTabs}
   <div id="ap_p1">
-  ${a && a.nuevo ? `<div class="apnew"><div><b>Consultante nuevo${a.origen === 'enlace' ? ' · agendó por su enlace' : ''}</b><br><span class="ts">${esc([a.nuevo.correo, a.nuevo.telefono].filter(Boolean).join(' · '))}${a.nuevo.correo || a.nuevo.telefono ? ' · ' : ''}Aún no tiene ficha.</span></div></div>` : ''}
+  ${a && a.nuevo ? `<div class="apnew"><div><b>Consultante nuevo${a.origen === 'enlace' ? ' · agendó por tu enlace' : ''}</b><br><span class="ts">${esc([a.nuevo.correo, a.nuevo.telefono].filter(Boolean).join(' · '))}${a.nuevo.correo || a.nuevo.telefono ? ' · ' : ''}Aún no tienes ficha.</span></div></div>` : ''}
   ${a ? `<div class="apsum"><div class="row" style="justify-content:space-between"><b class="apwhen">${esc(start.toLocaleString(I18N.locale(), { weekday: 'short', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' }))}</b><span class="chip">${esc(a.estado || 'Programada')}</span></div><span class="ts">${esc(a.duracion || 50)} min · ${esc(a.modalidad || '')}</span></div>
   <div class="row">${TEAM() || a.evento ? '' : a.noteId ? `<button class="btn sm" data-ap="note">Ver sesión</button>` : `<button class="btn sm pri" data-ap="evol">Registrar sesión</button>`}${a.patientId ? '<button class="btn sm" data-ap="open">Abrir consultante</button>' : ''}${(a.estado === 'Programada' || !a.estado) && !a.evento ? `<button class="btn sm" data-ap="rem">Enviar recordatorio</button>` : ''}<button class="btn sm warn" data-ap="del">${a.evento ? 'Eliminar evento' : 'Eliminar cita'}</button></div>
   <p class="k2">Reprogramar o cambiar</p>` : ''}
-  <div class="grid">${a ? '' : '<div class="fld wide"><div class="seg" id="pnseg"><button type="button" data-pn="0" class="on">Consultante existente</button><button type="button" data-pn="1">Consultante nuevo</button><button type="button" data-pn="2">Evento</button></div></div>'}<div class="fld wide" id="pn_ev" ${a && a.evento ? '' : 'style="display:none"'}>${F('Título del evento (ej.: Almuerzo, Capacitación)', 'evTitulo', a && a.evento || '')}</div><div class="fld wide" id="pn_ex" ${a && (a.patientId || a.nuevo || a.evento) ? 'style="display:none"' : ''}><label for="f_patientId">Consultante</label><select id="f_patientId" data-f="patientId"><option value="">Elija un consultante…</option>${pats.map(p => `<option value="${p.id}" ${p.id === pre ? 'selected' : ''}>${esc(fullName(p))}</option>`).join('')}</select></div>
+  <div class="grid">${a ? '' : '<div class="fld wide"><div class="seg" id="pnseg"><button type="button" data-pn="0" class="on">Consultante existente</button><button type="button" data-pn="1">Consultante nuevo</button><button type="button" data-pn="2">Evento</button></div></div>'}<div class="fld wide" id="pn_ev" ${a && a.evento ? '' : 'style="display:none"'}>${F('Título del evento (ej.: Almuerzo, Capacitación)', 'evTitulo', a && a.evento || '')}</div><div class="fld wide" id="pn_ex" ${a && (a.patientId || a.nuevo || a.evento) ? 'style="display:none"' : ''}><label for="f_patientId">Consultante</label><select id="f_patientId" data-f="patientId"><option value="">Elige un consultante…</option>${pats.map(p => `<option value="${p.id}" ${p.id === pre ? 'selected' : ''}>${esc(fullName(p))}</option>`).join('')}</select></div>
   ${a ? '' : `<div id="pn_new" style="display:none">${F('Nombres', 'nnNombres', '')}${F('Apellidos', 'nnApellidos', '')}${F('Correo', 'nnCorreo', '', { type: 'email' })}${F('Teléfono', 'nnTelefono', '')}</div>`}
   ${F('Fecha', 'fecha', t.slice(0, 10), { type: 'date' })}<div class="fld"><label for="f_hora">Hora</label><input id="f_hora" data-f="hora" type="time" value="${t.slice(11, 16)}"></div>
   ${F('Duración (en minutos)', 'duracion', a ? a.duracion : 50, { ph: 'Minutos' })}
@@ -100,7 +100,7 @@ ACT.apptEdit = b => {
   <div class="fld wide" id="apmod" ${a && a.evento ? 'style="display:none"' : ''}><span class="lbl">Modalidad</span><div class="seg" id="apseg">${mods.map(m => `<button type="button" data-mod="${esc(m)}" class="${m === mv ? 'on' : ''}">${esc(m)}</button>`).join('')}</div><select id="f_modalidad" data-f="modalidad" hidden aria-label="Modalidad">${mods.map(m => `<option ${m === mv ? 'selected' : ''}>${esc(m)}</option>`).join('')}</select>
   <div style="margin-top:10px">${F('Enlace de la videollamada (opcional)', 'enlace', a && a.enlace || '', { ph: 'https://meet.google.com/…  o  https://zoom.us/j/…' })}</div></div></div>
   ${a ? '' : '<p class="aphint">«Repetir cada semana» es la cantidad de semanas adicionales en las que se agendarán citas, en este mismo día y horario.</p>'}
-  <div id="apwarn"></div>${a || S.mode !== 'server' ? '' : '<label class="check" id="apmail" style="display:none"><input type="checkbox" id="ap_mail"> <span>Enviar la cita por correo al consultante, con botón para agregarla a su Google Calendar (y el enlace de la videollamada, si lo puso)</span></label><p class="stnote" id="apmail_no" style="display:none;margin:0">Este consultante no tiene correo en sus datos: no se le puede enviar la cita.</p>'}${a ? remApptHTML(a) : ''}</div>${recPanel}<div class="row" style="justify-content:${a ? 'flex-end' : 'space-between'}">${a ? '' : '<span></span>'}<span class="row">${a ? '' : '<button class="btn" id="apcn">Cancelar</button>'}<button class="btn pri" data-ap="save">${a ? 'Guardar cambios' : 'Guardar cita'}</button></span></div></div></div>`;
+  <div id="apwarn"></div>${a || S.mode !== 'server' ? '' : '<label class="check" id="apmail" style="display:none"><input type="checkbox" id="ap_mail"> <span>Enviar la cita por correo al consultante, con botón para agregarla a tu Google Calendar (y el enlace de la videollamada, si lo puso)</span></label><p class="stnote" id="apmail_no" style="display:none;margin:0">Este consultante no tiene correo en tus datos: no se le puede enviar la cita.</p>'}${a ? remApptHTML(a) : ''}</div>${recPanel}<div class="row" style="justify-content:${a ? 'flex-end' : 'space-between'}">${a ? '' : '<span></span>'}<span class="row">${a ? '' : '<button class="btn" id="apcn">Cancelar</button>'}<button class="btn pri" data-ap="save">${a ? 'Guardar cambios' : 'Guardar cita'}</button></span></div></div></div>`;
   const close = () => { root.innerHTML = ''; };
   $('#apcl').onclick = close;
   if ($('#f_recActivo')) $('#f_recActivo').onchange = e => { $('#rc_body').hidden = !e.target.checked; };
@@ -135,13 +135,13 @@ ACT.apptEdit = b => {
     }
     const o = readForm($('#apform'), {});
     const ev = evt ? (o.evTitulo || '').trim() : '';
-    if (evt && !ev) { toast('Escriba el título del evento.'); return; }
+    if (evt && !ev) { toast('Escribe el título del evento.'); return; }
     const nn = pnew ? { nombres: (o.nnNombres || '').trim(), apellidos: (o.nnApellidos || '').trim(), correo: (o.nnCorreo || '').trim(), telefono: (o.nnTelefono || '').trim() } : null;
     const keepNuevo = !nn && a && a.nuevo && !a.patientId && !o.patientId;  // paciente nuevo: la cita se vincula sola cuando se crea su historia
-    if (!evt && (nn ? !nn.nombres || !nn.apellidos : !o.patientId && !keepNuevo)) { toast(nn ? 'Escriba los nombres y apellidos del consultante nuevo.' : 'Elija el consultante.'); return; }
+    if (!evt && (nn ? !nn.nombres || !nn.apellidos : !o.patientId && !keepNuevo)) { toast(nn ? 'Escribe los nombres y apellidos del consultante nuevo.' : 'Elige el consultante.'); return; }
     const enl = evt ? '' : (o.enlace || '').trim();
     if (enl && !/^https?:\/\/\S{4,500}$/.test(enl)) { toast('El enlace de la videollamada debe empezar por https://'); return; }
-    if (!o.fecha || !o.hora) { toast('Indique fecha y hora.'); return; }
+    if (!o.fecha || !o.hora) { toast('Indica fecha y hora.'); return; }
     const st = new Date(o.fecha + 'T' + o.hora), dur = Math.max(5, Math.min(600, +o.duracion || 50));
     if (isNaN(st)) { toast('La fecha no es válida.'); return; }
     const rep = a ? 0 : +o.repetir || 0, made = [], snap = a ? clone(a) : null; const serie = nn && rep ? newId('s') : '';
@@ -172,13 +172,13 @@ ACT.gcal = async () => {
   const root = $('#modal-root');
   let st, gs; try { [st, gs] = await Promise.all([api('/calendar/feed'), api('/google/status')]); } catch (e) { toast(e.message); return; }
   const direct = () => !gs.enabled ? `<p style="margin:0;font-size:14px;color:var(--muted)">El administrador del servidor aún no configuró la conexión directa con Google. Mientras tanto puede usar el enlace iCal de abajo.</p>`
-    : gs.connected ? `<div class="banner ok">Conectado. Cada cita que cree, mueva o cancele se copia al instante al calendario «${esc(gs.calendar)}» de su cuenta de Google.${gs.last_sync ? ' Última sincronización: ' + esc(fmtShort(gs.last_sync)) + '.' : ''}</div>
+    : gs.connected ? `<div class="banner ok">Conectado. Cada cita que creas, mueves o cancelas se copia al instante al calendario «${esc(gs.calendar)}» de tu cuenta de Google.${gs.last_sync ? ' Última sincronización: ' + esc(fmtShort(gs.last_sync)) + '.' : ''}</div>
       ${gs.last_error ? `<div class="banner"><b>Problema con Google:</b> ${esc(gs.last_error)}. <button class="btn sm" data-g="gconnect">Reconectar</button></div>` : ''}
       <div class="row" style="align-items:flex-end"><div class="fld" style="flex:1"><label for="gd_detail">Qué verá Google de cada cita</label><select id="gd_detail">${DETAILS.map(([v, l]) => `<option value="${v}" ${gs.detail === v ? 'selected' : ''}>${l}</option>`).join('')}</select></div><button class="btn" data-g="gdetail">Guardar</button></div>
       <div class="row" style="justify-content:space-between"><button class="btn warn" data-g="gdisc">Desconectar</button><button class="btn" data-g="gsync">Sincronizar ahora</button></div>`
-    : `<p style="margin:0">Conecte su cuenta de Google y sus citas aparecerán <b>al instante</b> en un calendario nuevo, «${esc(gs.calendar)}». La app solo puede ver y cambiar ese calendario, no los demás.</p>
+    : `<p style="margin:0">Conecta tu cuenta de Google y tus citas aparecerán <b>al instante</b> en un calendario nuevo, «${esc(gs.calendar)}». La app solo puede ver y cambiar ese calendario, no los demás.</p>
       <div class="fld"><label for="gd_detail">Qué verá Google de cada cita</label><select id="gd_detail">${DETAILS.map(([v, l]) => `<option value="${v}">${l}</option>`).join('')}</select></div>
-      <p style="margin:0;font-size:13px;color:var(--muted)">Vea qué datos se envían en la <a href="privacidad" target="_blank" rel="noopener">política de privacidad</a>. Google mostrará «Google no ha verificado esta app»: pulse <b>Avanzado</b> y luego <b>Ir a…</b> para continuar.</p>
+      <p style="margin:0;font-size:13px;color:var(--muted)">Ve qué datos se envían en la <a href="privacidad" target="_blank" rel="noopener">política de privacidad</a>. Google mostrará «Google no ha verificado esta app»: pulsa <b>Avanzado</b> y luego <b>Ir a…</b> para continuar.</p>
       <div class="row end"><button class="btn pri" data-g="gconnect">Conectar con Google</button></div>`;
   const draw = (token) => {
     const url = token ? location.origin + '/api/calendar/' + token + '.ics' : '';
@@ -186,12 +186,12 @@ ACT.gcal = async () => {
     <div class="sec"><h3>Conexión directa${gs.enabled && !gs.connected ? ' (recomendada)' : ''}</h3>${direct()}</div>
     <p style="margin:0;font-size:13px;color:var(--muted)">Nunca se envían notas ni datos de las sesiones: solo la hora, la duración, la modalidad y lo que elija.</p>
     <details class="sec" ${!gs.enabled || token ? 'open' : ''}><summary class="sum">${gs.enabled ? 'Alternativa: enlace iCal (se actualiza cada pocas horas)' : 'Enlace iCal'}</summary>
-    <p style="margin:0;font-size:14px">La app crea un <b>enlace privado</b> con sus citas al que Google Calendar se suscribe. Google lo actualiza cada pocas horas.</p>
+    <p style="margin:0;font-size:14px">La app crea un <b>enlace privado</b> con tus citas al que Google Calendar se suscribe. Google lo actualiza cada pocas horas.</p>
     <div class="fld"><label for="g_detail">Qué verá Google de cada cita</label><select id="g_detail">${[['iniciales', 'Solo las iniciales del consultante (recomendado)'], ['oculto', 'Solo «Cita de terapia», sin consultante'], ['nombre', 'Nombre completo del consultante']].map(([v, l]) => `<option value="${v}" ${st.detail === v ? 'selected' : ''}>${l}</option>`).join('')}</select></div>
-    ${url ? `<div class="banner ok">Copie este enlace ahora: por seguridad no se vuelve a mostrar.</div><div class="row"><input type="text" id="g_url" readonly value="${esc(url)}" style="flex:1"><button class="btn" data-g="copy">Copiar</button></div>
-      <ol style="margin:0;padding-left:20px;font-size:14px;line-height:1.7"><li>Abra Google Calendar en el computador.</li><li>A la izquierda, junto a «Otros calendarios», pulse <b>+</b> y luego <b>Desde URL</b>.</li><li>Pegue el enlace y pulse <b>Agregar calendario</b>.</li></ol>`
-      : st.active ? `<div class="banner ok">Hay un enlace activo desde ${esc(fmtShort(st.created_at))}. Si lo perdió, cree uno nuevo: el anterior deja de funcionar.</div>` : ''}
-    <p style="margin:0;font-size:13px;color:var(--muted)">Quien tenga el enlace puede ver sus horarios. No lo comparta; si cree que se filtró, cree uno nuevo o desactívelo.</p>
+    ${url ? `<div class="banner ok">Copia este enlace ahora: por seguridad no se vuelve a mostrar.</div><div class="row"><input type="text" id="g_url" readonly value="${esc(url)}" style="flex:1"><button class="btn" data-g="copy">Copiar</button></div>
+      <ol style="margin:0;padding-left:20px;font-size:14px;line-height:1.7"><li>Abre Google Calendar en el computador.</li><li>A la izquierda, junto a «Otros calendarios», pulsa <b>+</b> y luego <b>Desde URL</b>.</li><li>Pega el enlace y pulsa <b>Agregar calendario</b>.</li></ol>`
+      : st.active ? `<div class="banner ok">Hay un enlace activo desde ${esc(fmtShort(st.created_at))}. Si lo perdiste, crea uno nuevo: el anterior deja de funcionar.</div>` : ''}
+    <p style="margin:0;font-size:13px;color:var(--muted)">Quien tenga el enlace puede ver tus horarios. No lo compartas; si cree que se filtró, crea uno nuevo o desactívalo.</p>
     <div class="row" style="justify-content:space-between">${st.active || url ? '<button class="btn warn" data-g="off">Desactivar enlace</button>' : '<span></span>'}<button class="btn ${gs.connected ? '' : 'pri'}" data-g="new">${st.active || url ? 'Crear enlace nuevo' : 'Crear enlace'}</button></div></details></div></div>`;
   };
   draw('');
@@ -199,12 +199,12 @@ ACT.gcal = async () => {
     const b = e.target.closest('[data-g]'); if (!b) return;
     const g = b.dataset.g;
     if (g === 'close') { root.innerHTML = ''; root.onclick = null; return; }
-    if (g === 'copy') { const i = $('#g_url'); i.select(); try { await navigator.clipboard.writeText(i.value); toast('Enlace copiado.'); } catch (err) { document.execCommand && document.execCommand('copy'); toast('Enlace seleccionado: cópielo con Ctrl+C.'); } return; }
+    if (g === 'copy') { const i = $('#g_url'); i.select(); try { await navigator.clipboard.writeText(i.value); toast('Enlace copiado.'); } catch (err) { document.execCommand && document.execCommand('copy'); toast('Enlace seleccionado: cópialo con Ctrl+C.'); } return; }
     try {
       if (g === 'gconnect') { const r = await api('/google/connect', { method: 'POST', body: { detail: ($('#gd_detail') || {}).value || gs.detail } }); location.href = r.url; return; }
       if (g === 'gdetail') { setBusy(b, true); gs = await api('/google/detail', { method: 'POST', body: { detail: $('#gd_detail').value } }); toast('Guardado. Actualizando las citas en Google…'); draw(''); return; }
       if (g === 'gsync') { setBusy(b, true); gs = await api('/google/sync', { method: 'POST' }); toast(gs.last_error ? 'Google respondió con un problema.' : gs.synced + ' citas sincronizadas.'); draw(''); return; }
-      if (g === 'gdisc') { if (!b.dataset.sure) { b.dataset.sure = 1; b.textContent = 'Confirmar: desconectar'; return; } await api('/google', { method: 'DELETE' }); gs = Object.assign({}, gs, { connected: false, last_error: '' }); toast('Desconectado. El calendario «' + gs.calendar + '» queda en su Google; puede borrarlo allí si quiere.'); draw(''); return; }
+      if (g === 'gdisc') { if (!b.dataset.sure) { b.dataset.sure = 1; b.textContent = 'Confirmar: desconectar'; return; } await api('/google', { method: 'DELETE' }); gs = Object.assign({}, gs, { connected: false, last_error: '' }); toast('Desconectado. El calendario «' + gs.calendar + '» queda en tu Google; puedes borrarlo allí si quieres.'); draw(''); return; }
       if (g === 'off') { await api('/calendar/feed', { method: 'DELETE' }); st = { active: false, detail: st.detail }; draw(''); toast('Enlace desactivado.'); }
       if (g === 'new') { const r = await api('/calendar/feed', { method: 'POST', body: { detail: $('#g_detail').value } }); st = { active: true, detail: r.detail, created_at: nowISO() }; draw(r.token); }
     } catch (err) { toast(err.message); }
@@ -242,30 +242,30 @@ ACT.reservas = async () => {
     <p style="margin:0;font-size:12px;color:var(--muted)">P = presencial · V = virtual · T = telefónica (puede marcar varias por día). Los consultantes ven hasta ${st.horizonte} días adelante (los días más lejanos se ven atenuados).</p>`;
   };
   const diaHTML = () => {
-    if (!st.sel) return '<p style="margin:0;font-size:13px;color:var(--muted)">Elija un día del calendario para marcar su horario y el tipo de consulta.</p>';
+    if (!st.sel) return '<p style="margin:0;font-size:13px;color:var(--muted)">Elige un día del calendario para marcar tu horario y el tipo de consulta.</p>';
     const f = st.fechas[st.sel], tit = new Date(st.sel + 'T12:00:00').toLocaleDateString(I18N.locale(), { weekday: 'long', day: 'numeric', month: 'long' }), dia = tit.split(',')[0].split(' ')[0];
     return `<div class="card" role="group" aria-label="${esc(tit)}"><div class="row" style="justify-content:space-between;align-items:center"><b>${esc(tit)}</b><label><input type="checkbox" id="rs_atiendo" ${f ? 'checked' : ''}> Atiendo este día</label></div>
     ${f ? `<div class="card" role="group" aria-labelledby="rs_tipos"><b id="rs_tipos">Tipos de consulta de este día</b><div class="row">${MODS_R.map(m => `<label><input type="checkbox" data-dm="${m}" ${f.modalidades.includes(m) ? 'checked' : ''}> ${m}</label>`).join('')}</div></div>
     ${f.franjas.map((x, j) => `<div class="row" style="align-items:center"><input type="time" data-t="${st.sel}|${j}|0" value="${esc(x[0])}" aria-label="Desde"><span>a</span><input type="time" data-t="${st.sel}|${j}|1" value="${esc(x[1])}" aria-label="Hasta"><button type="button" class="btn sm" data-r="del" data-j="${j}" aria-label="Quitar franja">×</button></div>`).join('')}
     ${f.franjas.length < 6 ? '<div><button type="button" class="btn sm" data-r="add">+ Agregar franja</button></div>' : ''}
     <div class="row" style="align-items:center;flex-wrap:wrap"><label for="rs_rep">Repetir este horario y tipo de consulta los próximos</label><input id="rs_rep" type="text" inputmode="numeric" value="4" style="width:64px"><span>${esc(dia.endsWith('s') ? dia : dia + 's')}</span><button type="button" class="btn sm" data-r="rep">Repetir</button></div>
-    <p class="stnote" style="margin:6px 0 0"><b>Importante:</b> poner el número no basta. Para que el horario se copie a los siguientes ${esc(dia.endsWith('s') ? dia : dia + 's')}, pulse el botón «Repetir».</p>` : ''}</div>`;
+    <p class="stnote" style="margin:6px 0 0"><b>Importante:</b> poner el número no basta. Para que el horario se copie a los siguientes ${esc(dia.endsWith('s') ? dia : dia + 's')}, pulsa el botón «Repetir».</p>` : ''}</div>`;
   };
   const draw = () => {
     const m0 = root.querySelector('.modal'), b0 = root.querySelector('.box'), sm = m0 ? m0.scrollTop : 0, sb = b0 ? b0.scrollTop : 0;  // al redibujar se conserva el desplazamiento
     root.innerHTML = `<div class="modal" role="dialog" aria-modal="true" aria-label="Reservas"><div class="box" id="rsform" style="width:min(620px,100%)"><div class="row" style="justify-content:space-between"><h3>Reservas por enlace</h3><button class="btn sm" data-r="close">Cerrar</button></div>
     ${r.correo ? '' : '<div class="banner"><b>Falta el correo de envío.</b> Sin él no se pueden enviar las confirmaciones y el enlace no funciona.</div>'}
-    <div class="sec"><h3 style="display:flex;justify-content:space-between;align-items:center;gap:8px">1 · Su enlace<label class="chk" style="display:flex;gap:6px;align-items:center;text-transform:none;letter-spacing:0;font-size:14px;color:var(--ink)"><input type="checkbox" id="rs_on" ${st.activo ? 'checked' : ''}> Enlace activo</label></h3>
-    <p style="margin:0;font-size:14px">Comparta un enlace para que sus consultantes agenden solos en los horarios que defina. Cada cita llega a su agenda y se envía un correo de confirmación al consultante y a usted.</p>
+    <div class="sec"><h3 style="display:flex;justify-content:space-between;align-items:center;gap:8px">1 · Tu enlace<label class="chk" style="display:flex;gap:6px;align-items:center;text-transform:none;letter-spacing:0;font-size:14px;color:var(--ink)"><input type="checkbox" id="rs_on" ${st.activo ? 'checked' : ''}> Enlace activo</label></h3>
+    <p style="margin:0;font-size:14px">Comparte un enlace para que tus consultantes agenden solos en los horarios que defina. Cada cita llega a tu agenda y se envía un correo de confirmación al consultante y a ti.</p>
     ${r.slug ? `<div class="row"><input type="text" id="rs_url" readonly value="${esc(url(r.slug))}" style="flex:1"><button class="btn" data-r="copy">Copiar</button><button class="btn" data-r="new">Crear enlace nuevo</button></div>` : '<p style="margin:0;font-size:13px;color:var(--muted)">El enlace se crea al guardar.</p>'}</div>
-    <div class="sec"><h3>2 · Calendario de atención</h3><p style="margin:0;font-size:13px;color:var(--muted)">Haga clic en cada día en que atiende y escriba sus horas (por ejemplo, 8:00 a 12:00 y 15:00 a 19:00) y los tipos de consulta de ese día (presencial, virtual o telefónica; puede marcar varios). Los días sin marcar no se ofrecen a los consultantes.</p><div id="rs_cal" style="display:flex;flex-direction:column;gap:12px">${calHTML()}${diaHTML()}</div></div>
+    <div class="sec"><h3>2 · Calendario de atención</h3><p style="margin:0;font-size:13px;color:var(--muted)">Haz clic en cada día en que atiendes y escribe tus horas (por ejemplo, 8:00 a 12:00 y 15:00 a 19:00) y los tipos de consulta de ese día (presencial, virtual o telefónica; puedes marcar varios). Los días sin marcar no se ofrecen a los consultantes.</p><div id="rs_cal" style="display:flex;flex-direction:column;gap:12px">${calHTML()}${diaHTML()}</div></div>
     <div class="sec"><h3>3 · Reglas de reserva</h3>
     <div class="grid">${[['rs_dur', 'Duración de cada cita (min)', st.duracion], ['rs_des', 'Descanso entre citas (min)', st.descanso], ['rs_avi', 'Anticipación mínima (horas)', st.aviso], ['rs_can', 'Cancelar hasta (horas antes)', st.cancelacion], ['rs_hor', 'Hasta cuántos días adelante', st.horizonte]].map(([id, l, v]) => `<div class="fld"><label for="${id}">${l}</label><input id="${id}" type="text" inputmode="numeric" value="${esc(v)}"></div>`).join('')}</div>
     <p style="margin:0;font-size:13px;color:var(--muted)"><b>Anticipación mínima:</b> con cuántas horas de antelación como mínimo pueden reservar (con 24, hoy no verán horarios que empiecen dentro de menos de un día).</p>
     <p style="margin:0;font-size:13px;color:var(--muted)"><b>Hasta cuántos días adelante:</b> qué tan lejos en el futuro pueden agendar (con 30, solo verán horarios de los próximos 30 días).</p>
-    <p style="margin:0;font-size:13px;color:var(--muted)"><b>Cancelar hasta:</b> cuántas horas antes de la cita pueden cancelarla ellos mismos (0 = sin límite); después deben comunicarse con usted.</p>
-    <p style="margin:0;font-size:13px;color:var(--muted)">El descanso es tiempo que queda reservado después de cada cita (para sus notas) y no se ofrece a los consultantes. Use 0 si no lo necesita.</p>
-    <p style="margin:0;font-size:13px;color:var(--muted)">Los consultantes nuevos agendan sin que se cree su ficha; los que ya tienen ficha se identifican con documento y correo.</p>
+    <p style="margin:0;font-size:13px;color:var(--muted)"><b>Cancelar hasta:</b> cuántas horas antes de la cita pueden cancelarla ellos mismos (0 = sin límite); después deben comunicarse contigo.</p>
+    <p style="margin:0;font-size:13px;color:var(--muted)">El descanso es tiempo que queda reservado después de cada cita (para tus notas) y no se ofrece a los consultantes. Usa 0 si no lo necesitas.</p>
+    <p style="margin:0;font-size:13px;color:var(--muted)">Los consultantes nuevos agendan sin que se cree tu ficha; los que ya tienen ficha se identifican con documento y correo.</p>
     </div>
     <div class="row end"><button class="btn pri" data-r="save">Guardar</button></div></div></div>`;
     const m1 = root.querySelector('.modal'), b1 = root.querySelector('.box'); if (m1) m1.scrollTop = sm; if (b1) b1.scrollTop = sb;
@@ -275,7 +275,7 @@ ACT.reservas = async () => {
   draw();
   root.onchange = e => {
     if (e.target.id === 'rs_atiendo') { sync(); if (e.target.checked) st.fechas[st.sel] = { modalidades: ['Presencial'], franjas: [['09:00', '17:00']] }; else delete st.fechas[st.sel]; drawCal(); }
-    else if (e.target.dataset.dm) { const f = st.fechas[st.sel], ms = [...root.querySelectorAll('[data-dm]:checked')].map(k => k.dataset.dm); if (!ms.length) toast('Elija al menos un tipo de consulta.'); else if (f) f.modalidades = ms; sync(); drawCal(); }
+    else if (e.target.dataset.dm) { const f = st.fechas[st.sel], ms = [...root.querySelectorAll('[data-dm]:checked')].map(k => k.dataset.dm); if (!ms.length) toast('Elige al menos un tipo de consulta.'); else if (f) f.modalidades = ms; sync(); drawCal(); }
     else if (e.target.id === 'rs_hor') { sync(); const l = limite().slice(0, 7); if (st.mes > l) st.mes = l; drawCal(); }
   };
   root.onclick = async e => {
@@ -283,15 +283,15 @@ ACT.reservas = async () => {
     const b = e.target.closest('[data-r]'); if (!b) return;
     const g = b.dataset.r;
     if (g === 'close') { root.innerHTML = ''; root.onclick = root.onchange = null; return; }
-    if (g === 'copy') { const i = $('#rs_url'); i.select(); try { await navigator.clipboard.writeText(i.value); toast('Enlace copiado.'); } catch (err) { toast('Enlace seleccionado: cópielo con Ctrl+C.'); } return; }
+    if (g === 'copy') { const i = $('#rs_url'); i.select(); try { await navigator.clipboard.writeText(i.value); toast('Enlace copiado.'); } catch (err) { toast('Enlace seleccionado: cópialo con Ctrl+C.'); } return; }
     if (g === 'mv') { sync(); const [y, m] = st.mes.split('-').map(Number), n = new Date(y, m - 1 + +b.dataset.v, 1); st.mes = n.getFullYear() + '-' + String(n.getMonth() + 1).padStart(2, '0'); drawCal(); return; }
     if (g === 'add') { sync(); const rs = st.fechas[st.sel].franjas, last = rs[rs.length - 1]; const h = +last[1].slice(0, 2); rs.push([last[1], h < 23 ? String(h + 1).padStart(2, '0') + last[1].slice(2) : '23:59']); drawCal(); return; }
     if (g === 'rep') {
       sync(); const n = parseInt($('#rs_rep').value, 10), f = st.fechas[st.sel], lim = limite();
-      if (!(n >= 1 && n <= 52)) { toast('Escriba cuántas semanas repetir (de 1 a 52).'); return; }
+      if (!(n >= 1 && n <= 52)) { toast('Escribe cuántas semanas repetir (de 1 a 52).'); return; }
       let k = 0;
       for (; k < n; k++) { const d = new Date(st.sel + 'T12:00:00'); d.setDate(d.getDate() + 7 * (k + 1)); const ds = isoR(d); if (ds > lim) break; st.fechas[ds] = { modalidades: f.modalidades.slice(), franjas: f.franjas.map(x => x.slice()) }; }
-      toast(k ? 'Horario repetido en ' + k + (k === 1 ? ' semana más.' : ' semanas más.') + (k < n ? ' Se detuvo en el límite de «Hasta cuántos días adelante».' : '') : 'Esa fecha ya queda fuera de «Hasta cuántos días adelante»: súbalo para repetir más.');
+      toast(k ? 'Horario repetido en ' + k + (k === 1 ? ' semana más.' : ' semanas más.') + (k < n ? ' Se detuvo en el límite de «Hasta cuántos días adelante».' : '') : 'Esa fecha ya queda fuera de «Hasta cuántos días adelante»: súbelo para repetir más.');
       drawCal(); return;
     }
     if (g === 'del') { sync(); const f = st.fechas[st.sel]; f.franjas.splice(+b.dataset.j, 1); if (!f.franjas.length) delete st.fechas[st.sel]; drawCal(); return; }
@@ -319,21 +319,21 @@ function tabCierre(p) {
   const list = cs.map((c, i) => `<div class="card"><div class="row" style="justify-content:space-between"><b>Cierre del ${esc(fmtD(c.fecha))}</b><span class="chip ok">Firmado</span></div><span class="ts">${esc(c.motivo)} · firmado ${esc(fmtShort(c.signedAt))}</span><div class="row"><button class="btn sm pri" data-act="viewCierre" data-i="${i}">Ver y descargar</button></div></div>`).join('');
   if (isClosed(p)) {
     return `<div class="sec"><h3>Cierre del proceso</h3><div class="banner ok">Este proceso está cerrado. Estado: ${esc(p.estado)}.</div>${list}
-    <div class="row"><button class="btn" data-act="reopen">Reabrir proceso</button><span style="font-size:13px;color:var(--muted)">Úselo si el consultante vuelve a consulta. Las notas de cierre anteriores se conservan.</span></div></div>`;
+    <div class="row"><button class="btn" data-act="reopen">Reabrir proceso</button><span style="font-size:13px;color:var(--muted)">Úsalo si el consultante vuelve a consulta. Las notas de cierre anteriores se conservan.</span></div></div>`;
   }
   const fut = S.appts.filter(a => a.patientId === p.id && a.estado === 'Programada' && a.startAt >= nowISO()).length;
   return `<div class="sec">${list ? `<h3>Cierres anteriores</h3>${list}` : ''}<div id="cierreform" class="sec"><h3>Nota de cierre</h3>${sigNeeded()}
   ${fut ? `<div class="banner">Este consultante tiene ${fut} cita${fut > 1 ? 's' : ''} futura${fut > 1 ? 's' : ''} programada${fut > 1 ? 's' : ''}. Al cerrar el proceso se marcarán como canceladas.</div>` : ''}
   <div class="grid">${F('Fecha de cierre', 'fecha', localInput().slice(0, 10), { type: 'date' })}${F('Motivo de cierre', 'motivo', CIERRE_MOT[0], { type: 'select', opts: CIERRE_MOT })}${F('Estado del consultante al cerrar', 'estadoFinal', 'Alta', { type: 'select', opts: CLOSED })}</div>
   <div class="grid">${CIERRE_FIELDS.map(f => F(f[1], f[0], '', { type: 'area', rows: f[2], wide: true, req: true })).join('')}</div>
-  <div class="fld"><span class="lbl">Firma del terapeuta (de su perfil)</span>${therPreview()}</div>
+  <div class="fld"><span class="lbl">Firma del terapeuta (de tu perfil)</span>${therPreview()}</div>
   <p class="lock-note">Al guardar, la nota de cierre queda firmada y <b>no podrá modificarse</b>, y el consultante pasa al estado que elija arriba.</p>
   <div class="row end"><button class="btn" data-act="saveBorrador">Guardar borrador</button><button class="btn pri" data-act="saveCierre">Firmar cierre</button></div></div></div>`;
 }
 ACT.saveCierre = async b => {
   const p = curPatient(), o = readForm($('#cierreform'), {});
-  if (!canSign()) { toast('Primero guarde su nombre y firma en «Mi perfil».'); return; }
-  if (!o.fecha) { toast('Indique la fecha del cierre.'); return; }
+  if (!canSign()) { toast('Primero guarda tu nombre y firma en «Mi perfil».'); return; }
+  if (!o.fecha) { toast('Indica la fecha del cierre.'); return; }
   if (!reqCheck($('#cierreform'), o, CIERRE_FIELDS.map(f => f[0]))) return;
   const snap = clone(p); dropBorrador(p, 'cierreform');
   p.cierres = (p.cierres || []).concat([Object.assign(o, therSnap(), { signedAt: nowISO() })]);
@@ -406,13 +406,13 @@ function idleActivity() {
 function idleTick() {
   if (!S.user || S.mode !== 'server') { hideIdleWarn(); return; }
   const lim = (S.user.idle_minutes || 30) * 60000, left = lim - (Date.now() - Idle.last);
-  if (left <= 0) { doLogout('Su sesión se cerró por inactividad.' + (Idle.draftSaved ? ' Lo que estaba escribiendo quedó guardado como borrador.' : '') + ' Ingrese de nuevo.'); return; }
+  if (left <= 0) { doLogout('Tu sesión se cerró por inactividad.' + (Idle.draftSaved ? ' Lo que estaba escribiendo quedó guardado como borrador.' : '') + ' Ingresa de nuevo.'); return; }
   if (left <= 60000) {
     if (!Idle.saved) idleAutosave();
     let w = $('#idlewarn');
     if (!w) {
       w = document.createElement('div'); w.id = 'idlewarn'; w.className = 'idle';
-      w.innerHTML = '<div class="box" role="alertdialog" aria-live="assertive"><b>¿Sigue ahí?</b><p style="margin:0">Por seguridad, su sesión se cerrará en <span id="idlesec">60</span> segundos.</p><button class="btn pri" id="idlego">Seguir trabajando</button></div>';
+      w.innerHTML = '<div class="box" role="alertdialog" aria-live="assertive"><b>¿Sigue ahí?</b><p style="margin:0">Por seguridad, tu sesión se cerrará en <span id="idlesec">60</span> segundos.</p><button class="btn pri" id="idlego">Seguir trabajando</button></div>';
       document.body.appendChild(w);
       $('#idlego').onclick = () => { hideIdleWarn(); Idle.last = Date.now(); Idle.saved = false; Idle.draftSaved = false; Idle.ping = Date.now(); api('/auth/me').catch(() => { }); };
       $('#idlego').focus();

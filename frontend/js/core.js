@@ -45,7 +45,7 @@ async function api(path, opt = {}) {
     headers: Object.assign({ 'Content-Type': 'application/json', 'X-Requested-With': 'archivo-clinico' }, opt.headers || {}),
     body: opt.body !== undefined ? JSON.stringify(opt.body) : undefined
   });
-  if (r.status === 401 && !opt.noRedirect && S.user) { S.user = null; S.patients = []; S.notes = []; S.reports = []; S.appts = []; S.pagos = []; S.files = []; S.scales = []; S.pid = null; hideIdleWarn(); renderLogin('Su sesión terminó. Ingrese de nuevo.'); throw new Error('Sesión terminada'); }
+  if (r.status === 401 && !opt.noRedirect && S.user) { S.user = null; S.patients = []; S.notes = []; S.reports = []; S.appts = []; S.pagos = []; S.files = []; S.scales = []; S.pid = null; hideIdleWarn(); renderLogin('Tu sesión terminó. Ingresa de nuevo.'); throw new Error('Sesión terminada'); }
   if (!r.ok) {
     let m = 'Error ' + r.status;
     let det = null;
@@ -134,7 +134,7 @@ const Store = {
 /* ===== Firma manuscrita en canvas ===== */
 const pads = {};
 function makePad(host, name) {
-  host.innerHTML = '<canvas></canvas><div class="hint">Firme aquí con el dedo o el mouse</div>';
+  host.innerHTML = '<canvas></canvas><div class="hint">Firma aquí con el dedo o el mouse</div>';
   const c = host.firstElementChild, hint = host.lastElementChild;
   const dpr = Math.max(1, window.devicePixelRatio || 1);
   const w = Math.max(240, host.clientWidth), h = 140;
@@ -186,7 +186,7 @@ function genoBlock(k = '') {
   <input type="text" id="geno_text${sfx}" placeholder="Nombre o texto a colocar" aria-label="Texto para colocar en el genograma" style="max-width:210px">
   <button type="button" class="btn sm" data-gt="undo" title="Deshacer (Ctrl+Z)" aria-label="Deshacer" disabled>↶ Deshacer</button><button type="button" class="btn sm" data-gt="redo" title="Rehacer (Ctrl+Y)" aria-label="Rehacer" disabled>↷ Rehacer</button><button type="button" class="btn sm" data-gt="clear">Limpiar</button>${img ? '' : `<label class="check" style="font-size:13px"><input type="checkbox" id="geno_straight${sfx}" checked> <span>Enderezar líneas</span></label><label class="check" style="font-size:13px"><input type="checkbox" id="geno_grid${sfx}" checked> <span>Cuadrícula</span></label>`}<button type="button" class="btn sm" data-gt="upload">Subir imagen</button><input type="file" id="geno_file${sfx}" accept="image/*" style="display:none"></div>
   <div class="genobox"><canvas id="genocv${sfx}" aria-label="${img ? 'Lienzo de la imagen' : 'Lienzo del genograma'}"></canvas></div>
-  <span style="font-size:12px;color:var(--muted)">${img ? 'Suba una imagen de su computador y escriba o dibuje encima. Para escribir, ponga el texto en la casilla, elija «Texto» y toque el lugar.' : 'Dibuje con el dedo o el mouse, o suba la foto de un genograma hecho a mano y complételo encima. Hombre es un cuadrado, mujer un círculo y fallecido una X que se coloca sobre el símbolo. Para un nombre, escríbalo en la casilla, elija «Texto» y toque el lugar.'}</span></div>`;
+  <span style="font-size:12px;color:var(--muted)">${img ? 'Sube una imagen de tu computador y escribe o dibuja encima. Para escribir, pon el texto en la casilla, elige «Texto» y toca el lugar.' : 'Dibuja con el dedo o el mouse, o sube la foto de un genograma hecho a mano y complétalo encima. Hombre es un cuadrado, mujer un círculo y fallecido una X que se coloca sobre el símbolo. Para un nombre, escríbelo en la casilla, elige «Texto» y toca el lugar.'}</span></div>`;
 }
 /* Monta el lienzo de cada bloque de la pantalla: el del genograma (geno) y los de imagen (genos[clave]). */
 const genos = {};
@@ -235,7 +235,7 @@ function mountOneGeno(gk) {
   cv.addEventListener('pointerdown', e => {
     e.preventDefault(); const [px, py] = pos(e);
     if (st.tool === 'pen' || st.tool === 'erase') { st.cur = { t: st.tool, pts: [[px, py]] }; add(st.cur); try { cv.setPointerCapture(e.pointerId); } catch (err) { /* sin captura */ } }
-    else if (st.tool === 'tx') { const s = ($('#geno_text').value || '').trim(); if (!s) { toast('Escriba el texto en la casilla y toque el lugar donde va.'); return; } const [sx, sy] = snapPt(px, py); add({ t: 'tx', x: sx, y: sy, s }); }
+    else if (st.tool === 'tx') { const s = ($('#geno_text').value || '').trim(); if (!s) { toast('Escribe el texto en la casilla y toca el lugar donde va.'); return; } const [sx, sy] = snapPt(px, py); add({ t: 'tx', x: sx, y: sy, s }); }
     else { const [sx, sy] = snapPt(px, py); add({ t: st.tool, x: sx, y: sy }); }
   });
   cv.addEventListener('pointermove', e => {
@@ -291,16 +291,16 @@ function mountOneGeno(gk) {
     const b = e.target.closest('[data-gt]'); if (!b) return; const k = b.dataset.gt;
     if (k === 'undo') undo();
     else if (k === 'redo') redo();
-    else if (k === 'clear') { if (!st.ops.length && !st.bg) return; checkpoint(); st.ops = []; st.bg = null; st.dirty = true; st.saved = ''; st.png = true; redraw(); toast('Lienzo limpio. Puede recuperarlo con «Deshacer».'); }
+    else if (k === 'clear') { if (!st.ops.length && !st.bg) return; checkpoint(); st.ops = []; st.bg = null; st.dirty = true; st.saved = ''; st.png = true; redraw(); toast('Lienzo limpio. Puedes recuperarlo con «Deshacer».'); }
     else if (k === 'upload') $('#geno_file').click();
     else { st.tool = k; $$('#genotools [data-gt]').forEach(t => { const on = t.dataset.gt === k; t.classList.toggle('on', on); t.setAttribute('aria-pressed', String(on)); }); }
   });
   if ($('#geno_grid')) $('#geno_grid').addEventListener('change', e => { st.grid = e.target.checked; redraw(); });
   $('#geno_file').addEventListener('change', e => {
     const f = e.target.files[0]; e.target.value = ''; if (!f) return;
-    if (!/^image\//.test(f.type)) { toast('Elija un archivo de imagen.'); return; }
+    if (!/^image\//.test(f.type)) { toast('Elige un archivo de imagen.'); return; }
     const url = URL.createObjectURL(f);
-    loadImg(url, im => { checkpoint(); st.bg = im; st.png = false; st.dirty = true; redraw(); URL.revokeObjectURL(url); toast('Imagen cargada. Puede dibujar encima.'); }, () => { URL.revokeObjectURL(url); toast('No se pudo leer la imagen.'); });
+    loadImg(url, im => { checkpoint(); st.bg = im; st.png = false; st.dirty = true; redraw(); URL.revokeObjectURL(url); toast('Imagen cargada. Puedes dibujar encima.'); }, () => { URL.revokeObjectURL(url); toast('No se pudo leer la imagen.'); });
   });
   genos[gk] = {
     ops: () => st.ops,

@@ -19,7 +19,7 @@ def main() -> int:
         return 2
     email, name = sys.argv[1].strip().lower(), sys.argv[2].strip()
     password = getpass.getpass("Contraseña: ")
-    if password != getpass.getpass("Repita la contraseña: "):
+    if password != getpass.getpass("Repite la contraseña: "):
         print("Las contraseñas no coinciden.")
         return 1
     if len(password) < MIN_PASSWORD:

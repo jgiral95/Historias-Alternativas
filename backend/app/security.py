@@ -45,7 +45,7 @@ def _open(blob: bytes) -> bytes:
         for k, aes in _AES:
             if k == kid:
                 return aes.decrypt(blob[7:19], blob[19:], MAGIC + kid)
-        raise InvalidToken("Clave de cifrado desconocida: revise DATA_KEY")
+        raise InvalidToken("Clave de cifrado desconocida: revisa DATA_KEY")
     return _fernet.decrypt(blob)  # dato guardado antes del cambio a AES-256
 
 

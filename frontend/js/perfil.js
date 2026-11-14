@@ -3,32 +3,32 @@
 function accountModal() {
   const root = $('#modal-root');
   root.innerHTML = `<div class="modal" role="dialog" aria-modal="true" aria-label="Mi cuenta"><div class="box" id="profform"><div class="row" style="justify-content:space-between"><h3>Mi cuenta</h3><button class="btn sm" id="pcl">Cerrar</button></div>
-  <p class="stnote">${esc(S.user.name)} · ${esc(S.user.email)}<br>Cuenta de equipo de ${esc(S.user.ownerName || 'su terapeuta')}.</p>
-  <div class="sec" id="tpbox"><h3>Mis datos para el historial</h3><p class="stnote">Su documento y su firma aparecen en el historial de cada cambio que haga a los datos de un consultante.</p>
-  <div class="grid">${F('Documento de identidad', 'tpdoc', '')}</div><div class="fld"><span class="lbl">Su firma</span><div id="tpsigprev"></div><div class="sigbox" id="tpsig"></div><button class="btn sm" id="tpclear" type="button">Borrar trazo</button></div>
+  <p class="stnote">${esc(S.user.name)} · ${esc(S.user.email)}<br>Cuenta de equipo de ${esc(S.user.ownerName || 'tu terapeuta')}.</p>
+  <div class="sec" id="tpbox"><h3>Mis datos para el historial</h3><p class="stnote">Tu documento y tu firma aparecen en el historial de cada cambio que haga a los datos de un consultante.</p>
+  <div class="grid">${F('Documento de identidad', 'tpdoc', '')}</div><div class="fld"><span class="lbl">Tu firma</span><div id="tpsigprev"></div><div class="sigbox" id="tpsig"></div><button class="btn sm" id="tpclear" type="button">Borrar trazo</button></div>
   <div class="row end"><button class="btn pri" id="tpsave" type="button">Guardar mis datos</button></div></div>
   <details class="sec" id="pwbox" open><summary class="sum">Cambiar contraseña</summary><form id="pwform" class="sec" autocomplete="on" onsubmit="return false">
     <input type="email" autocomplete="username" value="${esc(S.user.email)}" hidden aria-hidden="true" tabindex="-1">
     <div class="grid"><div class="fld"><label for="pw_cur">Contraseña actual</label><input id="pw_cur" type="password" autocomplete="current-password"></div>
     <div class="fld"><label for="pw_new">Nueva contraseña</label><input id="pw_new" type="password" autocomplete="new-password" minlength="10"></div>
-    <div class="fld"><label for="pw_new2">Repita la nueva contraseña</label><input id="pw_new2" type="password" autocomplete="new-password"></div></div>
+    <div class="fld"><label for="pw_new2">Repite la nueva contraseña</label><input id="pw_new2" type="password" autocomplete="new-password"></div></div>
     <div class="row end"><button class="btn" id="pwsave" type="button">Cambiar contraseña</button></div></form></details>
   <details class="sec" id="tfbox"><summary class="sum">Verificación en dos pasos ${S.user.totp ? '<span class="chip ok" style="text-transform:none;letter-spacing:0">Activa</span>' : '<span class="chip warn" style="text-transform:none;letter-spacing:0">Inactiva</span>'}</summary><div id="tfbody"></div></details></div></div>`;
   $('#pcl').onclick = () => { root.innerHTML = ''; };
   $('#tfbox').addEventListener('toggle', e => { if (e.target.open) draw2fa(); });
   const tpad = makePad($('#tpsig'), 'teamSig'); let curSig = '';
   $('#tpclear').onclick = () => tpad.clear ? tpad.clear() : makePad($('#tpsig'), 'teamSig');
-  api('/equipo/mi-perfil').then(d => { const f = $('#f_tpdoc'); if (f && !f.value) f.value = d.documento || ''; curSig = d.firma || ''; if (curSig) $('#tpsigprev').innerHTML = `<span class="lbl">Firma guardada</span><img class="sigimg" src="${curSig}" alt="Su firma guardada"><p class="stnote">Dibuje abajo solo si quiere reemplazarla.</p>`; }).catch(() => {});
+  api('/equipo/mi-perfil').then(d => { const f = $('#f_tpdoc'); if (f && !f.value) f.value = d.documento || ''; curSig = d.firma || ''; if (curSig) $('#tpsigprev').innerHTML = `<span class="lbl">Firma guardada</span><img class="sigimg" src="${curSig}" alt="Tu firma guardada"><p class="stnote">Dibuja abajo solo si quieres reemplazarla.</p>`; }).catch(() => {});
   $('#tpsave').onclick = async () => {
     const firma = tpad.isEmpty() ? curSig : tpad.data();
-    if (!firma) { toast('Dibuje su firma.'); return; }
+    if (!firma) { toast('Dibuja tu firma.'); return; }
     setBusy($('#tpsave'), true);
     try { await api('/equipo/mi-perfil', { method: 'PUT', body: { documento: $('#f_tpdoc').value.trim(), firma } }); S.user.tieneFirma = true; toast('Datos guardados.'); root.innerHTML = ''; render(); }
     catch (e) { toast(e.message); } finally { setBusy($('#tpsave'), false); }
   };
   $('#pwsave').onclick = async () => {
     const cur = $('#pw_cur').value, nw = $('#pw_new').value, nw2 = $('#pw_new2').value;
-    if (!cur || !nw) { toast('Escriba la contraseña actual y la nueva.'); return; }
+    if (!cur || !nw) { toast('Escribe la contraseña actual y la nueva.'); return; }
     if (nw.length < 10) { toast('La nueva contraseña debe tener al menos 10 caracteres.'); return; }
     if (nw !== nw2) { toast('Las contraseñas nuevas no coinciden.'); return; }
     setBusy($('#pwsave'), true);
@@ -41,13 +41,13 @@ ACT.team = async () => {
   const root = $('#modal-root');
   const draw = (list, msg) => {
     root.innerHTML = `<div class="modal" role="dialog" aria-modal="true" aria-label="Mi equipo"><div class="box" id="teamform"><div class="row" style="justify-content:space-between"><h3>Mi equipo</h3><button class="btn sm" data-tm2="close">Cerrar</button></div>
-    <p style="margin:0;font-size:13px;color:var(--muted)">Cuentas para su secretaría o asistentes. Cada persona entra con su propio correo y contraseña y trabaja sobre sus consultantes, pero <b>solo ve y edita los datos de los consultantes y la agenda</b>. No ve consentimientos, primera vez, sesiones, impresiones, escalas, informes ni adjuntos. Sus cambios a los datos quedan en el historial con su nombre.</p>
+    <p style="margin:0;font-size:13px;color:var(--muted)">Cuentas para tu secretaría o asistentes. Cada persona entra con su propio correo y contraseña y trabaja sobre tus consultantes, pero <b>solo ve y edita los datos de los consultantes y la agenda</b>. No ves consentimientos, primera vez, sesiones, impresiones, escalas, informes ni adjuntos. Tus cambios a los datos quedan en el historial con tu nombre.</p>
     ${msg ? `<div class="banner">${msg}</div>` : ''}
     ${list.length ? list.map(u => `<div class="card"><div class="row" style="justify-content:space-between"><span><b>${esc(u.name)}</b> <span class="chip ${u.active ? 'ok' : 'warn'}">${u.active ? 'Activa' : 'Inactiva'}</span>${u.totp ? ' <span class="chip">2 pasos</span>' : ''}<br><small style="color:var(--muted)">${esc(u.email)}</small></span>
       <span class="row"><button class="btn sm" data-tm2="pw" data-id="${u.id}">Nueva contraseña</button><button class="btn sm ${u.active ? 'warn' : ''}" data-tm2="${u.active ? 'off' : 'on'}" data-id="${u.id}">${u.active ? 'Desactivar' : 'Activar'}</button></span></div>
-      <div class="row" id="tpw_${u.id}" hidden><input type="password" id="tpwv_${u.id}" autocomplete="new-password" placeholder="Nueva contraseña (mínimo 10)" style="flex:1;min-width:180px"><button class="btn sm pri" data-tm2="pwsave" data-id="${u.id}">Guardar</button></div></div>`).join('') : '<p class="stnote">Aún no tiene personas en su equipo.</p>'}
+      <div class="row" id="tpw_${u.id}" hidden><input type="password" id="tpwv_${u.id}" autocomplete="new-password" placeholder="Nueva contraseña (mínimo 10)" style="flex:1;min-width:180px"><button class="btn sm pri" data-tm2="pwsave" data-id="${u.id}">Guardar</button></div></div>`).join('') : '<p class="stnote">Aún no tienes personas en tu equipo.</p>'}
     <div class="card"><b>Agregar a alguien</b><div class="grid">${F('Nombre', 'tname', '')}${F('Correo', 'temail', '', { type: 'email' })}${F('Contraseña inicial (mínimo 10)', 'tpass', '', { type: 'password' })}</div>
-    <p class="stnote">Entréguele la contraseña en persona y pídale que la cambie en «Mi cuenta».</p><div class="row end"><button class="btn pri" data-tm2="add">Crear cuenta</button></div></div></div></div>`;
+    <p class="stnote">Entrégale la contraseña en persona y pídale que la cambie en «Mi cuenta».</p><div class="row end"><button class="btn pri" data-tm2="add">Crear cuenta</button></div></div></div></div>`;
   };
   let list = [];
   try { list = await api('/equipo'); } catch (e) { toast(e.message); return; }
@@ -71,24 +71,24 @@ ACT.profile = () => {
   if (TEAM()) return accountModal();
   const pr = S.profile, root = $('#modal-root');
   root.innerHTML = `<div class="modal" role="dialog" aria-modal="true" aria-label="Mi perfil"><div class="box" id="profform"><div class="row" style="justify-content:space-between"><h3>Mi perfil</h3><button class="btn sm" id="pcl">Cerrar</button></div>
-  <div class="grid">${F('Nombre completo', 'nombre', pr.nombre)}${F('Cédula (documento de identidad)', 'cedula', pr.cedula || '')}${F('Título', 'titulo', pr.titulo)}${F('Registro (si lo tiene)', 'registro', pr.registro)}${F('Lugar de práctica', 'consultorio', pr.consultorio)}${F('Plataforma habitual de teleterapia', 'plataforma', pr.plataforma || '', { ph: 'Ej.: Google Meet' })}${F('Ciudad', 'ciudad', pr.ciudad)}${F('Teléfono', 'telefono', pr.telefono, { type: 'tel' })}${F('Correo', 'correo', pr.correo, { type: 'email' })}${F('Idioma de la app', 'idioma', pr.idioma === 'en' ? 'English' : 'Español', { type: 'select', opts: ['Español', 'English'] })}</div>
-  <div class="fld"><span class="lbl">Logo para sus informes (opcional)</span>
+  <div class="grid">${F('Nombre completo', 'nombre', pr.nombre)}${F('Cédula (documento de identidad)', 'cedula', pr.cedula || '')}${F('Título', 'titulo', pr.titulo)}${F('Registro (si lo tienes)', 'registro', pr.registro)}${F('Lugar de práctica', 'consultorio', pr.consultorio)}${F('Plataforma habitual de teleterapia', 'plataforma', pr.plataforma || '', { ph: 'Ej.: Google Meet' })}${F('Ciudad', 'ciudad', pr.ciudad)}${F('Teléfono', 'telefono', pr.telefono, { type: 'tel' })}${F('Correo', 'correo', pr.correo, { type: 'email' })}${F('Idioma de la app', 'idioma', pr.idioma === 'en' ? 'English' : 'Español', { type: 'select', opts: ['Español', 'English'] })}</div>
+  <div class="fld"><span class="lbl">Logo para tus informes (opcional)</span>
   <div class="row" style="align-items:center"><span id="plogo">${pr.logo ? `<img class="logoprev" src="${pr.logo}" alt="Logo guardado">` : '<span style="font-size:13px;color:var(--muted)">Sin logo</span>'}</span>
   <input type="file" id="plogofile" accept="image/png,image/jpeg,image/webp,image/svg+xml" aria-label="Subir logo">${pr.logo ? '<button class="btn sm warn" id="plogodel" type="button">Quitar logo</button>' : ''}</div>
   <span style="font-size:12px;color:var(--muted)">Sale en el encabezado de los informes que firme desde ahora. PNG con fondo transparente se ve mejor.</span></div>
   <div class="fld"><span class="lbl">Firma manuscrita</span>${pr.firma ? `<img class="sigimg" src="${pr.firma}" alt="Firma guardada">` : '<span class="chip warn">Aún no hay firma guardada</span>'}
-  <div class="sigbox" id="psig" style="margin-top:6px"></div><div class="row"><button class="btn sm" id="pclr">Borrar trazo</button><span style="font-size:12px;color:var(--muted)">Dibuje una firma nueva solo si desea reemplazar la guardada. Los documentos ya firmados conservan la firma con la que se firmaron.</span></div>
-  <div class="card" style="margin-top:8px"><div class="fld"><label for="psigfile">O suba una imagen de su firma (foto o escaneo, PNG o JPG)</label><input type="file" id="psigfile" accept="image/png,image/jpeg,image/webp"></div>
+  <div class="sigbox" id="psig" style="margin-top:6px"></div><div class="row"><button class="btn sm" id="pclr">Borrar trazo</button><span style="font-size:12px;color:var(--muted)">Dibuja una firma nueva solo si deseas reemplazar la guardada. Los documentos ya firmados conservan la firma con la que se firmaron.</span></div>
+  <div class="card" style="margin-top:8px"><div class="fld"><label for="psigfile">O sube una imagen de tu firma (foto o escaneo, PNG o JPG)</label><input type="file" id="psigfile" accept="image/png,image/jpeg,image/webp"></div>
   <label class="check"><input type="checkbox" id="psigbg" checked> <span>Quitar el fondo y recortar los bordes</span></label>
-  <div id="psigprev" hidden><span class="lbl">Así quedará su firma</span><img class="sigimg" id="psigimg" alt="Vista previa de la firma subida"><div class="row"><button class="btn sm" id="psigdrop">Descartar imagen</button></div></div>
-  <p style="margin:0;font-size:12px;color:var(--muted)">Para un mejor resultado, firme con tinta oscura sobre papel blanco y tome la foto con buena luz.</p></div></div>
-  <p style="margin:0;font-size:13px;color:var(--muted)">Sus modelos de consentimiento (adultos, familia, niños…) se administran en «Mis consentimientos», desde la pestaña Consentimiento de cualquier consultante.</p>
+  <div id="psigprev" hidden><span class="lbl">Así quedará tu firma</span><img class="sigimg" id="psigimg" alt="Vista previa de la firma subida"><div class="row"><button class="btn sm" id="psigdrop">Descartar imagen</button></div></div>
+  <p style="margin:0;font-size:12px;color:var(--muted)">Para un mejor resultado, firme con tinta oscura sobre papel blanco y toma la foto con buena luz.</p></div></div>
+  <p style="margin:0;font-size:13px;color:var(--muted)">Tus modelos de consentimiento (adultos, familia, niños…) se administran en «Mis consentimientos», desde la pestaña Consentimiento de cualquier consultante.</p>
   <div class="row end"><button class="btn pri" id="psave">Guardar perfil</button></div>
   ${S.mode === 'server' ? `<details class="sec" id="pwbox"><summary class="sum">Cambiar contraseña</summary><form id="pwform" class="sec" autocomplete="on" onsubmit="return false">
     <input type="email" autocomplete="username" value="${esc(S.user ? S.user.email : '')}" hidden aria-hidden="true" tabindex="-1">
     <div class="grid"><div class="fld"><label for="pw_cur">Contraseña actual</label><input id="pw_cur" type="password" autocomplete="current-password"></div>
     <div class="fld"><label for="pw_new">Nueva contraseña</label><input id="pw_new" type="password" autocomplete="new-password" minlength="10"></div>
-    <div class="fld"><label for="pw_new2">Repita la nueva contraseña</label><input id="pw_new2" type="password" autocomplete="new-password"></div></div>
+    <div class="fld"><label for="pw_new2">Repite la nueva contraseña</label><input id="pw_new2" type="password" autocomplete="new-password"></div></div>
     <p style="margin:0;font-size:13px;color:var(--muted)">Mínimo 10 caracteres. Este cambio se guarda aparte de los datos del perfil.</p>
     <div class="row end"><button class="btn" id="pwsave" type="button">Cambiar contraseña</button></div></form></details>
   <details class="sec" id="tfbox"><summary class="sum">Verificación en dos pasos ${S.user && S.user.totp ? '<span class="chip ok" style="text-transform:none;letter-spacing:0">Activa</span>' : '<span class="chip warn" style="text-transform:none;letter-spacing:0">Inactiva</span>'}</summary><div id="tfbody" class="sec"></div></details>` : ''}</div></div>`;
@@ -96,7 +96,7 @@ ACT.profile = () => {
   const pad = makePad($('#psig'), 'profSig');
   if ($('#pwsave')) $('#pwsave').onclick = async () => {
     const cur = $('#pw_cur').value, nw = $('#pw_new').value, nw2 = $('#pw_new2').value;
-    if (!cur || !nw) { toast('Escriba la contraseña actual y la nueva.'); return; }
+    if (!cur || !nw) { toast('Escribe la contraseña actual y la nueva.'); return; }
     if (nw.length < 10) { toast('La nueva contraseña debe tener al menos 10 caracteres.'); return; }
     if (nw !== nw2) { toast('Las contraseñas nuevas no coinciden.'); return; }
     setBusy($('#pwsave'), true);
@@ -121,7 +121,7 @@ ACT.profile = () => {
   $('#pcl').onclick = () => root.innerHTML = '';
   $('#psave').onclick = async () => {
     const o = readForm($('#profform'), {}); o.idioma = o.idioma === 'English' ? 'en' : 'es';
-    if (!o.nombre) { toast('Escriba su nombre completo.'); return; }
+    if (!o.nombre) { toast('Escribe tu nombre completo.'); return; }
     const snap = clone(S.profile);
     Object.assign(S.profile, o); if (upFirma) S.profile.firma = upFirma; else if (!pad.isEmpty()) S.profile.firma = pad.data();
     if (newLogo !== undefined) { if (newLogo) S.profile.logo = newLogo; else delete S.profile.logo; }
@@ -132,7 +132,7 @@ ACT.profile = () => {
 
 /* Convierte una foto o escaneo de la firma en una imagen limpia: fondo transparente, bordes recortados y tamaño acotado. */
 async function sigFromImage(file, clean) {
-  if (!/^image\/(png|jpeg|webp)$/.test(file.type)) throw new Error('Use una imagen PNG, JPG o WEBP.');
+  if (!/^image\/(png|jpeg|webp)$/.test(file.type)) throw new Error('Usa una imagen PNG, JPG o WEBP.');
   if (file.size > 10 * 1048576) throw new Error('La imagen supera 10 MB.');
   const url = URL.createObjectURL(file);
   try {
@@ -156,7 +156,7 @@ async function sigFromImage(file, clean) {
         px[i * 4] = 16; px[i * 4 + 1] = 34; px[i * 4 + 2] = 42; px[i * 4 + 3] = alpha;
         if (alpha > 60) { if (xx < box.x0) box.x0 = xx; if (xx > box.x1) box.x1 = xx; if (y < box.y0) box.y0 = y; if (y > box.y1) box.y1 = y; }
       }
-      if (box.x1 < 0) throw new Error('No se encontró la firma en la imagen. Pruebe con más luz o desmarque «Quitar el fondo».');
+      if (box.x1 < 0) throw new Error('No se encontró la firma en la imagen. Prueba con más luz o desmarque «Quitar el fondo».');
       x.putImageData(d, 0, 0);
     }
     const pad = Math.round(Math.max(box.x1 - box.x0, box.y1 - box.y0) * 0.04) + 4;
@@ -170,7 +170,7 @@ async function sigFromImage(file, clean) {
 
 /* Ajusta el logo a un tamaño liviano para los documentos (máximo 600×240), conservando la transparencia. */
 async function logoFromImage(file) {
-  if (!/^image\/(png|jpeg|webp|svg\+xml)$/.test(file.type)) throw new Error('Use una imagen PNG, JPG, WEBP o SVG.');
+  if (!/^image\/(png|jpeg|webp|svg\+xml)$/.test(file.type)) throw new Error('Usa una imagen PNG, JPG, WEBP o SVG.');
   if (file.size > 5 * 1048576) throw new Error('La imagen supera 5 MB.');
   const url = URL.createObjectURL(file);
   try {
@@ -188,21 +188,21 @@ async function logoFromImage(file) {
 async function draw2fa(step, data) {
   const box = $('#tfbody'); if (!box) return;
   let st; try { st = await api('/auth/2fa'); } catch (e) { box.innerHTML = `<p>${esc(e.message)}</p>`; return; }
-  const codesHTML = codes => `<div class="banner ok"><b>Guarde estos códigos de recuperación</b> en un lugar seguro (impresos o en su gestor de contraseñas). Cada uno sirve una sola vez si pierde el teléfono. No se volverán a mostrar.</div>
+  const codesHTML = codes => `<div class="banner ok"><b>Guarda estos códigos de recuperación</b> en un lugar seguro (impresos o en tu gestor de contraseñas). Cada uno sirve una sola vez si pierde el teléfono. No se volverán a mostrar.</div>
     <div class="card" style="font-family:var(--f-mono);font-size:15px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px 16px" id="tfcodes">${codes.map(c => `<span>${esc(c)}</span>`).join('')}</div>
     <div class="row"><button class="btn sm" type="button" id="tfcopy">Copiar</button><button class="btn sm" type="button" id="tfdl">Descargar .txt</button></div>`;
   if (step === 'codes') {
     box.innerHTML = codesHTML(data) + '<div class="row end"><button class="btn pri" type="button" id="tfdone">Ya los guardé</button></div>';
-    $('#tfcopy').onclick = async () => { try { await navigator.clipboard.writeText(data.join('\n')); toast('Códigos copiados.'); } catch (e) { toast('No se pudo copiar; selecciónelos y cópielos.'); } };
+    $('#tfcopy').onclick = async () => { try { await navigator.clipboard.writeText(data.join('\n')); toast('Códigos copiados.'); } catch (e) { toast('No se pudo copiar; selecciónalos y cópialos.'); } };
     $('#tfdl').onclick = () => downloadFile('codigos-recuperacion-alter-karute.txt', 'Códigos de recuperación de Alter-Karute (' + (S.user && S.user.email) + ')\nCada código sirve una sola vez.\n\n' + data.join('\n') + '\n');
     $('#tfdone').onclick = () => draw2fa();
     return;
   }
   if (step === 'setup') {
     let qr = ''; try { const q = qrcode(0, 'M'); q.addData(data.uri); q.make(); qr = q.createSvgTag(4, 2); } catch (e) { /* sin QR */ }
-    box.innerHTML = `<ol style="margin:0;padding-left:20px;line-height:1.7"><li>Instale en su teléfono una app autenticadora: Google Authenticator, Microsoft Authenticator o Authy.</li><li>En la app, agregue una cuenta y escanee este código QR.</li><li>Escriba abajo el código de 6 dígitos que aparece.</li></ol>
+    box.innerHTML = `<ol style="margin:0;padding-left:20px;line-height:1.7"><li>Instala en tu teléfono una app autenticadora: Google Authenticator, Microsoft Authenticator o Authy.</li><li>En la app, agrega una cuenta y escanea este código QR.</li><li>Escribe abajo el código de 6 dígitos que aparece.</li></ol>
       <div class="row" style="align-items:center"><div style="background:#fff;padding:6px;border-radius:8px;border:1px solid var(--line)">${qr.replace('<svg ', '<svg style="width:180px;height:180px" ')}</div>
-      <div style="font-size:13px;color:var(--muted);max-width:260px">Si no puede escanear, escriba esta clave en la app:<br><b style="font-family:var(--f-mono);color:var(--ink);word-break:break-all">${esc(data.secret.replace(/(.{4})/g, '$1 ').trim())}</b></div></div>
+      <div style="font-size:13px;color:var(--muted);max-width:260px">Si no puedes escanear, escribe esta clave en la app:<br><b style="font-family:var(--f-mono);color:var(--ink);word-break:break-all">${esc(data.secret.replace(/(.{4})/g, '$1 ').trim())}</b></div></div>
       <div class="row" style="align-items:flex-end"><div class="fld" style="max-width:220px"><label for="tf_code">Código de la app</label>${CODE_INPUT('tf_code')}</div><button class="btn pri" type="button" id="tfenable">Activar</button><button class="btn" type="button" id="tfcancel">Cancelar</button></div>`;
     $('#tfcancel').onclick = () => draw2fa();
     $('#tfenable').onclick = async () => {
@@ -214,7 +214,7 @@ async function draw2fa(step, data) {
     return;
   }
   if (!st.enabled) {
-    box.innerHTML = `<p style="margin:0">Al ingresar, además de la contraseña se pide un código que cambia cada 30 segundos en su teléfono. Así, aunque alguien conozca su contraseña, no puede entrar a sus fichas.</p>
+    box.innerHTML = `<p style="margin:0">Al ingresar, además de la contraseña se pide un código que cambia cada 30 segundos en tu teléfono. Así, aunque alguien conozca tu contraseña, no puede entrar a tus fichas.</p>
       <div class="row end"><button class="btn pri" type="button" id="tfstart">Activar verificación en dos pasos</button></div>`;
     $('#tfstart').onclick = async () => { try { draw2fa('setup', await api('/auth/2fa/setup', { method: 'POST' })); } catch (e) { toast(e.message); } };
     return;
@@ -276,13 +276,13 @@ const secList = () => ED[ED.which === 'datos' ? 'datos' : String(ED.which).start
 const edInit = (val, attr, label) => `<details class="edinit" ${val ? 'open' : ''}><summary>Texto inicial${val ? '' : ' (opcional)'}</summary><textarea ${attr} rows="2" aria-label="Texto inicial de ${esc(label)}" placeholder="Lo que este campo trae escrito en cada nota nueva">${esc(val || '')}</textarea></details>`;
 const CAMPO_TIPOS = [['', 'Texto'], ['date', 'Fecha'], ['time', 'Hora'], ['number', 'Número']];
 function edField(f, path, noSize) {
-  return `<div class="edfw"><div class="edf"><span class="dragh" draggable="true" data-dk="f" data-dv="${path}" title="Arrastre para cambiar el orden" aria-hidden="true">⠿</span><input type="text" data-fm-l="${path}" value="${esc(f.l)}" maxlength="120" aria-label="Nombre del campo">${noSize ? `<select data-fm-tp="${path}" aria-label="Tipo de campo">${CAMPO_TIPOS.map(([v, n]) => `<option value="${v}" ${(f.tp || '') === v ? 'selected' : ''}>${n}</option>`).join('')}</select>` : `<select data-fm-r="${path}" aria-label="Tamaño">${ROWS.map(([v, n]) => `<option value="${v}" ${[2, 3, 5].reduce((a, x) => Math.abs(x - (+f.r || 3)) < Math.abs(a - (+f.r || 3)) ? x : a, 3) === v ? 'selected' : ''}>${n}</option>`).join('')}</select>`}<button class="btn sm warn" data-fm="fdel:${path}" aria-label="Quitar campo">✕</button></div>${noSize ? '' : edInit(f.d, `data-fm-d="${path}"`, f.l)}</div>`;
+  return `<div class="edfw"><div class="edf"><span class="dragh" draggable="true" data-dk="f" data-dv="${path}" title="Arrastra para cambiar el orden" aria-hidden="true">⠿</span><input type="text" data-fm-l="${path}" value="${esc(f.l)}" maxlength="120" aria-label="Nombre del campo">${noSize ? `<select data-fm-tp="${path}" aria-label="Tipo de campo">${CAMPO_TIPOS.map(([v, n]) => `<option value="${v}" ${(f.tp || '') === v ? 'selected' : ''}>${n}</option>`).join('')}</select>` : `<select data-fm-r="${path}" aria-label="Tamaño">${ROWS.map(([v, n]) => `<option value="${v}" ${[2, 3, 5].reduce((a, x) => Math.abs(x - (+f.r || 3)) < Math.abs(a - (+f.r || 3)) ? x : a, 3) === v ? 'selected' : ''}>${n}</option>`).join('')}</select>`}<button class="btn sm warn" data-fm="fdel:${path}" aria-label="Quitar campo">✕</button></div>${noSize ? '' : edInit(f.d, `data-fm-d="${path}"`, f.l)}</div>`;
 }
 function secCard(sc, si, isDatos) {
-  const head = `<div class="edf"><span class="dragh" draggable="true" data-dk="s" data-dv="${si}" title="Arrastre para cambiar el orden" aria-hidden="true">⠿</span><input type="text" data-fm-t="${si}" value="${esc(sc.t)}" maxlength="120" aria-label="Título del apartado" style="font-weight:600"><button class="btn sm warn" data-fm="sdel:${si}" aria-label="Quitar apartado">✕</button></div>`;
-  if (sc.img) return `<div class="card">${head}<p style="margin:0;font-size:13px;color:var(--muted)">Apartado de imagen: el terapeuta sube una imagen de su computador en cada ficha. Quítelo con ✕ si no lo usa.</p></div>`;
-  if (sc.g && !sc.fs.length) return `<div class="card">${head}<p style="margin:0;font-size:13px;color:var(--muted)">Apartado de genograma: espacio para dibujarlo o subir una imagen. Quítelo con ✕ si no lo usa.</p></div>`;
-  const body = sc.fs.length ? sc.fs.map((f, fi) => edField(f, si + '.' + fi, isDatos)).join('') : `<p style="margin:0;font-size:13px;color:var(--muted)">Solo título: se escribe en un único espacio, sin subtítulos. Use «+ Campo» si quiere dividirlo.</p>${isDatos ? '' : edInit(sc.soloD, `data-fm-sd="${si}"`, sc.t)}`;
+  const head = `<div class="edf"><span class="dragh" draggable="true" data-dk="s" data-dv="${si}" title="Arrastra para cambiar el orden" aria-hidden="true">⠿</span><input type="text" data-fm-t="${si}" value="${esc(sc.t)}" maxlength="120" aria-label="Título del apartado" style="font-weight:600"><button class="btn sm warn" data-fm="sdel:${si}" aria-label="Quitar apartado">✕</button></div>`;
+  if (sc.img) return `<div class="card">${head}<p style="margin:0;font-size:13px;color:var(--muted)">Apartado de imagen: el terapeuta sube una imagen de tu computador en cada ficha. Quítalo con ✕ si no lo usas.</p></div>`;
+  if (sc.g && !sc.fs.length) return `<div class="card">${head}<p style="margin:0;font-size:13px;color:var(--muted)">Apartado de genograma: espacio para dibujarlo o subir una imagen. Quítalo con ✕ si no lo usas.</p></div>`;
+  const body = sc.fs.length ? sc.fs.map((f, fi) => edField(f, si + '.' + fi, isDatos)).join('') : `<p style="margin:0;font-size:13px;color:var(--muted)">Solo título: se escribe en un único espacio, sin subtítulos. Usa «+ Campo» si quieres dividirlo.</p>${isDatos ? '' : edInit(sc.soloD, `data-fm-sd="${si}"`, sc.t)}`;
   const geno = sc.g ? `<div class="row"><span class="chip">Incluye el genograma al final</span><button class="btn sm warn" data-fm="gdel:${si}">Quitar genograma</button></div>` : '';
   return `<div class="card">${head}${body}${geno}<div class="row"><button class="btn sm" data-fm="fadd:${si}">+ Campo</button></div></div>`;
 }
@@ -293,7 +293,7 @@ function formCard() {
   const own = ED.datos.flatMap(sc => sc.g ? [] : sc.fs.length ? sc.fs.map(f => [fkey(f.k), sc.t + ': ' + (f.l || '…')]) : [[sc.soloKey, sc.t]]);
   if (!ED.formulario) ED.formulario = own.map(o => o[0]);
   const row = (k, n) => `<div class="row"><span style="flex:1">${esc(n)}</span><button class="btn sm ${ED.formulario.includes(k) ? 'pri' : ''}" data-fm="fo:${k}">${ED.formulario.includes(k) ? 'En el formulario · quitar' : 'Agregar al formulario'}</button></div>`;
-  return own.length ? `<div class="card"><b>Formulario del consultante nuevo</b><p class="stnote" style="margin:4px 0">Elija cuáles de estos campos le pide a quien recibe el formulario; todos los que elija son obligatorios. Los campos nuevos aparecen aquí cuando los guarda en este formato.</p>${own.map(([k, n]) => row(k, n)).join('')}</div>` : '';
+  return own.length ? `<div class="card"><b>Formulario del consultante nuevo</b><p class="stnote" style="margin:4px 0">Elige cuáles de estos campos le pide a quien recibe el formulario; todos los que elija son obligatorios. Los campos nuevos aparecen aquí cuando los guarda en este formato.</p>${own.map(([k, n]) => row(k, n)).join('')}</div>` : '';
 }
 /* Campos de este formato que salen como filtro en el buscador (se guardan en formatos.filtros por clave de campo). */
 function filtroCard() {
@@ -302,15 +302,15 @@ function filtroCard() {
   if (!own.length) return '';
   if (!ED.filtros) ED.filtros = ((S.profile.formatos || {}).filtros || []).slice();
   const row = ([k, n]) => `<div class="row"><span style="flex:1">${esc(n)}</span><button class="btn sm ${ED.filtros.includes(k) ? 'pri' : ''}" data-fm="fi:${k}">${ED.filtros.includes(k) ? 'Es filtro · quitar' : 'Usar como filtro'}</button></div>`;
-  return `<div class="card"><b>Filtros del buscador</b><p class="stnote" style="margin:4px 0">Elija con qué campos de este formato se puede filtrar la búsqueda. Los campos nuevos aparecen aquí cuando los guarda en este formato.</p>${own.map(row).join('')}</div>`;
+  return `<div class="card"><b>Filtros del buscador</b><p class="stnote" style="margin:4px 0">Elige con qué campos de este formato se puede filtrar la búsqueda. Los campos nuevos aparecen aquí cuando los guarda en este formato.</p>${own.map(row).join('')}</div>`;
 }
 function drawFormats() {
   const root = $('#modal-root'), prev = root.querySelector('.modal > .box'), top = prev ? prev.scrollTop : 0, w = ED.which;
   const isX = String(w).startsWith('x_'), hasGeno = (isX ? ED[w] : ED.intake).some(sc => sc.g);
-  const intro = {  intake: 'Los cambios solo se aplican a las <b>nuevas</b> consultas de primera vez. Las ya firmadas conservan el formato con el que se firmaron.', evol: 'Los cambios solo se aplican a las <b>nuevas</b> sesiones. Las ya firmadas conservan el formato con el que se firmaron.', datos: 'Agregue los datos que usted toma de cada consultante, además de los campos fijos. Aparecen al final de esa pestaña para todos sus consultantes.' }[w] || 'Arme los apartados y campos de esta pestaña. Los cambios se aplican a todas las fichas; lo ya escrito se conserva.';
+  const intro = {  intake: 'Los cambios solo se aplican a las <b>nuevas</b> consultas de primera vez. Las ya firmadas conservan el formato con el que se firmaron.', evol: 'Los cambios solo se aplican a las <b>nuevas</b> sesiones. Las ya firmadas conservan el formato con el que se firmaron.', datos: 'Agrega los datos que tomas de cada consultante, además de los campos fijos. Aparecen al final de esa pestaña para todos tus consultantes.' }[w] || 'Arma los apartados y campos de esta pestaña. Los cambios se aplican a todas las fichas; lo ya escrito se conserva.';
   const body = w === 'evol'
-    ? `<p class="stnote" style="margin:0">La fecha y hora, la modalidad, las personas presentes van siempre en la sesión: aquí arma el resto.</p><div class="card">${ED.evol.map((f, fi) => edField(f, String(fi))).join('') || '<p style="margin:0;color:var(--muted)">Aún no tiene campos. Agréguelos uno por uno o use el formato sugerido.</p>'}<div class="row"><button class="btn sm" data-fm="fadd:">+ Campo</button>${ED.evol.length ? '' : '<button class="btn sm" data-fm="reset">Usar el formato sugerido</button>'}</div></div>`
-    : (false ? `<div class="card"><b>Apartados de la ficha</b><p class="stnote" style="margin:4px 0">Identificación siempre se muestra. Muestre solo los que quiera usar; los datos ya escritos no se borran.</p>${BASE_SECS.map(([id, n]) => `<div class="row"><span style="flex:1">${n}</span><button class="btn sm ${ED.ocultos.includes(id) ? '' : 'pri'}" data-fm="oc:${id}">${ED.ocultos.includes(id) ? 'Mostrar' : 'Visible · ocultar'}</button></div>`).join('')}</div>` : '') + (w === 'datos' ? `<div class="card"><b>Campos fijos</b><p class="stnote" style="margin:4px 0 8px">Siempre aparecen primero en la pestaña Datos y no se pueden quitar ni cambiar:</p><div class="row"><span class="chip">Nombre</span><span class="chip">Apellido</span><span class="chip">Documento de identidad</span></div></div>` : '') + secList().map((sc, si) => secCard(sc, si, w === 'datos')).join('') + `<div class="row"><button class="btn" data-fm="sadd">+ Apartado</button>${(w === 'intake' || isX) && !hasGeno ? '<button class="btn" data-fm="gadd">+ Genograma</button>' : ''}${isX ? '<button class="btn" data-fm="iadd">+ Imagen</button>' : ''}</div>` + (w === 'datos' ? formCard() : '');
+    ? `<p class="stnote" style="margin:0">La fecha y hora, la modalidad, las personas presentes van siempre en la sesión: aquí arma el resto.</p><div class="card">${ED.evol.map((f, fi) => edField(f, String(fi))).join('') || '<p style="margin:0;color:var(--muted)">Aún no tienes campos. Agrégalos uno por uno o usa el formato sugerido.</p>'}<div class="row"><button class="btn sm" data-fm="fadd:">+ Campo</button>${ED.evol.length ? '' : '<button class="btn sm" data-fm="reset">Usar el formato sugerido</button>'}</div></div>`
+    : (false ? `<div class="card"><b>Apartados de la ficha</b><p class="stnote" style="margin:4px 0">Identificación siempre se muestra. Muestra solo los que quiera usar; los datos ya escritos no se borran.</p>${BASE_SECS.map(([id, n]) => `<div class="row"><span style="flex:1">${n}</span><button class="btn sm ${ED.ocultos.includes(id) ? '' : 'pri'}" data-fm="oc:${id}">${ED.ocultos.includes(id) ? 'Mostrar' : 'Visible · ocultar'}</button></div>`).join('')}</div>` : '') + (w === 'datos' ? `<div class="card"><b>Campos fijos</b><p class="stnote" style="margin:4px 0 8px">Siempre aparecen primero en la pestaña Datos y no se pueden quitar ni cambiar:</p><div class="row"><span class="chip">Nombre</span><span class="chip">Apellido</span><span class="chip">Documento de identidad</span></div></div>` : '') + secList().map((sc, si) => secCard(sc, si, w === 'datos')).join('') + `<div class="row"><button class="btn" data-fm="sadd">+ Apartado</button>${(w === 'intake' || isX) && !hasGeno ? '<button class="btn" data-fm="gadd">+ Genograma</button>' : ''}${isX ? '<button class="btn" data-fm="iadd">+ Imagen</button>' : ''}</div>` + (w === 'datos' ? formCard() : '');
   root.innerHTML = `<div class="modal" role="dialog" aria-modal="true" aria-label="Mis formatos"><div class="box" id="fmform"><div class="row mfhead" style="justify-content:space-between"><h3 style="flex:1">Mis formatos</h3><button class="btn sm pri" data-fm="save">Guardar</button><button class="btn sm" data-fm="close">Cerrar</button></div>
   ${hubTabs(w)}
   <p style="margin:0;font-size:13px;color:var(--muted)">${intro}</p>
@@ -394,11 +394,11 @@ function saveFormats() {
 /* Pestañas de la ficha: renombrar, ocultar y crear propias (texto libre por consultante). */
 let TM = null;
 const tabsDraw = () => {
-  const root = $('#modal-root'), prevM = root.querySelector('.modal'), top = prevM ? prevM.scrollTop : 0, row = (id, n, hid, ex) => `<div class="edf">${ex ? `<span class="dragh" draggable="true" data-dk="t" data-dv="${id}" title="Arrastre para cambiar el orden" aria-hidden="true">⠿</span>` : ''}<input type="text" data-tm-n="${id}" value="${esc(n)}" maxlength="60" placeholder="Nueva pestaña" aria-label="Nombre de la pestaña">${id === 'datos' ? '<span class="chip">Siempre visible</span>' : ex ? `<button class="btn sm" data-tm="mod:${id}" title="Una sola vez: datos que casi no cambian. Por sesión: se agrega una entrada con fecha en cada encuentro.">${(TM.extra.find(y => y.id === id) || {}).modo === 'sesion' ? 'Por sesión' : 'Una sola vez'} · cambiar</button><button class="btn sm warn" data-tm="del:${id}">Borrar</button>` : `<button class="btn sm ${hid ? '' : 'pri'}" data-tm="hid:${id}">${hid ? 'Oculta · mostrar' : 'Visible · ocultar'}</button>`}</div>`;
+  const root = $('#modal-root'), prevM = root.querySelector('.modal'), top = prevM ? prevM.scrollTop : 0, row = (id, n, hid, ex) => `<div class="edf">${ex ? `<span class="dragh" draggable="true" data-dk="t" data-dv="${id}" title="Arrastra para cambiar el orden" aria-hidden="true">⠿</span>` : ''}<input type="text" data-tm-n="${id}" value="${esc(n)}" maxlength="60" placeholder="Nueva pestaña" aria-label="Nombre de la pestaña">${id === 'datos' ? '<span class="chip">Siempre visible</span>' : ex ? `<button class="btn sm" data-tm="mod:${id}" title="Una sola vez: datos que casi no cambian. Por sesión: se agrega una entrada con fecha en cada encuentro.">${(TM.extra.find(y => y.id === id) || {}).modo === 'sesion' ? 'Por sesión' : 'Una sola vez'} · cambiar</button><button class="btn sm warn" data-tm="del:${id}">Borrar</button>` : `<button class="btn sm ${hid ? '' : 'pri'}" data-tm="hid:${id}">${hid ? 'Oculta · mostrar' : 'Visible · ocultar'}</button>`}</div>`;
   root.innerHTML = `<div class="modal" role="dialog" aria-modal="true" aria-label="Mis formatos"><div class="box"><div class="row mfhead" style="justify-content:space-between"><h3 style="flex:1">Mis formatos</h3><button class="btn sm pri" data-tm="save">Guardar</button><button class="btn sm" data-tm="close">Cerrar</button></div>${hubTabs('pestanas')}
-  <p style="margin:0;font-size:13px;color:var(--muted)">Cree las pestañas de la ficha del consultante. Para cada pestaña nueva elija «Una sola vez» (datos que casi no cambian, como los del consultante) o «Por sesión» (una entrada con fecha en cada encuentro).</p>
+  <p style="margin:0;font-size:13px;color:var(--muted)">Crea las pestañas de la ficha del consultante. Para cada pestaña nueva elige «Una sola vez» (datos que casi no cambian, como los del consultante) o «Por sesión» (una entrada con fecha en cada encuentro).</p>
   <h4 style="margin:12px 0 4px">Pestañas de la ficha</h4>
-  <div class="row" style="justify-content:space-between;margin:12px 0 4px"><span></span><button class="btn sm" data-tm="add:">+ Pestaña nueva</button></div><div class="card">${TM.extra.map(x => row(x.id, x.nombre, false, true)).join('') || '<p style="margin:0;color:var(--muted);font-size:13px">Aún no ha creado pestañas propias. Use «+ Pestaña nueva».</p>'}</div>
+  <div class="row" style="justify-content:space-between;margin:12px 0 4px"><span></span><button class="btn sm" data-tm="add:">+ Pestaña nueva</button></div><div class="card">${TM.extra.map(x => row(x.id, x.nombre, false, true)).join('') || '<p style="margin:0;color:var(--muted);font-size:13px">Aún no ha creado pestañas propias. Usa «+ Pestaña nueva».</p>'}</div>
   <div class="row end"><button class="btn pri" data-tm="save">Guardar</button></div></div></div>`;
   const nm = root.querySelector('.modal'); if (nm) nm.scrollTop = top;
 };

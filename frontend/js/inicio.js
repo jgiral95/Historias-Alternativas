@@ -4,13 +4,13 @@ function renderFirstPassword(msg) {
   $('#modal-root').innerHTML = ''; $('#fb-root').innerHTML = '';
   $('#app').innerHTML = `<div class="panel" style="max-width:440px;margin:8vh auto 0"><form class="body" id="firstpw" autocomplete="on">
     <div class="brand">${logoSVG(60)}<b>Alter-Karute</b></div>
-    <h2 style="margin:0;font-size:20px">Elija su contraseña</h2>
-    <p style="margin:0;color:var(--muted)">Hola${S.user.name ? ', ' + esc(S.user.name.split(' ')[0]) : ''}. Su cuenta se creó con una contraseña temporal. Antes de empezar, elija una que solo usted conozca (mínimo 10 caracteres).</p>
+    <h2 style="margin:0;font-size:20px">Elige tu contraseña</h2>
+    <p style="margin:0;color:var(--muted)">Hola${S.user.name ? ', ' + esc(S.user.name.split(' ')[0]) : ''}. Tu cuenta se creó con una contraseña temporal. Antes de empezar, elige una que solo tú conozcas (mínimo 10 caracteres).</p>
     ${msg ? `<div class="banner" role="alert">${esc(msg)}</div>` : ''}
     <input type="email" autocomplete="username" value="${esc(S.user.email)}" hidden aria-hidden="true" tabindex="-1">
     <div class="fld"><label for="fp_cur">Contraseña temporal</label><input id="fp_cur" type="password" autocomplete="current-password" required></div>
     <div class="fld"><label for="fp_new">Nueva contraseña</label><input id="fp_new" type="password" autocomplete="new-password" minlength="10" required></div>
-    <div class="fld"><label for="fp_new2">Repita la nueva contraseña</label><input id="fp_new2" type="password" autocomplete="new-password" required></div>
+    <div class="fld"><label for="fp_new2">Repite la nueva contraseña</label><input id="fp_new2" type="password" autocomplete="new-password" required></div>
     <button class="btn pri" type="submit">Guardar y entrar</button><button class="btn" type="button" id="fp_out">Salir</button></form></div>`;
   $('#fp_out').onclick = () => ACT.logout();
   $('#firstpw').onsubmit = async ev => {
@@ -31,12 +31,12 @@ async function stepDone(k) {
 function stepsList() {
   const real = S.patients.filter(x => !x.demo), ps = (S.profile && S.profile.pasos) || {}, demo = S.patients.some(x => x.demo);
   return [
-    ['perfil', !!(S.profile.nombre && S.profile.firma), 'Complete su perfil y dibuje su firma (opcional)', 'Con ella puede firmar acuerdos, sesiones e informes.', '<button class="btn sm pri" data-act="profile">Mi perfil</button>'],
-    ['ejemplo', demo || !!ps.ejemplo, 'Explore con consultantes de ejemplo', 'Cargamos 3 consultantes ficticios con acuerdos, primera vez, sesiones, citas y notas de proceso. Los borra con un clic.', demo ? '<button class="btn sm" data-act="demoDel">Borrar los ejemplos</button>' : '<button class="btn sm pri" data-act="demoLoad">Cargar ejemplos</button>'],
-    ['formatos', !!ps.formatos, 'Revise sus formatos', 'Acuerdo, primera vez, sesión y datos del consultante: cambie, oculte o cree los apartados que necesite.', '<button class="btn sm" data-act="formats">Mis formatos</button>'],
-    ['paciente', real.length > 0, 'Cree su primer consultante', 'Con datos ficticios mientras sea una prueba.', '<button class="btn sm" data-act="newPatient">Nuevo consultante</button>'],
-    ['cita', S.appts.some(a => !a.demo), 'Agende una cita', 'Desde la agenda; puede conectarla con Google Calendar.', '<button class="btn sm" data-act="view" data-v="agenda">Ir a la agenda</button>'],
-    ['comentario', !!ps.comentario, 'Cuéntenos qué mejorar', 'Use el botón «Comentarios», abajo a la derecha: elija el apartado del programa y cuéntenos qué falla, qué no entiende o qué le gustaría.', '<button class="btn sm" data-act="fbOpenStep">Escribir un comentario</button>']
+    ['perfil', !!(S.profile.nombre && S.profile.firma), 'Completa tu perfil y dibuja tu firma (opcional)', 'Con ella puede firmar acuerdos, sesiones e informes.', '<button class="btn sm pri" data-act="profile">Mi perfil</button>'],
+    ['ejemplo', demo || !!ps.ejemplo, 'Explora con consultantes de ejemplo', 'Cargamos 3 consultantes ficticios con acuerdos, primera vez, sesiones, citas y notas de proceso. Los borra con un clic.', demo ? '<button class="btn sm" data-act="demoDel">Borrar los ejemplos</button>' : '<button class="btn sm pri" data-act="demoLoad">Cargar ejemplos</button>'],
+    ['formatos', !!ps.formatos, 'Revisa tus formatos', 'Acuerdo, primera vez, sesión y datos del consultante: cambia, oculte o crea los apartados que necesite.', '<button class="btn sm" data-act="formats">Mis formatos</button>'],
+    ['paciente', real.length > 0, 'Crea tu primer consultante', 'Con datos ficticios mientras sea una prueba.', '<button class="btn sm" data-act="newPatient">Nuevo consultante</button>'],
+    ['cita', S.appts.some(a => !a.demo), 'Agenda una cita', 'Desde la agenda; puedes conectarla con Google Calendar.', '<button class="btn sm" data-act="view" data-v="agenda">Ir a la agenda</button>'],
+    ['comentario', !!ps.comentario, 'Cuéntanos qué mejorar', 'Usa el botón «Comentarios», abajo a la derecha: elige el apartado del programa y cuéntanos qué falla, qué no entiende o qué le gustaría.', '<button class="btn sm" data-act="fbOpenStep">Escribir un comentario</button>']
   ];
 }
 function stepsHTML() {
@@ -44,17 +44,17 @@ function stepsHTML() {
   const L = stepsList(), done = L.filter(x => x[1]).length;
   if (done === L.length) return '';
   const hello = (S.profile.pasos || {}).bienvenida ? '' : `<div class="card" style="background:var(--surface)"><b style="font-size:16px">Bienvenido(a) a Alter-Karute · versión de prueba</b>
-    <p style="margin:0;font-size:15px"><b>¡Gracias por hacer parte de nuestro equipo de prueba!</b> Su colaboración es muy valiosa: como agradecimiento, contará con <b>tres meses gratis</b> cuando el software se lance oficialmente. Le pedimos que haga todos los comentarios que necesite, para que juntos lleguemos a un software completo, intuitivo e integral para sus fichas.</p>
-    <ul style="margin:0;padding-left:20px;display:flex;flex-direction:column;gap:4px;font-size:14px"><li><b>Use solo datos inventados</b> mientras dure la prueba: puede cargar consultantes de ejemplo para ver la app «llena».</li>
+    <p style="margin:0;font-size:15px"><b>¡Gracias por hacer parte de nuestro equipo de prueba!</b> Tu colaboración es muy valiosa: como agradecimiento, contará con <b>tres meses gratis</b> cuando el software se lance oficialmente. Le pedimos que haga todos los comentarios que necesite, para que juntos lleguemos a un software completo, intuitivo e integral para tus fichas.</p>
+    <ul style="margin:0;padding-left:20px;display:flex;flex-direction:column;gap:4px;font-size:14px"><li><b>Usa solo datos inventados</b> mientras dure la prueba: puedes cargar consultantes de ejemplo para ver la app «llena».</li>
     <li><b>Todo es opcional:</b> solo el nombre del consultante es necesario. Alter-Karute acompaña el bienestar con terapias alternativas; no es una herramienta clínica.</li>
     <li>Lo que firma (acuerdos, primera vez, sesiones, informes) <b>no se puede modificar</b>, como en papel: solo se agregan adendas.</li>
-    <li>Si algo falla o no se entiende, use el botón <b>Comentarios</b>, abajo a la derecha. Por favor <b>elija el apartado del programa</b> al que se refiere (Agenda, Sesión, Consentimiento…): así podemos ubicar y corregir más rápido.</li></ul>
+    <li>Si algo falla o no se entiende, usa el botón <b>Comentarios</b>, abajo a la derecha. Por favor <b>elige el apartado del programa</b> al que se refiere (Agenda, Sesión, Consentimiento…): así podemos ubicar y corregir más rápido.</li></ul>
     <div class="row end"><button class="btn sm" data-act="welcomeOk">Entendido</button></div></div>`;
   return `<section class="steps" aria-label="Primeros pasos">${hello}<div class="row" style="justify-content:space-between"><h3>Primeros pasos · ${done} de ${L.length}</h3><button class="btn sm" data-act="stepsHide">Ocultar</button></div>
     <div class="bar" aria-hidden="true"><i style="width:${Math.round(done / L.length * 100)}%"></i></div>
     <ol>${L.map(([k, ok, t, d, btn]) => `<li class="${ok ? 'ok' : ''}" data-step="${k}"><span class="ck" aria-hidden="true">${ok ? '✓' : ''}</span><span class="tx"><b>${t}</b><br><span class="ts" style="font-family:inherit">${d}</span></span>${ok && k !== 'ejemplo' ? '<span class="sr-only">Hecho</span>' : btn}</li>`).join('')}</ol></section>`;
 }
-ACT.stepsHide = async () => { S.profile.pasos = S.profile.pasos || {}; S.profile.pasos.oculto = nowISO(); render(); try { await Store.save(S.profile, { strict: true }); } catch (e) { /* no es importante */ } toast('Puede volver a ver los primeros pasos desde el menú → Ayuda: primeros pasos.'); };
+ACT.stepsHide = async () => { S.profile.pasos = S.profile.pasos || {}; S.profile.pasos.oculto = nowISO(); render(); try { await Store.save(S.profile, { strict: true }); } catch (e) { /* no es importante */ } toast('Puedes volver a ver los primeros pasos desde el menú → Ayuda: primeros pasos.'); };
 ACT.stepsShow = async () => { closeMenu(); S.profile.pasos = S.profile.pasos || {}; delete S.profile.pasos.oculto; S.view = 'patients'; S.pid = null; S.homeTab = 'resumen'; S.homeOpen = true; render(); scrollTo(0, 0); try { await Store.save(S.profile, { strict: true }); } catch (e) { /* no es importante */ } };
 ACT.fbOpenStep = () => fbOpen();
 function welcome() { /* la bienvenida va dentro de «Primeros pasos», sin tapar la pantalla */ }
@@ -85,7 +85,7 @@ function demoRecords() {
   B.consents = [consent(B, 'Teleterapia (atención a distancia)'), consent(B, DATA_TIPO)];
   const tele = { tele_plataforma: 'Google Meet', tele_comunicacion: COMUNIC[0] };
   const atA = { viaIngreso: 'Demanda espontánea' };
-  A.intake = Object.assign({ ...atA, formulacion: 'El estrés del trabajo se le queda en el cuerpo (cuello y hombros) y le quita el sueño; se calma cuando se mueve y respira con calma.', antFam: 'Madre con tensión y nervios frecuentes.', desarrollo: 'No refiere', academicoLaboral: 'Diseñadora gráfica; cambio reciente de empresa.', sessionAt: at(-35), modalidad: 'Presencial', motivo: 'Quiere aprender a manejar el estrés y dormir mejor desde hace unos 6 meses, sobre todo desde su cambio de trabajo.', remitido: 'Por iniciativa propia', historiaProblema: 'Siente preocupación constante por el trabajo, la salud de su madre y el dinero. Tensión en el cuello y cansancio. Evita reuniones donde debe exponer.', antMedicos: 'No refiere. Consulta con su médico cuando lo necesita.', antPsi: 'Es su primera vez en un proceso de acompañamiento.', familia: 'Vive sola. Buena relación con su madre y su hermano.', examenMental: 'Se ve atenta y algo acelerada al inicio; se relaja a lo largo de la sesión.', objetivos: 'Bajar el estrés, mejorar el descanso y retomar actividades que evita.', plan: 'Sesiones semanales de 50 minutos durante 12 semanas: respiración consciente, relajación y pausas activas.', impresion: 'Estrés por carga laboral, con tensión corporal y sueño liviano.', signedAt: iso, addenda: [], schema: clone(intakeSchema({})) }, ther);
+  A.intake = Object.assign({ ...atA, formulacion: 'El estrés del trabajo se le queda en el cuerpo (cuello y hombros) y le quita el sueño; se calma cuando se mueve y respira con calma.', antFam: 'Madre con tensión y nervios frecuentes.', desarrollo: 'No refiere', academicoLaboral: 'Diseñadora gráfica; cambio reciente de empresa.', sessionAt: at(-35), modalidad: 'Presencial', motivo: 'Quiere aprender a manejar el estrés y dormir mejor desde hace unos 6 meses, sobre todo desde su cambio de trabajo.', remitido: 'Por iniciativa propia', historiaProblema: 'Siente preocupación constante por el trabajo, la salud de su madre y el dinero. Tensión en el cuello y cansancio. Evita reuniones donde debe exponer.', antMedicos: 'No refiere. Consulta con su médico cuando lo necesita.', antPsi: 'Es su primera vez en un proceso de acompañamiento.', familia: 'Vive sola. Buena relación con su madre y tu hermano.', examenMental: 'Se ve atenta y algo acelerada al inicio; se relaja a lo largo de la sesión.', objetivos: 'Bajar el estrés, mejorar el descanso y retomar actividades que evita.', plan: 'Sesiones semanales de 50 minutos durante 12 semanas: respiración consciente, relajación y pausas activas.', impresion: 'Estrés por carga laboral, con tensión corporal y sueño liviano.', signedAt: iso, addenda: [], schema: clone(intakeSchema({})) }, ther);
   B.intake = Object.assign({ ...atA, formulacion: 'Después de una ruptura dejó sus rutinas y se aisló; retomar actividades que disfruta le devuelve energía.', antMedicos: 'No refiere', antPsi: 'Sin otros procesos previos.', antFam: 'No refiere', desarrollo: 'No se indagó', familia: 'Vive con sus padres.', academicoLaboral: 'Estudiante de ingeniería; bajo rendimiento este semestre.', sessionAt: at(-21, 18), modalidad: 'Virtual', ...tele, motivo: 'Se siente sin ánimo, aislado y con bajo rendimiento en el estudio este semestre.', historiaProblema: 'Tras una ruptura de pareja perdió interés en actividades que disfrutaba. Duerme más de lo habitual.', examenMental: 'Se le ve tranquilo y con poca energía; habla despacio.', objetivos: 'Recuperar rutinas y actividades que disfruta; mejorar el rendimiento en el estudio.', plan: 'Sesiones semanales virtuales: rutina diaria, movimiento suave y práctica de atención plena.', signedAt: iso, addenda: [], schema: clone(intakeSchema({})) }, ther);
   const recs = [A, B, C], note = (p, days, h, o, ap) => { const n = Object.assign({ objetivoSesion: 'Trabajar las metas del plan.', evolucionObj: 'Avance parcial.', id: newId('n'), kind: 'note', patientId: p.id, sessionAt: at(days, h), modalidad: p.modalidadAt === 'Virtual' ? 'Virtual' : 'Presencial', duracion: 50, ...(p.modalidadAt === 'Virtual' ? tele : {}), signedAt: iso, addenda: [], schema: clone(NOTE_FIELDS) }, o, ther); if (ap) { ap.noteId = n.id; n.apptId = ap.id; } recs.push(n); return n; };
   const appt = (p, days, h, estado, extra) => { const a = Object.assign({ id: newId('a'), kind: 'appt', patientId: p.id, startAt: at(days, h), duracion: 50, modalidad: p.modalidadAt === 'Virtual' ? 'Virtual' : 'Presencial', estado }, extra); recs.push(a); return a; };
@@ -116,7 +116,7 @@ function demoExtras(ps, at) {
     if (/hora de fin/.test(l)) return '11:00';
     if (/inicio \(fecha y hora\)/.test(l)) return dia(-7 - k) + ' 10:00';
     if (/(sesión|sesiones)(?!.*pactad)/.test(l) && l.length < 40) return `${k + 2} de 8`;
-    return 'Ejemplo: texto de muestra para «' + label.replace(/\s*\(.*$/, '').replace(/[:?]+$/, '') + '». Reemplácelo con sus propias palabras.';
+    return 'Ejemplo: texto de muestra para «' + label.replace(/\s*\(.*$/, '').replace(/[:?]+$/, '') + '». Reemplázalo con tus propias palabras.';
   };
   ps.forEach((p, pi) => {
     p.extras = p.extras || {};
@@ -128,9 +128,9 @@ function demoExtras(ps, at) {
   });
 }
 ACT.demoLoad = async b => {
-  if (S.patients.some(x => x.demo)) { toast('Ya tiene los consultantes de ejemplo.'); return; }
+  if (S.patients.some(x => x.demo)) { toast('Ya tienes los consultantes de ejemplo.'); return; }
   setBusy(b, true);
-  try { await api('/demo', { method: 'POST', body: { records: demoRecords() } }); await Store.load(); stepDone('ejemplo'); S.view = 'patients'; S.pid = null; render(); toast('Listo: 3 consultantes de ejemplo. Ábralos desde la lista de la izquierda.'); }
+  try { await api('/demo', { method: 'POST', body: { records: demoRecords() } }); await Store.load(); stepDone('ejemplo'); S.view = 'patients'; S.pid = null; render(); toast('Listo: 3 consultantes de ejemplo. Ábrelos desde la lista de la izquierda.'); }
   catch (e) { toast(e.message); } finally { if (b && b.isConnected) setBusy(b, false); }
 };
 ACT.demoDel = async b => {
@@ -161,7 +161,7 @@ ACT.accessLog = async b => {
   };
   const p = pid ? S.patients.find(x => x.id === pid) : null;
   root.innerHTML = `<div class="modal" role="dialog" aria-modal="true" aria-label="Bitácora de accesos"><div class="box" style="max-width:860px"><div class="row" style="justify-content:space-between"><h3>${p ? 'Accesos a la historia de ' + esc(fullName(p)) : 'Bitácora de accesos'}</h3><button class="btn sm" id="al_close">Cerrar</button></div>
-    <p class="stnote" style="margin:0">Cada vez que usted o alguien de su equipo abre una historia, guarda, firma o descarga, queda aquí con la fecha y la hora. ${pid ? '' : 'También los ingresos a la cuenta y los intentos fallidos o sin permiso. '}Nadie puede borrar ni modificar este registro.</p>
+    <p class="stnote" style="margin:0">Cada vez que tú o alguien de tu equipo abra una historia, guarda, firma o descarga, queda aquí con la fecha y la hora. ${pid ? '' : 'También los ingresos a la cuenta y los intentos fallidos o sin permiso. '}Nadie puede borrar ni modificar este registro.</p>
     <div class="row"><select id="al_who" style="width:auto" aria-label="Filtrar por persona"><option value="">Todas las personas</option>${people.map(x => `<option>${esc(x)}</option>`).join('')}</select>${pid ? '' : `<select id="al_what" style="width:auto" aria-label="Filtrar por tipo"><option value="">Todo</option><option value="hist">Historias</option><option value="ing">Ingresos a la cuenta</option><option value="den">Intentos sin permiso</option></select>`}<span class="ts">${list.length} registros${list.length >= 300 ? ' (los más recientes)' : ''}</span></div>
     <div id="al_body" class="tscroll"></div></div></div>`;
   $('#al_close').onclick = () => { root.innerHTML = ''; };

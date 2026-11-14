@@ -10,7 +10,7 @@ function addendaHTML(rec, kind, id) {
   return `${list}<details><summary style="cursor:pointer;color:var(--accent-fg);font-weight:500">Agregar adenda o corrección</summary><div class="sec" style="margin-top:8px">
   <div class="fld"><label for="adt_${id}">Tipo</label><select id="adt_${id}" data-adtipo="${id}"><option value="Adenda">Adenda (información adicional)</option><option value="Corrección">Corrección de un error</option></select></div>
   <div class="grid" id="adc_${id}" hidden><div class="fld wide"><label for="add_${id}">Qué dice el registro (texto que se corrige)</label><textarea id="add_${id}" rows="2"></textarea></div><div class="fld wide"><label for="adn_${id}">Qué debe decir</label><textarea id="adn_${id}" rows="2"></textarea></div></div>
-  <p class="stnote" id="adh_${id}" hidden>El registro original no se borra: la corrección queda agregada, con fecha, hora, su nombre y su identificación.</p>
+  <p class="stnote" id="adh_${id}" hidden>El registro original no se borra: la corrección queda agregada, con fecha, hora, tu nombre y tu identificación.</p>
   <div class="fld"><label for="ad_${id}" id="adl_${id}">Texto de la adenda (queda con fecha y hora)</label><textarea id="ad_${id}" rows="3"></textarea></div><div class="row end"><button class="btn sm pri" data-act="addAdd" data-kind="${kind}" data-id="${id}">Guardar adenda</button></div></div></details>`;
 }
 document.addEventListener('change', e => {
@@ -21,9 +21,9 @@ document.addEventListener('change', e => {
 ACT.addAdd = async b => {
   const id = b.dataset.id, tipo = ($('#adt_' + id) || {}).value || 'Adenda', t = $('#ad_' + id).value.trim();
   const corr = tipo === 'Corrección', dice = corr ? $('#add_' + id).value.trim() : '', debe = corr ? $('#adn_' + id).value.trim() : '';
-  if (corr && (!dice || !debe)) { toast('Escriba qué dice el registro y qué debe decir.'); return; }
-  if (!t) { toast(corr ? 'Escriba el motivo de la corrección.' : 'Escriba el texto de la adenda.'); return; }
-  if (!S.profile.nombre) { toast('Complete su nombre en el perfil.'); return; }
+  if (corr && (!dice || !debe)) { toast('Escribe qué dice el registro y qué debe decir.'); return; }
+  if (!t) { toast(corr ? 'Escribe el motivo de la corrección.' : 'Escribe el texto de la adenda.'); return; }
+  if (!S.profile.nombre) { toast('Completa tu nombre en el perfil.'); return; }
   const p = curPatient(); let rec, owner;
   if (b.dataset.kind === 'intake') { rec = p.intake; owner = p; } else if (b.dataset.kind === 'note') { rec = S.notes.find(n => n.id === b.dataset.id); owner = rec; } else { rec = S.reports.find(n => n.id === b.dataset.id); owner = rec; }
   const snap = clone(owner);
@@ -97,16 +97,16 @@ function dxListHTML() {
 }
 function dxBlock(i, o = {}) {
   dxReset(o.ctx || 'intake:' + (curPatient() || {}).id, o.seed);
-  const intro = o.from ? `Impresión vigente, tomada de ${esc(o.from)}. Modifíquela solo si cambió en esta sesión: agregue, o cambie el estado (activa, inactiva o histórica). «Quitar» es solo para corregir un error.`
-    : o.note ? 'El consultante aún no tiene impresiones registradas. Puede agregarlas aquí.'
-    : 'Escriba con sus propias palabras la impresión o el motivo de seguimiento y pulse «Agregar». La primera de la lista es la principal.';
+  const intro = o.from ? `Impresión vigente, tomada de ${esc(o.from)}. Modifícala solo si cambió en esta sesión: agrega, o cambia el estado (activa, inactiva o histórica). «Quitar» es solo para corregir un error.`
+    : o.note ? 'El consultante aún no tiene impresiones registradas. Puedes agregarlas aquí.'
+    : 'Escribe con tus propias palabras la impresión o el motivo de seguimiento y pulsa «Agregar». La primera de la lista es la principal.';
   return `<div class="sec" id="dxblock" ${o.note ? 'data-note="1"' : ''}><h3>Impresión o motivo de seguimiento</h3>
   <p style="margin:0;font-size:13px;color:var(--muted)">${intro}</p><div id="dxchg">${o.note ? dxChgHTML() : ''}</div>
   <div class="row"><input id="dx_q" type="text" maxlength="300" autocomplete="off" placeholder="Ej.: ansiedad ante exámenes, duelo reciente" aria-label="Nueva impresión" style="flex:1"><button type="button" class="btn sm" data-dx="add:0">Agregar</button></div>
   <div id="dxlist">${dxListHTML()}</div>
   ${F(o.note ? 'Observaciones o motivo del cambio (opcional)' : 'Observaciones (opcional)', 'dxObs', i.dxObs || '', { type: 'area', rows: 2, wide: true, ph: '' })}</div>`;
 }
-function dxChgHTML() { return dxChanged() ? '<span class="chip warn">Impresión actualizada en esta sesión. Si quiere, explique el motivo abajo.</span>' : ''; }
+function dxChgHTML() { return dxChanged() ? '<span class="chip warn">Impresión actualizada en esta sesión. Si quieres, explique el motivo abajo.</span>' : ''; }
 function dxRedraw() { $('#dxlist').innerHTML = dxListHTML(); const c = $('#dxchg'); if (c && $('#dxblock').dataset.note) c.innerHTML = dxChgHTML(); }
 function dxMount() {}
 function dxAdd() {
@@ -150,11 +150,11 @@ function tabIntake(p) {
   return `<div id="intakeform" class="sec">${consentWarn}${sigNeeded()}<div class="row" style="justify-content:space-between"><h3 style="flex:1">Primera vez</h3><button class="btn" data-act="saveIntake" data-sign="0">Guardar borrador</button><button class="btn pri" data-act="saveIntake" data-sign="1">Firmar y guardar</button></div>${phraseHint()}
   ${atencionBlock(i, 'intake', p)}
   <div id="teleslot">${isRemote(i.modalidad) ? teleBlock(i) : ''}</div>
-  <p class="stnote">Todos los campos son opcionales: llene lo que le sirva.</p>
+  <p class="stnote">Todos los campos son opcionales: llena lo que le sirva.</p>
   ${intakeSchema(i).map(([t, fs, g]) => `<div class="sec"><h3>${esc(t)}</h3><div class="grid">${fs.map(f => F(f[1], f[0], i[f[0]] !== undefined ? i[f[0]] : (f[3] || ''), { type: 'area', rows: f[2], wide: true, aria: t, req: true })).join('')}</div>${g === 'genograma' ? genoBlock() : ''}</div>`).join('')}
-  ${legacyOf(i).length ? `<div class="sec"><h3>Datos de la versión anterior</h3><p style="margin:0;font-size:13px;color:var(--muted)">Estos campos ya no están en el formulario. Pase lo que necesite a los apartados nuevos y vacíe el campo, o déjelo como está.</p><div class="grid">${legacyOf(i).map(([k, l]) => F(l, k, i[k], { type: 'area', rows: 2, wide: true })).join('')}</div></div>` : ''}
-  <div class="fld"><span class="lbl">Firma del terapeuta (de su perfil)</span>${therPreview()}</div>
-  <p class="lock-note">Al guardar, el documento queda firmado con su firma, la fecha y la hora, y <b>no podrá modificarse</b>. Solo podrá agregar adendas.</p><div class="row end"><button class="btn" data-act="saveIntake" data-sign="0">Guardar borrador</button><button class="btn pri" data-act="saveIntake" data-sign="1">Firmar y guardar</button></div></div>`;
+  ${legacyOf(i).length ? `<div class="sec"><h3>Datos de la versión anterior</h3><p style="margin:0;font-size:13px;color:var(--muted)">Estos campos ya no están en el formulario. Pasa lo que necesite a los apartados nuevos y vacíe el campo, o déjalo como está.</p><div class="grid">${legacyOf(i).map(([k, l]) => F(l, k, i[k], { type: 'area', rows: 2, wide: true })).join('')}</div></div>` : ''}
+  <div class="fld"><span class="lbl">Firma del terapeuta (de tu perfil)</span>${therPreview()}</div>
+  <p class="lock-note">Al guardar, el documento queda firmado con tu firma, la fecha y la hora, y <b>no podrá modificarse</b>. Solo podrá agregar adendas.</p><div class="row end"><button class="btn" data-act="saveIntake" data-sign="0">Guardar borrador</button><button class="btn pri" data-act="saveIntake" data-sign="1">Firmar y guardar</button></div></div>`;
 }
 ACT.viewIntake = () => { const p = curPatient(); showDoc('Primera vez · ' + fullName(p), docIntake(p), 'primera-vez-' + slug(fullName(p)) + '.html'); };
 ACT.saveIntake = async b => {
@@ -162,7 +162,7 @@ ACT.saveIntake = async b => {
   o.sessionAt = toISO(o.sessionAt);
   if (geno) o.genograma = geno.data();
   if (sign) {
-    if (!canSign()) { toast('Primero guarde su nombre y firma en «Mi perfil».'); return; }
+    if (!canSign()) { toast('Primero guarda tu nombre y firma en «Mi perfil».'); return; }
     const sc = intakeSchema(p.intake || {});
     if (!reqCheck($('#intakeform'), o, intakeKeys(sc).concat(['presentes']))) return;
     if (!atencionChecks(o)) return;
@@ -191,15 +191,15 @@ function teleBlock(r) {
   ${F('Lugar desde donde se conectó el consultante', 'tele_ubicacion', r.tele_ubicacion || '', { ph: 'Ciudad y tipo de lugar (casa, oficina…)' })}
   ${F('Grabación', 'tele_grabacion', r.tele_grabacion || GRABA[0], { type: 'select', opts: GRABA })}
   ${F('Fallas técnicas o incidencias (opcional)', 'tele_incidencias', r.tele_incidencias || '', { type: 'area', rows: 2, wide: true })}</div>
-  <div class="banner" id="telewarn" ${badPlatform(r.tele_plataforma || S.profile.plataforma) ? '' : 'hidden'}>No se recomienda usar WhatsApp ni redes sociales para las sesiones. Use una plataforma con cifrado y control de acceso.</div>
+  <div class="banner" id="telewarn" ${badPlatform(r.tele_plataforma || S.profile.plataforma) ? '' : 'hidden'}>No se recomienda usar WhatsApp ni redes sociales para las sesiones. Usa una plataforma con cifrado y control de acceso.</div>
   ${chk('tele_idPaciente', 'Verifiqué la identidad del consultante al inicio de la sesión.', r.tele_idPaciente)}
   ${chk('tele_idProfesional', 'Me identifiqué ante el consultante con mi nombre y profesión.', r.tele_idProfesional)}
   ${chk('tele_privacidad', 'El consultante confirmó estar en un lugar privado y conoce el procedimiento ante fallas o emergencias.', r.tele_privacidad)}</div>`;
 }
 function teleCheck(o) {
   if (!isRemote(o.modalidad)) { Object.keys(o).forEach(k => { if (k.startsWith('tele_')) delete o[k]; }); return true; }
-  if (!o.tele_plataforma || !o.tele_ubicacion) { toast('En atención a distancia indique la plataforma y el lugar desde donde se conectó el consultante.'); return false; }
-  if (!o.tele_idPaciente || !o.tele_idProfesional) { toast('Confirme la identificación del consultante y la suya al inicio de la sesión.'); return false; }
+  if (!o.tele_plataforma || !o.tele_ubicacion) { toast('En atención a distancia indica la plataforma y el lugar desde donde se conectó el consultante.'); return false; }
+  if (!o.tele_idPaciente || !o.tele_idProfesional) { toast('Confirma la identificación del consultante y la tuya al inicio de la sesión.'); return false; }
   return true;
 }
 function teleDoc(r) {
@@ -217,7 +217,7 @@ function verifBox(r) {
   const base = r.verificarEn || location.origin, url = base + '/verificar?c=' + r.verificacion;
   let qr = '';
   try { const q = qrcode(0, 'M'); q.addData(url); q.make(); qr = q.createSvgTag(3, 0); } catch (e) { /* sin librería de QR */ }
-  return `<div style="display:flex;gap:14px;align-items:center;margin-top:22px;padding-top:10px;border-top:1px solid #c9d2d4;font-size:12px;line-height:1.5"><div style="flex:none;width:96px">${qr.replace('<svg ', '<svg style="width:96px;height:96px" ')}</div><div>Código de verificación: <b style="font-family:monospace;font-size:14px;letter-spacing:.05em">${esc(r.verificacion)}</b><br>Compruebe que este documento es auténtico y que su contenido no fue alterado en<br>${esc(base)}/verificar</div></div>`;
+  return `<div style="display:flex;gap:14px;align-items:center;margin-top:22px;padding-top:10px;border-top:1px solid #c9d2d4;font-size:12px;line-height:1.5"><div style="flex:none;width:96px">${qr.replace('<svg ', '<svg style="width:96px;height:96px" ')}</div><div>Código de verificación: <b style="font-family:monospace;font-size:14px;letter-spacing:.05em">${esc(r.verificacion)}</b><br>Compruebe que este documento es auténtico y que tu contenido no fue alterado en<br>${esc(base)}/verificar</div></div>`;
 }
 
 /* ----- Sesión ----- */
@@ -226,10 +226,10 @@ function noteForm(p, n) {
   return `<div class="card" id="noteform"><div class="row" style="justify-content:space-between"><h3 style="flex:1">${n.id ? 'Editar borrador' : 'Nueva nota de sesión'}</h3><button class="btn" data-act="cancelNote">Cancelar</button><button class="btn" data-act="saveNote" data-sign="0">Guardar borrador</button><button class="btn pri" data-act="saveNote" data-sign="1">Firmar y guardar</button></div>${sigNeeded()}${prevNoteHTML(p, n)}
   ${atencionBlock(n, 'note', p)}
   <div id="teleslot">${isRemote(n.modalidad) ? teleBlock(n) : ''}</div>
-  ${evolSchema(n).length ? `${phraseHint()}<p class="stnote">Todos los campos son opcionales: llene lo que le sirva.</p><div class="grid">${evolSchema(n).map(f => F(f[1], f[0], n[f[0]] !== undefined ? n[f[0]] : (f[3] || ''), { type: 'area', rows: f[2], wide: true, req: true })).join('')}</div>`
-    : `<div class="banner" id="noformat">Aún no ha creado su formato de sesión. Créelo en «Mis formatos» con los campos que usted usa (puede partir del formato sugerido). <div class="row" style="margin-top:6px"><button class="btn sm pri" data-act="formats" data-hub="evol">Crear mi formato</button></div></div>`}
-  <div class="fld"><span class="lbl">Firma del terapeuta (de su perfil)</span>${therPreview()}</div>
-  <p class="lock-note">Al guardar, el documento queda firmado con su firma, la fecha y la hora, y <b>no podrá modificarse</b>. Solo podrá agregar adendas.</p><div class="row end"><button class="btn" data-act="cancelNote">Cancelar</button><button class="btn" data-act="saveNote" data-sign="0">Guardar borrador</button><button class="btn pri" data-act="saveNote" data-sign="1">Firmar y guardar</button></div></div>`;
+  ${evolSchema(n).length ? `${phraseHint()}<p class="stnote">Todos los campos son opcionales: llena lo que le sirva.</p><div class="grid">${evolSchema(n).map(f => F(f[1], f[0], n[f[0]] !== undefined ? n[f[0]] : (f[3] || ''), { type: 'area', rows: f[2], wide: true, req: true })).join('')}</div>`
+    : `<div class="banner" id="noformat">Aún no ha creado tu formato de sesión. Créalo en «Mis formatos» con los campos que usas (puedes partir del formato sugerido). <div class="row" style="margin-top:6px"><button class="btn sm pri" data-act="formats" data-hub="evol">Crear mi formato</button></div></div>`}
+  <div class="fld"><span class="lbl">Firma del terapeuta (de tu perfil)</span>${therPreview()}</div>
+  <p class="lock-note">Al guardar, el documento queda firmado con tu firma, la fecha y la hora, y <b>no podrá modificarse</b>. Solo podrá agregar adendas.</p><div class="row end"><button class="btn" data-act="cancelNote">Cancelar</button><button class="btn" data-act="saveNote" data-sign="0">Guardar borrador</button><button class="btn pri" data-act="saveNote" data-sign="1">Firmar y guardar</button></div></div>`;
 }
 function prevNoteHTML(p, n) {
   const prev = S.notes.filter(x => x.patientId === p.id && x.signedAt && x.id !== n.id).sort((a, b) => b.sessionAt.localeCompare(a.sessionAt))[0];
@@ -261,7 +261,7 @@ ACT.saveNote = async b => {
   const p = curPatient(), sign = b.dataset.sign === '1', o = readForm($('#noteform'), {});
   o.sessionAt = toISO(o.sessionAt);
   if (sign) {
-    if (!canSign()) { toast('Primero guarde su nombre y firma en «Mi perfil».'); return; }
+    if (!canSign()) { toast('Primero guarda tu nombre y firma en «Mi perfil».'); return; }
     if (!reqCheck($('#noteform'), o, evolSchema({}).map(f => f[0]).concat(['presentes']))) return;
     if (!atencionChecks(o)) return;
     if (!teleCheck(o)) return;

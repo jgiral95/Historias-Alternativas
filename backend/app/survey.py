@@ -1,6 +1,6 @@
 """Encuestas de satisfacción: sorteo periódico de consultantes, envío del enlace y respuestas anónimas.
 
-Cada terapeuta configura su encuesta en su perfil (registro «profile», campo «encuesta»):
+Cada terapeuta configura tu encuesta en tu perfil (registro «profile», campo «encuesta»):
   activa, cadaDias, cantidad, intro, preguntas, incluirAnteriores.
 Cada sorteo elige al azar, entre los consultantes atendidos en el periodo, a quienes no se invitó
 en los últimos SURVEY_MIN_GAP_DAYS días, no pidieron la baja y autorizaron el tratamiento de datos.
@@ -39,24 +39,24 @@ TYPES = {
 
 # Preguntas sugeridas: las del formato del consultorio y una dimensión sobre el terapeuta.
 DEFAULT_QUESTIONS = [
-    {"id": "op1", "dim": "Oportunidad de consulta", "texto": "Cuando solicitó su cita, se la asignaron en:", "tipo": "dias"},
-    {"id": "op2", "dim": "Oportunidad de consulta", "texto": "La hora en que le asignaron su cita coincidió con el momento de la atención", "tipo": "sino"},
+    {"id": "op1", "dim": "Oportunidad de consulta", "texto": "Cuando solicitó tu cita, se la asignaron en:", "tipo": "dias"},
+    {"id": "op2", "dim": "Oportunidad de consulta", "texto": "La hora en que le asignaron tu cita coincidió con el momento de la atención", "tipo": "sino"},
     {"id": "pf1", "dim": "Planta física", "texto": "¿Cómo encontró el estado de aseo del consultorio?", "tipo": "escala"},
     {"id": "pf2", "dim": "Planta física", "texto": "¿Cómo califica las comodidades del consultorio?", "tipo": "escala"},
     {"id": "pf3", "dim": "Planta física", "texto": "¿Cómo califica el ambiente de las instalaciones?", "tipo": "escala"},
     {"id": "at1", "dim": "Atención", "texto": "El trato que recibió en la recepción o al agendar fue:", "tipo": "escala"},
     {"id": "cp1", "dim": "Características del terapeuta", "texto": "La puntualidad del terapeuta al iniciar las sesiones fue:", "tipo": "escala"},
-    {"id": "cp2", "dim": "Características del terapeuta", "texto": "La forma en que el terapeuta escuchó lo que usted quería expresar fue:", "tipo": "escala"},
-    {"id": "cp3", "dim": "Características del terapeuta", "texto": "La claridad con que le explicó su proceso y las actividades propuestas fue:", "tipo": "escala"},
+    {"id": "cp2", "dim": "Características del terapeuta", "texto": "La forma en que el terapeuta escuchó lo que querías expresar fue:", "tipo": "escala"},
+    {"id": "cp3", "dim": "Características del terapeuta", "texto": "La claridad con que le explicó tu proceso y las actividades propuestas fue:", "tipo": "escala"},
     {"id": "cp4", "dim": "Características del terapeuta", "texto": "El respeto y el trato digno que recibió del terapeuta fueron:", "tipo": "escala"},
     {"id": "cp5", "dim": "Características del terapeuta", "texto": "La confianza y la confidencialidad que le transmitió el terapeuta fueron:", "tipo": "escala"},
-    {"id": "cp6", "dim": "Características del terapeuta", "texto": "La información que recibió sobre sus derechos, deberes y el consentimiento informado fue:", "tipo": "escala"},
-    {"id": "cp7", "dim": "Características del terapeuta", "texto": "La utilidad de las sesiones para su situación ha sido:", "tipo": "escala"},
-    {"id": "eg1", "dim": "Experiencia general", "texto": "En general, ¿cómo califica su experiencia con el servicio?", "tipo": "escala"},
-    {"id": "eg2", "dim": "Experiencia general", "texto": "¿Recomendaría este servicio a sus familiares y amigos?", "tipo": "recomienda"},
+    {"id": "cp6", "dim": "Características del terapeuta", "texto": "La información que recibió sobre tus derechos, deberes y el consentimiento informado fue:", "tipo": "escala"},
+    {"id": "cp7", "dim": "Características del terapeuta", "texto": "La utilidad de las sesiones para tu situación ha sido:", "tipo": "escala"},
+    {"id": "eg1", "dim": "Experiencia general", "texto": "En general, ¿cómo califica tu experiencia con el servicio?", "tipo": "escala"},
+    {"id": "eg2", "dim": "Experiencia general", "texto": "¿Recomendaría este servicio a tus familiares y amigos?", "tipo": "recomienda"},
     {"id": "com", "dim": "Comentarios", "texto": "¿Qué podríamos mejorar? (opcional)", "tipo": "texto"},
 ]
-DEFAULT_INTRO = "Queremos conocer su opinión sobre la atención que recibió. Son unos 2 minutos y sus respuestas se guardan sin su nombre."
+DEFAULT_INTRO = "Queremos conocer tu opinión sobre la atención que recibió. Son unos 2 minutos y tus respuestas se guardan sin tu nombre."
 
 _draw_lock = threading.Lock()
 
@@ -252,7 +252,7 @@ def link(token: str, base: str = "") -> str:
 
 def message(to: str, token: str, p: dict, prof: dict, acc: dict | None = None) -> EmailMessage:
     acc = acc or {}
-    who = prof.get("nombre") or "Su terapeuta(a)"
+    who = prof.get("nombre") or "Tu terapeuta(a)"
     place = prof.get("consultorio") or who
     first = str(p.get("nombres") or "").split(" ")[0]
     url = link(token, acc.get("base") or "")
@@ -266,30 +266,30 @@ def message(to: str, token: str, p: dict, prof: dict, acc: dict | None = None) -
         m["Reply-To"] = reply
     m.set_content(
         f"Hola{(' ' + first) if first else ''}:\n\n{who} le invita a responder una encuesta corta sobre la atención que recibió. "
-        f"Toma unos 2 minutos y sus respuestas se guardan sin su nombre.\n\n{url}\n\n"
+        f"Toma unos 2 minutos y tus respuestas se guardan sin tu nombre.\n\n{url}\n\n"
         f"El enlace estará abierto {SURVEY_DAYS_OPEN} días. Responder es voluntario.\n"
-        f"Si no desea recibir más encuestas: {out}\n\nGracias por su tiempo.\n")
+        f"Si no deseas recibir más encuestas: {out}\n\nGracias por tu tiempo.\n")
     correo.agregar(m, correo.layout("¿Cómo le pareció la atención?",
-                                    [f"Hola{(' ' + first) if first else ''}. {who} le invita a responder una encuesta corta sobre la atención que recibió. Toma unos 2 minutos y sus respuestas se guardan sin su nombre."],
+                                    [f"Hola{(' ' + first) if first else ''}. {who} le invita a responder una encuesta corta sobre la atención que recibió. Toma unos 2 minutos y tus respuestas se guardan sin tu nombre."],
                                     cierre=[f"El enlace estará abierto {SURVEY_DAYS_OPEN} días. Responder es voluntario."], boton=("Responder la encuesta", url),
-                                    notas=[("Si no desea recibir más encuestas,", "haga clic aquí", out)], firma=("Gracias por su tiempo,", who)), prof.get("idioma"))
+                                    notas=[("Si no deseas recibir más encuestas,", "haz clic aquí", out)], firma=("Gracias por tu tiempo,", who)), prof.get("idioma"))
     return m
 
 
 def send_verify(to: str, name: str, url: str, acc: dict, lang: str | None = None) -> None:
     """Correo con el enlace para activar una cuenta nueva. Se reemplaza en las pruebas."""
     m = EmailMessage()
-    m["Subject"] = "Bienvenido(a) a Alter-Karute: confirme su correo para activar su cuenta"
+    m["Subject"] = "Bienvenido(a) a Alter-Karute: confirma tu correo para activar tu cuenta"
     m["From"] = formataddr(("Alter-Karute", acc.get("from") or SMTP_FROM))
     m["To"] = to
     nombre = (name or "").strip()
     m.set_content(
         f"Bienvenido(a) a Alter-Karute{(', ' + nombre) if nombre else ''}.\n\n"
-        f"Para activar su cuenta, confirme su correo con este enlace (vigente durante 24 horas):\n\n{url}\n\n"
-        "Si usted no solicitó esta cuenta, ignore este mensaje: no se creará ningún registro.\n\nAtentamente,\nAlter-Karute\n")
+        f"Para activar tu cuenta, confirma tu correo con este enlace (vigente durante 24 horas):\n\n{url}\n\n"
+        "Si no solicitaste esta cuenta, ignora este mensaje: no se creará ningún registro.\n\nAtentamente,\nAlter-Karute\n")
     correo.agregar(m, correo.layout(f"Bienvenido(a) a Alter-Karute{(', ' + nombre) if nombre else ''}",
-                                    ["Para activar su cuenta, confirme su correo con el siguiente botón. El enlace estará vigente durante 24 horas."],
-                                    boton=("Confirmar mi correo", url), notas=["Si usted no solicitó esta cuenta, ignore este mensaje: no se creará ningún registro."]), lang)
+                                    ["Para activar tu cuenta, confirma tu correo con el siguiente botón. El enlace estará vigente durante 24 horas."],
+                                    boton=("Confirmar mi correo", url), notas=["Si no solicitaste esta cuenta, ignora este mensaje: no se creará ningún registro."]), lang)
     with smtp_open(acc) as s:
         s.send_message(m)
 
@@ -313,7 +313,7 @@ def validate_answers(questions: list[dict], body) -> dict:
                 out[q["id"]] = str(v).strip()[:1500]
             continue
         if not isinstance(v, int) or isinstance(v, bool) or not 0 <= v < len(TYPES[q["tipo"]]):
-            raise ValueError("Responda todas las preguntas con opciones")
+            raise ValueError("Responde todas las preguntas con opciones")
         out[q["id"]] = v
     return out
 
@@ -332,7 +332,7 @@ _stop = threading.Event()
 
 
 def start_scheduler(every_seconds: int = 900) -> None:
-    """Cada 15 minutos: recordatorios de citas; el sorteo de encuestas respeta su propia frecuencia."""
+    """Cada 15 minutos: recordatorios de citas; el sorteo de encuestas respeta tu propia frecuencia."""
     def loop():
         from . import reminders  # importación tardía: reminders usa este módulo
         _stop.wait(60)

@@ -4,12 +4,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Verificar documento</title>
-<meta name="description" content="Compruebe que su documento es auténtico.">
+<meta name="description" content="Compruebe que tu documento es auténtico.">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Alter-Karute">
 <meta property="og:locale" content="es_CO">
 <meta property="og:title" content="Verificar documento · Alter-Karute">
-<meta property="og:description" content="Compruebe que su documento es auténtico.">
+<meta property="og:description" content="Compruebe que tu documento es auténtico.">
 <meta property="og:image" content="__ORIGIN__/og.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
@@ -49,11 +49,11 @@ dt{color:var(--muted)}dd{margin:0;overflow-wrap:anywhere}
 <main>
   <div class="card">
     <h1><svg width="30" height="30" viewBox="0 0 120 120" aria-hidden="true"><rect x="6" y="6" width="108" height="108" rx="16" fill="#4E6B58"/><rect x="34" y="22" width="52" height="64" rx="6" fill="#FFFFFF"/><rect x="46" y="14" width="28" height="16" rx="4" fill="#FFFFFF" stroke="#4E6B58" stroke-width="4"/><rect x="42" y="46" width="36" height="6" rx="3" fill="#4E6B58"/><rect x="42" y="58" width="36" height="6" rx="3" fill="#4E6B58"/><rect x="42" y="70" width="22" height="6" rx="3" fill="#4E6B58"/></svg>Verificar un documento</h1>
-    <p>Escriba el código de verificación impreso al final del informe o del certificado. Si es auténtico, verá el contenido tal como lo firmó el profesional: compárelo con el documento que recibió.</p>
+    <p>Escribe el código de verificación impreso al final del informe o del certificado. Si es auténtico, verá el contenido tal como lo firmó el profesional: compárelo con el documento que recibió.</p>
     <form id="f"><input id="c" placeholder="XXXX-XXXX-XXXX" aria-label="Código de verificación" autocomplete="off" maxlength="16" required><button>Verificar</button></form>
     <div id="out" aria-live="polite"></div>
   </div>
-  <p class="muted">Esta consulta queda registrada. La información de este documento es reservada: úsela solo para el fin para el que le entregaron el documento.</p>
+  <p class="muted">Esta consulta queda registrada. La información de este documento es reservada: úsala solo para el fin para el que le entregaron el documento.</p>
 </main>
 <script>window.I18N_PUBLIC = 1;</script>
 <script src="js/i18n.js"></script>
@@ -75,7 +75,7 @@ async function check(code) {
   try {
     const r = await fetch('/api/verify/' + encodeURIComponent(code), { headers: { 'X-Requested-With': 'archivo-clinico' } });
     if (r.status === 404) { out.innerHTML = '<div class="res bad"><b>No encontramos un documento con ese código.</b> Revise que lo escribió bien. Si el código es correcto, el documento no fue emitido por este sistema.</div>'; return; }
-    if (r.status === 429) { out.innerHTML = '<div class="res bad">Demasiadas consultas. Intente de nuevo en unos minutos.</div>'; return; }
+    if (r.status === 429) { out.innerHTML = '<div class="res bad">Demasiadas consultas. Intenta de nuevo en unos minutos.</div>'; return; }
     if (!r.ok) throw new Error();
     const d = await r.json();
     out.innerHTML = `<div class="res ok"><b>Documento auténtico.</b> Fue emitido y firmado en este sistema.</div>
@@ -83,8 +83,8 @@ async function check(code) {
       ${d.asunto ? `<dt>Asunto</dt><dd>${esc(d.asunto)}</dd>` : ''}<dt>Firmado por</dt><dd>${esc(d.profesional)}${d.registro ? ' · T.P. ' + esc(d.registro) : ''}</dd><dt>Fecha de firma</dt><dd>${esc(fmt(d.firmado))}</dd></dl>
       <p><b>Contenido firmado</b></p><div class="doc">${fmtRich(d.contenido)}</div>
       ${(d.adendas || []).length ? '<p><b>Adendas</b></p>' + d.adendas.map(a => `<div class="doc"><b>${esc(fmt(a.fecha))}:</b> ${esc(a.texto)}</div>`).join('') : ''}
-      <p class="muted">Si el documento que recibió dice algo distinto, fue alterado: comuníquese con el terapeuta.</p>`;
-  } catch (e) { out.innerHTML = '<div class="res bad">No se pudo consultar en este momento. Intente más tarde.</div>'; }
+      <p class="muted">Si el documento que recibió dice algo distinto, fue alterado: comunícate con el terapeuta.</p>`;
+  } catch (e) { out.innerHTML = '<div class="res bad">No se pudo consultar en este momento. Intenta más tarde.</div>'; }
 }
 $('#f').onsubmit = e => { e.preventDefault(); check($('#c').value); };
 const q = new URLSearchParams(location.search).get('c');

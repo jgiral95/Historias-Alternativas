@@ -23,8 +23,8 @@ function remotePending(p) {
 }
 ACT.firmasSync = async () => { await firmasSync(); render(); };
 function remoteMsg(p, f) {
-  const who = (S.profile && S.profile.nombre) || 'su terapeuta', first = (p.nombres || '').split(' ')[0];
-  return `Hola${first ? ' ' + first : ''}, ${who} le envía el documento «${f.tipo}» para que lo lea y lo firme desde su celular: ${location.origin}/firmar?t=${f.enlace} Para abrirlo se le pedirá su número de documento. El enlace vence en 7 días.`;
+  const who = (S.profile && S.profile.nombre) || 'tu terapeuta', first = (p.nombres || '').split(' ')[0];
+  return `Hola${first ? ' ' + first : ''}, ${who} le envía el documento «${f.tipo}» para que lo lea y lo firme desde tu celular: ${location.origin}/firmar?t=${f.enlace} Para abrirlo se le pedirá tu número de documento. El enlace vence en 7 días.`;
 }
 function remoteModal(f) {
   const p = S.patients.find(x => x.id === f.patientId) || {}, root = $('#modal-root'), text = remoteMsg(p, f), ph = waPhone(p.telefono, p.telInd);
@@ -36,7 +36,7 @@ function remoteModal(f) {
   <div class="row end"><button class="btn" id="rf_close">Listo</button></div></div></div>`;
   $('#rf_txt').oninput = () => { const w = $('#rf_wa'); if (w) w.href = `https://wa.me/${ph}?text=${encodeURIComponent($('#rf_txt').value)}`; };
   $('#rf_close').onclick = () => { root.innerHTML = ''; render(); };
-  $('#rf_copy').onclick = async () => { try { await navigator.clipboard.writeText($('#rf_txt').value); toast('Mensaje copiado.'); } catch (e) { $('#rf_txt').select(); toast('Copie el mensaje seleccionado.'); } };
+  $('#rf_copy').onclick = async () => { try { await navigator.clipboard.writeText($('#rf_txt').value); toast('Mensaje copiado.'); } catch (e) { $('#rf_txt').select(); toast('Copia el mensaje seleccionado.'); } };
   if ($('#rf_mail')) $('#rf_mail').onclick = async () => {
     setBusy($('#rf_mail'), true);
     try { const r = await api('/firmas/' + f.ref + '/correo', { method: 'POST' }); if (r.correoEnviado) { toast('Enviado al correo del consultante.'); await firmasSync(); } else toast(r.motivo); }
@@ -45,10 +45,10 @@ function remoteModal(f) {
 }
 ACT.remoteConsent = async b => {
   const p = curPatient();
-  if (!canSign()) { toast('Primero guarde su nombre y firma en «Mi perfil».'); return; }
+  if (!canSign()) { toast('Primero guarda tu nombre y firma en «Mi perfil».'); return; }
   const o = readForm($('#tabbody'), {});
-  if (!o.signerName) { toast('Escriba el nombre de quien firma.'); return; }
-  if (!o.signerDoc) { toast('Escriba el documento de quien firma: se le pedirá para abrir el enlace.'); return; }
+  if (!o.signerName) { toast('Escribe el nombre de quien firma.'); return; }
+  if (!o.signerDoc) { toast('Escribe el documento de quien firma: se le pedirá para abrir el enlace.'); return; }
   if (!(o.consentText || '').trim()) { toast('El documento está vacío.'); return; }
   setBusy(b, true);
   try {
@@ -79,16 +79,16 @@ ACT.saveConsentDraft = async b => {
 };
 ACT.signConsent = async b => {
   const p = curPatient();
-  if (!canSign()) { toast('Primero guarde su nombre y firma en «Mi perfil».'); return; }
+  if (!canSign()) { toast('Primero guarda tu nombre y firma en «Mi perfil».'); return; }
   const o = readForm($('#tabbody'), {});
-  if (!$('#c_ok').checked) { toast('Marque la confirmación de lectura y aceptación.'); return; }
-  if (!o.copia) { toast('Indique si se le entregó copia al usuario.'); const f = $('#f_copia'); if (f) { f.closest('.fld').classList.add('miss'); f.focus(); } return; }
+  if (!$('#c_ok').checked) { toast('Marca la confirmación de lectura y aceptación.'); return; }
+  if (!o.copia) { toast('Indica si se le entregó copia al usuario.'); const f = $('#f_copia'); if (f) { f.closest('.fld').classList.add('miss'); f.focus(); } return; }
   const rec = { tipo: consentName(o.tipo || 'Atención presencial'), plantilla: o.tipo && o.tipo.startsWith('mio:') ? o.tipo.slice(4) : undefined, text: o.consentText, copia: o.copia };
   if ($('#repsblock')) {
-    if (!o.r1Name) { toast('Escriba el nombre del representante legal 1.'); return; }
+    if (!o.r1Name) { toast('Escribe el nombre del representante legal 1.'); return; }
     if (pads.consentSig.isEmpty()) { toast('Falta la firma del representante legal 1.'); return; }
     const second = !pads.consentSig2.isEmpty();
-    if (second && !o.r2Name) { toast('Escriba el nombre del representante legal 2.'); return; }
+    if (second && !o.r2Name) { toast('Escribe el nombre del representante legal 2.'); return; }
     if (!second && !o.sinFirma2) { toast('Falta la firma del representante legal 2, o explique por qué no firma.'); return; }
     const sop = $('#f_soporte') && $('#f_soporte').files[0];
     if (!second && sop && (!FILE_TYPES[sop.type] || upTooBig(sop))) { toast('El soporte debe ser PDF (máximo 8 MB) o imagen (máximo 40 MB).'); return; }
@@ -98,7 +98,7 @@ ACT.signConsent = async b => {
       sinFirma2: second ? undefined : o.sinFirma2,
       asentimiento: { nombre: fullName(p), estado: o.as_firma ? 'El menor firma el asentimiento' : 'El menor no firmó el asentimiento', valoracion: o.as_obs || '', firma: o.as_firma ? pads.assentSig.data() : '' } });
   } else {
-    if (!o.signerName) { toast('Escriba el nombre del firmante.'); return; }
+    if (!o.signerName) { toast('Escribe el nombre del firmante.'); return; }
     if (pads.consentSig.isEmpty()) { toast('Falta la firma del consultante o acudiente.'); return; }
     Object.assign(rec, { signerType: o.signerType, signerName: o.signerName, signerDoc: o.signerDoc, signerSig: pads.consentSig.data() });
   }
@@ -119,7 +119,7 @@ ACT.signConsent = async b => {
   p.consents = p.consents || [];
   p.consents.push(Object.assign(rec, { signedAt: nowISO() }, therSnap()));
   delete p.consentDraft;
-  if (!(await persist([p], b))) { restore(p, snap); if (sopFile) toast('El soporte quedó como adjunto sin consentimiento; puede quitarlo en los próximos 15 minutos desde Archivo.'); return; }
+  if (!(await persist([p], b))) { restore(p, snap); if (sopFile) toast('El soporte quedó como adjunto sin consentimiento; puedes quitarlo en los próximos 15 minutos desde Archivo.'); return; }
   S.reconsent = false; S.consentPreset = null; toast('Documento firmado y guardado.'); render();
 };
 /* Mis consentimientos: modelos propios del terapeuta (adultos, familia, niños…). */
@@ -134,7 +134,7 @@ ACT.consentManage = () => {
       <details class="sec"><summary>Vista previa con un consultante</summary><div class="row" style="margin-top:6px"><select id="cm_pv" aria-label="Consultante para la vista previa">${S.patients.map(x => `<option value="${x.id}" ${x.id === S.pid ? 'selected' : ''}>${esc(fullName(x))}</option>`).join('') || '<option value="">(sin consultantes)</option>'}</select><button type="button" class="btn sm" data-cm="pv">Ver</button></div><div id="cm_pvout" class="doc-prev" style="white-space:pre-wrap;font-family:var(--f-doc);margin-top:8px"></div></details>
       <div class="row"><button class="btn sm" data-cm="base">Cargar el texto base</button><button class="btn sm" data-cm="tele">Agregar cláusulas de teleterapia</button></div>
       <div class="row end"><button class="btn" data-cm="list">Volver</button><button class="btn pri" data-cm="save" data-id="${esc(edit.id || '')}">Guardar modelo</button></div>`
-    : `${list.map(c => `<div class="card"><div class="row" style="justify-content:space-between"><b><span class="dragh" draggable="true" data-dk="cons" data-dv="${esc(c.id)}" title="Arrastre para cambiar el orden" aria-hidden="true">⠿</span> ${esc(c.nombre)}</b><span class="row"><button class="btn sm" data-cm="edit" data-id="${esc(c.id)}">Editar</button><button class="btn sm warn" data-cm="del" data-id="${esc(c.id)}">Quitar</button></span></div></div>`).join('') || '<p style="margin:0;color:var(--muted)">Aún no tiene modelos propios. Puede crear uno por tipo de atención: adultos, familia, niños, pareja…</p>'}
+    : `${list.map(c => `<div class="card"><div class="row" style="justify-content:space-between"><b><span class="dragh" draggable="true" data-dk="cons" data-dv="${esc(c.id)}" title="Arrastra para cambiar el orden" aria-hidden="true">⠿</span> ${esc(c.nombre)}</b><span class="row"><button class="btn sm" data-cm="edit" data-id="${esc(c.id)}">Editar</button><button class="btn sm warn" data-cm="del" data-id="${esc(c.id)}">Quitar</button></span></div></div>`).join('') || '<p style="margin:0;color:var(--muted)">Aún no tienes modelos propios. Puedes crear uno por tipo de atención: adultos, familia, niños, pareja…</p>'}
       <p style="margin:0;font-size:13px;color:var(--muted)">Editar o quitar un modelo no cambia los consentimientos ya firmados.</p><div class="row end"><button class="btn pri" data-cm="new">Nuevo modelo</button></div>`}</div></div>`;
   };
   draw(null);
@@ -143,7 +143,7 @@ ACT.consentManage = () => {
     if (v) { const ta = $('#f_texto'); ta.focus(); ta.setRangeText('{' + v.dataset.var + '}', ta.selectionStart, ta.selectionEnd, 'end'); return; }
     const b = e.target.closest('[data-cm]'); if (!b) return;
     const a = b.dataset.cm, list = myConsents();
-    if (a === 'pv') { const px = S.patients.find(x => x.id === $('#cm_pv').value); $('#cm_pvout').innerHTML = px ? fmtRich(fillTpl($('#f_texto').value, px, S.profile)) : 'Cree un consultante para ver la vista previa.'; return; }
+    if (a === 'pv') { const px = S.patients.find(x => x.id === $('#cm_pv').value); $('#cm_pvout').innerHTML = px ? fmtRich(fillTpl($('#f_texto').value, px, S.profile)) : 'Crea un consultante para ver la vista previa.'; return; }
     if (a === 'close') { root.innerHTML = ''; root.onclick = null; if (S.tab === 'consent' && !S.dirty) render(); else hubClosed(); return; }
     if (a === 'list') return draw(null);
     if (a === 'new') return draw({});
@@ -159,7 +159,7 @@ ACT.consentManage = () => {
     }
     if (a === 'save') {
       const o = readForm($('#cmform'), {});
-      if (!o.nombre || !o.texto) { toast('Escriba el nombre y el texto del modelo.'); return; }
+      if (!o.nombre || !o.texto) { toast('Escribe el nombre y el texto del modelo.'); return; }
       if (list.length >= 20 && !b.dataset.id) { toast('Máximo 20 modelos.'); return; }
       const c = { id: b.dataset.id || Math.random().toString(36).slice(2, 9), nombre: o.nombre.slice(0, 120), texto: o.texto.slice(0, 30000) };
       S.profile.consentimientos = b.dataset.id ? list.map(x => x.id === c.id ? c : x) : list.concat([c]); delete S.profile.consentimiento;

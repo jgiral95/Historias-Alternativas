@@ -4,7 +4,7 @@ const SCALES_BASE = [
   { id: 'bienestar', nombre: 'Chequeo de bienestar', instruccion: 'Pensando en las últimas 2 semanas, ¿con qué frecuencia le pasó lo siguiente?', opciones: [[0, 'Nunca'], [1, 'A veces'], [2, 'Casi siempre'], [3, 'Siempre']],
     items: ['Me sentí con energía', 'Dormí y descansé bien', 'Me sentí en calma', 'Disfruté de mis actividades', 'Me sentí acompañado(a)', 'Pude hacer pausas para cuidarme'],
     rangos: [[0, 6, 'Por cuidar'], [7, 12, 'En camino'], [13, 18, 'Bien']], alertas: [] },
-  { id: 'equilibrio', nombre: 'Rueda del equilibrio', instruccion: 'Del 1 (muy bajo) al 5 (muy alto), ¿cómo siente hoy cada área de su vida?', opciones: [[1, 'Muy bajo'], [2, 'Bajo'], [3, 'Medio'], [4, 'Alto'], [5, 'Muy alto']],
+  { id: 'equilibrio', nombre: 'Rueda del equilibrio', instruccion: 'Del 1 (muy bajo) al 5 (muy alto), ¿cómo siente hoy cada área de tu vida?', opciones: [[1, 'Muy bajo'], [2, 'Bajo'], [3, 'Medio'], [4, 'Alto'], [5, 'Muy alto']],
     items: ['Cuerpo y movimiento', 'Descanso', 'Alimentación', 'Emociones', 'Relaciones', 'Trabajo o estudio', 'Tiempo para sí mismo(a) y espiritualidad'],
     rangos: [[7, 17, 'Por cuidar'], [18, 27, 'En camino'], [28, 35, 'Bien']], alertas: [] }
 ];
@@ -66,13 +66,13 @@ function tabEscalas(p) {
   ${groups.map(g => { const sc = g[g.length - 1].escala, last = g[g.length - 1];
     return `<div class="card"><div class="row" style="justify-content:space-between"><b>${esc(sc.nombre)}</b><span>Último: <b style="font-family:var(--f-mono)">${last.total}</b>${last.nivel ? ` <span class="chip">${esc(last.nivel)}</span>` : ''}</span></div>
     ${scaleChart(sc, g)}
-    <dl class="kv">${g.slice().reverse().map(e => `<dt>${esc(fmtShort(e.aplicadaAt))}</dt><dd>${e.total} puntos${e.nivel ? ' · ' + esc(e.nivel) : ''} · <button class="btn sm" data-act="viewScale" data-id="${e.id}">Ver</button></dd>`).join('')}</dl></div>`; }).join('') || (S.newScale ? '' : '<div class="empty">Aún no hay escalas aplicadas. Incluye PHQ-9 (depresión) y GAD-7 (ansiedad); puede agregar las suyas en «Mis chequeos».</div>')}</div>`;
+    <dl class="kv">${g.slice().reverse().map(e => `<dt>${esc(fmtShort(e.aplicadaAt))}</dt><dd>${e.total} puntos${e.nivel ? ' · ' + esc(e.nivel) : ''} · <button class="btn sm" data-act="viewScale" data-id="${e.id}">Ver</button></dd>`).join('')}</dl></div>`; }).join('') || (S.newScale ? '' : '<div class="empty">Aún no hay escalas aplicadas. Incluye PHQ-9 (depresión) y GAD-7 (ansiedad); puedes agregar las tuyas en «Mis chequeos».</div>')}</div>`;
 }
 ACT.newScale = () => { S.newScale = SCALES_BASE[0].id; render(); updateScaleTotal(); };
 ACT.cancelScale = () => { S.newScale = null; render(); };
 ACT.saveScale = async b => {
   const p = curPatient(), r = readScale(), o = readForm($('#scaleform'), {});
-  if (!canSign()) { toast('Primero guarde su nombre y firma en «Mi perfil».'); return; }
+  if (!canSign()) { toast('Primero guarda tu nombre y firma en «Mi perfil».'); return; }
   if (r.done < r.sc.items.length) { toast(r.sc.items.length - r.done === 1 ? 'Falta 1 ítem por responder.' : `Faltan ${r.sc.items.length - r.done} ítems por responder.`); return; }
   if (!reqCheck($('#scaleform'), o, ['version', 'motivo', 'observaciones', 'interpretacion'])) return;
   const fileRef = o.protocolo ? S.files.find(f => f.patientId === p.id && f.nombre === o.protocolo) : null;
@@ -102,9 +102,9 @@ ACT.scaleManage = () => {
       ${F('Opciones de respuesta (una por línea: puntaje = texto)', 'opciones', (edit.opciones || FREQ4).map(o => o[0] + ' = ' + o[1]).join('\n'), { type: 'area', rows: 4 })}
       ${F('Rangos de interpretación (una por línea: mínimo-máximo = nivel)', 'rangos', (edit.rangos || []).map(r => r[0] + '-' + r[1] + ' = ' + r[2]).join('\n'), { type: 'area', rows: 4 })}
       ${F('Ítems (uno por línea)', 'items', (edit.items || []).join('\n'), { type: 'area', rows: 8, wide: true })}</div>
-      <p style="margin:0;font-size:13px;color:var(--muted)">Si la escala tiene derechos de autor (por ejemplo BDI-II o BAI), úsela solo si tiene la licencia. Cada aplicación guarda una copia de la escala tal como estaba, así que editarla después no cambia lo ya aplicado.</p>
+      <p style="margin:0;font-size:13px;color:var(--muted)">Si la escala tiene derechos de autor (por ejemplo BDI-II o BAI), úsala solo si tienes la licencia. Cada aplicación guarda una copia de la escala tal como estaba, así que editarla después no cambia lo ya aplicado.</p>
       <div class="row end"><button class="btn" data-sm="list">Volver</button><button class="btn pri" data-sm="save" data-id="${esc(edit.id || '')}">Guardar escala</button></div>`
-    : `${list.map(x => `<div class="card"><div class="row" style="justify-content:space-between"><b><span class="dragh" draggable="true" data-dk="esc" data-dv="${x.id}" title="Arrastre para cambiar el orden" aria-hidden="true">⠿</span> ${esc(x.nombre)}</b><span class="row"><button class="btn sm" data-sm="edit" data-id="${x.id}">Editar</button><button class="btn sm warn" data-sm="del" data-id="${x.id}">Quitar</button></span></div><span class="ts">${x.items.length} ítems · puntaje ${scaleMin(x)} a ${scaleMax(x)}</span></div>`).join('') || '<p style="margin:0;color:var(--muted)">Aún no tiene escalas propias. PHQ-9 y GAD-7 ya vienen incluidas.</p>'}
+    : `${list.map(x => `<div class="card"><div class="row" style="justify-content:space-between"><b><span class="dragh" draggable="true" data-dk="esc" data-dv="${x.id}" title="Arrastra para cambiar el orden" aria-hidden="true">⠿</span> ${esc(x.nombre)}</b><span class="row"><button class="btn sm" data-sm="edit" data-id="${x.id}">Editar</button><button class="btn sm warn" data-sm="del" data-id="${x.id}">Quitar</button></span></div><span class="ts">${x.items.length} ítems · puntaje ${scaleMin(x)} a ${scaleMax(x)}</span></div>`).join('') || '<p style="margin:0;color:var(--muted)">Aún no tienes escalas propias. PHQ-9 y GAD-7 ya vienen incluidas.</p>'}
       <div class="row end"><button class="btn pri" data-sm="new">Nueva escala</button></div>`}</div></div>`;
   };
   draw(null);
@@ -127,7 +127,7 @@ ACT.scaleManage = () => {
       const opciones = o.opciones.split('\n').map(l => l.match(/^\s*(-?\d+)\s*=\s*(.+)$/)).filter(Boolean).map(m => [+m[1], m[2].trim()]);
       const rangos = o.rangos.split('\n').map(l => l.match(/^\s*(-?\d+)\s*-\s*(-?\d+)\s*=\s*(.+)$/)).filter(Boolean).map(m => [+m[1], +m[2], m[3].trim()]);
       const items = o.items.split('\n').map(x => x.trim()).filter(Boolean);
-      if (!o.nombre || items.length < 1 || opciones.length < 2) { toast('Escriba el nombre, al menos un ítem y al menos dos opciones con su puntaje («0 = Nunca»).'); return; }
+      if (!o.nombre || items.length < 1 || opciones.length < 2) { toast('Escribe el nombre, al menos un ítem y al menos dos opciones con tu puntaje («0 = Nunca»).'); return; }
       if (items.length > 120) { toast('Máximo 120 ítems.'); return; }
       const sc = { id: b.dataset.id || 'mi_' + Math.random().toString(36).slice(2, 9), nombre: o.nombre.slice(0, 120), instruccion: o.instruccion, opciones, rangos, items, propia: true };
       S.profile.escalas = b.dataset.id ? list.map(x => x.id === sc.id ? sc : x) : list.concat([sc]);
@@ -142,7 +142,7 @@ document.addEventListener('pointerout', e => { if (e.target.closest && e.target.
 
 /* ===== Frases frecuentes: al escribir «/» en un campo de texto se sugieren y se insertan ===== */
 const myPhrases = () => S.profile.frases || [];
-const phraseHint = () => `<p class="phint">${myPhrases().length ? 'Escriba <b>/</b> en cualquier campo para insertar una de sus frases frecuentes.' : 'Consejo: guarde sus frases frecuentes en «Mis formatos» → Frases y escríbalas con <b>/</b>.'}</p>`;
+const phraseHint = () => `<p class="phint">${myPhrases().length ? 'Escribe <b>/</b> en cualquier campo para insertar una de tus frases frecuentes.' : 'Consejo: guarda tus frases frecuentes en «Mis formatos» → Frases y escríbelas con <b>/</b>.'}</p>`;
 const Ph = { ta: null, start: 0, list: [], sel: 0 };
 function phraseClose() { const x = $('#fpop'); if (x) x.remove(); Ph.ta = null; }
 function phraseMatch(ta) {
@@ -178,8 +178,8 @@ ACT.phrases = () => {
   const draw = () => {
     const list = myPhrases();
     root.innerHTML = `<div class="modal" role="dialog" aria-modal="true" aria-label="Mis frases"><div class="box" id="phform"><div class="row mfhead" style="justify-content:space-between"><h3 style="flex:1">Mis formatos</h3><button class="btn sm" data-ph="close">Cerrar</button></div>${hubTabs('frases')}<b>Frases frecuentes</b>
-    <p style="margin:0;font-size:13px;color:var(--muted)">En cualquier campo de texto de una nota, escriba <b>/</b> y el atajo (por ejemplo <b>/psico</b>) y pulse Enter: se inserta la frase completa.</p>
-    ${list.map((f, i) => `<div class="card"><div class="row" style="justify-content:space-between"><b><span class="dragh" draggable="true" data-dk="fra" data-dv="${i}" title="Arrastre para cambiar el orden" aria-hidden="true">⠿</span> /${esc(f.a)}</b><button class="btn sm warn" data-ph="del" data-i="${i}">Quitar</button></div><p>${esc(f.t)}</p></div>`).join('') || '<p style="margin:0;color:var(--muted)">Aún no tiene frases.</p>'}
+    <p style="margin:0;font-size:13px;color:var(--muted)">En cualquier campo de texto de una nota, escribe <b>/</b> y el atajo (por ejemplo <b>/psico</b>) y pulsa Enter: se inserta la frase completa.</p>
+    ${list.map((f, i) => `<div class="card"><div class="row" style="justify-content:space-between"><b><span class="dragh" draggable="true" data-dk="fra" data-dv="${i}" title="Arrastra para cambiar el orden" aria-hidden="true">⠿</span> /${esc(f.a)}</b><button class="btn sm warn" data-ph="del" data-i="${i}">Quitar</button></div><p>${esc(f.t)}</p></div>`).join('') || '<p style="margin:0;color:var(--muted)">Aún no tienes frases.</p>'}
     <div class="card"><div class="grid">${F('Atajo (una palabra)', 'a', '', { ph: 'Ej.: psico' })}${F('Frase', 't', '', { type: 'area', rows: 3, wide: true })}</div><div class="row end"><button class="btn pri" data-ph="add">Agregar frase</button></div></div></div></div>`;
   };
   draw();
@@ -190,8 +190,8 @@ ACT.phrases = () => {
     if (b.dataset.ph === 'del') list.splice(+b.dataset.i, 1);
     if (b.dataset.ph === 'add') {
       const o = readForm($('#phform'), {}), a = (o.a || '').replace(/^\/+/, '').replace(/\s+/g, '').slice(0, 30);
-      if (!a || !o.t) { toast('Escriba el atajo y la frase.'); return; }
-      if (list.some(f => norm(f.a) === norm(a))) { toast('Ya tiene una frase con ese atajo.'); return; }
+      if (!a || !o.t) { toast('Escribe el atajo y la frase.'); return; }
+      if (list.some(f => norm(f.a) === norm(a))) { toast('Ya tienes una frase con ese atajo.'); return; }
       if (list.length >= 100) { toast('Máximo 100 frases.'); return; }
       list.push({ a, t: o.t.slice(0, 2000) });
     }

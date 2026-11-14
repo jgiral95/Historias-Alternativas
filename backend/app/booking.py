@@ -1,7 +1,7 @@
 """Reservas por enlace público: horario del profesional, huecos libres y correos de confirmación.
 
-El consultante nuevo no se crea en la lista de consultantes: la cita guarda sus datos de contacto («nuevo») y el
-profesional decide si abre su ficha. El consultante existente se identifica con documento y correo."""
+El consultante nuevo no se crea en la lista de consultantes: la cita guarda tus datos de contacto («nuevo») y el
+profesional decide si abre tu ficha. El consultante existente se identifica con documento y correo."""
 import re
 from datetime import date, datetime, timedelta, timezone
 from email.message import EmailMessage
@@ -47,7 +47,7 @@ def fechas_clean(f) -> dict:
             raise ValueError("El calendario de atención no es válido")
         raw = v.get("modalidades") if isinstance(v.get("modalidades"), list) else [v.get("modalidad")]  # «modalidad» (una sola) es el formato anterior
         if not raw or any(m not in MODS for m in raw):
-            raise ValueError("Elija al menos un tipo de consulta para cada día (presencial, virtual o telefónica)")
+            raise ValueError("Elige al menos un tipo de consulta para cada día (presencial, virtual o telefónica)")
         if k >= hoy:
             out[k] = {"modalidades": [m for m in MODS if m in raw], "franjas": _franjas(ranges(v.get("franjas")))}
     return out
@@ -75,7 +75,7 @@ def clean(c: dict) -> dict:
     else:
         mods = [m for m in MODS if m in (c.get("modalidades") or [])]
         if not mods:
-            raise ValueError("Elija al menos una modalidad")
+            raise ValueError("Elige al menos una modalidad")
     out = {"dias": dias, "duracion": dur, "descanso": desc, "aviso": aviso, "cancelacion": cancel, "horizonte": hor, "modalidades": mods}
     if fechas is not None:
         out["fechas"] = fechas
@@ -154,34 +154,34 @@ def enlace_ok(enlace: str) -> str:
 def messages(prof: dict, start: datetime, dur: int, mod: str, who: str, patient_mail: str, therapist_mail: str, nuevo: dict | None, url: str = "", otra_hora: str = "", enlace: str = "") -> list[tuple[str, str, str, str]]:
     """(destinatario, asunto, texto, html) de la confirmación al consultante y del aviso al profesional."""
     cuando = reminders.when_text(start)
-    ter = prof.get("nombre") or "su terapeuta"
-    place = prof.get("consultorio") or prof.get("nombre") or "su consulta"
+    ter = prof.get("nombre") or "tu terapeuta"
+    place = prof.get("consultorio") or prof.get("nombre") or "tu consulta"
     first = who.split(" ")[0]
     filas = [("Cuándo", cuando), ("Modalidad", f"{mod} · {dur} min"), ("Con", ter + (f" · {prof['consultorio']}" if prof.get("consultorio") and prof["consultorio"].strip().lower() != ter.strip().lower() else ""))]
     meet = enlace_ok(enlace)
     cal = gcal_link(start, dur, ter, mod, prof.get("consultorio") or "", meet)
-    cierre = "¿Tuvo un imprevisto? Puede ver o cancelar su cita en cualquier momento con este botón." if url else "¡Lo esperamos!"
-    otro = ("Si prefiere otra hora, cancele la cita y", "elija un nuevo horario", otra_hora) if url and otra_hora else None
-    txt = (f"¡Hola, {first}!\n\nSu cita está confirmada. Ya reservamos su espacio con {ter}.\n\n" + "\n".join(f"{k}: {v}" for k, v in filas)
+    cierre = "¿Tuvo un imprevisto? Puedes ver o cancelar tu cita en cualquier momento con este botón." if url else "¡Lo esperamos!"
+    otro = ("Si prefieres otra hora, cancela la cita y", "elige un nuevo horario", otra_hora) if url and otra_hora else None
+    txt = (f"¡Hola, {first}!\n\nTu cita está confirmada. Ya reservamos tu espacio con {ter}.\n\n" + "\n".join(f"{k}: {v}" for k, v in filas)
            + f"\n\n{cierre}" + (f"\n\nEntrar a la videollamada: {meet}" if meet else "")
-           + f"\n\nAgregar la cita a su Google Calendar: {cal}" + (f"\nVer o cancelar mi cita: {url}" if url else "")
-           + (f"\nSi prefiere otra hora, cancele la cita y elija un nuevo horario: {otra_hora}" if otro else "")
+           + f"\n\nAgregar la cita a tu Google Calendar: {cal}" + (f"\nVer o cancelar mi cita: {url}" if url else "")
+           + (f"\nSi prefiere otra hora, cancela la cita y elige un nuevo horario: {otra_hora}" if otro else "")
            + f"\n\nAtentamente,\n{ter}\n\nMensaje automático enviado con Alter-Karute.\n")
     if meet:
         b1, b2 = ("Entrar a la videollamada", meet), ("Agregar a Google Calendar", cal)
-        nts = [otro] + ([("Para ver o cancelar su cita,", "haga clic aquí", url)] if url else [])
+        nts = [otro] + ([("Para ver o cancelar tu cita,", "haz clic aquí", url)] if url else [])
     else:
         b1, b2 = ("Agregar a Google Calendar", cal), (("Ver o cancelar mi cita", url) if url else None)
         nts = [otro]
     nts = [n for n in nts if n]
-    html = correo.layout("¡Su cita está confirmada!", [f"Hola, {first}. Ya reservamos su espacio con {ter}. Estos son los datos de su cita:"], filas, [cierre], b1, nts, ("Atentamente,", ter), boton2=b2)
+    html = correo.layout("¡Tu cita está confirmada!", [f"Hola, {first}. Ya reservamos tu espacio con {ter}. Estos son los datos de tu cita:"], filas, [cierre], b1, nts, ("Atentamente,", ter), boton2=b2)
     t_filas = [("Consultante", who + (" (nuevo)" if nuevo else "")), ("Cuándo", cuando), ("Modalidad", f"{mod} · {dur} min"), ("Correo", patient_mail)]
     if nuevo:
         t_filas.append(("Teléfono", nuevo.get("telefono") or ""))
-    t_cierre = "Es un consultante nuevo: todavía no tiene ficha en la app. Cuando quiera, créela y vincule la cita desde su agenda." if nuevo else "La cita ya está en su agenda."
-    t_txt = "Tiene una nueva cita agendada por su enlace.\n\n" + "\n".join(f"{k}: {v}" for k, v in t_filas) + f"\n\n{t_cierre}\n\nMensaje automático enviado con Alter-Karute.\n"
-    t_html = correo.layout("Nueva cita agendada", [f"{first} acaba de agendar una cita por su enlace de reservas."], t_filas, [t_cierre], firma=("Que tenga un buen día,", "El equipo de Alter-Karute"))
-    return [(patient_mail, f"¡Su cita está confirmada! — {place}", txt, html), (therapist_mail, f"Nueva cita agendada: {who}", t_txt, t_html)]
+    t_cierre = "Es un consultante nuevo: todavía no tiene ficha en la app. Cuando quiera, créala y vincule la cita desde tu agenda." if nuevo else "La cita ya está en tu agenda."
+    t_txt = "Tienes una nueva cita agendada por tu enlace.\n\n" + "\n".join(f"{k}: {v}" for k, v in t_filas) + f"\n\n{t_cierre}\n\nMensaje automático enviado con Alter-Karute.\n"
+    t_html = correo.layout("Nueva cita agendada", [f"{first} acaba de agendar una cita por tu enlace de reservas."], t_filas, [t_cierre], firma=("Que tenga un buen día,", "El equipo de Alter-Karute"))
+    return [(patient_mail, f"¡Tu cita está confirmada! — {place}", txt, html), (therapist_mail, f"Nueva cita agendada: {who}", t_txt, t_html)]
 
 
 def notify(prof: dict, acc: dict, start: datetime, dur: int, mod: str, who: str, patient_mail: str, therapist_mail: str, nuevo: dict | None, url: str = "", otra_hora: str = "", enlace: str = "") -> None:

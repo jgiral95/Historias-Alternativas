@@ -36,7 +36,7 @@ ACT.forms = async () => {
   const load = async () => { try { list = await api('/formularios'); return true; } catch (e) { toast(e.message); return false; } };
   if (!(await load())) return;
   root.innerHTML = `<div class="modal" role="dialog" aria-modal="true" aria-label="Formularios de datos"><div class="box" id="fmform" style="width:min(680px,100%)"><div class="row" style="justify-content:space-between"><h3>Formularios de datos</h3><button class="btn sm" data-fm="close">Cerrar</button></div>
-    <p style="margin:0;font-size:14px">Envíe un formulario para que el consultante registre sus datos antes de la primera atención. Lo que responda queda pendiente de su revisión: usted decide cuándo crear su ficha. El enlace se usa una vez y vence en 7 días.</p>
+    <p style="margin:0;font-size:14px">Envía un formulario para que el consultante registre tus datos antes de la primera atención. Lo que responda queda pendiente de tu revisión: tú decides cuándo crear tu ficha. El enlace se usa una vez y vence en 7 días.</p>
     <div class="card"><div class="grid">${F('Nombre del consultante (opcional)', 'fm_nombre', '')}${F('Correo del consultante', 'fm_correo', '', { type: 'email' })}</div>
       <div class="row end"><button class="btn" data-fm="new" data-send="0">Crear enlace para copiar</button><button class="btn pri" data-fm="new" data-send="1">Enviar por correo</button></div></div>
     <div id="fm_list"></div></div></div>`;
@@ -49,15 +49,15 @@ ACT.forms = async () => {
       if (k === 'new') {
         const send = b.dataset.send === '1', o = readForm($('#fmform'), {});
         const r = await api('/formularios', { method: 'POST', body: { nombre: o.fm_nombre || '', correo: o.fm_correo || '', enviar: send } });
-        if (send) toast(r.correoEnviado ? 'Formulario enviado por correo.' : (r.motivo || 'No se pudo enviar el correo.') + ' El enlace quedó creado: puede copiarlo.');
-        else { try { await navigator.clipboard.writeText(formUrl(r)); toast('Enlace copiado. Envíelo por correo o mensaje de texto.'); } catch (err) { toast('Enlace creado: use «Copiar enlace» en la lista.'); } }
+        if (send) toast(r.correoEnviado ? 'Formulario enviado por correo.' : (r.motivo || 'No se pudo enviar el correo.') + ' El enlace quedó creado: puedes copiarlo.');
+        else { try { await navigator.clipboard.writeText(formUrl(r)); toast('Enlace copiado. Envíalo por correo o mensaje de texto.'); } catch (err) { toast('Enlace creado: usa «Copiar enlace» en la lista.'); } }
         ['fm_nombre', 'fm_correo'].forEach(id => { $('#f_' + id).value = ''; });
       } else if (k === 'copy') { try { await navigator.clipboard.writeText(formUrl(f)); toast('Enlace copiado.'); } catch (err) { toast('No se pudo copiar: ' + formUrl(f)); } return; }
       else if (k === 'mail') { const r = await api('/formularios/' + ref + '/correo', { method: 'POST' }); toast(r.correoEnviado ? 'Correo enviado.' : r.motivo || 'No se pudo enviar el correo.'); }
       else if (k === 'cancel') { if (!b.dataset.sure) { b.dataset.sure = 1; b.textContent = 'Confirmar'; return; } await api('/formularios/' + ref + '/anular', { method: 'POST' }); toast(f.estado === 'recibido' ? 'Formulario descartado y datos borrados.' : 'Enlace anulado.'); }
       else if (k === 'del') { await api('/formularios/' + ref, { method: 'DELETE' }); toast('Formulario eliminado.'); }
       else if (k === 'delall') { if (!b.dataset.sure) { b.dataset.sure = 1; b.textContent = 'Confirmar'; return; } for (const x of list.filter(z => z.estado === 'anulado')) await api('/formularios/' + x.ref, { method: 'DELETE' }); toast('Formularios anulados eliminados.'); }
-      else if (k === 'review') { close(); S.view = 'patients'; S.draft = true; S.formRef = ref; S.draftObj = Object.assign({ id: newId('p'), kind: 'patient', consents: [], estado: 'Activo', tipoDoc: 'CC', createdAt: nowISO() }, f.datos); S.pid = S.draftObj.id; S.tab = 'datos'; render(); scrollTo(0, 0); toast('Datos del formulario cargados: revíselos y pulse «Guardar datos».'); return; }
+      else if (k === 'review') { close(); S.view = 'patients'; S.draft = true; S.formRef = ref; S.draftObj = Object.assign({ id: newId('p'), kind: 'patient', consents: [], estado: 'Activo', tipoDoc: 'CC', createdAt: nowISO() }, f.datos); S.pid = S.draftObj.id; S.tab = 'datos'; render(); scrollTo(0, 0); toast('Datos del formulario cargados: revísalos y pulsa «Guardar datos».'); return; }
       if (await load()) draw();
     } catch (err) { toast(err.message); }
   };

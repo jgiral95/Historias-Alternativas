@@ -75,7 +75,7 @@ class Record(Base):
 
 
 class Blob(Base):
-    """Archivo adjunto (PDF o imagen), cifrado. Sus datos descriptivos van en un registro «file»."""
+    """Archivo adjunto (PDF o imagen), cifrado. Tus datos descriptivos van en un registro «file»."""
     __tablename__ = "blobs"
     __table_args__ = (PrimaryKeyConstraint("user_id", "id"),)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
@@ -96,7 +96,7 @@ class Verification(Base):
 
 
 class GoogleLink(Base):
-    """Conexión de un usuario con su Google Calendar. El permiso (refresh token) va cifrado."""
+    """Conexión de un usuario con tu Google Calendar. El permiso (refresh token) va cifrado."""
     __tablename__ = "google_links"
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), primary_key=True)
     token: Mapped[bytes] = mapped_column(LargeBinary)
@@ -127,7 +127,7 @@ class Booking(Base):
 
 
 class IntakeForm(Base):
-    """Formulario de datos que el terapeuta envía al consultante antes de la atención. Del enlace solo se guarda su hash;
+    """Formulario de datos que el terapeuta envía al consultante antes de la atención. Del enlace solo se guarda tu hash;
     lo que el consultante responde va cifrado y se borra cuando el terapeuta crea el consultante o descarta el formulario."""
     __tablename__ = "intake_forms"
     id: Mapped[str] = mapped_column(String(64), primary_key=True)  # hash del enlace
@@ -194,7 +194,7 @@ class SurveyState(Base):
 
 
 class MailAccount(Base):
-    """Correo propio de cada terapeuta para enviar sus encuestas. Todo va cifrado (incluida la contraseña)."""
+    """Correo propio de cada terapeuta para enviar tus encuestas. Todo va cifrado (incluida la contraseña)."""
     __tablename__ = "mail_accounts"
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), primary_key=True)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
@@ -202,7 +202,7 @@ class MailAccount(Base):
 
 
 class ApptReminder(Base):
-    """Recordatorio de una cita: enlace para confirmar o cancelar (solo se guarda su hash) y cómo se envió."""
+    """Recordatorio de una cita: enlace para confirmar o cancelar (solo se guarda tu hash) y cómo se envió."""
     __tablename__ = "appt_reminders"
     id: Mapped[str] = mapped_column(String(64), primary_key=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
@@ -215,7 +215,7 @@ class ApptReminder(Base):
 
 
 class ConsentRequest(Base):
-    """Consentimiento enviado para firmar a distancia. Del enlace solo se guarda su hash; el texto, el firmante
+    """Consentimiento enviado para firmar a distancia. Del enlace solo se guarda tu hash; el texto, el firmante
     y la firma del terapeuta van cifrados. Al firmarse, el consentimiento se agrega a la historia del consultante."""
     __tablename__ = "consent_requests"
     id: Mapped[str] = mapped_column(String(64), primary_key=True)  # hash del enlace

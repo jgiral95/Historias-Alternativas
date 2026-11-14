@@ -4,12 +4,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Confirmar cita</title>
-<meta name="description" content="Abra el enlace para confirmar su cita.">
+<meta name="description" content="Abre el enlace para confirmar tu cita.">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Alter-Karute">
 <meta property="og:locale" content="es_CO">
 <meta property="og:title" content="Confirmar cita · Alter-Karute">
-<meta property="og:description" content="Abra el enlace para confirmar su cita.">
+<meta property="og:description" content="Abre el enlace para confirmar tu cita.">
 <meta property="og:image" content="__ORIGIN__/og.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
@@ -56,11 +56,11 @@ const logo = '<svg width="28" height="28" viewBox="0 0 120 120" aria-hidden="tru
 const card = h => { $('#m').innerHTML = `<div class="card">${h}</div>`; };
 let d;
 function draw(msg) {
-  const who = esc(d.profesional || 'su terapeuta'), head = `<h1>${logo}Su cita</h1><p class="when">${esc(d.cuando)}</p><p>Con <b>${who}</b>${d.consultorio ? ' · ' + esc(d.consultorio) : ''} · ${esc(d.modalidad)}</p>`;
-  if (d.estado === 'Cancelada') return card(head + `<div class="res bad">Esta cita está cancelada.</div>${msg || ''}<p class="muted">Si quiere reprogramarla, comuníquese con el consultorio.</p>`);
+  const who = esc(d.profesional || 'tu terapeuta'), head = `<h1>${logo}Tu cita</h1><p class="when">${esc(d.cuando)}</p><p>Con <b>${who}</b>${d.consultorio ? ' · ' + esc(d.consultorio) : ''} · ${esc(d.modalidad)}</p>`;
+  if (d.estado === 'Cancelada') return card(head + `<div class="res bad">Esta cita está cancelada.</div>${msg || ''}<p class="muted">Si quieres reprogramarla, comunícate con el consultorio.</p>`);
   if (d.pasada) return card(head + '<div class="res bad">Esta cita ya pasó.</div>');
-  card(head + (d.respuesta === 'Confirmada' ? '<div class="res ok">Su asistencia está confirmada. ¡Lo esperamos!</div>' : '') + (msg || '') +
-    `<div class="btns">${d.respuesta === 'Confirmada' ? '' : '<button id="yes">Confirmo que asistiré</button>'}<button class="sec" id="no">No puedo asistir: cancelar la cita</button></div><p class="muted">Si quiere cambiar la hora, cancele aquí y comuníquese con el consultorio.</p>`);
+  card(head + (d.respuesta === 'Confirmada' ? '<div class="res ok">Tu asistencia está confirmada. ¡Lo esperamos!</div>' : '') + (msg || '') +
+    `<div class="btns">${d.respuesta === 'Confirmada' ? '' : '<button id="yes">Confirmo que asistiré</button>'}<button class="sec" id="no">No puedo asistir: cancelar la cita</button></div><p class="muted">Si quieres cambiar la hora, cancela aquí y comunícate con el consultorio.</p>`);
   if ($('#yes')) $('#yes').onclick = () => answer('confirmar');
   $('#no').onclick = () => { if ($('#no').dataset.sure) answer('cancelar'); else { $('#no').dataset.sure = 1; $('#no').textContent = 'Sí, cancelar la cita'; } };
 }
@@ -69,19 +69,19 @@ async function answer(accion) {
   try {
     const r = await fetch('/api/cita/' + encodeURIComponent(token), { method: 'POST', headers: H, body: JSON.stringify({ accion }) });
     const j = await r.json().catch(() => ({}));
-    if (!r.ok) { draw(`<div class="res bad">${esc(j.detail || 'No se pudo guardar. Intente de nuevo.')}</div>`); return; }
+    if (!r.ok) { draw(`<div class="res bad">${esc(j.detail || 'No se pudo guardar. Intenta de nuevo.')}</div>`); return; }
     d.estado = j.estado; d.respuesta = j.respuesta;
     draw(accion === 'cancelar' ? '<div class="res ok">Listo, avisamos al consultorio que no podrá asistir.</div>' : '');
-  } catch (e) { draw('<div class="res bad">No hay conexión. Intente de nuevo.</div>'); }
+  } catch (e) { draw('<div class="res bad">No hay conexión. Intenta de nuevo.</div>'); }
 }
 (async () => {
-  if (!token) return card('<div class="res bad">El enlace está incompleto. Ábralo de nuevo desde el mensaje que recibió.</div>');
+  if (!token) return card('<div class="res bad">El enlace está incompleto. Ábrelo de nuevo desde el mensaje que recibió.</div>');
   try {
     const r = await fetch('/api/cita/' + encodeURIComponent(token), { headers: H });
-    if (r.status === 404) return card('<div class="res bad">Este enlace no es válido. Ábralo de nuevo desde el mensaje que recibió.</div>');
+    if (r.status === 404) return card('<div class="res bad">Este enlace no es válido. Ábrelo de nuevo desde el mensaje que recibió.</div>');
     if (!r.ok) throw new Error();
     d = await r.json(); draw();
-  } catch (e) { card('<div class="res bad">No se pudo cargar la cita. Intente en unos minutos.</div>'); }
+  } catch (e) { card('<div class="res bad">No se pudo cargar la cita. Intenta en unos minutos.</div>'); }
 })();
 </script>
 </body>

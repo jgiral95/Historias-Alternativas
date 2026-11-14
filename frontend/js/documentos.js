@@ -3,9 +3,9 @@
 const INTAKE = [
   ['Motivo y expectativas', [['motivo', '¿Qué le trae a consulta?', 3], ['remitido', '¿Quién se lo recomendó?', 1], ['historiaProblema', 'Cómo empezó lo que le preocupa', 4]]],
   ['Salud y bienestar', [['antMedicos', 'Salud física y lo que toma (opcional)', 3], ['antPsi', 'Otros procesos, terapias o prácticas que ha probado', 3], ['antFam', 'Familia', 3], ['sustancias', 'Hábitos (alimentación, sueño, consumo de sustancias)', 2]]],
-  ['Su historia y entorno', [['desarrollo', 'Su historia personal', 4], ['familia', 'Familia y red de apoyo', 3], ['social', 'Relaciones y vida social', 3], ['academicoLaboral', 'Estudio o trabajo', 3]], 'genograma'],
+  ['Tu historia y entorno', [['desarrollo', 'Tu historia personal', 4], ['familia', 'Familia y red de apoyo', 3], ['social', 'Relaciones y vida social', 3], ['academicoLaboral', 'Estudio o trabajo', 3]], 'genograma'],
   ['Cómo llega hoy', [['examenMental', 'Estado de ánimo, energía y presencia en la sesión', 4]]],
-  ['Metas y plan de acompañamiento', [['formulacion', 'Lo que usted observa (de lo que cuenta a lo que se propone)', 4], ['objetivos', 'Metas del proceso', 3], ['plan', 'Plan de acompañamiento: prácticas, frecuencia y cómo se hará el seguimiento', 3], ['expectativas', 'Lo que espera el consultante', 2], ['impresion', 'Impresión inicial', 3]]]
+  ['Metas y plan de acompañamiento', [['formulacion', 'Lo que observas (de lo que cuenta a lo que se propone)', 4], ['objetivos', 'Metas del proceso', 3], ['plan', 'Plan de acompañamiento: prácticas, frecuencia y cómo se hará el seguimiento', 3], ['expectativas', 'Lo que espera el consultante', 2], ['impresion', 'Impresión inicial', 3]]]
 ];
 /* Campos que tenían las primeras citas de versiones anteriores: se muestran si traen datos, para no perder nada. */
 const INTAKE_LEGACY = [['mentalApariencia', 'Apariencia y conducta'], ['mentalAfecto', 'Ánimo y afecto'], ['mentalPensamiento', 'Pensamiento y lenguaje'], ['mentalPercepcion', 'Sensopercepción, orientación y memoria'], ['mentalJuicio', 'Juicio y conciencia del problema'], ['riesgo', 'Señales de alerta'], ['nivelRiesgo', 'Nivel de alerta']];
@@ -17,7 +17,7 @@ const intakeSchema = i => (i && i.signedAt) ? (i.schema || INTAKE) : intakeNew((
 /* Formatos propios hechos antes de los campos nuevos: se agregan los que faltan, sin tocar el resto. */
 function intakeNew(sc) {
   if (sc.some(x => x[1].some(f => f[0] === 'formulacion'))) return sc;
-  const c = clone(sc); c[c.length - 1][1].unshift(['formulacion', 'Lo que usted observa (de lo que cuenta a lo que se propone)', 4]); return c;
+  const c = clone(sc); c[c.length - 1][1].unshift(['formulacion', 'Lo que observas (de lo que cuenta a lo que se propone)', 4]); return c;
 }
 /* Sesión: sin formato propio no trae campos; cada terapeuta arma el suyo en «Mis formatos» (puede partir de NOTE_FIELDS, el sugerido).
    Las notas firmadas sin copia del formato (versiones anteriores) se muestran con NOTE_FIELDS. */
@@ -62,9 +62,9 @@ const TELE_CLAUSE = `
 
 ATENCIÓN A DISTANCIA (TELETERAPIA)
 
-7. Cómo funciona. La atención se realiza, total o parcialmente, por videollamada o llamada telefónica en la plataforma que me indicó el terapeuta. Tiene el mismo alcance que la atención presencial, salvo los límites propios de la distancia: el terapeuta puede recomendarme atención presencial cuando lo considere necesario, y yo puedo pedirla.
+7. Cómo funciona. La atención se realiza, total o parcialmente, por videollamada o llamada telefónica en la plataforma que me indicó el terapeuta. Tienes el mismo alcance que la atención presencial, salvo los límites propios de la distancia: el terapeuta puede recomendarme atención presencial cuando lo considere necesario, y yo puedo pedirla.
 
-8. Beneficios y riesgos. Me evita desplazamientos y facilita la continuidad del proceso. Sus riesgos son las fallas de conexión, la menor percepción de la comunicación no verbal y la posibilidad de que terceros vean o escuchen la sesión, o de que la información se exponga por fallas de seguridad informática.
+8. Beneficios y riesgos. Me evita desplazamientos y facilita la continuidad del proceso. Tus riesgos son las fallas de conexión, la menor percepción de la comunicación no verbal y la posibilidad de que terceros vean o escuchen la sesión, o de que la información se exponga por fallas de seguridad informática.
 
 9. Responsabilidades. El terapeuta usará una plataforma con cifrado y control de acceso, se identificará al iniciar y registrará cada sesión en mi ficha. Yo me conectaré desde un lugar privado, con una conexión y un equipo adecuados, me identificaré cuando se me pida y no permitiré que otras personas escuchen sin avisar.
 
@@ -87,7 +87,7 @@ Yo, {paciente}, identificado/a con documento {documento}, autorizo de manera pre
 
 3. Seguridad y encargados. Mis datos se guardan cifrados, con acceso restringido al terapeuta. Pueden alojarse en servidores de terceros que actúan como encargados y están obligados a protegerlos. No se venden ni se ceden a terceros.
 
-4. Mis derechos. Puedo conocer, actualizar y rectificar mis datos; pedir prueba de esta autorización; ser informado/a sobre su uso; y revocar esta autorización o pedir la supresión de mis datos.
+4. Mis derechos. Puedo conocer, actualizar y rectificar mis datos; pedir prueba de esta autorización; ser informado/a sobre tu uso; y revocar esta autorización o pedir la supresión de mis datos.
 
 5. Contacto. Puedo ejercer mis derechos escribiendo a {correo} o llamando al {telefono}.
 
@@ -110,7 +110,7 @@ const apptConsentMissing = (p, modalidad) => { const r = REMOTE_MODS.includes(mo
 /* Variables de los consentimientos: datos del consultante, de sus acudientes y del terapeuta. */
 const CONSENT_VARS = [['paciente', 'Nombre del consultante'], ['documento', 'Documento'], ['edad', 'Edad'], ['nacimiento', 'Fecha de nacimiento'], ['paciente_direccion', 'Dirección del consultante'], ['paciente_telefono', 'Teléfono del consultante'], ['paciente_correo', 'Correo del consultante'],
   ['acudiente', 'Acudiente 1'], ['acudiente_documento', 'Documento acudiente 1'], ['acudiente_parentesco', 'Parentesco acudiente 1'], ['acudiente2', 'Acudiente 2'], ['acudiente2_documento', 'Documento acudiente 2'], ['acudiente2_parentesco', 'Parentesco acudiente 2'],
-  ['terapeuta', 'Su nombre'], ['cedula', 'Su cédula'], ['registro', 'Su registro'], ['consultorio', 'Lugar de práctica'], ['ciudad', 'Su ciudad'], ['telefono', 'Su teléfono'], ['correo', 'Su correo'], ['fecha', 'Fecha de hoy']];
+  ['terapeuta', 'Tu nombre'], ['cedula', 'Tu cédula'], ['registro', 'Tu registro'], ['consultorio', 'Lugar de práctica'], ['ciudad', 'Tu ciudad'], ['telefono', 'Tu teléfono'], ['correo', 'Tu correo'], ['fecha', 'Fecha de hoy']];
 function fillTpl(t, p, pr) {
   const b = v => v || '________', v = Object.assign(tplValues(p, pr), {
     nacimiento: p.nacimiento ? fmtD(p.nacimiento + 'T12:00:00') : '________', paciente_direccion: b([p.direccion, p.localidad, p.ciudad].filter(Boolean).join(', ')), paciente_telefono: b(telOf(p.telefono, p.telInd)), paciente_correo: b(p.correo),
@@ -127,7 +127,7 @@ function sessionStats(p) {
 }
 
 /* Variables que se pueden usar en las plantillas de informe. */
-const TPL_VARS = [['paciente', 'Nombre del consultante'], ['documento', 'Documento'], ['edad', 'Edad'], ['resumen_asistencia', 'Sesiones y fechas'], ['n_sesiones', 'Número de sesiones'], ['primera_sesion', 'Primera sesión'], ['ultima_sesion', 'Última sesión'], ['terapeuta', 'Su nombre'], ['registro', 'Su registro'], ['ciudad', 'Su ciudad'], ['fecha', 'Fecha de hoy']];
+const TPL_VARS = [['paciente', 'Nombre del consultante'], ['documento', 'Documento'], ['edad', 'Edad'], ['resumen_asistencia', 'Sesiones y fechas'], ['n_sesiones', 'Número de sesiones'], ['primera_sesion', 'Primera sesión'], ['ultima_sesion', 'Última sesión'], ['terapeuta', 'Tu nombre'], ['registro', 'Tu registro'], ['ciudad', 'Tu ciudad'], ['fecha', 'Fecha de hoy']];
 function tplValues(p, pr) {
   const st = sessionStats(p), a = ageOf(p.nacimiento);
   return {
@@ -139,11 +139,11 @@ function tplValues(p, pr) {
 }
 const fillVars = (text, p, pr) => { const v = tplValues(p, pr); return text.replace(/\{([a-z_]+)\}/g, (m, k) => (k in v ? v[k] : m)); };
 const ATT = 'Por medio de la presente certifico que {paciente}, identificado/a con {documento}, ha asistido a sesiones de acompañamiento conmigo, con {resumen_asistencia}.';
-const CLOSE = '\n\nSe expide a solicitud del interesado/a y con su autorización. Este documento no es un certificado médico; el contenido de las sesiones es reservado.';
+const CLOSE = '\n\nSe expide a solicitud del interesado/a y con tu autorización. Este documento no es un certificado médico; el contenido de las sesiones es reservado.';
 const BASE_TPL = {
-  'Remisión a otro terapeuta': 'Recomiendo a {paciente}, identificado/a con {documento}, continuar su proceso con [terapeuta o servicio].\n\nMotivo:\n[Describa el motivo.]\n\nResumen de lo trabajado (autorizado por el consultante):\n[Prácticas realizadas y tiempo de acompañamiento.]\n\nQuedo atento/a a cualquier consulta.' + CLOSE,
+  'Remisión a otro terapeuta': 'Recomiendo a {paciente}, identificado/a con {documento}, continuar su proceso con [terapeuta o servicio].\n\nMotivo:\n[Describe el motivo.]\n\nResumen de lo trabajado (autorizado por el consultante):\n[Prácticas realizadas y tiempo de acompañamiento.]\n\nQuedo atento/a a cualquier consulta.' + CLOSE,
   'Constancia de asistencia': ATT + '\n\nLa asistencia a las sesiones se anota en mi ficha.' + CLOSE,
-  'Otro': ATT + '\n\n[Escriba el contenido del documento.]' + CLOSE
+  'Otro': ATT + '\n\n[Escribe el contenido del documento.]' + CLOSE
 };
 const myTemplates = () => (S.profile && S.profile.plantillas) || [];
 function tplRaw(key) {
@@ -322,7 +322,7 @@ async function downloadFile(filename, data) {
 function printDoc(title, body) {
   const f = document.createElement('iframe');
   f.setAttribute('aria-hidden', 'true'); f.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0';
-  f.onload = () => { try { f.contentWindow.focus(); f.contentWindow.print(); } catch (e) { toast('No se pudo abrir la impresión: use «Descargar».'); } setTimeout(() => f.remove(), 60000); };
+  f.onload = () => { try { f.contentWindow.focus(); f.contentWindow.print(); } catch (e) { toast('No se pudo abrir la impresión: usa «Descargar».'); } setTimeout(() => f.remove(), 60000); };
   f.srcdoc = standalone(title, body); document.body.appendChild(f);
 }
 function showDoc(title, body, filename) {
@@ -331,7 +331,7 @@ function showDoc(title, body, filename) {
   $('#cl').onclick = () => root.innerHTML = '';
   $('#dl').onclick = () => downloadFile(filename, standalone(title, body));
   $('#pr').onclick = () => printDoc(title, body);
-  $('#cp').onclick = async () => { const t = $('#paper').innerText; try { await navigator.clipboard.writeText(t); toast('Texto copiado.'); } catch (e) { const r = document.createRange(); r.selectNodeContents($('#paper')); const s = getSelection(); s.removeAllRanges(); s.addRange(r); toast('Texto seleccionado; cópielo con Ctrl+C.'); } };
+  $('#cp').onclick = async () => { const t = $('#paper').innerText; try { await navigator.clipboard.writeText(t); toast('Texto copiado.'); } catch (e) { const r = document.createRange(); r.selectNodeContents($('#paper')); const s = getSelection(); s.removeAllRanges(); s.addRange(r); toast('Texto seleccionado; cópialo con Ctrl+C.'); } };
 }
 
 /* ===== Guardado confirmado =====
@@ -348,14 +348,14 @@ function saveError(e) {
   if (e && e.status === 401) { relogin(); return; }
   const off = navigator.onLine === false;
   const d = document.createElement('div'); d.className = 'savefail'; d.setAttribute('role', 'alert');
-  d.innerHTML = `<div><b>No se guardó.</b> ${esc(off ? 'No hay conexión a internet.' : (e instanceof TypeError || /fetch|network|load failed/i.test(e && e.message || '')) ? 'No se pudo conectar con el servidor.' : (e && e.message) || 'El servidor no respondió.')} Lo que escribió sigue en pantalla: revise la conexión y vuelva a intentarlo.</div><button class="btn sm">Cerrar</button>`;
+  d.innerHTML = `<div><b>No se guardó.</b> ${esc(off ? 'No hay conexión a internet.' : (e instanceof TypeError || /fetch|network|load failed/i.test(e && e.message || '')) ? 'No se pudo conectar con el servidor.' : (e && e.message) || 'El servidor no respondió.')} Lo que escribió sigue en pantalla: revisa la conexión y vuelve a intentarlo.</div><button class="btn sm">Cerrar</button>`;
   d.querySelector('button').onclick = () => d.remove();
   document.body.appendChild(d);
 }
 function relogin() {
   if ($('#relogin')) return;
   const d = document.createElement('div'); d.className = 'idle'; d.id = 'relogin';
-  d.innerHTML = `<form class="box" style="text-align:left"><b>Su sesión terminó</b><p style="margin:0">Ingrese su contraseña para continuar. Lo que escribió sigue en pantalla; después vuelva a pulsar el botón de guardar.</p>
+  d.innerHTML = `<form class="box" style="text-align:left"><b>Tu sesión terminó</b><p style="margin:0">Ingresa tu contraseña para continuar. Lo que escribió sigue en pantalla; después vuelve a pulsar el botón de guardar.</p>
   <div class="fld"><label for="rl_pass">Contraseña de ${esc(S.user ? S.user.email : '')}</label><input id="rl_pass" type="password" autocomplete="current-password" required></div>
   <div class="row end"><button type="button" class="btn" id="rl_out">Salir</button><button class="btn pri">Continuar</button></div></form>`;
   document.body.appendChild(d);
@@ -368,9 +368,9 @@ function relogin() {
       let r;
       if (!ticket) {
         r = await api('/auth/login', { method: 'POST', body: { email: S.user.email, password: $('#rl_pass').value }, noRedirect: true });
-        if (r.need_2fa) { ticket = r.ticket; $('#rl_pass').closest('.fld').outerHTML = `<div class="fld"><label for="rl_code">Código de su app autenticadora (o de recuperación)</label>${CODE_INPUT('rl_code')}</div>`; $('#rl_code').focus(); return; }
+        if (r.need_2fa) { ticket = r.ticket; $('#rl_pass').closest('.fld').outerHTML = `<div class="fld"><label for="rl_code">Código de tu app autenticadora (o de recuperación)</label>${CODE_INPUT('rl_code')}</div>`; $('#rl_code').focus(); return; }
       } else r = await api('/auth/2fa/login', { method: 'POST', body: { ticket, code: $('#rl_code').value.trim() }, noRedirect: true });
-      S.user = r; Idle.last = Idle.ping = Date.now(); d.remove(); toast('Sesión renovada. Vuelva a guardar.');
+      S.user = r; Idle.last = Idle.ping = Date.now(); d.remove(); toast('Sesión renovada. Vuelve a guardar.');
     } catch (err) { toast(err.message); }
   };
 }

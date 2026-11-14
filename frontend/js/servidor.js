@@ -13,8 +13,8 @@ function renderDown() {
   $('#modal-root').innerHTML = '';
   $('#app').innerHTML = `<div class="panel" style="max-width:440px;margin:8vh auto 0"><div class="body">
     <a class="brand" href="/" aria-label="Alter-Karute: ir a la página principal" style="text-decoration:none;color:inherit">${logoSVG(60)}<b>Alter-Karute</b></a>
-    <div class="banner" role="alert"><b>El servidor no responde.</b> La página cargó, pero el servicio de la aplicación no está disponible en este momento. Puede estar reiniciándose después de una actualización.</div>
-    <p style="margin:0;color:var(--muted);font-size:14px">Espere un minuto y pulse «Reintentar». Si sigue igual, avise al administrador.</p>
+    <div class="banner" role="alert"><b>El servidor no responde.</b> La página cargó, pero el servicio de la aplicación no está disponible en este momento. Puedes estar reiniciándose después de una actualización.</div>
+    <p style="margin:0;color:var(--muted);font-size:14px">Espera un minuto y pulsa «Reintentar». Si sigue igual, avise al administrador.</p>
     <button class="btn pri" id="dn_retry">Reintentar</button></div></div>`;
   $('#dn_retry').onclick = () => location.reload();
   clearTimeout(renderDown.t); renderDown.t = setTimeout(() => location.reload(), 30000);
@@ -26,9 +26,9 @@ const GOOGLE_BTN = txt => `<a class="btn" href="/api/auth/google/start" style="d
 function renderRegistro(msg, v) {
   v = v || {};
   $('#app').innerHTML = `<div class="panel" style="width:100%;max-width:400px;box-sizing:border-box;margin:8vh auto 0"><form class="body" id="regform" autocomplete="on">
-    <a class="brand" href="/" aria-label="Alter-Karute: ir a la página principal" style="text-decoration:none;color:inherit">${logoSVG(60)}<b>Alter-Karute</b></a><p style="margin:0;color:var(--muted)">Cree su cuenta para empezar.</p>
+    <a class="brand" href="/" aria-label="Alter-Karute: ir a la página principal" style="text-decoration:none;color:inherit">${logoSVG(60)}<b>Alter-Karute</b></a><p style="margin:0;color:var(--muted)">Crea tu cuenta para empezar.</p>
     ${msg ? `<div class="banner" role="alert">${esc(msg)}</div>` : ''}
-    ${GOOGLE_BTN('Crear cuenta con Google')}<p style="margin:0;text-align:center;color:var(--muted);font-size:13px">o con su correo</p>
+    ${GOOGLE_BTN('Crear cuenta con Google')}<p style="margin:0;text-align:center;color:var(--muted);font-size:13px">o con tu correo</p>
     <div class="fld"><label for="rg_name">Nombre completo</label><input id="rg_name" autocomplete="name" value="${esc(v.name || '')}" required></div>
     <div class="fld"><label for="rg_email">Correo</label><input id="rg_email" type="email" autocomplete="username" value="${esc(v.email || '')}" required></div>
     <div class="fld"><label for="rg_pass">Contraseña</label><input id="rg_pass" type="password" autocomplete="new-password" minlength="10" required></div>
@@ -44,8 +44,8 @@ function renderRegistro(msg, v) {
     try {
       await api('/auth/register', { method: 'POST', body: b, noRedirect: true });
       $('#app').innerHTML = `<div class="panel" style="width:100%;max-width:400px;box-sizing:border-box;margin:8vh auto 0"><div class="body">
-        <a class="brand" href="/" aria-label="Alter-Karute: ir a la página principal" style="text-decoration:none;color:inherit">${logoSVG(60)}<b>Alter-Karute</b></a><h2 style="margin:0">Revise su correo</h2>
-        <p style="margin:0">Enviamos un enlace de confirmación a <b>${esc(b.email)}</b>. Ábralo para activar su cuenta (vale 24 horas). Si no lo ve, revise la carpeta de spam.</p>
+        <a class="brand" href="/" aria-label="Alter-Karute: ir a la página principal" style="text-decoration:none;color:inherit">${logoSVG(60)}<b>Alter-Karute</b></a><h2 style="margin:0">Revisa tu correo</h2>
+        <p style="margin:0">Enviamos un enlace de confirmación a <b>${esc(b.email)}</b>. Ábrelo para activar tu cuenta (vale 24 horas). Si no lo ves, revisa la carpeta de spam.</p>
         <button class="btn" id="rg_ok">Volver al ingreso</button></div></div>`;
       $('#rg_ok').onclick = () => renderLogin('', b.email);
     } catch (err) { renderRegistro(err.message, b); }
@@ -54,7 +54,7 @@ function renderRegistro(msg, v) {
 function renderLogin(msg, email) {
   $('#modal-root').innerHTML = ''; $('#fb-root').innerHTML = '';
   $('#app').innerHTML = `<div class="panel" style="width:100%;max-width:400px;box-sizing:border-box;margin:8vh auto 0"><form class="body" id="loginform" autocomplete="on">
-    <a class="brand" href="/" aria-label="Alter-Karute: ir a la página principal" style="text-decoration:none;color:inherit">${logoSVG(60)}<b>Alter-Karute</b></a><p style="margin:0;color:var(--muted)">Ingrese con su cuenta para ver sus fichas.</p><p style="margin:6px 0 0;color:var(--muted);font-size:12px">Seguimiento de bienestar con terapias alternativas: no es una herramienta clínica.</p>
+    <a class="brand" href="/" aria-label="Alter-Karute: ir a la página principal" style="text-decoration:none;color:inherit">${logoSVG(60)}<b>Alter-Karute</b></a><p style="margin:0;color:var(--muted)">Ingresa con tu cuenta para ver tus fichas.</p><p style="margin:6px 0 0;color:var(--muted);font-size:12px">Seguimiento de bienestar con terapias alternativas: no es una herramienta clínica.</p>
     ${msg ? `<div class="banner" role="alert">${esc(msg)}</div>` : ''}
     <div class="fld"><label for="lg_email">Correo</label><input id="lg_email" type="email" autocomplete="username" value="${esc(email || '')}" required></div>
     <div class="fld"><label for="lg_pass">Contraseña</label><input id="lg_pass" type="password" autocomplete="current-password" required></div>
@@ -76,12 +76,12 @@ const CODE_INPUT = id => `<input id="${id}" type="text" inputmode="text" autocom
 function renderCode(ticket, email, msg, days, keep) {
   $('#app').innerHTML = `<div class="panel" style="width:100%;max-width:400px;box-sizing:border-box;margin:8vh auto 0"><form class="body" id="codeform" autocomplete="off">
     <a class="brand" href="/" aria-label="Alter-Karute: ir a la página principal" style="text-decoration:none;color:inherit">${logoSVG(60)}<b>Alter-Karute</b></a>
-    <p style="margin:0"><b>Verificación en dos pasos.</b> Escriba el código de 6 dígitos que muestra su app autenticadora para ${esc(email)}.</p>
+    <p style="margin:0"><b>Verificación en dos pasos.</b> Escribe el código de 6 dígitos que muestra tu app autenticadora para ${esc(email)}.</p>
     ${msg ? `<div class="banner" role="alert">${esc(msg)}</div>` : ''}
     <div class="fld"><label for="lg_code">Código</label>${CODE_INPUT('lg_code')}</div>
-    ${days ? `<label class="chk" style="display:flex;gap:8px;align-items:flex-start;font-size:14px"><input type="checkbox" id="lg_remember" ${keep === false ? '' : 'checked'} style="margin-top:3px;accent-color:var(--accent)"><span>Recordar este dispositivo: no volver a pedir el código aquí mientras se use al menos una vez cada ${days} días. No lo marque en un equipo compartido.</span></label>` : ''}
+    ${days ? `<label class="chk" style="display:flex;gap:8px;align-items:flex-start;font-size:14px"><input type="checkbox" id="lg_remember" ${keep === false ? '' : 'checked'} style="margin-top:3px;accent-color:var(--accent)"><span>Recordar este dispositivo: no volver a pedir el código aquí mientras se use al menos una vez cada ${days} días. No lo marques en un equipo compartido.</span></label>` : ''}
     <button class="btn pri" type="submit">Verificar</button>
-    <p style="margin:0;font-size:13px;color:var(--muted)">¿No tiene el teléfono? Escriba uno de sus códigos de recuperación (por ejemplo <span style="font-family:var(--f-mono)">abcd-2345</span>). Si los perdió, pida al administrador que quite la verificación de su cuenta.</p>
+    <p style="margin:0;font-size:13px;color:var(--muted)">¿No tiene el teléfono? Escribe uno de tus códigos de recuperación (por ejemplo <span style="font-family:var(--f-mono)">abcd-2345</span>). Si los perdió, pide al administrador que quita la verificación de tu cuenta.</p>
     <button class="btn sm" type="button" id="lg_back">Volver</button></form></div>`;
   $('#lg_back').onclick = () => renderLogin('', email);
   $('#codeform').onsubmit = async ev => {
@@ -163,8 +163,8 @@ ACT.users = async () => {
       if (act === 'toggle') await api('/admin/users/' + id, { method: 'PATCH', body: { active: b.dataset.active !== '1' } });
       else if (act === 'role') await api('/admin/users/' + id, { method: 'PATCH', body: { role: b.dataset.role === 'admin' ? 'user' : 'admin' } });
       else if (act === 'no2fa') { if (!b.dataset.sure) { b.dataset.sure = 1; b.textContent = 'Confirmar: quitar 2 pasos'; return; } await api('/admin/users/' + id, { method: 'PATCH', body: { reset_2fa: true } }); toast('Verificación en dos pasos quitada. El usuario puede volver a activarla.'); }
-      else if (act === 'reset') { const pw = $('#rp_' + id).value; if (!pw) { toast('Escriba la nueva contraseña.'); return; } await api('/admin/users/' + id, { method: 'PATCH', body: { password: pw } }); toast('Contraseña restablecida. Deberá cambiarla al entrar.'); }
-      else if (act === 'create') { const o = readForm($('#uform'), {}); await api('/admin/users', { method: 'POST', body: { name: o.uname, email: o.uemail, password: o.upass, role: o.urole === 'Administrador' ? 'admin' : 'user' } }); toast('Usuario creado. Deberá elegir su contraseña al entrar.'); ['uname', 'uemail', 'upass'].forEach(k => { $('#f_' + k).value = ''; }); }
+      else if (act === 'reset') { const pw = $('#rp_' + id).value; if (!pw) { toast('Escribe la nueva contraseña.'); return; } await api('/admin/users/' + id, { method: 'PATCH', body: { password: pw } }); toast('Contraseña restablecida. Deberá cambiarla al entrar.'); }
+      else if (act === 'create') { const o = readForm($('#uform'), {}); await api('/admin/users', { method: 'POST', body: { name: o.uname, email: o.uemail, password: o.upass, role: o.urole === 'Administrador' ? 'admin' : 'user' } }); toast('Usuario creado. Deberá elegir tu contraseña al entrar.'); ['uname', 'uemail', 'upass'].forEach(k => { $('#f_' + k).value = ''; }); }
       if (await load()) drawList();
     } catch (err) { toast(err.message); }
   };
@@ -240,13 +240,13 @@ new MutationObserver(ms => ms.forEach(m => m.addedNodes.forEach(n => { if (n.nod
     if (e.target.id === 'f_consentTipo') {
       const ta = $('#f_consentText'), want = consentText(curPatient(), e.target.value);
       if (ta.dataset.auto === '1' || ta.value === ta.dataset.last) { ta.value = want; ta.dataset.last = want; ta.dataset.auto = '1'; }
-      else toast('El texto ya tiene cambios: agregue a mano las cláusulas de la nueva modalidad.');
+      else toast('El texto ya tiene cambios: agrega a mano las cláusulas de la nueva modalidad.');
     }
     if (e.target.id === 'f_consentText') e.target.dataset.auto = '0';
     if (e.target.id === 'f_plantilla' && $('#f_contenido')) {
       const ta = $('#f_contenido'), ti = $('#f_tipo'), key = e.target.value;
       if (!ta.value.trim() || ta.value === ta.dataset.tpl) { const txt = reportTemplate(key, curPatient(), S.profile); ta.value = txt; ta.dataset.tpl = txt; }
-      else toast('El texto ya tiene cambios. Use «Regenerar desde plantilla» para reemplazarlo.');
+      else toast('El texto ya tiene cambios. Usa «Regenerar desde plantilla» para reemplazarlo.');
       if (!ti.value.trim() || ti.value === ti.dataset.auto) { ti.value = tplName(key); ti.dataset.auto = ti.value; }
     }
   });
@@ -263,7 +263,7 @@ new MutationObserver(ms => ms.forEach(m => m.addedNodes.forEach(n => { if (n.nod
   }
   const qs = new URLSearchParams(location.search), vt = qs.get('verificar'), gl = qs.get('gl');
   if (gl) history.replaceState(null, '', location.pathname);
-  if (S.mode === 'server' && !S.user && gl) { renderLogin({ cancel: 'No se concedió el permiso en Google.', off: 'El ingreso con Google no está disponible por ahora.', inactive: 'Esta cuenta está desactivada.', limit: 'Se crearon demasiadas cuentas desde esta conexión hoy. Intente de nuevo mañana.' }[gl] || 'No se pudo ingresar con Google. Intente de nuevo.'); return; }
+  if (S.mode === 'server' && !S.user && gl) { renderLogin({ cancel: 'No se concedió el permiso en Google.', off: 'El ingreso con Google no está disponible por ahora.', inactive: 'Esta cuenta está desactivada.', limit: 'Se crearon demasiadas cuentas desde esta conexión hoy. Intenta de nuevo mañana.' }[gl] || 'No se pudo ingresar con Google. Intenta de nuevo.'); return; }
   if (S.mode === 'server' && !S.user && vt) {
     history.replaceState(null, '', location.pathname);
     try { S.user = await api('/auth/verify', { method: 'POST', body: { token: vt }, noRedirect: true }); }
@@ -275,7 +275,7 @@ new MutationObserver(ms => ms.forEach(m => m.addedNodes.forEach(n => { if (n.nod
   if (gq && S.user) {
     history.replaceState(null, '', location.pathname);
     S.view = 'agenda'; render();
-    toast(gq === 'ok' ? 'Google Calendar conectado. Sus citas se están copiando.' : gq === 'cancel' ? 'No se concedió el permiso en Google.' : 'No se pudo conectar con Google. Intente de nuevo.');
+    toast(gq === 'ok' ? 'Google Calendar conectado. Tus citas se están copiando.' : gq === 'cancel' ? 'No se concedió el permiso en Google.' : 'No se pudo conectar con Google. Intenta de nuevo.');
     if (gq === 'ok') ACT.gcal();
   }
 })();

@@ -2,7 +2,7 @@
 const CK = (...a) => a.map(([k, l, r]) => [k, l, r || 2]);
 const CK_ATENCION = ['Datos de la atención', CK(['c_ini', 'Inicio (fecha y hora)', 1], ['c_fin', 'Hora de fin', 1], ['c_mod', 'Modalidad (Presencial · Virtual · Telefónica)', 1], ['c_ses', 'Sesión (ej.: 4 de 10)', 1])];
 const CK_ANT = ['Compromisos anteriores', CK(['c_ant', 'Compromisos de la sesión anterior: Cumplido · Parcial · No cumplido · Ya no aplica', 3], ['c_apr', '¿Qué aprendió al intentarlo?', 3])];
-const CK_CIERRE = ['Cierre de la nota', CK(['c_com', 'Compromisos nuevos (acción · fecha límite · quién lo verifica: el coachee, el coach u otra persona)', 4], ['c_avance', 'Avance hacia el objetivo, de 1 (lejos) a 10 (logrado)', 1], ['c_priv', 'Notas privadas del coach (solo para usted: no las comparta ni las incluya en informes)', 4], ['c_rem', '¿Requiere remisión? No · Psicología · Salud · Otro. Si no es «No»: motivo y a quién se remite', 2])];
+const CK_CIERRE = ['Cierre de la nota', CK(['c_com', 'Compromisos nuevos (acción · fecha límite · quién lo verifica: el coachee, el coach u otra persona)', 4], ['c_avance', 'Avance hacia el objetivo, de 1 (lejos) a 10 (logrado)', 1], ['c_priv', 'Notas privadas del coach (solo para ti: no las compartas ni las incluye en informes)', 4], ['c_rem', '¿Requiere remisión? No · Psicología · Salud · Otro. Si no es «No»: motivo y a quién se remite', 2])];
 const COACH_MODELOS = [
   { id: 'x_coach_acuerdo', nombre: 'Acuerdo', modo: 'unica', base: 1, secs: [
     ['El proceso', CK(['c_tipo', 'Tipo de coaching (Vida · Ejecutivo · Ontológico · Sistémico · PNL · Salud y bienestar · Otro)', 1], ['c_quien', '¿Quién contrata? (El coachee · Una empresa (sponsor) · Otra persona)', 1], ['c_spon', 'Sponsor: nombre, cargo, empresa y correo', 2], ['c_nses', 'Sesiones pactadas', 1], ['c_frec', 'Frecuencia (Semanal · Quincenal · Mensual · Variable)', 1], ['c_dur', 'Duración por sesión (minutos)', 1], ['c_pago', 'Valor y forma de pago', 1])],
@@ -13,7 +13,7 @@ const COACH_MODELOS = [
   { id: 'x_coach_rueda', nombre: 'Rueda de la vida', modo: 'sesion', base: 1, secs: [
     ['Momento', CK(['c_mom', 'Momento (Inicio · Mitad · Cierre · Otro)', 1])],
     ['Rueda: satisfacción hoy / deseada, de 1 a 10', CK(['c_salud', 'Salud (hoy / deseada)', 1], ['c_trab', 'Trabajo y carrera', 1], ['c_din', 'Dinero', 1], ['c_fam', 'Familia', 1], ['c_par', 'Pareja', 1], ['c_ami', 'Amistades', 1], ['c_cre', 'Crecimiento personal', 1], ['c_ocio', 'Ocio y descanso', 1])],
-    ['Valores y visión', CK(['c_val', 'Valores más importantes (hasta 5: Libertad, Familia, Seguridad, Aprendizaje, Reconocimiento, Salud, Servicio, Otro)', 2], ['c_vis', 'Su vida plena se vería así', 3], ['c_pal', 'Área palanca: la que, si mejora, mueve a las demás', 1], ['c_paso', 'Primer paso y fecha', 2])]] },
+    ['Valores y visión', CK(['c_val', 'Valores más importantes (hasta 5: Libertad, Familia, Seguridad, Aprendizaje, Reconocimiento, Salud, Servicio, Otro)', 2], ['c_vis', 'Tu vida plena se vería así', 3], ['c_pal', 'Área palanca: la que, si mejora, mueve a las demás', 1], ['c_paso', 'Primer paso y fecha', 2])]] },
   { id: 'x_coach_cierre', nombre: 'Cierre', modo: 'unica', base: 1, secs: [
     ['Resultados', CK(['c_av', 'Avance: punto de partida → hoy (1 a 10)', 1], ['c_indc', 'Indicadores del acuerdo: ¿se cumplieron? (Sí · En parte · No, con comentario)', 4], ['c_log', 'Logros (pueden ir a la empresa)', 3], ['c_apc', 'Aprendizajes clave, en palabras del coachee', 3], ['c_abi', 'Lo que queda abierto', 2], ['c_rec', 'Recomendaciones y próximos pasos (pueden ir a la empresa)', 3])],
     ['Evaluación y destino', CK(['c_val2', 'Valoración del proceso por el coachee (1 a 10) y comentario', 2], ['c_dest', 'Informe para: solo el coachee · el coachee y la empresa', 1])]] },
@@ -39,7 +39,7 @@ const COACH_MODELOS = [
   { id: 'x_coach_bienestar', nombre: 'Bienestar', modo: 'sesion', secs: [CK_ATENCION, CK_ANT,
     ['Foco y hábitos', CK(['c_ar', 'Área de trabajo (Sueño · Alimentación · Movimiento · Estrés · Hidratación · Pantallas · Otra)', 1], ['c_ha', 'Hábitos en seguimiento: hábito, meta por semana y registro de 7 días', 4])],
     ['Cambio', CK(['c_et', 'Etapa de cambio (Precontemplación · Contemplación · Preparación · Acción · Mantenimiento · Recaída)', 1], ['c_im', 'Importancia del cambio (1 a 10)', 1], ['c_cf', 'Confianza en lograrlo (1 a 10)', 1])],
-    ['Meta', CK(['c_sm', 'Meta SMART: qué · cuánto · para cuándo · cómo lo medirá', 3], ['c_ob', 'Obstáculos y plan B', 2], ['c_al', 'Mencionó síntomas o condiciones que requieren un profesional de salud (Sí/No). Si es «Sí», complete la remisión; no registre diagnósticos', 2])], CK_CIERRE] }
+    ['Meta', CK(['c_sm', 'Meta SMART: qué · cuánto · para cuándo · cómo lo medirá', 3], ['c_ob', 'Obstáculos y plan B', 2], ['c_al', 'Mencionó síntomas o condiciones que requieren un profesional de salud (Sí/No). Si es «Sí», completa la remisión; no registres diagnósticos', 2])], CK_CIERRE] }
 ];
 /* Agrega a TM.extra los modelos pedidos (base o escuelas) sin repetir los ya instalados. */
 function coachAdd(grupo) {
@@ -47,5 +47,5 @@ function coachAdd(grupo) {
   if (!add.length) return toast('Esos modelos ya están instalados.');
   if (TM.extra.length + add.length > 30) return toast('Máximo 30 pestañas nuevas.');
   add.forEach(m => TM.extra.push({ id: m.id, nombre: m.nombre, modo: m.modo, secs: clone(m.secs) }));
-  toast(add.length + (add.length === 1 ? ' pestaña agregada' : ' pestañas agregadas') + '. Pulse Guardar.');
+  toast(add.length + (add.length === 1 ? ' pestaña agregada' : ' pestañas agregadas') + '. Pulsa Guardar.');
 }

@@ -2,7 +2,7 @@
 
 Cada terapeuta los activa (perfil → «recordatorios»: activo, horas antes). El servidor revisa cada
 15 minutos las citas programadas que empiezan dentro de ese plazo y, si el consultante tiene correo y el
-terapeuta configuró su correo de envío, le envía un recordatorio con un enlace para confirmar o
+terapeuta configuró tu correo de envío, le envía un recordatorio con un enlace para confirmar o
 cancelar. Las demás quedan para enviar a mano (WhatsApp o copiar el mensaje) desde Pendientes.
 El mensaje no lleva información de las sesiones: solo fecha, hora, modalidad y el nombre del terapeuta."""
 import hashlib
@@ -98,18 +98,18 @@ def link(token: str, base: str = "") -> str:
 
 def text(p: dict, a: dict, prof: dict, url: str, nota: str = "") -> str:
     first = str(p.get("nombres") or "").split(" ")[0]
-    who = prof.get("nombre") or "su terapeuta"
+    who = prof.get("nombre") or "tu terapeuta"
     start = parse(a.get("startAt"))
     mod = a.get("modalidad") or "Presencial"
-    return (f"Hola{(' ' + first) if first else ''}, le recordamos su cita con {who} el {when_text(start)} ({mod.lower()}). "
-            + (nota + " " if nota else "") + f"Por favor confirme o avísenos si no puede asistir: {url}")
+    return (f"Hola{(' ' + first) if first else ''}, le recordamos tu cita con {who} el {when_text(start)} ({mod.lower()}). "
+            + (nota + " " if nota else "") + f"Por favor confirma o avísenos si no puedes asistir: {url}")
 
 
 def send_mail(to: str, body: str, prof: dict, acc: dict) -> None:
     """Envía el recordatorio desde el correo del terapeuta. Se reemplaza en las pruebas."""
     m = EmailMessage()
-    place = prof.get("consultorio") or prof.get("nombre") or "su consulta"
-    m["Subject"] = f"Recordatorio de su cita — {place}"
+    place = prof.get("consultorio") or prof.get("nombre") or "tu consulta"
+    m["Subject"] = f"Recordatorio de tu cita — {place}"
     m["From"] = formataddr((prof.get("nombre") or "", acc.get("from"))) if acc.get("propio") else acc.get("from")
     m["To"] = to
     reply = acc.get("from") if acc.get("propio") else prof.get("correo")
@@ -117,7 +117,7 @@ def send_mail(to: str, body: str, prof: dict, acc: dict) -> None:
         m["Reply-To"] = reply
     m.set_content(body + "\n\nEste es un mensaje automático de recordatorio.\n")
     antes, url, despues = correo.separar_enlace(body)
-    correo.agregar(m, correo.layout("Recordatorio de su cita", [antes, despues], boton=("Confirmar o cancelar mi cita", url) if url else None,
+    correo.agregar(m, correo.layout("Recordatorio de tu cita", [antes, despues], boton=("Confirmar o cancelar mi cita", url) if url else None,
                                     firma=("Atentamente,", prof.get("nombre") or place)), prof.get("idioma"))
     with survey.smtp_open(acc) as s:
         s.send_message(m)

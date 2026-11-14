@@ -48,7 +48,7 @@ function pnGroups(list) {
 }
 function pnListHTML() {
   const list = pnFiltered(), q = S.pn.q, today = dayKey(new Date());
-  if (!S.pnotes.length) return '<div class="empty" style="padding:24px 16px">Aún no tiene notas de proceso. Use «+ Nueva nota» para anotar una hipótesis, una formulación de caso o una supervisión.</div>';
+  if (!S.pnotes.length) return '<div class="empty" style="padding:24px 16px">Aún no tienes notas de proceso. Usa «+ Nueva nota» para anotar una hipótesis, una formulación de caso o una supervisión.</div>';
   if (!list.length) return '<div class="empty" style="padding:24px 16px">Ninguna nota coincide con la búsqueda o los filtros.</div>';
   const cur = pnCur(), groups = pnGroups(list);
   return groups.map(g => {
@@ -58,7 +58,7 @@ function pnListHTML() {
   }).join('');
 }
 function pnEditorHTML(n) {
-  if (!n) return `<div class="pned"><h3 style="margin:0">Notas de proceso</h3><div class="banner" style="margin:0"><b>Son sus notas de trabajo, no la ficha.</b> Aquí van hipótesis, formulaciones, lo que habló en supervisión e ideas para el caso. No se firman, no salen en la historia completa ni en copias o informes, y su equipo no las ve. Puede editarlas y borrarlas cuando quiera.</div>
+  if (!n) return `<div class="pned"><h3 style="margin:0">Notas de proceso</h3><div class="banner" style="margin:0"><b>Son tus notas de trabajo, no la ficha.</b> Aquí van hipótesis, formulaciones, lo que habló en supervisión e ideas para el caso. No se firman, no salen en la historia completa ni en copias o informes, y tu equipo no las ve. Puedes editarlas y borrarlas cuando quieras.</div>
     <p class="stnote" style="margin:0">Lo que haga parte de la atención (lo ocurrido en la sesión, el impresión, las decisiones del proceso) debe quedar en la sesión de la historia.</p>
     <div class="row"><button class="btn pri" data-act="pnNew">+ Nueva nota</button></div></div>`;
   const pts = S.patients.slice().sort((a, b) => fullName(a).localeCompare(fullName(b), 'es'));
@@ -73,9 +73,9 @@ function pnEditorHTML(n) {
     <div class="fld"><label for="pn_txt">Nota</label>${richBar('pn_txt')}<textarea id="pn_txt" rows="12" style="font-family:var(--f-doc);font-size:15px" placeholder="Hipótesis, preguntas abiertas, lo conversado en supervisión…">${esc(n.texto || '')}</textarea></div>
     <div class="fld"><span class="lbl">A mano${(n.manos || []).length ? ' (' + n.manos.length + (n.manos.length === 1 ? ' hoja' : ' hojas') + ')' : ''}</span>
       <div class="hwthumbs" id="hwthumbs">${(n.manos || []).map((h, i) => `<button class="hwthumb" data-act="hwOpen" data-i="${i}" aria-label="Abrir hoja a mano ${i + 1}"><img data-hw="${i}" alt=""><span>Hoja ${i + 1} · ${esc(fmtShort(h.at))}</span></button>`).join('')}</div>
-      <div class="row"><button class="btn sm" data-act="hwOpen" data-i="new">✎ Escribir a mano</button><span class="hwhint">Con lápiz en tablet o con el dedo. La escritura a mano no entra en la búsqueda: póngale un título a la nota.</span></div></div>
+      <div class="row"><button class="btn sm" data-act="hwOpen" data-i="new">✎ Escribir a mano</button><span class="hwhint">Con lápiz en tablet o con el dedo. La escritura a mano no entra en la búsqueda: ponle un título a la nota.</span></div></div>
     <div class="sec" style="margin:0"><h3 style="margin:0">Seguimiento${segs.length ? ' (' + segs.length + ')' : ''}</h3>
-      <p class="stnote" style="margin:0">Agregue cómo evoluciona la idea: qué confirmó o descartó, qué le dijeron en supervisión, qué probar en la próxima sesión.</p>
+      <p class="stnote" style="margin:0">Agrega cómo evoluciona la idea: qué confirmó o descartó, qué le dijeron en supervisión, qué probar en la próxima sesión.</p>
       <div class="fld"><label for="pn_seg" class="sr-only">Nuevo seguimiento</label><textarea id="pn_seg" rows="3" placeholder="Nuevo seguimiento…"></textarea></div>
       <div class="row end"><button class="btn sm pri" data-act="pnSeg">Agregar seguimiento</button></div>
       ${segs.map(([x, i]) => `<div class="pnseg"><span class="ts">${esc(fmtShort(x.at))} <button class="btn sm" data-act="pnSegDel" data-i="${i}" style="padding:0 6px;margin-left:4px" aria-label="Quitar este seguimiento">Quitar</button></span><p>${pnMark(x.texto, S.pn.q)}</p></div>`).join('')}</div>
@@ -145,7 +145,7 @@ ACT.pnBack = async () => { await pnLeave(); S.pn.sel = null; S.pn.draft = null; 
 ACT.pnFor = b => { S.view = 'cuaderno'; S.pn.pid = b.dataset.id; S.pn.open.add(b.dataset.id); S.pn.estado = 'todas'; S.pn.sel = null; S.pn.q = ''; render(); scrollTo(0, 0); };
 ACT.pnSeg = async b => {
   const n = pnCur(), t = $('#pn_seg').value.trim(); if (!n) return;
-  if (!t) { toast('Escriba el seguimiento.'); $('#pn_seg').focus(); return; }
+  if (!t) { toast('Escribe el seguimiento.'); $('#pn_seg').focus(); return; }
   pnRead(n); n.seguimiento = (n.seguimiento || []).concat([{ at: nowISO(), texto: t.slice(0, 5000) }]);
   if (n.estado === 'Abierta') n.estado = 'En seguimiento';
   await pnChain; clearTimeout(pnTimer);
@@ -243,7 +243,7 @@ function hwEditor(n, idx) {
     ${HW_SIZES.map((s, i) => btn('size', i, ['Fino', 'Medio', 'Grueso'][i], `aria-pressed="${i === 1}"`)).join('')}<span class="sep"></span>
     ${btn('do', 'undo', '↶ Deshacer')}${btn('do', 'redo', '↷ Rehacer')}<span class="sep"></span>
     <select data-hw-bg aria-label="Fondo de la hoja" style="width:auto">${[['rayas', 'Rayada'], ['cuadros', 'Cuadriculada'], ['liso', 'Lisa']].map(([v, l]) => `<option value="${v}" ${v === page.fondo ? 'selected' : ''}>${l}</option>`).join('')}</select>
-    <label class="check hwhint" style="margin:0"><input type="checkbox" data-hw-pen> Solo lápiz (la mano no raya)</label><span class="hwhint">Desplace la hoja con dos dedos</span>
+    <label class="check hwhint" style="margin:0"><input type="checkbox" data-hw-pen> Solo lápiz (la mano no raya)</label><span class="hwhint">Desplaza la hoja con dos dedos</span>
     <span style="flex:1"></span>${orig ? btn('do', 'del', 'Eliminar hoja', 'class="btn sm warn"') : ''}${btn('do', 'close', 'Cancelar')}${btn('do', 'save', 'Guardar hoja', 'class="btn sm pri"')}</div>
     <div class="hwscroll"><div class="hwpage"><canvas aria-label="Hoja para escribir a mano"></canvas></div></div>`;
   document.body.appendChild(host);
@@ -330,7 +330,7 @@ function hwEditor(n, idx) {
       page.at = nowISO(); const old = (n.manos || []).slice(); n.manos = old.slice();
       if (idx >= 0) n.manos[idx] = page; else n.manos.push(page);
       n.updatedAt = nowISO();
-      if (JSON.stringify(n).length > 1_800_000) { n.manos = old; toast('La nota quedó muy grande: cree una nota nueva para seguir escribiendo a mano.'); return; }
+      if (JSON.stringify(n).length > 1_800_000) { n.manos = old; toast('La nota quedó muy grande: crea una nota nueva para seguir escribiendo a mano.'); return; }
       if (!(await hwPersist(n, b))) { n.manos = old; return; }
       close(); render(); toast('Hoja guardada.');
     }
