@@ -2293,7 +2293,7 @@ class BookCfgIn(BaseModel):
 def booking_get(user: User = Depends(pro_user), db: Session = Depends(get_db)):
     b = db.get(Booking, user.id)
     return {"activo": bool(b and b.active), "slug": b.slug if b else None, "config": decrypt(b.payload) if b else booking.DEFAULT,
-            "correo": survey.smtp_enabled(survey.account(db, user.id))}
+            "correo": survey.smtp_enabled(survey.account(db, user.id)), "suscrito": suscrito(user, db)}
 
 
 @app.put("/api/reserva")

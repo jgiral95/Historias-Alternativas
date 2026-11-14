@@ -254,6 +254,7 @@ ACT.reservas = async () => {
   const draw = () => {
     const m0 = root.querySelector('.modal'), b0 = root.querySelector('.box'), sm = m0 ? m0.scrollTop : 0, sb = b0 ? b0.scrollTop : 0;  // al redibujar se conserva el desplazamiento
     root.innerHTML = `<div class="modal" role="dialog" aria-modal="true" aria-label="Reservas"><div class="box" id="rsform" style="width:min(620px,100%)"><div class="row" style="justify-content:space-between"><h3>Reservas por enlace</h3><button class="btn sm" data-r="close">Cerrar</button></div>
+    ${r.suscrito === false ? '<div class="banner"><b>Necesitas una suscripción vigente.</b> Sin ella no puedes crear un enlace de reservas y el que tengas no funciona para tus consultantes.</div>' : ''}
     ${r.correo ? '' : '<div class="banner"><b>Falta el correo de envío.</b> Sin él no se pueden enviar las confirmaciones y el enlace no funciona.</div>'}
     <div class="sec"><h3 style="display:flex;align-items:center;gap:8px">1 · Tu enlace<label class="chk" style="margin-left:auto;display:flex;gap:6px;align-items:center;text-transform:none;letter-spacing:0;font-size:14px;color:var(--ink)"><input type="checkbox" id="rs_on" ${st.activo ? 'checked' : ''}> Enlace activo</label></h3>
     <p style="margin:0;font-size:14px">Comparte un enlace para que tus consultantes agenden solos en los horarios que definas. Cada cita llega a tu agenda y se envía un correo de confirmación al consultante y a ti.</p>
