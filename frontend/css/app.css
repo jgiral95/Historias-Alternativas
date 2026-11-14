@@ -519,3 +519,23 @@ body:has(#fb-root .fbbtn) .modal{padding-bottom:84px}
 #ap_p1{display:flex;flex-direction:column;gap:14px}
 .recrow{display:flex;align-items:center;gap:8px;margin-bottom:8px}.recrow input{width:90px}.recrow select{width:auto}
 #rc_body[hidden]{display:none}#rc_body{display:flex;flex-direction:column;gap:12px}.recrow input.bad{border-color:var(--danger,#b3261e);box-shadow:0 0 0 2px rgba(179,38,30,.18)}
+
+/* ===== Toques holísticos: profundidad suave, títulos serif, píldoras y transiciones ===== */
+:root{--sh:0 1px 2px rgba(60,50,30,.04),0 8px 24px rgba(78,107,88,.08);--sh-btn:0 2px 8px rgba(78,107,88,.28)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--sh:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.28);--sh-btn:0 2px 8px rgba(0,0,0,.35)}}
+:root[data-theme="dark"]{--sh:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.28);--sh-btn:0 2px 8px rgba(0,0,0,.35)}
+body{background-color:var(--bg);background-image:radial-gradient(120% 60% at 0% 0%,color-mix(in srgb,var(--accent-soft) 80%,transparent),transparent 60%),radial-gradient(90% 50% at 100% 100%,color-mix(in srgb,var(--warn-soft) 55%,transparent),transparent 70%);background-attachment:fixed}
+h1,h2,h3{font-family:var(--f-doc);font-weight:600;letter-spacing:.1px}
+.top{border-radius:99px;padding:8px 14px 8px 18px;box-shadow:var(--sh)}
+.panel,.modal>.box{border-radius:18px;box-shadow:var(--sh)}
+.card,.stat{border-radius:14px}
+.btn,.tab,.prow,.avatar,.chip{transition:background-color .2s,border-color .2s,color .2s,box-shadow .2s,filter .2s}
+.btn{border-radius:99px}
+.btn.pri{background-image:linear-gradient(180deg,color-mix(in srgb,var(--accent) 86%,#fff),var(--accent));box-shadow:var(--sh-btn)}
+.tabs{border-radius:99px}
+.tab{border-radius:99px}
+.tab.on{box-shadow:0 1px 3px rgba(30,40,30,.12),inset 0 0 0 1px var(--line)}
+.prow:hover{background:var(--accent-soft)}
+@keyframes ak-in{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.modal>.box{animation:ak-in .25s ease-out both}
+@media (prefers-reduced-motion:reduce){.modal>.box{animation:none}.btn,.tab,.prow,.avatar,.chip{transition:none}}
