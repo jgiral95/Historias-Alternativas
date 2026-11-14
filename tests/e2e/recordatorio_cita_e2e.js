@@ -12,8 +12,12 @@ let bad = 0; const ok = (c, m) => { console.log((c ? 'OK   ' : 'FALLA') + ' ' + 
   await page.waitForSelector('#aptabs');
   await page.click('[data-aptab="2"]');
   ok(await page.locator('#ap_p2').isVisible() && !(await page.locator('#ap_p1').isVisible()), 'la pestaña Recordatorio se abre y oculta la de la cita');
-  await page.check('#f_recActivo'); await page.fill('#rc_n', '3'); await page.dispatchEvent('#rc_n', 'input');
+  ok(!(await page.locator('#rc_n').isVisible()), 'los cuadros no se ven hasta marcar la casilla');
+  await page.check('#f_recActivo'); ok(await page.locator('#rc_n').isVisible(), 'al marcar la casilla aparecen los cuadros');
+  await page.fill('#rc_n', '3'); await page.dispatchEvent('#rc_n', 'input');
   ok(await page.locator('.recrow').count() === 3, 'el número de recordatorios define cuántos espacios hay');
+  await page.click('[data-ap="save"]'); await page.waitForTimeout(300);
+  ok(await page.locator('#ap_p2').isVisible() && await page.locator('[data-rn="0"].bad').count() === 1 && !(await page.evaluate(() => (S.appts.find(x => x.id === 'a_rc') || {}).rec)), 'con un espacio vacío marca el campo y no guarda');
   await page.fill('[data-rn="0"]', '2'); await page.selectOption('[data-ru="0"]', 'semanas'); await page.fill('[data-rn="1"]', '1x'); await page.selectOption('[data-ru="1"]', 'días'); await page.fill('[data-rn="2"]', '3'); await page.selectOption('[data-ru="2"]', 'horas');
   ok(await page.inputValue('[data-rn="1"]') === '1', 'solo admite números');
   await page.evaluate(() => { Store.save = async x => x; });

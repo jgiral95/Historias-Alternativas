@@ -518,3 +518,4 @@ body:has(#fb-root .fbbtn) .modal{padding-bottom:84px}
 #ap_p2{display:flex;flex-direction:column;gap:12px}#ap_p2[hidden],#ap_p1[hidden]{display:none}
 #ap_p1{display:flex;flex-direction:column;gap:14px}
 .recrow{display:flex;align-items:center;gap:8px;margin-bottom:8px}.recrow input{width:90px}.recrow select{width:auto}
+#rc_body[hidden]{display:none}#rc_body{display:flex;flex-direction:column;gap:12px}.recrow input.bad{border-color:var(--danger,#b3261e);box-shadow:0 0 0 2px rgba(179,38,30,.18)}

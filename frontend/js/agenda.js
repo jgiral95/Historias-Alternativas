@@ -80,10 +80,10 @@ ACT.apptEdit = b => {
   const rc = (a && a.rec) || {}, REC_U = ['horas', 'días', 'semanas', 'meses'], recOn = S.mode === 'server' && !TEAM() && !(a && a.evento);
   const recItems = Array.isArray(rc.items) ? rc.items : rc.dias ? (rc.frec ? Array.from({ length: Math.ceil(rc.dias / rc.frec) }, (_, i) => rc.dias - i * rc.frec) : [rc.dias]).map(n => ({ n, u: 'días' })) : [];
   const recTabs = recOn ? `<div class="fld wide"><div class="seg" id="aptabs"><button type="button" data-aptab="1" class="on">Cita</button><button type="button" data-aptab="2">Recordatorio</button></div></div>` : '';
-  const recRow = (i, it) => `<div class="recrow"><span class="ts">${i + 1}.</span><input type="text" inputmode="numeric" maxlength="3" data-rn="${i}" value="${esc(it && it.n || '')}" placeholder="Cantidad" aria-label="Cantidad del recordatorio ${i + 1}"><select data-ru="${i}" aria-label="Unidad del recordatorio ${i + 1}">${REC_U.map(u => `<option ${u === ((it && it.u) || 'días') ? 'selected' : ''}>${u}</option>`).join('')}</select><span class="ts">antes de la cita</span></div>`;
+  const recRow = (i, it) => `<div class="recrow"><input type="text" inputmode="numeric" maxlength="3" data-rn="${i}" value="${esc(it && it.n || '')}" placeholder="Cantidad" aria-label="Cantidad del recordatorio ${i + 1}"><select data-ru="${i}" aria-label="Unidad del recordatorio ${i + 1}">${REC_U.map(u => `<option ${u === ((it && it.u) || 'días') ? 'selected' : ''}>${u}</option>`).join('')}</select><span class="ts">antes de la cita</span></div>`;
   const recPanel = recOn ? `<div id="ap_p2" hidden><label class="check"><input type="checkbox" id="f_recActivo" data-f="recActivo" ${rc.activo ? 'checked' : ''}> <span>Enviar recordatorios de esta cita por correo al consultante</span></label>
-  <div class="fld" style="max-width:220px"><label for="rc_n">Cuántos recordatorios enviar</label><input id="rc_n" type="text" inputmode="numeric" maxlength="2" value="${recItems.length || 1}"></div>
-  <div id="rc_rows">${Array.from({ length: recItems.length || 1 }, (_, i) => recRow(i, recItems[i])).join('')}</div>
+  <div id="rc_body" ${rc.activo ? '' : 'hidden'}><div class="fld" style="max-width:220px"><label for="rc_n">Cuántos recordatorios enviar</label><input id="rc_n" type="text" inputmode="numeric" maxlength="2" value="${recItems.length || 1}"></div>
+  <div id="rc_rows">${Array.from({ length: recItems.length || 1 }, (_, i) => recRow(i, recItems[i])).join('')}</div></div>
   <p class="stnote" style="margin:0">Cada recordatorio sale cuando falta ese tiempo para la cita. Solo se envía si el consultante tiene correo y usted configuró su correo de envío (botón «Recordatorios»).</p></div>` : '';
   root.innerHTML = `<div class="modal" role="dialog" aria-modal="true" aria-label="Cita"><div class="box" id="apform" style="width:min(560px,100%)"><div class="row aphd"><div><h3>${a ? esc(apName(a)) : 'Nueva cita'}</h3>${a ? '' : '<p class="apsub">Elija consultante, día y hora</p>'}</div><button class="apx" id="apcl" aria-label="Cerrar" title="Cerrar">✕</button></div>
   ${recTabs}
@@ -103,6 +103,7 @@ ACT.apptEdit = b => {
   <div id="apwarn"></div>${a || S.mode !== 'server' ? '' : '<label class="check" id="apmail" style="display:none"><input type="checkbox" id="ap_mail"> <span>Enviar la cita por correo al consultante, con botón para agregarla a su Google Calendar (y el enlace de la videollamada, si lo puso)</span></label><p class="stnote" id="apmail_no" style="display:none;margin:0">Este consultante no tiene correo en sus datos: no se le puede enviar la cita.</p>'}${a ? remApptHTML(a) : ''}</div>${recPanel}<div class="row" style="justify-content:${a ? 'flex-end' : 'space-between'}">${a ? '' : '<span></span>'}<span class="row">${a ? '' : '<button class="btn" id="apcn">Cancelar</button>'}<button class="btn pri" data-ap="save">${a ? 'Guardar cambios' : 'Guardar cita'}</button></span></div></div></div>`;
   const close = () => { root.innerHTML = ''; };
   $('#apcl').onclick = close;
+  if ($('#f_recActivo')) $('#f_recActivo').onchange = e => { $('#rc_body').hidden = !e.target.checked; };
   if ($('#rc_n')) { const n = $('#rc_n'); n.oninput = () => { n.value = n.value.replace(/\D/g, ''); const k = Math.max(0, Math.min(10, +n.value || 0)), box = $('#rc_rows'), cur = [...box.querySelectorAll('.recrow')].map(r => ({ n: r.querySelector('[data-rn]').value, u: r.querySelector('[data-ru]').value })); if (+n.value > 10) n.value = 10; box.innerHTML = Array.from({ length: k }, (_, i) => recRow(i, cur[i])).join(''); }; $('#rc_rows').oninput = e => { if (e.target.dataset.rn !== undefined) e.target.value = e.target.value.replace(/\D/g, ''); }; }
   root.querySelectorAll('#aptabs [data-aptab]').forEach(bt => bt.onclick = () => { root.querySelectorAll('#aptabs button').forEach(x => x.classList.toggle('on', x === bt)); $('#ap_p1').hidden = bt.dataset.aptab !== '1'; $('#ap_p2').hidden = bt.dataset.aptab !== '2'; }); if ($('#apcn')) $('#apcn').onclick = close;
   let pnew = false, evt = !!(a && a.evento);  // evento: sin paciente, solo ocupa el horario
@@ -144,8 +145,13 @@ ACT.apptEdit = b => {
     const st = new Date(o.fecha + 'T' + o.hora), dur = Math.max(5, Math.min(600, +o.duracion || 50));
     if (isNaN(st)) { toast('La fecha no es válida.'); return; }
     const rep = a ? 0 : +o.repetir || 0, made = [], snap = a ? clone(a) : null; const serie = nn && rep ? newId('s') : '';
-    const recSel = recOn ? [...root.querySelectorAll('.recrow')].map(r => ({ n: parseInt(r.querySelector('[data-rn]').value, 10), u: r.querySelector('[data-ru]').value })).filter(x => x.n > 0) : [];
-    if (recOn && !evt && o.recActivo && !recSel.length) { toast('Escriba la cantidad de cada recordatorio (solo números).'); return; }
+    const rrows = recOn && !evt && o.recActivo ? [...root.querySelectorAll('.recrow')] : [];
+    const recSel = rrows.map(r => ({ n: parseInt(r.querySelector('[data-rn]').value, 10), u: r.querySelector('[data-ru]').value }));
+    const ORD = ['primer', 'segundo', 'tercer', 'cuarto', 'quinto', 'sexto', 'séptimo', 'octavo', 'noveno', 'décimo'];
+    if (recOn && !evt && o.recActivo) {
+      const bi = recSel.findIndex(x => !(x.n > 0));
+      if (!recSel.length || bi >= 0) { $('#rc_rows').querySelectorAll('input').forEach(i => i.classList.remove('bad')); const el = rrows[Math.max(bi, 0)]; if (el) { el.querySelector('[data-rn]').classList.add('bad'); el.querySelector('[data-rn]').focus(); } toast(rrows.length > 1 ? 'Falta la cantidad del ' + ORD[bi] + ' recordatorio.' : 'Falta la cantidad del recordatorio.'); return; }
+    }
     setBusy(k, true);
     for (let i = 0; i <= rep; i++) {
       const d = new Date(st); d.setDate(d.getDate() + 7 * i);
