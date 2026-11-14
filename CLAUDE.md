@@ -59,4 +59,4 @@ Exportar todos los datos solo desde «Exportar todos mis datos» (ZIP armado en 
 
 ## Pendientes
 - Los e2e `app_e2e.js`, `formularios_e2e.js` y otros aún asumen CIE/RIPS/EPS: hay que actualizarlos. `test_migrations.py` (2 pruebas) falla desde el origen.
-- Lenguaje: la app busca mejorar la salud de los consultantes con terapias alternativas, pero no es clínica ni realiza procesos clínicos (la pueden usar también profesionales); mantener ese aviso (inicio, privacidad, ingreso, pie de la app, documentos) y evitar términos clínicos.
+- Lenguaje: la app busca mejorar la salud de los consultantes con terapias alternativas, pero no es clínica (la pueden usar también profesionales); mantener ese aviso (inicio, privacidad, ingreso, pie de la app, documentos) y evitar términos clínicos.

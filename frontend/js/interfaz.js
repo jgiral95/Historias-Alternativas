@@ -97,7 +97,7 @@ async function navRestore(st) {
   if (p) logView();
 }
 window.addEventListener('popstate', e => { navRestore(e.state); });
-function render() { const tl = $('.tabs'), sx = tl ? tl.scrollLeft : 0; renderMain(); restoreBorradores(); const t2 = $('.tabs'); if (t2) { t2.scrollLeft = sx; const on = t2.querySelector('.tab.on'); if (on && (on.offsetLeft < t2.scrollLeft || on.offsetLeft + on.offsetWidth > t2.scrollLeft + t2.clientWidth)) t2.scrollLeft = Math.max(0, on.offsetLeft - 16); } navSync(); const sh = $('#app'); if (sh && !$('#aviso-alcance')) sh.insertAdjacentHTML('beforeend', '<div id="aviso-alcance" style="text-align:center;font-size:12px;color:var(--muted);padding:10px 0">Alter-Karute acompaña el bienestar y la salud con terapias alternativas: no realiza procesos clínicos.</div>'); }
+function render() { const tl = $('.tabs'), sx = tl ? tl.scrollLeft : 0; renderMain(); restoreBorradores(); const t2 = $('.tabs'); if (t2) { t2.scrollLeft = sx; const on = t2.querySelector('.tab.on'); if (on && (on.offsetLeft < t2.scrollLeft || on.offsetLeft + on.offsetWidth > t2.scrollLeft + t2.clientWidth)) t2.scrollLeft = Math.max(0, on.offsetLeft - 16); } navSync(); const sh = $('#app'); if (sh && !$('#aviso-alcance')) sh.insertAdjacentHTML('beforeend', '<div id="aviso-alcance" style="text-align:center;font-size:12px;color:var(--muted);padding:10px 0">Alter-Karute acompaña el bienestar y la salud con terapias alternativas.</div>'); }
 function renderMain() {
   S.dirty = false;
   const p = curPatient(), pr = S.profile;
