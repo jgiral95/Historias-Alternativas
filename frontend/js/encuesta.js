@@ -135,7 +135,7 @@ ACT.svSend = b => {
   const ph = waPhone(p.telefono, p.telInd), root = $('#modal-root');
   root.innerHTML = `<div class="modal" role="dialog" aria-modal="true" aria-label="Enviar encuesta"><div class="box" style="max-width:560px"><h3>Enviar encuesta a ${esc(fullName(p))}</h3>
   ${i.error ? `<div class="banner">No se pudo enviar por correo: ${esc(i.error)}</div>` : ''}
-  <p style="margin:0;font-size:14px">Envíale este enlace por el medio que prefieras. Vence el ${esc(fmtD(i.vence))}. Después de enviarlo, márcalo como enviado.</p>
+  <p style="margin:0;font-size:14px">Envíale este enlace por el medio que prefierass. Vence el ${esc(fmtD(i.vence))}. Después de enviarlo, márcalo como enviado.</p>
   <div class="fld"><label for="sv_link">Enlace</label><input id="sv_link" readonly value="${esc(url)}"></div>
   <div class="row">${ph ? `<a class="btn" href="https://wa.me/${ph}?text=${encodeURIComponent(text)}" target="_blank" rel="noopener">WhatsApp</a>` : ''}${p.correo ? `<a class="btn" href="mailto:${esc(p.correo)}?subject=${encodeURIComponent('Encuesta de satisfacción')}&body=${encodeURIComponent(text)}">Correo</a>` : ''}<button class="btn" id="sv_copy">Copiar mensaje</button></div>
   <div class="row end"><button class="btn warn" id="sv_cancel">No enviar</button><button class="btn" id="sv_close">Cerrar</button><button class="btn pri" id="sv_sent">Ya la envié</button></div></div></div>`;
