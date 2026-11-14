@@ -48,7 +48,7 @@ nav{font:14px "IBM Plex Sans",system-ui,sans-serif;margin:0 0 10px}
 <main>
 <a class="volver" href="/">← Volver al inicio</a>
 <header><svg width="42" height="42" viewBox="0 0 120 120" aria-hidden="true"><circle cx="60" cy="60" r="56" fill="#E4EBE2"/><path d="M60 24C88.8 39.6 88.8 75.6 60 96C31.2 75.6 31.2 39.6 60 24Z" fill="#7C9A83"/><path d="M60 98V43" stroke="#2F4A3A" stroke-width="4.2" fill="none" stroke-linecap="round"/><path d="M60 67L45.6 55M60 77L74.4 62" stroke="#2F4A3A" stroke-width="3" fill="none" stroke-linecap="round"/><circle cx="60" cy="60" r="56" fill="none" stroke="#2F4A3A" stroke-width="3"/></svg><h1>Política de privacidad y uso de datos personales</h1></header>
-<p class="meta">Alter-Karute · Vigente desde el 1 de noviembre de 2026 · Reemplaza la versión del 27 de octubre de 2026</p>
+<p class="meta">Alter-Karute · Vigente desde el 13 de noviembre de 2026 · Reemplaza la versión del 1 de noviembre de 2026</p>
 <nav><a href="#english">English summary (Google API data)</a></nav>
 
 <div class="aviso" style="background:#F1EADB;color:#2B2A25;border-left:4px solid #C47A56;padding:12px 16px;border-radius:8px;margin:0 0 20px"><b>Alcance de la plataforma.</b> Alter-Karute acompaña procesos de bienestar y de mejora de la salud con terapias alternativas y complementarias, pero no es una herramienta clínica: no diagnostica ni trata enfermedades. Si un consultante tiene una condición de salud, debe acudir a un profesional de la salud.</div>
@@ -62,8 +62,10 @@ nav{font:14px "IBM Plex Sans",system-ui,sans-serif;margin:0 0 10px}
 
 <h2>2. Qué datos se tratan</h2>
 <ul>
-<li><b>Profesionales:</b> nombre, correo, contraseña (guardada solo como resumen criptográfico Argon2, nunca en texto), cédula, registro, datos del consultorio, firma manuscrita y preferencias de uso. También los datos de las cuentas de su equipo (nombre y correo); la configuración de su correo de envío, incluida una contraseña de aplicación, guardada cifrada; y, si activan la verificación en dos pasos, su clave secreta, sus códigos de recuperación y los dispositivos que eligieron recordar (navegador, sistema y fecha del último uso).</li>
-<li><b>Consultantes</b> (los registra el terapeuta): datos de identificación y contacto, datos sociodemográficos, cuidadores o representantes, consentimientos y firmas, ficha (primera vez, sesiones, escalas, impresiones, informes, cierres y hojas escritas a mano), citas y documentos adjuntos. Incluye datos sensibles relativos a la salud.</li>
+<li><b>Profesionales:</b> nombre, correo, contraseña (guardada solo como resumen criptográfico Argon2, nunca en texto), cédula, registro, datos del consultorio, firma manuscrita y preferencias de uso. Si ingresan con Google, el nombre y el correo verificado que Google entrega (la contraseña de esa cuenta es aleatoria y nadie la conoce). También los datos de las cuentas de su equipo (nombre y correo); la configuración de su correo de envío, incluida una contraseña de aplicación, guardada cifrada; y, si activan la verificación en dos pasos, su clave secreta, sus códigos de recuperación y los dispositivos que eligieron recordar (navegador, sistema y fecha del último uso).</li>
+<li><b>Suscripción:</b> el plan elegido y la fecha hasta la que está pagada. El pago lo procesa ePayco; la plataforma no recibe ni guarda números de tarjeta ni datos bancarios, y consulta a ePayco, con el correo de la cuenta, si la suscripción está activa.</li>
+<li><b>Consultantes</b> (los registra el terapeuta): datos de identificación y contacto, datos sociodemográficos, cuidadores o representantes, consentimientos y firmas, ficha (primera vez, sesiones, escalas, impresiones, informes, cierres y hojas escritas a mano), citas, pagos y tarifas, y documentos adjuntos. Incluye datos sensibles relativos a la salud.</li>
+<li><b>Datos que escribe el propio consultante:</b> al reservar una cita con el enlace del terapeuta (nombres, apellidos, correo y teléfono; si ya tiene ficha, su número de documento y su correo) y en el formulario previo a la primera atención (los campos que el terapeuta defina). El terapeuta decide si crea su ficha con esos datos.</li>
 <li><b>Notas de proceso:</b> el cuaderno de trabajo del terapeuta (hipótesis, formulación de caso, notas de supervisión). No forman parte de la ficha, no salen en copias ni informes y las cuentas del equipo no las ven.</li>
 <li><b>Datos técnicos:</b> una bitácora de accesos y acciones, sin contenido de las sesiones: fecha y hora, usuario, tipo de acción, historia a la que se refiere y dirección IP. Cada terapeuta puede consultar la de su cuenta y su equipo. Además, la dirección IP se usa de forma temporal para limitar intentos de ingreso y consultas.</li>
 <li><b>Cookies:</b> solo dos, ambas necesarias: la de sesión, para mantener la sesión iniciada, y, si la persona elige «Recordar este dispositivo» al verificar el código, una que evita pedirlo de nuevo en ese navegador. No se usan cookies de publicidad ni de analítica. Algunas preferencias (modo claro u oscuro, vista de la agenda) se guardan en el propio navegador.</li>
@@ -79,13 +81,17 @@ nav{font:14px "IBM Plex Sans",system-ui,sans-serif;margin:0 0 10px}
 <li>Si el terapeuta lo envía, permitir que el consultante lea y firme su consentimiento a distancia con un enlace personal. Para abrirlo se pide su número de documento y, como constancia de la firma, se guardan la fecha y la hora, la dirección IP y el tipo de dispositivo.</li>
 <li>Si el terapeuta lo activa, enviar al consultante un recordatorio de su cita con un enlace para confirmarla o cancelarla: por correo, de forma automática, o por WhatsApp, cuando el terapeuta lo envía desde su propio teléfono. El recordatorio solo contiene la fecha, la hora, la modalidad y el nombre del terapeuta; nunca información de las sesiones.</li>
 <li>Durante la versión de prueba (beta), recibir los comentarios que los terapeutas y sus equipos envían sobre la app, con la parte de la app en la que estaban y, si quien comenta la adjunta, una captura de pantalla, para corregir errores. Se pide no incluir datos de consultantes, tampoco en las capturas; los comentarios se guardan cifrados y solo los ve el administrador.</li>
+<li>Permitir que el consultante reserve una cita con el enlace público del terapeuta y llene el formulario previo a la primera atención, que el terapeuta le envía con un enlace de un solo uso.</li>
+<li>Llevar las finanzas del terapeuta: tarifas, pagos y saldos de sus consultantes, que solo ven él y su equipo, y los recibos que él genera.</li>
+<li>Permitir el ingreso con Google y gestionar la suscripción (verificar con ePayco si está activa).</li>
 <li>Proteger la seguridad de la plataforma y cumplir obligaciones legales.</li>
 </ul>
 <p>Los datos <b>no se venden</b>, no se usan para publicidad, no se ceden a terceros con fines comerciales y no se usan para entrenar modelos de inteligencia artificial.</p>
 
-<h2>4. Datos de Google (Google Calendar)</h2>
+<h2>4. Datos de Google (ingreso y Google Calendar)</h2>
 <p>La conexión con Google Calendar es opcional y la activa cada terapeuta con su propia cuenta de Google.</p>
 <ul>
+<li><b>Ingreso con Google (opcional):</b> solo se piden los permisos básicos de identidad (openid, email y profile) para conocer el nombre y el correo verificado de la persona. Con ellos no se accede al calendario, al correo ni a los archivos de su cuenta de Google.</li>
 <li><b>Permiso que se pide:</b> únicamente <code>calendar.app.created</code>. Permite crear un calendario llamado «Alter-Karute» y manejar solo los eventos de ese calendario. La plataforma <b>no puede ver ni modificar</b> los demás calendarios ni los eventos personales del terapeuta.</li>
 <li><b>Qué se envía a Google:</b> la fecha, la hora, la duración y la modalidad de cada cita, y la identificación del consultante que el terapeuta elija: sus iniciales, su nombre o ninguna. Nunca se envían notas ni información de las sesiones.</li>
 <li><b>Qué se recibe de Google:</b> un permiso de acceso (token) y el identificador del calendario creado. El token se guarda cifrado y solo se usa para mantener sincronizado ese calendario.</li>
@@ -95,11 +101,11 @@ nav{font:14px "IBM Plex Sans",system-ui,sans-serif;margin:0 0 10px}
 
 <h2>5. Cómo se protegen</h2>
 <ul>
-<li>El contenido de las sesiones, las notas de proceso, las firmas, los adjuntos, los permisos de Google y las contraseñas de aplicación del correo se guardan cifrados en el servidor.</li>
+<li>El contenido de las sesiones, las notas de proceso, las firmas, los pagos, los adjuntos, los permisos de Google y las contraseñas de aplicación del correo se guardan cifrados en el servidor.</li>
 <li>Quedan sin cifrar solo los datos que el sistema necesita para funcionar: los correos y nombres de los usuarios, el tipo, el identificador y las fechas de cada registro, y la bitácora (que no tiene contenido de las sesiones).</li>
 <li>Toda la comunicación viaja cifrada (HTTPS).</li>
 <li>Cada terapeuta solo ve sus propios consultantes. Los administradores gestionan las cuentas, pero no pueden leer las fichas de otros terapeutas.</li>
-<li>El terapeuta puede crear cuentas para su equipo (secretaría o asistentes). Esas cuentas solo ven los datos de identificación y contacto de los consultantes y la agenda; nunca la información de las sesiones. Cada cambio a los datos del consultante queda registrado con la fecha, la hora y quién lo hizo.</li>
+<li>El terapeuta puede crear cuentas para su equipo (secretaría o asistentes). Esas cuentas solo ven los datos de identificación y contacto de los consultantes, la agenda y los pagos; nunca la información de las sesiones. Cada cambio a los datos del consultante queda registrado con la fecha, la hora y quién lo hizo.</li>
 <li>Cada cuenta puede activar la verificación en dos pasos con una app autenticadora. Si la persona elige recordar un dispositivo, allí no se vuelve a pedir el código mientras se use al menos una vez cada 30 días; cambiar la contraseña o elegir «Olvidar todos los dispositivos» lo anula. La sesión se cierra sola después de un tiempo sin actividad, y hay bloqueo temporal tras varios intentos fallidos de ingreso.</li>
 <li>Los documentos firmados no se pueden modificar ni borrar; solo admiten adendas con fecha y hora.</li>
 <li>Se hacen copias de respaldo de la base de datos.</li>
@@ -109,6 +115,7 @@ nav{font:14px "IBM Plex Sans",system-ui,sans-serif;margin:0 0 10px}
 <ul>
 <li><b>Proveedores de infraestructura</b> que hacen posible el servicio (por ejemplo, el servidor y el servicio de conexión segura Cloudflare). Solo transportan o alojan la información cifrada y están obligados a protegerla.</li>
 <li><b>Google</b>, solo con los datos de citas descritos en el punto 4 y solo si el terapeuta conecta su cuenta.</li>
+<li><b>ePayco</b>, que procesa los pagos de la suscripción. Recibe los datos de pago que la persona escribe en su página; la plataforma solo le consulta, con el correo de la cuenta, si la suscripción está activa.</li>
 <li><b>Proveedor de correo</b> del terapeuta (o el del servidor, si el terapeuta no configura el suyo), que transporta las invitaciones, recordatorios, encuestas y enlaces de firma enviados por correo.</li>
 <li><b>Quien tenga el enlace privado de calendario</b> que el terapeuta activó, con los datos de citas descritos en el punto 3. El terapeuta puede desactivarlo o cambiarlo cuando quiera.</li>
 <li><b>Quien recibe un informe:</b> puede ver el contenido de ese informe en la página de verificación, usando el código impreso en él.</li>
@@ -120,13 +127,14 @@ nav{font:14px "IBM Plex Sans",system-ui,sans-serif;margin:0 0 10px}
 <li>El expediente se conserva mientras el terapeuta lo mantenga en la plataforma; el titular puede pedir su copia o su supresión al terapeuta.</li>
 <li>La bitácora de accesos se conserva como constancia de seguridad.</li>
 <li>Los datos de las cuentas se conservan mientras la cuenta esté activa y el tiempo necesario para cumplir obligaciones legales.</li>
+<li>Si la suscripción vence, durante 30 días el terapeuta puede ver y descargar sus fichas sin modificarlas; pasado ese plazo no puede abrirlas, pero los datos no se borran y vuelven a estar disponibles al renovar.</li>
 <li>Los permisos de Google se borran al desconectar la cuenta.</li>
 </ul>
 
 <h2>8. Derechos de los titulares</h2>
 <p>Los titulares pueden conocer, actualizar y rectificar sus datos, pedir prueba de la autorización otorgada, ser informados sobre el uso de sus datos, revocar la autorización o pedir la supresión cuando no exista un deber legal de conservarlos, y presentar quejas ante la Superintendencia de Industria y Comercio.</p>
 <ul>
-<li><b>Pacientes:</b> ejercen sus derechos ante su terapeuta, que es el responsable de sus datos. La plataforma le ayuda a responder, por ejemplo con la copia completa de la ficha.</li>
+<li><b>Consultantes:</b> ejercen sus derechos ante su terapeuta, que es el responsable de sus datos. La plataforma le ayuda a responder, por ejemplo con la copia completa de la ficha.</li>
 <li><b>Terapeutas y cualquier otra consulta:</b> escriban a <a href="mailto:alterkarute.systems@gmail.com">alterkarute.systems@gmail.com</a>. Las consultas se atienden en máximo 10 días hábiles y los reclamos en máximo 15 días hábiles.</li>
 </ul>
 
@@ -140,6 +148,7 @@ nav{font:14px "IBM Plex Sans",system-ui,sans-serif;margin:0 0 10px}
 <p>Alter-Karute is a follow-up tool for alternative and complementary therapists. It supports wellbeing and health with alternative therapies. It is operated by Juan Pablo Giraldo (Colombia). Contact: <a href="mailto:alterkarute.systems@gmail.com">alterkarute.systems@gmail.com</a>.</p>
 <ul>
 <li><b>Google Calendar integration is optional.</b> Each therapist connects their own Google account.</li>
+<li><b>Google sign-in is optional.</b> Only the basic identity scopes (openid, email, profile) are requested, to get the person's name and verified email. They give no access to calendar, mail or files.</li>
 <li><b>Scope requested:</b> only <code>https://www.googleapis.com/auth/calendar.app.created</code>. It is used to create one secondary calendar named «Alter-Karute» and to create, update and delete appointment events in that calendar only. The app cannot read or change any other calendar or event.</li>
 <li><b>Data sent to Google:</b> appointment date, time, duration and modality, plus a label chosen by the therapist (the client's initials, full name, or nothing). No session notes or personal records are ever sent.</li>
 <li><b>Data received from Google:</b> an OAuth token and the ID of the calendar the app created. The token is stored encrypted and used only to keep that calendar in sync. It is deleted and revoked when the user disconnects.</li>

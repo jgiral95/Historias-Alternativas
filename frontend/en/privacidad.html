@@ -51,7 +51,7 @@ nav{font:14px "IBM Plex Sans",system-ui,sans-serif;margin:0 0 10px}
 <main>
 <a class="volver" href="/en/">← Back to home</a>
 <header><svg width="42" height="42" viewBox="0 0 120 120" aria-hidden="true"><circle cx="60" cy="60" r="56" fill="#E4EBE2"/><path d="M60 24C88.8 39.6 88.8 75.6 60 96C31.2 75.6 31.2 39.6 60 24Z" fill="#7C9A83"/><path d="M60 98V43" stroke="#2F4A3A" stroke-width="4.2" fill="none" stroke-linecap="round"/><path d="M60 67L45.6 55M60 77L74.4 62" stroke="#2F4A3A" stroke-width="3" fill="none" stroke-linecap="round"/><circle cx="60" cy="60" r="56" fill="none" stroke="#2F4A3A" stroke-width="3"/></svg><h1>Privacy policy and use of personal data</h1></header>
-<p class="meta">Alter-Karute · In force since November 1, 2026 · Replaces the version of October 27, 2026</p>
+<p class="meta">Alter-Karute · In force since November 13, 2026 · Replaces the version of November 1, 2026</p>
 <nav><a href="#english">English summary (Google API data)</a></nav>
 
 <div class="aviso" style="background:#F1EADB;color:#2B2A25;border-left:4px solid #C47A56;padding:12px 16px;border-radius:8px;margin:0 0 20px"><b>Scope of the platform.</b> Alter-Karute supports wellbeing and health-improvement processes with alternative and complementary therapies, but it is not a clinical tool: it does not diagnose or treat illnesses. If a client has a health condition, they should see a health professional.</div>
@@ -65,8 +65,10 @@ nav{font:14px "IBM Plex Sans",system-ui,sans-serif;margin:0 0 10px}
 
 <h2>2. What data is processed</h2>
 <ul>
-<li><b>Practitioners:</b> name, email, password (stored only as an Argon2 cryptographic hash, never as text), ID number, registration, practice details, handwritten signature and usage preferences. Also the data of their team accounts (name and email); the configuration of their sending email, including an app password, stored encrypted; and, if they enable two-step verification, their secret key, recovery codes and the devices they chose to remember (browser, system and date of last use).</li>
-<li><b>Clients</b> (recorded by the practitioner): identification and contact details, sociodemographic data, caregivers or representatives, consents and signatures, file (first session, sessions, scales, impressions, reports, closings and handwritten sheets), appointments and attached documents. It includes sensitive health-related data.</li>
+<li><b>Practitioners:</b> name, email, password (stored only as an Argon2 cryptographic hash, never as text), ID number, registration, practice details, handwritten signature and usage preferences. If they sign in with Google, the name and verified email that Google provides (the password of that account is random and nobody knows it). Also the data of their team accounts (name and email); the configuration of their sending email, including an app password, stored encrypted; and, if they enable two-step verification, their secret key, recovery codes and the devices they chose to remember (browser, system and date of last use).</li>
+<li><b>Subscription:</b> the chosen plan and the date until which it is paid. Payment is processed by ePayco; the platform does not receive or store card numbers or bank details, and asks ePayco, using the account email, whether the subscription is active.</li>
+<li><b>Clients</b> (recorded by the practitioner): identification and contact details, sociodemographic data, caregivers or representatives, consents and signatures, file (first session, sessions, scales, impressions, reports, closings and handwritten sheets), appointments, payments and fees, and attached documents. It includes sensitive health-related data.</li>
+<li><b>Data the client enters themselves:</b> when booking an appointment through the practitioner's link (first names, last names, email and phone; if they already have a file, their ID number and email) and in the form before the first session (the fields the practitioner defines). The practitioner decides whether to create their file with that data.</li>
 <li><b>Process notes:</b> the practitioner's working notebook (hypotheses, case formulation, supervision notes). They are not part of the file, do not appear in copies or reports, and team accounts cannot see them.</li>
 <li><b>Technical data:</b> a log of accesses and actions, without session content: date and time, user, type of action, record it refers to and IP address. Each practitioner can view the log for their account and team. In addition, the IP address is used temporarily to limit sign-in attempts and queries.</li>
 <li><b>Cookies:</b> only two, both necessary: the session cookie, to keep you signed in, and, if the person chooses “Remember this device” when verifying the code, one that avoids asking for it again in that browser. No advertising or analytics cookies are used. Some preferences (light or dark mode, calendar view) are stored in the browser itself.</li>
@@ -82,13 +84,17 @@ nav{font:14px "IBM Plex Sans",system-ui,sans-serif;margin:0 0 10px}
 <li>If the practitioner sends it, to let the client read and sign their consent remotely with a personal link. To open it, their ID number is requested and, as a record of the signature, the date and time, IP address and device type are stored.</li>
 <li>If the practitioner enables it, to send the client a reminder of their appointment with a link to confirm or cancel it: by email, automatically, or by WhatsApp, when the practitioner sends it from their own phone. The reminder contains only the date, time, format and practitioner's name; never session information.</li>
 <li>During the trial (beta) version, to receive the feedback that practitioners and their teams send about the app, with the part of the app they were in and, if the commenter attaches it, a screenshot, to fix errors. Please do not include client data, not even in screenshots; comments are stored encrypted and only the administrator sees them.</li>
+<li>To let the client book an appointment through the practitioner's public link and fill in the form before the first session, which the practitioner sends through a single-use link.</li>
+<li>To keep the practitioner's finances: fees, payments and balances of their clients, visible only to them and their team, and the receipts they generate.</li>
+<li>To allow sign-in with Google and manage the subscription (checking with ePayco whether it is active).</li>
 <li>To protect the security of the platform and comply with legal obligations.</li>
 </ul>
 <p>The data is <b>not sold</b>, not used for advertising, not transferred to third parties for commercial purposes and not used to train artificial intelligence models.</p>
 
-<h2>4. Google data (Google Calendar)</h2>
+<h2>4. Google data (sign-in and Google Calendar)</h2>
 <p>The Google Calendar connection is optional and each practitioner enables it with their own Google account.</p>
 <ul>
+<li><b>Sign-in with Google (optional):</b> only the basic identity permissions (openid, email and profile) are requested, to learn the person's name and verified email. They give no access to the calendar, mail or files of their Google account.</li>
 <li><b>Permission requested:</b> only <code>calendar.app.created</code>. It allows creating a calendar called “Alter-Karute” and managing only the events in that calendar. The platform <b>cannot see or modify</b> the practitioner's other calendars or personal events.</li>
 <li><b>What is sent to Google:</b> the date, time, duration and format of each appointment, and the client identification the practitioner chooses: their initials, their name or none. Notes and session information are never sent.</li>
 <li><b>What is received from Google:</b> an access permission (token) and the ID of the calendar created. The token is stored encrypted and used only to keep that calendar in sync.</li>
@@ -98,11 +104,11 @@ nav{font:14px "IBM Plex Sans",system-ui,sans-serif;margin:0 0 10px}
 
 <h2>5. How they are protected</h2>
 <ul>
-<li>Session content, process notes, signatures, attachments, Google permissions and email app passwords are stored encrypted on the server.</li>
+<li>Session content, process notes, signatures, payments, attachments, Google permissions and email app passwords are stored encrypted on the server.</li>
 <li>Only the data the system needs to work is left unencrypted: users' emails and names, each record's type, identifier and dates, and the log (which has no session content).</li>
 <li>All communication travels encrypted (HTTPS).</li>
 <li>Each practitioner sees only their own clients. Administrators manage accounts but cannot read other practitioners' files.</li>
-<li>The practitioner can create accounts for their team (secretary or assistants). Those accounts see only clients' identification and contact details and the calendar; never session information. Every change to client details is recorded with the date, time and who made it.</li>
+<li>The practitioner can create accounts for their team (secretary or assistants). Those accounts see only clients' identification and contact details, the calendar and payments; never session information. Every change to client details is recorded with the date, time and who made it.</li>
 <li>Each account can enable two-step verification with an authenticator app. If the person chooses to remember a device, the code isn't requested again there as long as it is used at least once every 30 days; changing the password or choosing “Forget all devices” cancels it. The session closes by itself after a period of inactivity, and there is a temporary lockout after several failed sign-in attempts.</li>
 <li>Signed documents cannot be modified or deleted; they only admit dated and timed addenda.</li>
 <li>Backups of the database are made.</li>
@@ -112,6 +118,7 @@ nav{font:14px "IBM Plex Sans",system-ui,sans-serif;margin:0 0 10px}
 <ul>
 <li><b>Infrastructure providers</b> that make the service possible (for example, the server and the Cloudflare secure connection service). They only carry or host the encrypted information and are obliged to protect it.</li>
 <li><b>Google</b>, only with the appointment data described in point 4 and only if the practitioner connects their account.</li>
+<li><b>ePayco</b>, which processes subscription payments. It receives the payment details the person enters on its page; the platform only asks it, using the account email, whether the subscription is active.</li>
 <li><b>Email provider</b> of the practitioner (or the server's, if the practitioner doesn't set up their own), which carries the invitations, reminders, surveys and signing links sent by email.</li>
 <li><b>Whoever has the private calendar link</b> that the practitioner enabled, with the appointment data described in point 3. The practitioner can deactivate or change it whenever they wish.</li>
 <li><b>Whoever receives a report:</b> can see that report's content on the verification page, using the code printed on it.</li>
@@ -123,6 +130,7 @@ nav{font:14px "IBM Plex Sans",system-ui,sans-serif;margin:0 0 10px}
 <li>The file is kept as long as the practitioner keeps it on the platform; the data subject can ask the practitioner for a copy or its deletion.</li>
 <li>The access log is kept as a security record.</li>
 <li>Account data is kept while the account is active and for the time needed to meet legal obligations.</li>
+<li>If the subscription expires, for 30 days the practitioner can view and download their files without changing them; after that they cannot open them, but the data is not deleted and becomes available again on renewal.</li>
 <li>Google permissions are deleted when the account is disconnected.</li>
 </ul>
 
@@ -143,6 +151,7 @@ nav{font:14px "IBM Plex Sans",system-ui,sans-serif;margin:0 0 10px}
 <p>Alter-Karute is a follow-up tool for alternative and complementary therapists. It supports wellbeing and health with alternative therapies. It is operated by Juan Pablo Giraldo (Colombia). Contact: <a href="mailto:alterkarute.systems@gmail.com">alterkarute.systems@gmail.com</a>.</p>
 <ul>
 <li><b>Google Calendar integration is optional.</b> Each therapist connects their own Google account.</li>
+<li><b>Google sign-in is optional.</b> Only the basic identity scopes (openid, email, profile) are requested, to get the person's name and verified email. They give no access to calendar, mail or files.</li>
 <li><b>Scope requested:</b> only <code>https://www.googleapis.com/auth/calendar.app.created</code>. It is used to create one secondary calendar named «Alter-Karute» and to create, update and delete appointment events in that calendar only. The app cannot read or change any other calendar or event.</li>
 <li><b>Data sent to Google:</b> appointment date, time, duration and modality, plus a label chosen by the therapist (the client's initials, full name, or nothing). No session notes or personal records are ever sent.</li>
 <li><b>Data received from Google:</b> an OAuth token and the ID of the calendar the app created. The token is stored encrypted and used only to keep that calendar in sync. It is deleted and revoked when the user disconnects.</li>
