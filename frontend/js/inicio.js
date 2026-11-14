@@ -33,7 +33,7 @@ function stepsList() {
   return [
     ['perfil', !!(S.profile.nombre && S.profile.firma), 'Completa tu perfil y dibuja tu firma (opcional)', 'Con ella puede firmar acuerdos, sesiones e informes.', '<button class="btn sm pri" data-act="profile">Mi perfil</button>'],
     ['ejemplo', demo || !!ps.ejemplo, 'Explora con consultantes de ejemplo', 'Cargamos 3 consultantes ficticios con acuerdos, primera vez, sesiones, citas y notas de proceso. Los borra con un clic.', demo ? '<button class="btn sm" data-act="demoDel">Borrar los ejemplos</button>' : '<button class="btn sm pri" data-act="demoLoad">Cargar ejemplos</button>'],
-    ['formatos', !!ps.formatos, 'Revisa tus formatos', 'Acuerdo, primera vez, sesión y datos del consultante: cambia, oculte o crea los apartados que necesite.', '<button class="btn sm" data-act="formats">Mis formatos</button>'],
+    ['formatos', !!ps.formatos, 'Revisa tus formatos', 'Acuerdo, primera vez, sesión y datos del consultante: cambia, oculta o crea los apartados que necesites.', '<button class="btn sm" data-act="formats">Mis formatos</button>'],
     ['paciente', real.length > 0, 'Crea tu primer consultante', 'Con datos ficticios mientras sea una prueba.', '<button class="btn sm" data-act="newPatient">Nuevo consultante</button>'],
     ['cita', S.appts.some(a => !a.demo), 'Agenda una cita', 'Desde la agenda; puedes conectarla con Google Calendar.', '<button class="btn sm" data-act="view" data-v="agenda">Ir a la agenda</button>'],
     ['comentario', !!ps.comentario, 'Cuéntanos qué mejorar', 'Usa el botón «Comentarios», abajo a la derecha: elige el apartado del programa y cuéntanos qué falla, qué no entiende o qué le gustaría.', '<button class="btn sm" data-act="fbOpenStep">Escribir un comentario</button>']
@@ -44,7 +44,7 @@ function stepsHTML() {
   const L = stepsList(), done = L.filter(x => x[1]).length;
   if (done === L.length) return '';
   const hello = (S.profile.pasos || {}).bienvenida ? '' : `<div class="card" style="background:var(--surface)"><b style="font-size:16px">Bienvenido(a) a Alter-Karute · versión de prueba</b>
-    <p style="margin:0;font-size:15px"><b>¡Gracias por hacer parte de nuestro equipo de prueba!</b> Tu colaboración es muy valiosa: como agradecimiento, contará con <b>tres meses gratis</b> cuando el software se lance oficialmente. Le pedimos que haga todos los comentarios que necesite, para que juntos lleguemos a un software completo, intuitivo e integral para tus fichas.</p>
+    <p style="margin:0;font-size:15px"><b>¡Gracias por hacer parte de nuestro equipo de prueba!</b> Tu colaboración es muy valiosa: como agradecimiento, contará con <b>tres meses gratis</b> cuando el software se lance oficialmente. Te pedimos que hagas todos los comentarios que necesites, para que juntos lleguemos a un software completo, intuitivo e integral para tus fichas.</p>
     <ul style="margin:0;padding-left:20px;display:flex;flex-direction:column;gap:4px;font-size:14px"><li><b>Usa solo datos inventados</b> mientras dure la prueba: puedes cargar consultantes de ejemplo para ver la app «llena».</li>
     <li><b>Todo es opcional:</b> solo el nombre del consultante es necesario. Alter-Karute acompaña el bienestar con terapias alternativas; no es una herramienta clínica.</li>
     <li>Lo que firma (acuerdos, primera vez, sesiones, informes) <b>no se puede modificar</b>, como en papel: solo se agregan adendas.</li>
