@@ -23,7 +23,7 @@ function simPos() {  // el botón circular va a la derecha del campo que se edit
   if (r.bottom < 0 || r.top > vh) { b.hidden = true; p.hidden = true; return; }
   el.classList.add('simcampo'); b.hidden = false;
   const top = el.tagName === 'TEXTAREA' || r.height > 60 ? Math.max(r.top, 0) + 8 : r.top + (r.height - tam) / 2;
-  b.style.left = Math.max(4, r.right - tam - 8) + 'px'; b.style.top = Math.max(4, top) + 'px';
+  b.style.left = Math.max(4, r.right - tam - 8) + scrollX + 'px'; b.style.top = Math.max(4, top) + scrollY + 'px';  // absoluto en el documento: se queda pegado al campo aunque el celular desplace la pantalla
   if (!p.hidden && simMovil()) { p.style.cssText = 'left:8px;right:8px;top:auto;bottom:calc(8px + env(safe-area-inset-bottom,0px));width:auto;max-height:44vh'; }
   else if (!p.hidden) {
     p.style.right = ''; p.style.bottom = '';
@@ -52,9 +52,10 @@ function simCerrar(volver) {
 let simRaf = 0;
 const simShow = () => { cancelAnimationFrame(simRaf); simRaf = requestAnimationFrame(simPos); };
 ['scroll', 'resize'].forEach(ev => window.addEventListener(ev, simShow, true));
-if (window.visualViewport) visualViewport.addEventListener('resize', simShow);
+if (window.visualViewport) ['resize', 'scroll'].forEach(ev => visualViewport.addEventListener(ev, simShow));
 document.addEventListener('input', e => { if (e.target === SIM.campo) simShow(); });
-document.addEventListener('focusin', e => { if (simCampo(e.target)) { if (SIM.campo !== e.target) simCerrar(false); SIM.campo = e.target; simShow(); } else if (!e.target.closest('#simbtn, #simpanel')) { simCerrar(false); SIM.campo = null; simShow(); } });
+// (tras enfocar, el celular desplaza la pantalla un momento después: se recoloca varias veces)
+document.addEventListener('focusin', e => { if (simCampo(e.target)) { if (SIM.campo !== e.target) simCerrar(false); SIM.campo = e.target; simShow(); [150, 400, 800].forEach(ms => setTimeout(simShow, ms)); } else if (!e.target.closest('#simbtn, #simpanel')) { simCerrar(false); SIM.campo = null; simShow(); } });
 document.addEventListener('mousedown', e => { if (e.target.closest('#simbtn, #simpanel')) e.preventDefault(); });  // no quita el foco del campo
 document.addEventListener('click', e => {
   const [b, p] = simUI();

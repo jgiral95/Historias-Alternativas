@@ -423,7 +423,7 @@ body:has(#fb-root .fbbtn) .modal{padding-bottom:84px}
 .apsum{background:var(--surface2);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:4px}.apwhen{font-size:19px;font-weight:600}.apwhen::first-letter{text-transform:uppercase}
 .apnew{background:var(--accent-soft);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:10px;font-size:14px}
 .k2{margin:4px 0 -4px;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);border-top:1px solid var(--line);padding-top:12px}
-#simbtn{position:fixed;left:0;top:0;z-index:70}
+#simbtn{position:absolute;left:0;top:0;z-index:70}
 #simbtn.simcir{width:30px;height:30px;padding:0;display:flex;align-items:center;justify-content:center;border-radius:50%;border:1px solid var(--line);background:var(--accent-soft);color:var(--accent-fg);cursor:pointer;box-shadow:0 1px 4px rgba(30,40,30,.18)}
 #simbtn.simcir:hover{background:var(--accent);color:var(--accent-ink)}
 .simcampo{padding-right:46px!important}
