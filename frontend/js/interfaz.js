@@ -112,8 +112,8 @@ function renderMain() {
     ${TEAM() ? '<button role="menuitem" data-act="profile">Mi cuenta</button>' : `<button role="menuitem" data-act="profile">Mi perfil</button><button role="menuitem" data-act="formats">Mis formatos</button>${S.mode === 'server' ? '<button role="menuitem" data-act="survey">Mi encuesta de satisfacción</button><button role="menuitem" data-act="team">Mi equipo</button><button role="menuitem" data-act="suscripcion">Mi suscripción</button>' : ''}`}${S.mode === 'server' && S.user && S.user.role === 'admin' ? '<button role="menuitem" data-act="users">Usuarios</button><button role="menuitem" data-act="fbAdmin">Comentarios de la beta</button>' : ''}${TEAM() || S.mode !== 'server' ? '' : '<button role="menuitem" data-act="accessLog">Bitácora de accesos</button>'}${TEAM() ? '' : '<button role="menuitem" data-act="stepsShow">Ayuda: primeros pasos</button>'}<button role="menuitem" data-act="privacy">Política de privacidad</button>${S.mode === 'server' ? '<hr><button role="menuitem" data-act="exportAll">Exportar todos mis datos</button><button role="menuitem" class="out" data-act="logout">Salir</button>' : ''}</div></div></div></header>
   ${S.mode === 'local' ? '<div class="banner">Modo local: los datos quedan solo en este navegador.</div>' : ''}
   ${S.mode === 'server' && hasLocal() ? '<div class="banner">Hay datos guardados en este navegador de antes de usar el servidor. <span class="row" style="display:inline-flex;margin-left:6px"><button class="btn sm" data-act="importLocal">Importar al servidor</button><button class="btn sm warn" data-act="dropLocal">Borrar copia local</button></span></div>' : ''}
-  ${S.patients.some(x => x.demo) ? `<div class="banner demo">Está viendo <b>consultantes de ejemplo</b> (ficticios), marcados «Ejemplo». Prueba lo que quiera con ellos; nunca se les envía nada.${TEAM() ? '' : ' <button class="btn sm" data-act="demoDel">Borrar los datos de ejemplo</button>'}</div>` : ''}
-  ${incomplete && !TEAM() ? '<div class="banner">Completa tu perfil y dibuja tu firma en «Mi perfil». Sin ella no podrá firmar consentimientos, notas ni informes.</div>' : ''}
+  ${S.patients.some(x => x.demo) ? `<div class="banner demo">Está viendo <b>consultantes de ejemplo</b> (ficticios), marcados «Ejemplo». Prueba lo que quieras con ellos; nunca se les envía nada.${TEAM() ? '' : ' <button class="btn sm" data-act="demoDel">Borrar los datos de ejemplo</button>'}</div>` : ''}
+  ${incomplete && !TEAM() ? '<div class="banner">Completa tu perfil y dibuja tu firma en «Mi perfil». Sin ella no podrás firmar consentimientos, notas ni informes.</div>' : ''}
   ${S.view === 'agenda' ? agendaHTML() : S.view === 'finanzas' ? finanzasHTML() : S.view === 'cuaderno' && !TEAM() ? pnHTML() : `<div class="layout ${p || S.homeOpen ? 'in-file' : ''}"><div class="plist-wrap">${listHTML()}</div><div class="file-wrap">${p ? fileHTML(p) : homeHTML()}</div></div>`}`;
   if (S.view === 'agenda' || S.view === 'finanzas') return;
   if (S.view === 'cuaderno') { pnMount(); return; }
@@ -302,7 +302,7 @@ function teamHomeHTML() {
   const act = S.patients.filter(p => !p.estado || p.estado === 'Activo').length, todayN = apptsOn(dayKey(new Date())).filter(a => a.estado !== 'Cancelada').length;
   return `<div class="panel"><div class="body"><button class="btn sm back" data-act="back">← Consultantes</button><h2 style="font-family:var(--f-doc);font-size:22px">Resumen</h2>
   <p class="stnote">Cuenta de equipo de ${esc((S.user && S.user.ownerName) || 'tu terapeuta')}. Puedes manejar la agenda y los datos de los consultantes; la información de las sesiones es solo del terapeuta.</p>
-  ${S.user && !S.user.tieneFirma ? '<div class="banner">Registra tu documento y tu firma en «Mi cuenta» (menú arriba a la derecha): aparecen en el historial de cada cambio que haga a los datos de un consultante.</div>' : ''}
+  ${S.user && !S.user.tieneFirma ? '<div class="banner">Registra tu documento y tu firma en «Mi cuenta» (menú arriba a la derecha): aparecen en el historial de cada cambio que hagas a los datos de un consultante.</div>' : ''}
   <div class="stats"><div class="stat"><b>${act}</b><span>consultantes activos</span></div><div class="stat"><b>${todayN}</b><span>citas hoy</span></div></div>
   ${todoHTML()}${todayHTML()}</div></div>`;
 }
@@ -543,7 +543,7 @@ ACT.delPatient = () => {
 function chooseParts(p, title, go) {
   const root = $('#modal-root');
   root.innerHTML = `<div class="modal" role="dialog" aria-modal="true" aria-label="${esc(title)}"><div class="box" id="partsform" style="width:min(520px,100%)"><div class="row" style="justify-content:space-between"><h3>${esc(title)}</h3><button class="btn sm" id="pt_cl">Cerrar</button></div>
-  <p style="margin:0;font-size:14px">Marca lo que quiere incluir. Si quita algo, el documento lo indica al inicio como copia parcial.</p>
+  <p style="margin:0;font-size:14px">Marca lo que quieres incluir. Si quitas algo, el documento lo indica al inicio como copia parcial.</p>
   <div class="sec">${FULL_PARTS.map(([k, l]) => { const n = partCount(p, k); return `<label class="check"><input type="checkbox" data-part="${k}" ${n ? 'checked' : 'disabled'}> <span>${esc(l)} <span style="color:var(--muted)">(${n})</span></span></label>`; }).join('')}</div>
   <div class="row end"><button class="btn pri" id="pt_go">Generar</button></div></div></div>`;
   $('#pt_cl').onclick = () => { root.innerHTML = ''; };

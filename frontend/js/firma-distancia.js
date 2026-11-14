@@ -24,7 +24,7 @@ function remotePending(p) {
 ACT.firmasSync = async () => { await firmasSync(); render(); };
 function remoteMsg(p, f) {
   const who = (S.profile && S.profile.nombre) || 'tu terapeuta', first = (p.nombres || '').split(' ')[0];
-  return `Hola${first ? ' ' + first : ''}, ${who} le envía el documento «${f.tipo}» para que lo lea y lo firme desde tu celular: ${location.origin}/firmar?t=${f.enlace} Para abrirlo se le pedirá tu número de documento. El enlace vence en 7 días.`;
+  return `Hola${first ? ' ' + first : ''}, ${who} te envía el documento «${f.tipo}» para que lo leas y lo firmes desde tu celular: ${location.origin}/firmar?t=${f.enlace} Para abrirlo se te pedirá tu número de documento. El enlace vence en 7 días.`;
 }
 function remoteModal(f) {
   const p = S.patients.find(x => x.id === f.patientId) || {}, root = $('#modal-root'), text = remoteMsg(p, f), ph = waPhone(p.telefono, p.telInd);

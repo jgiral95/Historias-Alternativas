@@ -171,7 +171,7 @@ const DETAILS = [['iniciales', 'Solo las iniciales del consultante (recomendado)
 ACT.gcal = async () => {
   const root = $('#modal-root');
   let st, gs; try { [st, gs] = await Promise.all([api('/calendar/feed'), api('/google/status')]); } catch (e) { toast(e.message); return; }
-  const direct = () => !gs.enabled ? `<p style="margin:0;font-size:14px;color:var(--muted)">El administrador del servidor aún no configuró la conexión directa con Google. Mientras tanto puede usar el enlace iCal de abajo.</p>`
+  const direct = () => !gs.enabled ? `<p style="margin:0;font-size:14px;color:var(--muted)">El administrador del servidor aún no configuró la conexión directa con Google. Mientras tanto puedes usar el enlace iCal de abajo.</p>`
     : gs.connected ? `<div class="banner ok">Conectado. Cada cita que creas, mueves o cancelas se copia al instante al calendario «${esc(gs.calendar)}» de tu cuenta de Google.${gs.last_sync ? ' Última sincronización: ' + esc(fmtShort(gs.last_sync)) + '.' : ''}</div>
       ${gs.last_error ? `<div class="banner"><b>Problema con Google:</b> ${esc(gs.last_error)}. <button class="btn sm" data-g="gconnect">Reconectar</button></div>` : ''}
       <div class="row" style="align-items:flex-end"><div class="fld" style="flex:1"><label for="gd_detail">Qué verá Google de cada cita</label><select id="gd_detail">${DETAILS.map(([v, l]) => `<option value="${v}" ${gs.detail === v ? 'selected' : ''}>${l}</option>`).join('')}</select></div><button class="btn" data-g="gdetail">Guardar</button></div>
@@ -184,14 +184,14 @@ ACT.gcal = async () => {
     const url = token ? location.origin + '/api/calendar/' + token + '.ics' : '';
     root.innerHTML = `<div class="modal" role="dialog" aria-modal="true" aria-label="Google Calendar"><div class="box" id="gcform" style="width:min(620px,100%)"><div class="row" style="justify-content:space-between"><h3>Google Calendar</h3><button class="btn sm" data-g="close">Cerrar</button></div>
     <div class="sec"><h3>Conexión directa${gs.enabled && !gs.connected ? ' (recomendada)' : ''}</h3>${direct()}</div>
-    <p style="margin:0;font-size:13px;color:var(--muted)">Nunca se envían notas ni datos de las sesiones: solo la hora, la duración, la modalidad y lo que elija.</p>
+    <p style="margin:0;font-size:13px;color:var(--muted)">Nunca se envían notas ni datos de las sesiones: solo la hora, la duración, la modalidad y lo que elijas.</p>
     <details class="sec" ${!gs.enabled || token ? 'open' : ''}><summary class="sum">${gs.enabled ? 'Alternativa: enlace iCal (se actualiza cada pocas horas)' : 'Enlace iCal'}</summary>
     <p style="margin:0;font-size:14px">La app crea un <b>enlace privado</b> con tus citas al que Google Calendar se suscribe. Google lo actualiza cada pocas horas.</p>
     <div class="fld"><label for="g_detail">Qué verá Google de cada cita</label><select id="g_detail">${[['iniciales', 'Solo las iniciales del consultante (recomendado)'], ['oculto', 'Solo «Cita de terapia», sin consultante'], ['nombre', 'Nombre completo del consultante']].map(([v, l]) => `<option value="${v}" ${st.detail === v ? 'selected' : ''}>${l}</option>`).join('')}</select></div>
     ${url ? `<div class="banner ok">Copia este enlace ahora: por seguridad no se vuelve a mostrar.</div><div class="row"><input type="text" id="g_url" readonly value="${esc(url)}" style="flex:1"><button class="btn" data-g="copy">Copiar</button></div>
       <ol style="margin:0;padding-left:20px;font-size:14px;line-height:1.7"><li>Abre Google Calendar en el computador.</li><li>A la izquierda, junto a «Otros calendarios», pulsa <b>+</b> y luego <b>Desde URL</b>.</li><li>Pega el enlace y pulsa <b>Agregar calendario</b>.</li></ol>`
       : st.active ? `<div class="banner ok">Hay un enlace activo desde ${esc(fmtShort(st.created_at))}. Si lo perdiste, crea uno nuevo: el anterior deja de funcionar.</div>` : ''}
-    <p style="margin:0;font-size:13px;color:var(--muted)">Quien tenga el enlace puede ver tus horarios. No lo compartas; si cree que se filtró, crea uno nuevo o desactívalo.</p>
+    <p style="margin:0;font-size:13px;color:var(--muted)">Quien tenga el enlace puede ver tus horarios. No lo compartas; si crees que se filtró, crea uno nuevo o desactívalo.</p>
     <div class="row" style="justify-content:space-between">${st.active || url ? '<button class="btn warn" data-g="off">Desactivar enlace</button>' : '<span></span>'}<button class="btn ${gs.connected ? '' : 'pri'}" data-g="new">${st.active || url ? 'Crear enlace nuevo' : 'Crear enlace'}</button></div></details></div></div>`;
   };
   draw('');
@@ -239,7 +239,7 @@ ACT.reservas = async () => {
     }
     return `<div class="row" style="justify-content:space-between;align-items:center"><button type="button" class="btn sm" data-r="mv" data-v="-1" aria-label="Mes anterior" ${st.mes <= hoy.slice(0, 7) ? 'disabled' : ''}>‹</button><b>${esc(nom)}</b><button type="button" class="btn sm" data-r="mv" data-v="1" aria-label="Mes siguiente" ${st.mes >= lim.slice(0, 7) ? 'disabled' : ''}>›</button></div>
     <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px">${c}</div>
-    <p style="margin:0;font-size:12px;color:var(--muted)">P = presencial · V = virtual · T = telefónica (puede marcar varias por día). Los consultantes ven hasta ${st.horizonte} días adelante (los días más lejanos se ven atenuados).</p>`;
+    <p style="margin:0;font-size:12px;color:var(--muted)">P = presencial · V = virtual · T = telefónica ((puedes marcar varias por día)). Los consultantes ven hasta ${st.horizonte} días adelante (los días más lejanos se ven atenuados).</p>`;
   };
   const diaHTML = () => {
     if (!st.sel) return '<p style="margin:0;font-size:13px;color:var(--muted)">Elige un día del calendario para marcar tu horario y el tipo de consulta.</p>';
@@ -256,7 +256,7 @@ ACT.reservas = async () => {
     root.innerHTML = `<div class="modal" role="dialog" aria-modal="true" aria-label="Reservas"><div class="box" id="rsform" style="width:min(620px,100%)"><div class="row" style="justify-content:space-between"><h3>Reservas por enlace</h3><button class="btn sm" data-r="close">Cerrar</button></div>
     ${r.correo ? '' : '<div class="banner"><b>Falta el correo de envío.</b> Sin él no se pueden enviar las confirmaciones y el enlace no funciona.</div>'}
     <div class="sec"><h3 style="display:flex;justify-content:space-between;align-items:center;gap:8px">1 · Tu enlace<label class="chk" style="display:flex;gap:6px;align-items:center;text-transform:none;letter-spacing:0;font-size:14px;color:var(--ink)"><input type="checkbox" id="rs_on" ${st.activo ? 'checked' : ''}> Enlace activo</label></h3>
-    <p style="margin:0;font-size:14px">Comparte un enlace para que tus consultantes agenden solos en los horarios que defina. Cada cita llega a tu agenda y se envía un correo de confirmación al consultante y a ti.</p>
+    <p style="margin:0;font-size:14px">Comparte un enlace para que tus consultantes agenden solos en los horarios que definas. Cada cita llega a tu agenda y se envía un correo de confirmación al consultante y a ti.</p>
     ${r.slug ? `<div class="row"><input type="text" id="rs_url" readonly value="${esc(url(r.slug))}" style="flex:1"><button class="btn" data-r="copy">Copiar</button><button class="btn" data-r="new">Crear enlace nuevo</button></div>` : '<p style="margin:0;font-size:13px;color:var(--muted)">El enlace se crea al guardar.</p>'}</div>
     <div class="sec"><h3>2 · Calendario de atención</h3><p style="margin:0;font-size:13px;color:var(--muted)">Haz clic en cada día en que atiendes y escribe tus horas (por ejemplo, 8:00 a 12:00 y 15:00 a 19:00) y los tipos de consulta de ese día (presencial, virtual o telefónica; puedes marcar varios). Los días sin marcar no se ofrecen a los consultantes.</p><div id="rs_cal" style="display:flex;flex-direction:column;gap:12px">${calHTML()}${diaHTML()}</div></div>
     <div class="sec"><h3>3 · Reglas de reserva</h3>
@@ -327,7 +327,7 @@ function tabCierre(p) {
   <div class="grid">${F('Fecha de cierre', 'fecha', localInput().slice(0, 10), { type: 'date' })}${F('Motivo de cierre', 'motivo', CIERRE_MOT[0], { type: 'select', opts: CIERRE_MOT })}${F('Estado del consultante al cerrar', 'estadoFinal', 'Alta', { type: 'select', opts: CLOSED })}</div>
   <div class="grid">${CIERRE_FIELDS.map(f => F(f[1], f[0], '', { type: 'area', rows: f[2], wide: true, req: true })).join('')}</div>
   <div class="fld"><span class="lbl">Firma del terapeuta (de tu perfil)</span>${therPreview()}</div>
-  <p class="lock-note">Al guardar, la nota de cierre queda firmada y <b>no podrá modificarse</b>, y el consultante pasa al estado que elija arriba.</p>
+  <p class="lock-note">Al guardar, la nota de cierre queda firmada y <b>no podrá modificarse</b>, y el consultante pasa al estado que elijas arriba.</p>
   <div class="row end"><button class="btn" data-act="saveBorrador">Guardar borrador</button><button class="btn pri" data-act="saveCierre">Firmar cierre</button></div></div></div>`;
 }
 ACT.saveCierre = async b => {

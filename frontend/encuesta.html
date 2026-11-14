@@ -4,12 +4,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Encuesta de satisfacción</title>
-<meta name="description" content="Cuéntanos cómo le fue: toma menos de un minuto.">
+<meta name="description" content="Cuéntanos cómo te fue: toma menos de un minuto.">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Alter-Karute">
 <meta property="og:locale" content="es_CO">
 <meta property="og:title" content="Encuesta de satisfacción · Alter-Karute">
-<meta property="og:description" content="Cuéntanos cómo le fue: toma menos de un minuto.">
+<meta property="og:description" content="Cuéntanos cómo te fue: toma menos de un minuto.">
 <meta property="og:image" content="__ORIGIN__/og.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
@@ -66,11 +66,11 @@ const q = new URLSearchParams(location.search), token = q.get('t') || '';
 const logo = '<svg width="30" height="30" viewBox="0 0 120 120" aria-hidden="true"><rect x="6" y="6" width="108" height="108" rx="16" fill="#4E6B58"/><rect x="34" y="22" width="52" height="64" rx="6" fill="#FFFFFF"/><rect x="46" y="14" width="28" height="16" rx="4" fill="#FFFFFF" stroke="#4E6B58" stroke-width="4"/><rect x="42" y="46" width="36" height="6" rx="3" fill="#4E6B58"/><rect x="42" y="58" width="36" height="6" rx="3" fill="#4E6B58"/><rect x="42" y="70" width="22" height="6" rx="3" fill="#4E6B58"/></svg>';
 const card = html => { $('#m').innerHTML = `<div class="card">${html}</div>`; };
 async function start() {
-  if (!token) return card('<div class="res bad">El enlace está incompleto. Ábrelo de nuevo desde el mensaje que recibió.</div>');
+  if (!token) return card('<div class="res bad">El enlace está incompleto. Ábrelo de nuevo desde el mensaje que recibiste.</div>');
   let d;
   try {
     const r = await fetch('/api/encuesta/' + encodeURIComponent(token), { headers: H });
-    if (r.status === 404) return card('<div class="res bad">Este enlace no es válido. Ábrelo de nuevo desde el mensaje que recibió.</div>');
+    if (r.status === 404) return card('<div class="res bad">Este enlace no es válido. Ábrelo de nuevo desde el mensaje que recibiste.</div>');
     if (!r.ok) throw new Error();
     d = await r.json();
   } catch (e) { return card('<div class="res bad">No se pudo cargar la encuesta. Intenta de nuevo en unos minutos.</div>'); }
@@ -110,7 +110,7 @@ async function start() {
 function optout(who) {
   card(`<h1>${logo}No recibir más encuestas</h1><p>¿Quieres dejar de recibir encuestas de satisfacción de <b>${who}</b>? Esto no afecta tu atención.</p><div id="err"></div><div style="display:flex;gap:8px;flex-wrap:wrap"><button id="yes">Sí, no enviarme más</button><a href="?t=${encodeURIComponent(token)}"><button class="sec" type="button">Volver a la encuesta</button></a></div>`);
   $('#yes').onclick = async () => {
-    try { const r = await fetch('/api/encuesta/' + encodeURIComponent(token) + '/baja', { method: 'POST', headers: H }); if (r.status !== 204) throw new Error(); card(`<h1>${logo}Listo</h1><div class="res ok">No le enviaremos más encuestas.</div>`); }
+    try { const r = await fetch('/api/encuesta/' + encodeURIComponent(token) + '/baja', { method: 'POST', headers: H }); if (r.status !== 204) throw new Error(); card(`<h1>${logo}Listo</h1><div class="res ok">No te enviaremos más encuestas.</div>`); }
     catch (e) { $('#err').innerHTML = '<div class="res bad">No se pudo guardar. Intenta de nuevo.</div>'; }
   };
 }

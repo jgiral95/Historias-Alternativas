@@ -31,12 +31,12 @@ async function stepDone(k) {
 function stepsList() {
   const real = S.patients.filter(x => !x.demo), ps = (S.profile && S.profile.pasos) || {}, demo = S.patients.some(x => x.demo);
   return [
-    ['perfil', !!(S.profile.nombre && S.profile.firma), 'Completa tu perfil y dibuja tu firma (opcional)', 'Con ella puede firmar acuerdos, sesiones e informes.', '<button class="btn sm pri" data-act="profile">Mi perfil</button>'],
+    ['perfil', !!(S.profile.nombre && S.profile.firma), 'Completa tu perfil y dibuja tu firma (opcional)', 'Con ella puedes firmar acuerdos, sesiones e informes.', '<button class="btn sm pri" data-act="profile">Mi perfil</button>'],
     ['ejemplo', demo || !!ps.ejemplo, 'Explora con consultantes de ejemplo', 'Cargamos 3 consultantes ficticios con acuerdos, primera vez, sesiones, citas y notas de proceso. Los borra con un clic.', demo ? '<button class="btn sm" data-act="demoDel">Borrar los ejemplos</button>' : '<button class="btn sm pri" data-act="demoLoad">Cargar ejemplos</button>'],
     ['formatos', !!ps.formatos, 'Revisa tus formatos', 'Acuerdo, primera vez, sesión y datos del consultante: cambia, oculta o crea los apartados que necesites.', '<button class="btn sm" data-act="formats">Mis formatos</button>'],
     ['paciente', real.length > 0, 'Crea tu primer consultante', 'Con datos ficticios mientras sea una prueba.', '<button class="btn sm" data-act="newPatient">Nuevo consultante</button>'],
     ['cita', S.appts.some(a => !a.demo), 'Agenda una cita', 'Desde la agenda; puedes conectarla con Google Calendar.', '<button class="btn sm" data-act="view" data-v="agenda">Ir a la agenda</button>'],
-    ['comentario', !!ps.comentario, 'Cuéntanos qué mejorar', 'Usa el botón «Comentarios», abajo a la derecha: elige el apartado del programa y cuéntanos qué falla, qué no entiende o qué le gustaría.', '<button class="btn sm" data-act="fbOpenStep">Escribir un comentario</button>']
+    ['comentario', !!ps.comentario, 'Cuéntanos qué mejorar', 'Usa el botón «Comentarios», abajo a la derecha: elige el apartado del programa y cuéntanos qué falla, qué no entiendes o qué te gustaría.', '<button class="btn sm" data-act="fbOpenStep">Escribir un comentario</button>']
   ];
 }
 function stepsHTML() {
@@ -161,7 +161,7 @@ ACT.accessLog = async b => {
   };
   const p = pid ? S.patients.find(x => x.id === pid) : null;
   root.innerHTML = `<div class="modal" role="dialog" aria-modal="true" aria-label="Bitácora de accesos"><div class="box" style="max-width:860px"><div class="row" style="justify-content:space-between"><h3>${p ? 'Accesos a la historia de ' + esc(fullName(p)) : 'Bitácora de accesos'}</h3><button class="btn sm" id="al_close">Cerrar</button></div>
-    <p class="stnote" style="margin:0">Cada vez que tú o alguien de tu equipo abra una historia, guarda, firma o descarga, queda aquí con la fecha y la hora. ${pid ? '' : 'También los ingresos a la cuenta y los intentos fallidos o sin permiso. '}Nadie puede borrar ni modificar este registro.</p>
+    <p class="stnote" style="margin:0">Cada vez que tú o alguien de tu equipo abra una historia, guarde, firme o descargue, queda aquí con la fecha y la hora. ${pid ? '' : 'También los ingresos a la cuenta y los intentos fallidos o sin permiso. '}Nadie puede borrar ni modificar este registro.</p>
     <div class="row"><select id="al_who" style="width:auto" aria-label="Filtrar por persona"><option value="">Todas las personas</option>${people.map(x => `<option>${esc(x)}</option>`).join('')}</select>${pid ? '' : `<select id="al_what" style="width:auto" aria-label="Filtrar por tipo"><option value="">Todo</option><option value="hist">Historias</option><option value="ing">Ingresos a la cuenta</option><option value="den">Intentos sin permiso</option></select>`}<span class="ts">${list.length} registros${list.length >= 300 ? ' (los más recientes)' : ''}</span></div>
     <div id="al_body" class="tscroll"></div></div></div>`;
   $('#al_close').onclick = () => { root.innerHTML = ''; };

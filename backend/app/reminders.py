@@ -101,8 +101,8 @@ def text(p: dict, a: dict, prof: dict, url: str, nota: str = "") -> str:
     who = prof.get("nombre") or "tu terapeuta"
     start = parse(a.get("startAt"))
     mod = a.get("modalidad") or "Presencial"
-    return (f"Hola{(' ' + first) if first else ''}, le recordamos tu cita con {who} el {when_text(start)} ({mod.lower()}). "
-            + (nota + " " if nota else "") + f"Por favor confirma o avísenos si no puedes asistir: {url}")
+    return (f"Hola{(' ' + first) if first else ''}, te recordamos tu cita con {who} el {when_text(start)} ({mod.lower()}). "
+            + (nota + " " if nota else "") + f"Por favor confirma o avísanos si no puedes asistir: {url}")
 
 
 def send_mail(to: str, body: str, prof: dict, acc: dict) -> None:

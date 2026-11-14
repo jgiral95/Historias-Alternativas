@@ -113,7 +113,7 @@ def access_token(link: GoogleLink) -> str:
     st, j = http("POST", TOKEN_URL, {"refresh_token": rt, "client_id": CLIENT_ID, "client_secret": CLIENT_SECRET,
                                      "grant_type": "refresh_token"}, form=True)
     if st != 200 or not j.get("access_token"):
-        raise GoogleError(401, "Google rechazó el permiso; reconecte la cuenta" if j.get("error") == "invalid_grant" else (j.get("error") or "Error de Google"))
+        raise GoogleError(401, "Google rechazó el permiso; reconecta la cuenta" if j.get("error") == "invalid_grant" else (j.get("error") or "Error de Google"))
     with _lock:
         _tokens[link.user_id] = (j["access_token"], time.time() + int(j.get("expires_in", 3600)))
     return j["access_token"]

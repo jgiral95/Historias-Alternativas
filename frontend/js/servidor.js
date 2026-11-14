@@ -81,7 +81,7 @@ function renderCode(ticket, email, msg, days, keep) {
     <div class="fld"><label for="lg_code">Código</label>${CODE_INPUT('lg_code')}</div>
     ${days ? `<label class="chk" style="display:flex;gap:8px;align-items:flex-start;font-size:14px"><input type="checkbox" id="lg_remember" ${keep === false ? '' : 'checked'} style="margin-top:3px;accent-color:var(--accent)"><span>Recordar este dispositivo: no volver a pedir el código aquí mientras se use al menos una vez cada ${days} días. No lo marques en un equipo compartido.</span></label>` : ''}
     <button class="btn pri" type="submit">Verificar</button>
-    <p style="margin:0;font-size:13px;color:var(--muted)">¿No tiene el teléfono? Escribe uno de tus códigos de recuperación (por ejemplo <span style="font-family:var(--f-mono)">abcd-2345</span>). Si los perdió, pide al administrador que quita la verificación de tu cuenta.</p>
+    <p style="margin:0;font-size:13px;color:var(--muted)">¿No tienes el teléfono? Escribe uno de tus códigos de recuperación (por ejemplo <span style="font-family:var(--f-mono)">abcd-2345</span>). Si los perdiste, pide al administrador que quite la verificación de tu cuenta.</p>
     <button class="btn sm" type="button" id="lg_back">Volver</button></form></div>`;
   $('#lg_back').onclick = () => renderLogin('', email);
   $('#codeform').onsubmit = async ev => {
@@ -164,7 +164,7 @@ ACT.users = async () => {
       else if (act === 'role') await api('/admin/users/' + id, { method: 'PATCH', body: { role: b.dataset.role === 'admin' ? 'user' : 'admin' } });
       else if (act === 'no2fa') { if (!b.dataset.sure) { b.dataset.sure = 1; b.textContent = 'Confirmar: quitar 2 pasos'; return; } await api('/admin/users/' + id, { method: 'PATCH', body: { reset_2fa: true } }); toast('Verificación en dos pasos quitada. El usuario puede volver a activarla.'); }
       else if (act === 'reset') { const pw = $('#rp_' + id).value; if (!pw) { toast('Escribe la nueva contraseña.'); return; } await api('/admin/users/' + id, { method: 'PATCH', body: { password: pw } }); toast('Contraseña restablecida. Deberá cambiarla al entrar.'); }
-      else if (act === 'create') { const o = readForm($('#uform'), {}); await api('/admin/users', { method: 'POST', body: { name: o.uname, email: o.uemail, password: o.upass, role: o.urole === 'Administrador' ? 'admin' : 'user' } }); toast('Usuario creado. Deberá elegir tu contraseña al entrar.'); ['uname', 'uemail', 'upass'].forEach(k => { $('#f_' + k).value = ''; }); }
+      else if (act === 'create') { const o = readForm($('#uform'), {}); await api('/admin/users', { method: 'POST', body: { name: o.uname, email: o.uemail, password: o.upass, role: o.urole === 'Administrador' ? 'admin' : 'user' } }); toast('Usuario creado. Deberá elegir su propia contraseña al entrar.'); ['uname', 'uemail', 'upass'].forEach(k => { $('#f_' + k).value = ''; }); }
       if (await load()) drawList();
     } catch (err) { toast(err.message); }
   };

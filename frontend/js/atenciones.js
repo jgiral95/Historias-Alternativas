@@ -150,11 +150,11 @@ function tabIntake(p) {
   return `<div id="intakeform" class="sec">${consentWarn}${sigNeeded()}<div class="row" style="justify-content:space-between"><h3 style="flex:1">Primera vez</h3><button class="btn" data-act="saveIntake" data-sign="0">Guardar borrador</button><button class="btn pri" data-act="saveIntake" data-sign="1">Firmar y guardar</button></div>${phraseHint()}
   ${atencionBlock(i, 'intake', p)}
   <div id="teleslot">${isRemote(i.modalidad) ? teleBlock(i) : ''}</div>
-  <p class="stnote">Todos los campos son opcionales: llena lo que le sirva.</p>
+  <p class="stnote">Todos los campos son opcionales: llena lo que te sirva.</p>
   ${intakeSchema(i).map(([t, fs, g]) => `<div class="sec"><h3>${esc(t)}</h3><div class="grid">${fs.map(f => F(f[1], f[0], i[f[0]] !== undefined ? i[f[0]] : (f[3] || ''), { type: 'area', rows: f[2], wide: true, aria: t, req: true })).join('')}</div>${g === 'genograma' ? genoBlock() : ''}</div>`).join('')}
-  ${legacyOf(i).length ? `<div class="sec"><h3>Datos de la versión anterior</h3><p style="margin:0;font-size:13px;color:var(--muted)">Estos campos ya no están en el formulario. Pasa lo que necesite a los apartados nuevos y vacíe el campo, o déjalo como está.</p><div class="grid">${legacyOf(i).map(([k, l]) => F(l, k, i[k], { type: 'area', rows: 2, wide: true })).join('')}</div></div>` : ''}
+  ${legacyOf(i).length ? `<div class="sec"><h3>Datos de la versión anterior</h3><p style="margin:0;font-size:13px;color:var(--muted)">Estos campos ya no están en el formulario. Pasa lo que necesites a los apartados nuevos y vacía el campo, o déjalo como está.</p><div class="grid">${legacyOf(i).map(([k, l]) => F(l, k, i[k], { type: 'area', rows: 2, wide: true })).join('')}</div></div>` : ''}
   <div class="fld"><span class="lbl">Firma del terapeuta (de tu perfil)</span>${therPreview()}</div>
-  <p class="lock-note">Al guardar, el documento queda firmado con tu firma, la fecha y la hora, y <b>no podrá modificarse</b>. Solo podrá agregar adendas.</p><div class="row end"><button class="btn" data-act="saveIntake" data-sign="0">Guardar borrador</button><button class="btn pri" data-act="saveIntake" data-sign="1">Firmar y guardar</button></div></div>`;
+  <p class="lock-note">Al guardar, el documento queda firmado con tu firma, la fecha y la hora, y <b>no podrá modificarse</b>. Solo podrás agregar adendas.</p><div class="row end"><button class="btn" data-act="saveIntake" data-sign="0">Guardar borrador</button><button class="btn pri" data-act="saveIntake" data-sign="1">Firmar y guardar</button></div></div>`;
 }
 ACT.viewIntake = () => { const p = curPatient(); showDoc('Primera vez · ' + fullName(p), docIntake(p), 'primera-vez-' + slug(fullName(p)) + '.html'); };
 ACT.saveIntake = async b => {
@@ -226,10 +226,10 @@ function noteForm(p, n) {
   return `<div class="card" id="noteform"><div class="row" style="justify-content:space-between"><h3 style="flex:1">${n.id ? 'Editar borrador' : 'Nueva nota de sesión'}</h3><button class="btn" data-act="cancelNote">Cancelar</button><button class="btn" data-act="saveNote" data-sign="0">Guardar borrador</button><button class="btn pri" data-act="saveNote" data-sign="1">Firmar y guardar</button></div>${sigNeeded()}${prevNoteHTML(p, n)}
   ${atencionBlock(n, 'note', p)}
   <div id="teleslot">${isRemote(n.modalidad) ? teleBlock(n) : ''}</div>
-  ${evolSchema(n).length ? `${phraseHint()}<p class="stnote">Todos los campos son opcionales: llena lo que le sirva.</p><div class="grid">${evolSchema(n).map(f => F(f[1], f[0], n[f[0]] !== undefined ? n[f[0]] : (f[3] || ''), { type: 'area', rows: f[2], wide: true, req: true })).join('')}</div>`
+  ${evolSchema(n).length ? `${phraseHint()}<p class="stnote">Todos los campos son opcionales: llena lo que te sirva.</p><div class="grid">${evolSchema(n).map(f => F(f[1], f[0], n[f[0]] !== undefined ? n[f[0]] : (f[3] || ''), { type: 'area', rows: f[2], wide: true, req: true })).join('')}</div>`
     : `<div class="banner" id="noformat">Aún no ha creado tu formato de sesión. Créalo en «Mis formatos» con los campos que usas (puedes partir del formato sugerido). <div class="row" style="margin-top:6px"><button class="btn sm pri" data-act="formats" data-hub="evol">Crear mi formato</button></div></div>`}
   <div class="fld"><span class="lbl">Firma del terapeuta (de tu perfil)</span>${therPreview()}</div>
-  <p class="lock-note">Al guardar, el documento queda firmado con tu firma, la fecha y la hora, y <b>no podrá modificarse</b>. Solo podrá agregar adendas.</p><div class="row end"><button class="btn" data-act="cancelNote">Cancelar</button><button class="btn" data-act="saveNote" data-sign="0">Guardar borrador</button><button class="btn pri" data-act="saveNote" data-sign="1">Firmar y guardar</button></div></div>`;
+  <p class="lock-note">Al guardar, el documento queda firmado con tu firma, la fecha y la hora, y <b>no podrá modificarse</b>. Solo podrás agregar adendas.</p><div class="row end"><button class="btn" data-act="cancelNote">Cancelar</button><button class="btn" data-act="saveNote" data-sign="0">Guardar borrador</button><button class="btn pri" data-act="saveNote" data-sign="1">Firmar y guardar</button></div></div>`;
 }
 function prevNoteHTML(p, n) {
   const prev = S.notes.filter(x => x.patientId === p.id && x.signedAt && x.id !== n.id).sort((a, b) => b.sessionAt.localeCompare(a.sessionAt))[0];

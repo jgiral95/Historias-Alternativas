@@ -111,7 +111,7 @@ def link(token: str, base: str = "") -> str:
 def message(nombre: str, prof: dict, url: str) -> str:
     first = str(nombre or "").split(" ")[0]
     who = prof.get("nombre") or "tu terapeuta"
-    return (f"Hola{(' ' + first) if first else ''}, {who} le envía un formulario para que registre tus datos antes de la primera atención: {url} "
+    return (f"Hola{(' ' + first) if first else ''}, {who} te envía un formulario para que registres tus datos antes de la primera atención: {url} "
             f"Solo toma unos minutos. El enlace se puede usar una vez y vence en {DAYS} días.")
 
 

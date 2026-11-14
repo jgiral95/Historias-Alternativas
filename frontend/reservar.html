@@ -4,12 +4,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Agendar cita</title>
-<meta name="description" content="Elige el día y la hora que le convenga. Recibirá la confirmación por correo.">
+<meta name="description" content="Elige el día y la hora que te convenga. Recibirás la confirmación por correo.">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Alter-Karute">
 <meta property="og:locale" content="es_CO">
 <meta property="og:title" content="Agenda tu cita · Alter-Karute">
-<meta property="og:description" content="Elige el día y la hora que le convenga. Recibirá la confirmación por correo.">
+<meta property="og:description" content="Elige el día y la hora que te convenga. Recibirás la confirmación por correo.">
 <meta property="og:image" content="__ORIGIN__/og.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
@@ -134,12 +134,12 @@ async function send() {
     if (r.status === 409) { await load(); hour = ''; return draw('<div class="res bad">' + esc(j.detail) + '</div>'); }
     if (!r.ok) return draw('<div class="res bad">' + esc(j.detail || 'No se pudo agendar. Intenta de nuevo.') + '</div>');
     const it = (d.dias[day] || []).find(x => x.i === hour), cuando = it ? new Date(it.ms).toLocaleString('es-CO', { weekday: 'long', day: 'numeric', month: 'long', hour: 'numeric', minute: '2-digit' }) + ' · zona horaria ' + tzLabel(it.ms) : j.cuando;
-    card(`<h1>${logo}Cita confirmada</h1><div class="res ok">Tu cita quedó agendada para el ${esc(cuando)} (${esc(j.modalidad).toLowerCase()}).</div><p class="muted">Le enviamos la confirmación a tu correo. Si no la ves, revisa la carpeta de spam.</p>`);
+    card(`<h1>${logo}Cita confirmada</h1><div class="res ok">Tu cita quedó agendada para el ${esc(cuando)} (${esc(j.modalidad).toLowerCase()}).</div><p class="muted">Te enviamos la confirmación a tu correo. Si no la ves, revisa la carpeta de spam.</p>`);
   } catch (e) { draw('<div class="res bad">No hay conexión. Intenta de nuevo.</div>'); }
 }
 async function load() { const r = await fetch('/api/reservar/' + encodeURIComponent(slug), { headers: H }); if (!r.ok) throw r; d = await r.json(); conv(); }
 (async () => {
-  if (!slug) return card('<div class="res bad">El enlace está incompleto. Ábrelo de nuevo desde el mensaje que recibió.</div>');
+  if (!slug) return card('<div class="res bad">El enlace está incompleto. Ábrelo de nuevo desde el mensaje que recibiste.</div>');
   try { await load(); draw(); } catch (r) {
     const j = r.json ? await r.json().catch(() => ({})) : {};
     card('<div class="res bad">' + esc(r.status === 404 ? 'Este enlace no está disponible.' : j.detail || 'No se pudo cargar. Intenta en unos minutos.') + '</div>');

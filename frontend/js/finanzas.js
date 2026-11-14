@@ -148,7 +148,7 @@ ACT.finAnular = b => {
 ACT.finCita = b => {
   const a = S.appts.find(x => x.id === b.dataset.id), p = S.patients.find(x => x.id === a.patientId);
   finModal('Cobro de la cita · ' + fmtD(a.startAt), `<div class="fld"><label for="fc_valor">Valor de esta cita (pesos)</label>${moneyInput('fc_valor', typeof a.valor === 'number' ? a.valor : '')}</div>
-    <p class="stnote">Vacío = tarifa vigente (${money(valorCita({ modalidad: a.modalidad }, p))}). Si escribe un valor, queda fijo aunque cambie la tarifa.</p>
+    <p class="stnote">Vacío = tarifa vigente (${money(valorCita({ modalidad: a.modalidad }, p))}). Si escribes un valor, queda fijo aunque cambie la tarifa.</p>
     ${a.estado === 'No asistió' ? `<label class="check"><input type="checkbox" id="fc_inas" ${a.cobrarInasistencia ? 'checked' : ''}> <span>Cobrar esta inasistencia</span></label>` : ''}
     <label class="check"><input type="checkbox" id="fc_cortesia" ${a.cortesia ? 'checked' : ''}> <span>Cortesía (no se cobra)</span></label>`, 'Guardar', async btn => {
     const v = parseCop($('#fc_valor').value), snap = clone(a);

@@ -39,24 +39,24 @@ TYPES = {
 
 # Preguntas sugeridas: las del formato del consultorio y una dimensión sobre el terapeuta.
 DEFAULT_QUESTIONS = [
-    {"id": "op1", "dim": "Oportunidad de consulta", "texto": "Cuando solicitó tu cita, se la asignaron en:", "tipo": "dias"},
-    {"id": "op2", "dim": "Oportunidad de consulta", "texto": "La hora en que le asignaron tu cita coincidió con el momento de la atención", "tipo": "sino"},
-    {"id": "pf1", "dim": "Planta física", "texto": "¿Cómo encontró el estado de aseo del consultorio?", "tipo": "escala"},
-    {"id": "pf2", "dim": "Planta física", "texto": "¿Cómo califica las comodidades del consultorio?", "tipo": "escala"},
-    {"id": "pf3", "dim": "Planta física", "texto": "¿Cómo califica el ambiente de las instalaciones?", "tipo": "escala"},
-    {"id": "at1", "dim": "Atención", "texto": "El trato que recibió en la recepción o al agendar fue:", "tipo": "escala"},
+    {"id": "op1", "dim": "Oportunidad de consulta", "texto": "Cuando solicitaste tu cita, te la asignaron en:", "tipo": "dias"},
+    {"id": "op2", "dim": "Oportunidad de consulta", "texto": "La hora en que te asignaron tu cita coincidió con el momento de la atención", "tipo": "sino"},
+    {"id": "pf1", "dim": "Planta física", "texto": "¿Cómo encontraste el estado de aseo del consultorio?", "tipo": "escala"},
+    {"id": "pf2", "dim": "Planta física", "texto": "¿Cómo calificas las comodidades del consultorio?", "tipo": "escala"},
+    {"id": "pf3", "dim": "Planta física", "texto": "¿Cómo calificas el ambiente de las instalaciones?", "tipo": "escala"},
+    {"id": "at1", "dim": "Atención", "texto": "El trato que recibiste en la recepción o al agendar fue:", "tipo": "escala"},
     {"id": "cp1", "dim": "Características del terapeuta", "texto": "La puntualidad del terapeuta al iniciar las sesiones fue:", "tipo": "escala"},
     {"id": "cp2", "dim": "Características del terapeuta", "texto": "La forma en que el terapeuta escuchó lo que querías expresar fue:", "tipo": "escala"},
-    {"id": "cp3", "dim": "Características del terapeuta", "texto": "La claridad con que le explicó tu proceso y las actividades propuestas fue:", "tipo": "escala"},
-    {"id": "cp4", "dim": "Características del terapeuta", "texto": "El respeto y el trato digno que recibió del terapeuta fueron:", "tipo": "escala"},
-    {"id": "cp5", "dim": "Características del terapeuta", "texto": "La confianza y la confidencialidad que le transmitió el terapeuta fueron:", "tipo": "escala"},
-    {"id": "cp6", "dim": "Características del terapeuta", "texto": "La información que recibió sobre tus derechos, deberes y el consentimiento informado fue:", "tipo": "escala"},
+    {"id": "cp3", "dim": "Características del terapeuta", "texto": "La claridad con que te explicó tu proceso y las actividades propuestas fue:", "tipo": "escala"},
+    {"id": "cp4", "dim": "Características del terapeuta", "texto": "El respeto y el trato digno que recibiste del terapeuta fueron:", "tipo": "escala"},
+    {"id": "cp5", "dim": "Características del terapeuta", "texto": "La confianza y la confidencialidad que te transmitió el terapeuta fueron:", "tipo": "escala"},
+    {"id": "cp6", "dim": "Características del terapeuta", "texto": "La información que recibiste sobre tus derechos, deberes y el consentimiento informado fue:", "tipo": "escala"},
     {"id": "cp7", "dim": "Características del terapeuta", "texto": "La utilidad de las sesiones para tu situación ha sido:", "tipo": "escala"},
     {"id": "eg1", "dim": "Experiencia general", "texto": "En general, ¿cómo califica tu experiencia con el servicio?", "tipo": "escala"},
-    {"id": "eg2", "dim": "Experiencia general", "texto": "¿Recomendaría este servicio a tus familiares y amigos?", "tipo": "recomienda"},
+    {"id": "eg2", "dim": "Experiencia general", "texto": "¿Recomendarías este servicio a tus familiares y amigos?", "tipo": "recomienda"},
     {"id": "com", "dim": "Comentarios", "texto": "¿Qué podríamos mejorar? (opcional)", "tipo": "texto"},
 ]
-DEFAULT_INTRO = "Queremos conocer tu opinión sobre la atención que recibió. Son unos 2 minutos y tus respuestas se guardan sin tu nombre."
+DEFAULT_INTRO = "Queremos conocer tu opinión sobre la atención que recibiste. Son unos 2 minutos y tus respuestas se guardan sin tu nombre."
 
 _draw_lock = threading.Lock()
 
@@ -258,19 +258,19 @@ def message(to: str, token: str, p: dict, prof: dict, acc: dict | None = None) -
     url = link(token, acc.get("base") or "")
     out = url + "&baja=1"
     m = EmailMessage()
-    m["Subject"] = f"¿Cómo le pareció la atención en {place}?"
+    m["Subject"] = f"¿Cómo te pareció la atención en {place}?"
     m["From"] = formataddr((prof.get("nombre") or "", acc.get("from") or SMTP_FROM)) if acc.get("propio") else (acc.get("from") or SMTP_FROM)
     m["To"] = to
     reply = acc.get("from") if acc.get("propio") else prof.get("correo")
     if reply and EMAIL_RE.match(reply):
         m["Reply-To"] = reply
     m.set_content(
-        f"Hola{(' ' + first) if first else ''}:\n\n{who} le invita a responder una encuesta corta sobre la atención que recibió. "
+        f"Hola{(' ' + first) if first else ''}:\n\n{who} te invita a responder una encuesta corta sobre la atención que recibiste. "
         f"Toma unos 2 minutos y tus respuestas se guardan sin tu nombre.\n\n{url}\n\n"
         f"El enlace estará abierto {SURVEY_DAYS_OPEN} días. Responder es voluntario.\n"
         f"Si no deseas recibir más encuestas: {out}\n\nGracias por tu tiempo.\n")
-    correo.agregar(m, correo.layout("¿Cómo le pareció la atención?",
-                                    [f"Hola{(' ' + first) if first else ''}. {who} le invita a responder una encuesta corta sobre la atención que recibió. Toma unos 2 minutos y tus respuestas se guardan sin tu nombre."],
+    correo.agregar(m, correo.layout("¿Cómo te pareció la atención?",
+                                    [f"Hola{(' ' + first) if first else ''}. {who} te invita a responder una encuesta corta sobre la atención que recibiste. Toma unos 2 minutos y tus respuestas se guardan sin tu nombre."],
                                     cierre=[f"El enlace estará abierto {SURVEY_DAYS_OPEN} días. Responder es voluntario."], boton=("Responder la encuesta", url),
                                     notas=[("Si no deseas recibir más encuestas,", "haz clic aquí", out)], firma=("Gracias por tu tiempo,", who)), prof.get("idioma"))
     return m

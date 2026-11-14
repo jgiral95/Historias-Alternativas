@@ -1,6 +1,6 @@
 # Guía rápida del código (para trabajar sin leer todo)
 
-App de seguimiento de consultantes para profesionales de terapias alternativas (fuera del ámbito del Ministerio de Salud): sin RIPS, CIE, CUPS ni normas de conservación. Basada en Historias_clinicas. Textos de la app en español, con «usted».
+App de seguimiento de consultantes para profesionales de terapias alternativas (fuera del ámbito del Ministerio de Salud): sin RIPS, CIE, CUPS ni normas de conservación. Basada en Historias_clinicas. Textos de la app en español, con «tú».
 
 ## Frontend (`frontend/`)
 `index.html` es la página de inicio pública (HTML estático; `portada.js` solo maneja la vista previa interactiva, con datos de ejemplo). La app está en `app.html` (se abre en `/app`), que solo carga `css/app.css` y los scripts de `js/` **en orden** (scripts clásicos que comparten el ámbito global: lo que se ejecuta al cargar no puede usar algo de un archivo posterior).

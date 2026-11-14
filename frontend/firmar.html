@@ -120,7 +120,7 @@ function read(msg) {
       <label class="check"><input type="checkbox" id="ok"> <span>Leí el documento, pude hacer preguntas y acepto de forma libre y voluntaria.</span></label>
       <div><label>Tu firma</label><div class="pad" id="pad"></div><div class="row" style="margin-top:6px"><button type="button" class="ghost" id="clr">Borrar firma</button></div></div>
       <button id="sign">Firmar el documento</button>
-      <p class="muted">Al firmar se guardan la fecha y la hora, la dirección IP y el tipo de dispositivo como constancia. Puedes revocar este consentimiento cuando quiera.</p></div>`);
+      <p class="muted">Al firmar se guardan la fecha y la hora, la dirección IP y el tipo de dispositivo como constancia. Puedes revocar este consentimiento cuando quieras.</p></div>`);
   pad = makePad($('#pad')); $('#clr').onclick = () => pad.clear();
   $('#sign').onclick = sign;
 }
@@ -134,19 +134,19 @@ async function sign() {
     if (!r.ok) { $('#sign').disabled = false; $('#sign').textContent = 'Firmar el documento'; return showErr(j.detail || 'No se pudo guardar. Intenta de nuevo.'); }
     card(head() + `<div class="res ok">Documento firmado el ${esc(fmt(j.firmado))}: quedó guardado en tu ficha. Gracias.</div>
       <div class="doc">${rich(d.texto)}</div><div class="sigs">${therBlock()}<div class="sg"><img src="${firma}" alt="Tu firma"><div class="ln"><b>${esc(d.firmante)}</b><br>${d.quien === 'Acudiente' ? 'Acudiente / representante legal' : 'Consultante'} · Doc. ${esc(d.documento)}<br><span class="muted">Firmado: ${esc(fmt(j.firmado))}</span></div></div></div><p class="muted" style="word-break:break-all">Huella SHA-256 del texto: ${esc(j.sha256)}</p>
-      <button class="noprint" id="pr">Guardar o imprimir una copia</button><p class="muted noprint">También puede pedir una copia del documento firmado al consultorio.</p>`);
+      <button class="noprint" id="pr">Guardar o imprimir una copia</button><p class="muted noprint">También puedes pedir una copia del documento firmado al consultorio.</p>`);
     $('#pr').onclick = () => print();
   } catch (e) { $('#sign').disabled = false; $('#sign').textContent = 'Firmar el documento'; showErr('No hay conexión. Intenta de nuevo.'); }
 }
 function showErr(t) { let e = $('#err'); if (!e) { e = document.createElement('div'); e.id = 'err'; e.className = 'res bad'; $('#sign').before(e); } e.textContent = t; }
 async function load() {
   const r = await fetch('/api/firma/' + encodeURIComponent(token), { headers: H });
-  if (r.status === 404) return card('<div class="res bad">Este enlace no es válido. Ábrelo de nuevo desde el mensaje que recibió.</div>');
+  if (r.status === 404) return card('<div class="res bad">Este enlace no es válido. Ábrelo de nuevo desde el mensaje que recibiste.</div>');
   if (!r.ok) throw new Error();
   d = await r.json(); ask();
 }
 (async () => {
-  if (!token) return card('<div class="res bad">El enlace está incompleto. Ábrelo de nuevo desde el mensaje que recibió.</div>');
+  if (!token) return card('<div class="res bad">El enlace está incompleto. Ábrelo de nuevo desde el mensaje que recibiste.</div>');
   try { await load(); } catch (e) { card('<div class="res bad">No se pudo cargar el documento. Intenta en unos minutos.</div>'); }
 })();
 </script>

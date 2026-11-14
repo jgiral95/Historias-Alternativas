@@ -10,24 +10,24 @@ const SV_TYPES = {
 };
 const SV_TIPO_LBL = { escala: 'Excelente · Bueno · Regular · Malo', dias: 'Días para asignar la cita', sino: 'Sí · No', recomienda: 'Definitivamente sí … definitivamente no', texto: 'Respuesta abierta (sin puntaje)' };
 const SV_DEFAULT = [
-  ['op1', 'Oportunidad de consulta', 'Cuando solicitó tu cita, se la asignaron en:', 'dias'],
-  ['op2', 'Oportunidad de consulta', 'La hora en que le asignaron tu cita coincidió con el momento de la atención', 'sino'],
-  ['pf1', 'Planta física', '¿Cómo encontró el estado de aseo del consultorio?', 'escala'],
-  ['pf2', 'Planta física', '¿Cómo califica las comodidades del consultorio?', 'escala'],
-  ['pf3', 'Planta física', '¿Cómo califica el ambiente de las instalaciones?', 'escala'],
-  ['at1', 'Atención', 'El trato que recibió en la recepción o al agendar fue:', 'escala'],
+  ['op1', 'Oportunidad de consulta', 'Cuando solicitaste tu cita, te la asignaron en:', 'dias'],
+  ['op2', 'Oportunidad de consulta', 'La hora en que te asignaron tu cita coincidió con el momento de la atención', 'sino'],
+  ['pf1', 'Planta física', '¿Cómo encontraste el estado de aseo del consultorio?', 'escala'],
+  ['pf2', 'Planta física', '¿Cómo calificas las comodidades del consultorio?', 'escala'],
+  ['pf3', 'Planta física', '¿Cómo calificas el ambiente de las instalaciones?', 'escala'],
+  ['at1', 'Atención', 'El trato que recibiste en la recepción o al agendar fue:', 'escala'],
   ['cp1', 'Características del terapeuta', 'La puntualidad del terapeuta al iniciar las sesiones fue:', 'escala'],
   ['cp2', 'Características del terapeuta', 'La forma en que el terapeuta escuchó lo que querías expresar fue:', 'escala'],
-  ['cp3', 'Características del terapeuta', 'La claridad con que le explicó tu proceso y las actividades propuestas fue:', 'escala'],
-  ['cp4', 'Características del terapeuta', 'El respeto y el trato digno que recibió del terapeuta fueron:', 'escala'],
-  ['cp5', 'Características del terapeuta', 'La confianza y la confidencialidad que le transmitió el terapeuta fueron:', 'escala'],
-  ['cp6', 'Características del terapeuta', 'La información que recibió sobre tus derechos, deberes y el consentimiento informado fue:', 'escala'],
+  ['cp3', 'Características del terapeuta', 'La claridad con que te explicó tu proceso y las actividades propuestas fue:', 'escala'],
+  ['cp4', 'Características del terapeuta', 'El respeto y el trato digno que recibiste del terapeuta fueron:', 'escala'],
+  ['cp5', 'Características del terapeuta', 'La confianza y la confidencialidad que te transmitió el terapeuta fueron:', 'escala'],
+  ['cp6', 'Características del terapeuta', 'La información que recibiste sobre tus derechos, deberes y el consentimiento informado fue:', 'escala'],
   ['cp7', 'Características del terapeuta', 'La utilidad de las sesiones para tu situación ha sido:', 'escala'],
   ['eg1', 'Experiencia general', 'En general, ¿cómo califica tu experiencia con el servicio?', 'escala'],
-  ['eg2', 'Experiencia general', '¿Recomendaría este servicio a tus familiares y amigos?', 'recomienda'],
+  ['eg2', 'Experiencia general', '¿Recomendarías este servicio a tus familiares y amigos?', 'recomienda'],
   ['com', 'Comentarios', '¿Qué podríamos mejorar? (opcional)', 'texto']
 ].map(([id, dim, texto, tipo]) => ({ id, dim, texto, tipo }));
-const SV_INTRO = 'Queremos conocer tu opinión sobre la atención que recibió. Son unos 2 minutos y tus respuestas se guardan sin tu nombre.';
+const SV_INTRO = 'Queremos conocer tu opinión sobre la atención que recibiste. Son unos 2 minutos y tus respuestas se guardan sin tu nombre.';
 const svCfg = () => Object.assign({ activa: false, cadaDias: 30, cantidad: 3, intro: SV_INTRO, incluirAnteriores: false }, clone(S.profile.encuesta || {}), { preguntas: clone((S.profile.encuesta && S.profile.encuesta.preguntas && S.profile.encuesta.preguntas.length) ? S.profile.encuesta.preguntas : SV_DEFAULT) });
 async function svLoad() { if (S.mode !== 'server' || TEAM()) return;  // el equipo no tiene encuestas: pedirlas quedaría como intento sin permiso
  try { S.sv = await api('/encuestas'); } catch (e) { S.sv = null; } }
@@ -47,7 +47,7 @@ ACT.survey = () => {
   const draw = () => {
     root.innerHTML = `<div class="modal" role="dialog" aria-modal="true" aria-label="Mi encuesta de satisfacción"><div class="box" id="svform" style="max-width:820px">
     <div class="row" style="justify-content:space-between"><h3>Mi encuesta de satisfacción</h3><button class="btn sm" data-sv="close">Cerrar</button></div>
-    <p style="margin:0;font-size:13px;color:var(--muted)">Cada cierto tiempo se sortean al azar consultantes atendidos en ese periodo y se les envía el enlace de la encuesta. Las respuestas son anónimas: aquí y en Estadísticas solo verá los resultados agregados. A un mismo consultante no se le vuelve a invitar antes de 6 meses, y puede pedir no recibir más encuestas.</p>
+    <p style="margin:0;font-size:13px;color:var(--muted)">Cada cierto tiempo se sortean al azar consultantes atendidos en ese periodo y se les envía el enlace de la encuesta. Las respuestas son anónimas: aquí y en Estadísticas solo verás los resultados agregados. A un mismo consultante no se le vuelve a invitar antes de 6 meses, y puede pedir no recibir más encuestas.</p>
     <div id="mailslot">${mailHTML(mailInfo)}</div>
     <label class="check"><input type="checkbox" id="sv_activa" ${cfg.activa ? 'checked' : ''}> <span><b>Enviar encuestas automáticamente</b></span></label>
     <div class="grid"><div class="fld"><label for="sv_cada">Hacer un sorteo cada</label><select id="sv_cada">${[15, 30, 60, 90, 180].map(d => `<option value="${d}" ${+cfg.cadaDias === d ? 'selected' : ''}>${d} días</option>`).join('')}</select></div>
@@ -59,7 +59,7 @@ ACT.survey = () => {
       <div class="row end"><button class="btn sm warn" data-sv="del" data-k="${k}">Quitar</button></div></div>`).join('') + '<div class="row"><button class="btn" data-sv="add">+ Pregunta</button></div>'}
     <p style="margin:0;font-size:13px;color:var(--muted)">Los cambios en las preguntas aplican a las encuestas que se envíen desde ahora. Último sorteo: ${st.ultimoSorteo ? esc(fmtDT(st.ultimoSorteo)) : 'ninguno'}.</p>
     <details class="sec" id="svtest" ${testOpen ? 'open' : ''}><summary>Enviar una encuesta de prueba</summary>
-      <p style="margin:6px 0;font-size:13px;color:var(--muted)">Llega al correo que escriba, enviada desde tu correo de envío, con las preguntas guardadas. Puedes responderla para ver cómo funciona: en Estadísticas aparece solo si marca «Incluir las respuestas de prueba». Guarda antes los cambios a las preguntas.</p>
+      <p style="margin:6px 0;font-size:13px;color:var(--muted)">Llega al correo que escribas, enviada desde tu correo de envío, con las preguntas guardadas. Puedes responderla para ver cómo funciona: en Estadísticas aparece solo si marcas «Incluir las respuestas de prueba». Guarda antes los cambios a las preguntas.</p>
       <div class="row"><input id="sv_tmail" type="email" style="flex:1;min-width:220px" value="${esc(testMail)}" placeholder="correo@ejemplo.com" aria-label="Correo para la prueba"><button class="btn" data-sv="test">Enviar prueba</button></div><div id="sv_tout" aria-live="polite"></div></details>
     <div class="row end"><button class="btn" data-sv="draw">Guardar y sortear ahora</button><button class="btn pri" data-sv="save">Guardar</button></div></div></div>`;
   };
@@ -87,7 +87,7 @@ ACT.survey = () => {
       try {
         const r = await api('/encuestas/prueba', { method: 'POST', body: { correo: testMail } }), url = svUrl(r.enlace);
         out.innerHTML = r.enviado ? `<div class="banner" style="background:var(--ok-soft,#DDF0E4);color:var(--ok,#2B7A4B)">Correo enviado a ${esc(testMail)}. Revisa también la carpeta de spam. <a href="${esc(url)}" target="_blank" rel="noopener">Abrir la encuesta aquí</a></div>`
-          : `<div class="banner"><b>No se envió el correo.</b> ${esc(r.motivo)}<br>Mientras tanto puede ver la encuesta: <a href="${esc(url)}" target="_blank" rel="noopener">abrir la encuesta de prueba</a></div>`;
+          : `<div class="banner"><b>No se envió el correo.</b> ${esc(r.motivo)}<br>Mientras tanto puedes ver la encuesta: <a href="${esc(url)}" target="_blank" rel="noopener">abrir la encuesta de prueba</a></div>`;
       } catch (err) { out.innerHTML = `<div class="banner">${esc(err.message)}</div>`; }
       b.disabled = false; return;
     }
@@ -112,13 +112,13 @@ function mailHTML(m, okMsg) {
   if (!m) return '<p class="stnote">Cargando el correo de envío…</p>';
   const known = /@(gmail|googlemail|outlook|hotmail|live|msn|yahoo|ymail|icloud|me|mac|zoho)\./i;
   const head = `<b>Correo de envío</b> ${m.propio ? `<span class="chip ok">${esc(m.correo)}</span>` : '<span class="chip warn">Sin configurar</span>'}`;
-  if (m.propio && !m.editar) return `<div class="card">${head}${okMsg ? `<div class="banner" style="background:var(--ok-soft,#DDF0E4);color:var(--ok,#2B7A4B)">${esc(okMsg)}</div>` : ''}<p class="stnote">Las encuestas salen desde este correo, con tu nombre, y las respuestas de los consultantes le llegan ahí. A los consultantes sin correo la encuesta les aparece en Pendientes para enviarla por WhatsApp.</p><div class="row"><button type="button" class="btn sm" data-sv="mailedit">Cambiar</button><button type="button" class="btn sm warn" data-sv="maildel">Quitar</button></div></div>`;
+  if (m.propio && !m.editar) return `<div class="card">${head}${okMsg ? `<div class="banner" style="background:var(--ok-soft,#DDF0E4);color:var(--ok,#2B7A4B)">${esc(okMsg)}</div>` : ''}<p class="stnote">Las encuestas salen desde este correo, con tu nombre, y las respuestas de los consultantes te llegan ahí. A los consultantes sin correo la encuesta les aparece en Pendientes para enviarla por WhatsApp.</p><div class="row"><button type="button" class="btn sm" data-sv="mailedit">Cambiar</button><button type="button" class="btn sm warn" data-sv="maildel">Quitar</button></div></div>`;
   const mail = m.correo || S.profile.correo || (S.user && S.user.email) || '';
   return `<div class="card">${head}${okMsg ? `<p class="stnote">${esc(okMsg)}</p>` : ''}
   <p class="stnote">Las encuestas se envían desde tu propio correo. ${m.servidor ? 'Mientras no lo configures, se usa el correo general del servidor.' : 'Mientras no lo configures, las encuestas sorteadas aparecen en Pendientes para enviarlas a mano.'}</p>
   <div class="grid"><div class="fld"><label for="ml_mail">Tu correo</label><input id="ml_mail" type="email" value="${esc(mail)}" autocomplete="off"></div>
   <div class="fld"><label for="ml_pw">Contraseña de aplicación</label><input id="ml_pw" type="password" autocomplete="new-password" placeholder="16 letras, p. ej. abcd efgh ijkl mnop"></div></div>
-  <details><summary style="font-size:13px">¿Qué es la contraseña de aplicación y cómo la saco?</summary><div class="stnote" style="margin-top:6px">Es una clave especial que da tu proveedor para que una aplicación envíe correos en tu nombre, sin usar tu contraseña normal. Se puede borrar cuando quiera.<br><b>Gmail:</b> active la verificación en dos pasos y entre a myaccount.google.com/apppasswords; crea una con el nombre «Alter-Karute» y copia las 16 letras.<br><b>Outlook/Hotmail:</b> account.microsoft.com → Seguridad → Opciones de seguridad avanzadas → Contraseñas de aplicación.<br><b>Yahoo:</b> Configuración de la cuenta → Seguridad → Generar contraseña de aplicación.<br><b>iCloud:</b> appleid.apple.com → Contraseñas específicas de apps.</div></details>
+  <details><summary style="font-size:13px">¿Qué es la contraseña de aplicación y cómo la saco?</summary><div class="stnote" style="margin-top:6px">Es una clave especial que da tu proveedor para que una aplicación envíe correos en tu nombre, sin usar tu contraseña normal. Se puede borrar cuando quieras.<br><b>Gmail:</b> activa la verificación en dos pasos y entra a myaccount.google.com/apppasswords; crea una con el nombre «Alter-Karute» y copia las 16 letras.<br><b>Outlook/Hotmail:</b> account.microsoft.com → Seguridad → Opciones de seguridad avanzadas → Contraseñas de aplicación.<br><b>Yahoo:</b> Configuración de la cuenta → Seguridad → Generar contraseña de aplicación.<br><b>iCloud:</b> appleid.apple.com → Contraseñas específicas de apps.</div></details>
   <details ${mail && !known.test(mail) ? 'open' : ''}><summary style="font-size:13px">Servidor de correo (solo si no es Gmail, Outlook, Yahoo, iCloud o Zoho)</summary><div class="grid" style="margin-top:6px"><div class="fld"><label for="ml_host">Servidor SMTP</label><input id="ml_host" type="text" placeholder="Ej.: smtp.miconsultorio.co" value="${esc(m.host && !known.test(mail) ? m.host : '')}"></div><div class="fld"><label for="ml_port">Puerto</label><select id="ml_port"><option value="0">Automático</option><option value="587">587 (STARTTLS)</option><option value="465">465 (SSL)</option></select></div></div></details>
   <div id="ml_out"></div><div class="row end">${m.propio ? '<button type="button" class="btn sm" data-sv="mailcancel">Cancelar</button>' : ''}<button type="button" class="btn sm pri" data-sv="mailsave">Guardar y probar</button></div></div>`;
 }
@@ -131,11 +131,11 @@ function svFormHTML(qs, disabled) {
 ACT.svSend = b => {
   const i = ((S.sv && S.sv.invitaciones) || []).find(x => x.id === b.dataset.id); if (!i) return;
   const p = S.patients.find(x => x.id === i.patientId) || {}, url = svUrl(i.enlace), who = S.profile.nombre || 'tu terapeuta';
-  const text = `Hola ${(p.nombres || '').split(' ')[0]}, ${who} le invita a responder una encuesta corta y anónima sobre la atención que recibió (unos 2 minutos): ${url}`;
+  const text = `Hola ${(p.nombres || '').split(' ')[0]}, ${who} te invita a responder una encuesta corta y anónima sobre la atención que recibiste (unos 2 minutos): ${url}`;
   const ph = waPhone(p.telefono, p.telInd), root = $('#modal-root');
   root.innerHTML = `<div class="modal" role="dialog" aria-modal="true" aria-label="Enviar encuesta"><div class="box" style="max-width:560px"><h3>Enviar encuesta a ${esc(fullName(p))}</h3>
   ${i.error ? `<div class="banner">No se pudo enviar por correo: ${esc(i.error)}</div>` : ''}
-  <p style="margin:0;font-size:14px">Envíale este enlace por el medio que prefiera. Vence el ${esc(fmtD(i.vence))}. Después de enviarlo, márcalo como enviado.</p>
+  <p style="margin:0;font-size:14px">Envíale este enlace por el medio que prefieras. Vence el ${esc(fmtD(i.vence))}. Después de enviarlo, márcalo como enviado.</p>
   <div class="fld"><label for="sv_link">Enlace</label><input id="sv_link" readonly value="${esc(url)}"></div>
   <div class="row">${ph ? `<a class="btn" href="https://wa.me/${ph}?text=${encodeURIComponent(text)}" target="_blank" rel="noopener">WhatsApp</a>` : ''}${p.correo ? `<a class="btn" href="mailto:${esc(p.correo)}?subject=${encodeURIComponent('Encuesta de satisfacción')}&body=${encodeURIComponent(text)}">Correo</a>` : ''}<button class="btn" id="sv_copy">Copiar mensaje</button></div>
   <div class="row end"><button class="btn warn" id="sv_cancel">No enviar</button><button class="btn" id="sv_close">Cerrar</button><button class="btn pri" id="sv_sent">Ya la envié</button></div></div></div>`;

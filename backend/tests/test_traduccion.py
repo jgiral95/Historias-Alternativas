@@ -6,8 +6,8 @@ from app import booking, correo, traduccion
 
 
 def test_tr_lineas_y_patrones():
-    assert traduccion.tr("¡Lo esperamos!", "en") == "We look forward to seeing you!"
-    assert traduccion.tr("¡Lo esperamos!", "es") == "¡Lo esperamos!"
+    assert traduccion.tr("¡Te esperamos!", "en") == "We look forward to seeing you!"
+    assert traduccion.tr("¡Te esperamos!", "es") == "¡Te esperamos!"
     assert traduccion.tr("Hola, Luis. Ya reservamos tu espacio con Ana. Estos son los datos de tu cita:", "en") == "Hello, Luis. We've reserved your spot with Ana. Here are your appointment details:"
     assert traduccion.tr("martes 4 de noviembre a las 3:00 p. m.", "en") == "Tuesday, November 4 at 3:00 p. m."
     assert traduccion.tr("texto sin traducción", "en") == "texto sin traducción"

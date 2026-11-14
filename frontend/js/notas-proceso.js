@@ -59,7 +59,7 @@ function pnListHTML() {
 }
 function pnEditorHTML(n) {
   if (!n) return `<div class="pned"><h3 style="margin:0">Notas de proceso</h3><div class="banner" style="margin:0"><b>Son tus notas de trabajo, no la ficha.</b> Aquí van hipótesis, formulaciones, lo que habló en supervisión e ideas para el caso. No se firman, no salen en la historia completa ni en copias o informes, y tu equipo no las ve. Puedes editarlas y borrarlas cuando quieras.</div>
-    <p class="stnote" style="margin:0">Lo que haga parte de la atención (lo ocurrido en la sesión, el impresión, las decisiones del proceso) debe quedar en la sesión de la historia.</p>
+    <p class="stnote" style="margin:0">Lo que haga parte de la atención (lo ocurrido en la sesión, la impresión, las decisiones del proceso) debe quedar en la sesión de la historia.</p>
     <div class="row"><button class="btn pri" data-act="pnNew">+ Nueva nota</button></div></div>`;
   const pts = S.patients.slice().sort((a, b) => fullName(a).localeCompare(fullName(b), 'es'));
   const pp = pnPat(n), segs = (n.seguimiento || []).map((x, i) => [x, i]).reverse();
@@ -75,7 +75,7 @@ function pnEditorHTML(n) {
       <div class="hwthumbs" id="hwthumbs">${(n.manos || []).map((h, i) => `<button class="hwthumb" data-act="hwOpen" data-i="${i}" aria-label="Abrir hoja a mano ${i + 1}"><img data-hw="${i}" alt=""><span>Hoja ${i + 1} · ${esc(fmtShort(h.at))}</span></button>`).join('')}</div>
       <div class="row"><button class="btn sm" data-act="hwOpen" data-i="new">✎ Escribir a mano</button><span class="hwhint">Con lápiz en tablet o con el dedo. La escritura a mano no entra en la búsqueda: ponle un título a la nota.</span></div></div>
     <div class="sec" style="margin:0"><h3 style="margin:0">Seguimiento${segs.length ? ' (' + segs.length + ')' : ''}</h3>
-      <p class="stnote" style="margin:0">Agrega cómo evoluciona la idea: qué confirmó o descartó, qué le dijeron en supervisión, qué probar en la próxima sesión.</p>
+      <p class="stnote" style="margin:0">Agrega cómo evoluciona la idea: qué confirmó o descartó, qué te dijeron en supervisión, qué probar en la próxima sesión.</p>
       <div class="fld"><label for="pn_seg" class="sr-only">Nuevo seguimiento</label><textarea id="pn_seg" rows="3" placeholder="Nuevo seguimiento…"></textarea></div>
       <div class="row end"><button class="btn sm pri" data-act="pnSeg">Agregar seguimiento</button></div>
       ${segs.map(([x, i]) => `<div class="pnseg"><span class="ts">${esc(fmtShort(x.at))} <button class="btn sm" data-act="pnSegDel" data-i="${i}" style="padding:0 6px;margin-left:4px" aria-label="Quitar este seguimiento">Quitar</button></span><p>${pnMark(x.texto, S.pn.q)}</p></div>`).join('')}</div>

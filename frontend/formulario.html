@@ -92,7 +92,7 @@ let d;
 const COUNTRIES = (() => { const codes = 'AF AX AL DE AD AO AI AQ AG SA DZ AR AM AW AU AT AZ BS BD BB BH BE BZ BJ BM BY BO BA BW BR BN BG BF BI BT CV KH CM CA BQ QA TD CZ CL CN CY CO KM CG CD KP KR CI CR HR CU CW DK DM EC EG SV AE ER SK SI ES US EE SZ ET PH FI FJ FR GA GM GE GH GI GD GR GL GP GU GT GF GG GN GQ GW GY HT HN HK HU IN ID IQ IR IE IS IL IT JM JP JE JO KZ KE KG KI KW LA LS LV LB LR LY LI LT LU MO MK MG MY MW MV ML MT MA MQ MU MR YT MX FM MD MC MN ME MS MZ MM NA NR NP NI NE NG NO NC NZ OM NL PK PW PS PA PG PY PE PF PL PT PR GB CF CD DO RE RW RO RU WS SM KN VC LC SN RS SC SL SG SY SO LK ZA SD SS SE CH SR TH TW TZ TJ TL TG TO TT TN TR TM TV UA UG UY UZ VU VA VE VN YE DJ ZM ZW'.split(' ');
   let n; try { const dn = new Intl.DisplayNames(['es'], { type: 'region' }); n = codes.map(c => dn.of(c)); } catch (e) { n = ['Venezuela', 'Ecuador', 'Perú', 'Panamá', 'México', 'España', 'Estados Unidos', 'Argentina', 'Chile']; }
   return ['Colombia', ...[...new Set(n)].filter(x => x && x !== 'Colombia' && x.length > 2).sort((a, b) => a.localeCompare(b, 'es'))]; })();
-const head = () => `<h1>${logo}Tus datos para la primera atención</h1><p>${d.nombre ? `<b>${esc(d.nombre)}</b> · ` : ''}${esc(d.profesional)} le pide que registre estos datos antes de tu primera atención.</p>`;
+const head = () => `<h1>${logo}Tus datos para la primera atención</h1><p>${d.nombre ? `<b>${esc(d.nombre)}</b> · ` : ''}${esc(d.profesional)} te pide que registres estos datos antes de tu primera atención.</p>`;
 const field = c => {
   const id = 'f_' + c.k, lab = `<label for="${id}">${esc(c.l)}${c.r ? ' <span class="req" aria-hidden="true">*</span>' : ''}</label>`;
   const val = '';
@@ -103,7 +103,7 @@ const field = c => {
 };
 function form() {
   card(head() + `<form id="f" class="btns" autocomplete="off" novalidate><div id="err" role="alert"></div><div class="fs">${d.campos.map(field).join('')}</div>
-    <p class="muted">Los campos con <span class="req">*</span> son obligatorios. Solo se registran los datos que le pide tu terapeuta; el consentimiento informado y la autorización de uso de tus datos los firmará con tu terapeuta en la primera atención. Si es menor de edad, escribe los datos del menor: tu profesional le pedirá los del acudiente.</p>
+    <p class="muted">Los campos con <span class="req">*</span> son obligatorios. Solo se registran los datos que te pide tu terapeuta; el consentimiento informado y la autorización de uso de tus datos los firmará con tu terapeuta en la primera atención. Si es menor de edad, escribe los datos del menor: tu terapeuta te pedirá los del acudiente.</p>
     <button type="submit">Enviar mis datos</button></form>`);
   $('#f').onsubmit = async e => {
     e.preventDefault();

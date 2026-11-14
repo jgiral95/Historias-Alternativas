@@ -47,8 +47,8 @@ def link(token: str, base: str = "") -> str:
 def message(p: dict, prof: dict, tipo: str, url: str) -> str:
     first = str(p.get("nombres") or "").split(" ")[0]
     who = prof.get("nombre") or "tu terapeuta"
-    return (f"Hola{(' ' + first) if first else ''}, {who} le envía el documento «{tipo}» para que lo lea y lo firme desde tu celular: {url} "
-            f"Para abrirlo se le pedirá tu número de documento. El enlace vence en {DAYS} días.")
+    return (f"Hola{(' ' + first) if first else ''}, {who} te envía el documento «{tipo}» para que lo leas y lo firmes desde tu celular: {url} "
+            f"Para abrirlo se te pedirá tu número de documento. El enlace vence en {DAYS} días.")
 
 
 def send_mail(to: str, body: str, prof: dict, acc: dict) -> None:

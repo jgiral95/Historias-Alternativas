@@ -121,7 +121,7 @@ def current_user(request: Request, response: Response, db: Session = Depends(get
     if idle > 60:  # sesión deslizante: renueva la marca de actividad
         set_session(request, response, user.id, tok["exp"])
     if user.must_change_password and request.url.path not in PASSWORD_FIRST_OK:
-        raise HTTPException(403, "Debe elegir tu propia contraseña antes de continuar")
+        raise HTTPException(403, "Debes elegir tu propia contraseña antes de continuar")
     return user
 
 
@@ -172,7 +172,7 @@ def ensure_writable(user: User, db: Session, nuevo_consultante: bool = False) ->
         return
     n = sum(1 for r in db.scalars(select(Record).where(Record.user_id == owner_id(user), Record.kind == "patient")) if not decrypt(r.payload).get("demo"))
     if nuevo_consultante and n >= 1:
-        raise HTTPException(402, "Sin suscripción solo puede probar con un consultante. Suscríbete en «Mi suscripción» para tener más.")
+        raise HTTPException(402, "Sin suscripción solo puedes probar con un consultante. Suscríbete en «Mi suscripción» para tener más.")
     if n > 1:
         raise HTTPException(402, "Tu suscripción no está activa: puedes consultar tus fichas, pero no modificarlas. Renueva en «Mi suscripción».")
 
@@ -566,7 +566,7 @@ def patch_user(uid: int, body: UserPatch, admin: User = Depends(require_admin), 
     if new_role not in ("admin", "user") and not (user.role == "asistente" and new_role == "asistente"):
         raise HTTPException(400, "Rol no válido")
     if user.id == admin.id and (new_role != "admin" or not new_active):
-        raise HTTPException(400, "No puede quitarse el rol de administrador ni desactivar tu propia cuenta")
+        raise HTTPException(400, "No puedes quitarte el rol de administrador ni desactivar tu propia cuenta")
     if user.role == "admin" and user.active and (new_role != "admin" or not new_active):
         others = db.scalar(select(func.count()).select_from(User).where(
             User.role == "admin", User.active.is_(True), User.id != user.id))
@@ -1325,7 +1325,7 @@ _vhits: dict[str, list[float]] = {}
 
 @app.get("/api/verify/{code}")
 def verify(code: str, request: Request, db: Session = Depends(get_db)):
-    """Cualquiera con el código impreso en un informe puede comprobar que es auténtico y ver tu contenido firmado."""
+    """Cualquiera con el código impreso en un informe puede comprobar que es auténtico y ver su contenido firmado."""
     ip = request.headers.get("cf-connecting-ip") or (request.client.host if request.client else "?")
     with _lock:
         hits = [t for t in _vhits.get(ip, []) if t > time.time() - WINDOW]
@@ -1555,7 +1555,7 @@ def twofa_enable(body: CodeIn, user: User = Depends(current_user), db: Session =
     secret = decrypt(user.totp_secret)["s"] if user.totp_secret else None
     step = totp_check(secret, body.code, None) if secret else None
     if step is None:
-        raise HTTPException(400, "El código no coincide. Revise que la hora del teléfono sea la correcta e intente con el código nuevo.")
+        raise HTTPException(400, "El código no coincide. Revisa que la hora del teléfono sea la correcta e intenta con el código nuevo.")
     codes = recovery_new()
     user.totp_enabled, user.totp_last, user.recovery_codes = True, step, json.dumps([recovery_hash(c) for c in codes])
     db.commit()
@@ -2226,7 +2226,7 @@ def public_consent_sign(token: str, body: RemoteSignIn, request: Request, db: Se
     r = _public_request(db, token)
     d = _unlock(db, r, body.documento)
     if not body.acepto:
-        raise HTTPException(400, "Marque que leyó y acepta el documento")
+        raise HTTPException(400, "Marca que leíste y aceptas el documento")
     if not SIG_RE.match(body.firma or "") or len(body.firma) > 400_000:
         raise HTTPException(400, "Dibuja tu firma")
     sha = firmas.text_hash(d["text"])
@@ -2243,8 +2243,8 @@ def public_consent_sign(token: str, body: RemoteSignIn, request: Request, db: Se
          "consultorio": d.get("consultorio"),
          "remoto": {"id": r.ref, "enviadoAt": d.get("enviadoAt"), "firmadoAt": now.isoformat(), "ip": ip[:64],
                     "navegador": (request.headers.get("user-agent") or "")[:300], "sha256": sha,
-                    "verificacion": "El firmante abrió tu enlace personal y escribió tu número de documento"},
-         "copia": "Disponible para el usuario en tu enlace de firma, donde puede guardarla o imprimirla"}
+                    "verificacion": "El firmante abrió su enlace personal y escribió su número de documento"},
+         "copia": "Disponible para el firmante en su enlace de firma, donde puede guardarla o imprimirla"}
     if d.get("plantilla"):
         c["plantilla"] = d["plantilla"]
     if d.get("therapistDocId"):

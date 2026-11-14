@@ -85,7 +85,7 @@ ACT.cancelSol = () => { S.newSol = false; render(); };
 ACT.saveSol = async b => {
   const p = curPatient(), o = readForm($('#solform'), {});
   if (!o.solicitante || !o.fecha) { toast('Indica el solicitante y la fecha.'); return; }
-  if (!o.verificado) { toast('Confirme que verificó la identidad y la autorización del solicitante.'); return; }
+  if (!o.verificado) { toast('Confirma que verificaste la identidad y la autorización del solicitante.'); return; }
   const snap = clone(p); dropBorrador(p, 'solform');
   p.solicitudes = (p.solicitudes || []).concat([{ id: newId('s'), fecha: o.fecha, calidad: o.calidad, solicitante: o.solicitante, documento: o.documento, medio: o.medio, observaciones: o.observaciones, verificado: true, registradoAt: nowISO(), registradoPor: S.profile.nombre }]);
   if (!(await persist([p], b))) { restore(p, snap); return; }
@@ -251,7 +251,7 @@ async function buildZip(b, p, sin) {
       while (used.has(fn)) fn = fn.replace(/(\.[^.]*)?$/, '-1$1'); used.add(fn);
       files.push({ name: fn, data: new Uint8Array(await (await fetchBlob(f.id)).arrayBuffer()) });
     }
-    files.push({ name: 'LEAME.txt', data: `Copia de la ficha de ${fullName(p)}\nGenerada el ${fmtDT(nowISO())} por ${S.profile.nombre || ''}.\n\nAbra el archivo .html en un navegador; desde allí puede imprimirlo o guardarlo como PDF.\nLa carpeta «anexos» contiene los documentos adjuntos.\n\nInformación reservada. Entrégala solo a quien tiene derecho a recibirla.\n` });
+    files.push({ name: 'LEAME.txt', data: `Copia de la ficha de ${fullName(p)}\nGenerada el ${fmtDT(nowISO())} por ${S.profile.nombre || ''}.\n\nAbre el archivo .html en un navegador; desde allí puedes imprimirlo o guardarlo como PDF.\nLa carpeta «anexos» contiene los documentos adjuntos.\n\nInformación reservada. Entrégala solo a quien tiene derecho a recibirla.\n` });
     const zip = makeZip(files), url = URL.createObjectURL(zip), a = document.createElement('a');
     a.href = url; a.download = 'historia-clinica-' + name + (sin.length ? '-parcial' : '') + '-' + stamp + '.zip'; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 10000);
     if (S.mode === 'server') api('/audit/export', { method: 'POST', body: { patientId: p.id } }).catch(() => { });
