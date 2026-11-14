@@ -70,8 +70,13 @@ ACT.team = async () => {
 ACT.profile = () => {
   if (TEAM()) return accountModal();
   const pr = S.profile, root = $('#modal-root');
-  root.innerHTML = `<div class="modal" role="dialog" aria-modal="true" aria-label="Mi perfil"><div class="box" id="profform"><div class="row" style="justify-content:space-between"><h3>Mi perfil</h3><button class="btn sm" id="pcl">Cerrar</button></div>
+  root.innerHTML = `<div class="modal" role="dialog" aria-modal="true" aria-label="Mi perfil"><div class="box tabbed" id="profform"><div class="row" style="justify-content:space-between"><h3>Mi perfil</h3><button class="btn sm" id="pcl">Cerrar</button></div>
+  <div class="tabs" role="tablist" aria-label="Secciones del perfil" style="margin:6px 0 0"><button type="button" role="tab" class="tab on" aria-selected="true" data-pt="datos">Datos</button><button type="button" role="tab" class="tab" aria-selected="false" data-pt="firma">Firma y logo</button>${S.mode === 'server' ? '<button type="button" role="tab" class="tab" aria-selected="false" data-pt="seg">Seguridad</button>' : ''}</div>
+  <div class="ptab" role="tabpanel" data-pp="datos">
   <div class="grid">${F('Nombre completo', 'nombre', pr.nombre)}${F('Cédula (documento de identidad)', 'cedula', pr.cedula || '')}${F('Título', 'titulo', pr.titulo)}${F('Registro (si lo tienes)', 'registro', pr.registro)}${F('Lugar de práctica', 'consultorio', pr.consultorio)}${F('Plataforma habitual de teleterapia', 'plataforma', pr.plataforma || '', { ph: 'Ej.: Google Meet' })}${F('Ciudad', 'ciudad', pr.ciudad)}${F('Teléfono', 'telefono', pr.telefono, { type: 'tel' })}${F('Correo', 'correo', pr.correo, { type: 'email' })}${F('Idioma de la app', 'idioma', pr.idioma === 'en' ? 'English' : 'Español', { type: 'select', opts: ['Español', 'English'] })}</div>
+  <p style="margin:0;font-size:13px;color:var(--muted)">Tus modelos de consentimiento (adultos, familia, niños…) se administran en «Mis consentimientos», desde la pestaña Consentimiento de cualquier consultante.</p>
+  </div>
+  <div class="ptab" role="tabpanel" data-pp="firma">
   <div class="fld"><span class="lbl">Logo para tus informes (opcional)</span>
   <div class="row" style="align-items:center"><span id="plogo">${pr.logo ? `<img class="logoprev" src="${pr.logo}" alt="Logo guardado">` : '<span style="font-size:13px;color:var(--muted)">Sin logo</span>'}</span>
   <input type="file" id="plogofile" accept="image/png,image/jpeg,image/webp,image/svg+xml" aria-label="Subir logo">${pr.logo ? '<button class="btn sm warn" id="plogodel" type="button">Quitar logo</button>' : ''}</div>
@@ -82,18 +87,21 @@ ACT.profile = () => {
   <label class="check"><input type="checkbox" id="psigbg" checked> <span>Quitar el fondo y recortar los bordes</span></label>
   <div id="psigprev" hidden><span class="lbl">Así quedará tu firma</span><img class="sigimg" id="psigimg" alt="Vista previa de la firma subida"><div class="row"><button class="btn sm" id="psigdrop">Descartar imagen</button></div></div>
   <p style="margin:0;font-size:12px;color:var(--muted)">Para un mejor resultado, firma con tinta oscura sobre papel blanco y toma la foto con buena luz.</p></div></div>
-  <p style="margin:0;font-size:13px;color:var(--muted)">Tus modelos de consentimiento (adultos, familia, niños…) se administran en «Mis consentimientos», desde la pestaña Consentimiento de cualquier consultante.</p>
-  <div class="row end"><button class="btn pri" id="psave">Guardar perfil</button></div>
-  ${S.mode === 'server' ? `<details class="sec" id="pwbox"><summary class="sum">Cambiar contraseña</summary><form id="pwform" class="sec" autocomplete="on" onsubmit="return false">
+  </div>
+  ${S.mode === 'server' ? `<div class="ptab" role="tabpanel" data-pp="seg" hidden><details class="sec" id="pwbox"><summary class="sum">Cambiar contraseña</summary><form id="pwform" class="sec" autocomplete="on" onsubmit="return false">
     <input type="email" autocomplete="username" value="${esc(S.user ? S.user.email : '')}" hidden aria-hidden="true" tabindex="-1">
     <div class="grid"><div class="fld"><label for="pw_cur">Contraseña actual</label><input id="pw_cur" type="password" autocomplete="current-password"></div>
     <div class="fld"><label for="pw_new">Nueva contraseña</label><input id="pw_new" type="password" autocomplete="new-password" minlength="10"></div>
     <div class="fld"><label for="pw_new2">Repite la nueva contraseña</label><input id="pw_new2" type="password" autocomplete="new-password"></div></div>
     <p style="margin:0;font-size:13px;color:var(--muted)">Mínimo 10 caracteres. Este cambio se guarda aparte de los datos del perfil.</p>
     <div class="row end"><button class="btn" id="pwsave" type="button">Cambiar contraseña</button></div></form></details>
-  <details class="sec" id="tfbox"><summary class="sum">Verificación en dos pasos ${S.user && S.user.totp ? '<span class="chip ok" style="text-transform:none;letter-spacing:0">Activa</span>' : '<span class="chip warn" style="text-transform:none;letter-spacing:0">Inactiva</span>'}</summary><div id="tfbody" class="sec"></div></details>` : ''}</div></div>`;
+  <details class="sec" id="tfbox"><summary class="sum">Verificación en dos pasos ${S.user && S.user.totp ? '<span class="chip ok" style="text-transform:none;letter-spacing:0">Activa</span>' : '<span class="chip warn" style="text-transform:none;letter-spacing:0">Inactiva</span>'}</summary><div id="tfbody" class="sec"></div></details></div>` : ''}
+  <div class="row end pfoot"><button class="btn pri" id="psave">Guardar perfil</button></div></div></div>`;
   if ($('#tfbox')) $('#tfbox').addEventListener('toggle', e => { if (e.target.open) draw2fa(); });
   const pad = makePad($('#psig'), 'profSig');
+  const showTab = k => { root.querySelectorAll('.ptab').forEach(x => { x.hidden = x.dataset.pp !== k; }); root.querySelectorAll('[data-pt]').forEach(x => { const on = x.dataset.pt === k; x.classList.toggle('on', on); x.setAttribute('aria-selected', on); }); };
+  root.querySelectorAll('[data-pt]').forEach(x => { x.onclick = () => showTab(x.dataset.pt); });
+  showTab('datos');  /* el panel de firma se pinta visible para medir el lienzo y luego se oculta */
   if ($('#pwsave')) $('#pwsave').onclick = async () => {
     const cur = $('#pw_cur').value, nw = $('#pw_new').value, nw2 = $('#pw_new2').value;
     if (!cur || !nw) { toast('Escribe la contraseña actual y la nueva.'); return; }

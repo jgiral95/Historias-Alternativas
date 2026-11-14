@@ -552,3 +552,11 @@ h1,h2,h3{font-family:var(--f-doc);font-weight:600;letter-spacing:.1px}
 .ap.pasada{opacity:.6}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#15191F;--surface:#1D232B;--surface2:#27303A;--ink:#E4E9EE;--muted:#9DAAB6;--line:#303A46;--accent:#93C4B4;--accent-ink:#0F1E1A;--accent-soft:#223A3A;--accent-fg:#BFE0D4;--warn-soft:#33291F}}
 :root[data-theme="dark"]{--bg:#15191F;--surface:#1D232B;--surface2:#27303A;--ink:#E4E9EE;--muted:#9DAAB6;--line:#303A46;--accent:#93C4B4;--accent-ink:#0F1E1A;--accent-soft:#223A3A;--accent-fg:#BFE0D4;--warn-soft:#33291F}
+
+/* Ventana con pestañas (Mi perfil): alto fijo, pestañas arriba, «Guardar» siempre visible */
+.modal>.box.tabbed{height:min(740px,calc(100vh - 32px));height:min(740px,calc(100dvh - 32px));gap:8px;padding-bottom:0}
+.ptab{flex:1;min-height:0;overflow:auto;padding:12px 6px 16px 0;display:flex;flex-direction:column;gap:16px;scrollbar-width:thin;scrollbar-color:var(--line) transparent}
+.ptab[hidden]{display:none}
+.pfoot{flex:none;padding:14px 0 18px;border-top:1px solid var(--line)}
+.box.tabbed .ptab>.card,.box.tabbed .ptab>.sec{flex:none}
+.box.tabbed .fld input:focus,.box.tabbed .fld select:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
