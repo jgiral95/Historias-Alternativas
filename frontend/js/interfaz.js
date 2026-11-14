@@ -632,3 +632,11 @@ function tabsMount(w) {
 const tabsScan = () => document.querySelectorAll('.tabwrap:not([data-m])').forEach(tabsMount);
 new MutationObserver(tabsScan).observe(document.documentElement, { childList: true, subtree: true });
 window.addEventListener('resize', () => document.querySelectorAll('.tabwrap .tabs').forEach(t => t.dispatchEvent(new Event('scroll'))));
+
+/* Celular: al escribir se oculta la barra inferior de secciones (la tapaba junto al teclado) */
+(function () {
+  const ESCRIBE = el => !!(el && el.matches && el.matches('textarea,[contenteditable="true"],input:not([type=checkbox]):not([type=radio]):not([type=button]):not([type=submit]):not([type=file]):not([type=range]):not([type=color])'));
+  const marca = () => document.body.classList.toggle('escribiendo', ESCRIBE(document.activeElement));
+  document.addEventListener('focusin', marca);
+  document.addEventListener('focusout', () => setTimeout(marca, 60));
+})();

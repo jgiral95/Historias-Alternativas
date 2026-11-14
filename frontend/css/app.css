@@ -587,3 +587,10 @@ h1,h2,h3{font-family:var(--f-doc);font-weight:600;letter-spacing:.1px}
 .pwojo{position:absolute;right:4px;top:50%;transform:translateY(-50%);width:34px;height:34px;display:flex;align-items:center;justify-content:center;background:none;border:0;border-radius:99px;color:var(--muted);cursor:pointer;padding:0;min-height:0}
 .pwojo:hover{color:var(--accent-fg);background:var(--accent-soft)}
 @media (max-width:640px){#simbtn{bottom:calc(84px + env(safe-area-inset-bottom,0px))}#simpanel{bottom:calc(132px + env(safe-area-inset-bottom,0px));max-height:50vh}}
+@media (max-width:640px){
+  body.escribiendo .nav{display:none}
+  body.escribiendo #app{padding-bottom:16px}
+  body.escribiendo #fb-root,body.escribiendo #simbtn{bottom:16px}
+  body.escribiendo #simpanel{bottom:64px}
+  body.escribiendo .toast{bottom:18px}
+}
