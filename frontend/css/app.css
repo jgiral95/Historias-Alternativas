@@ -560,3 +560,7 @@ h1,h2,h3{font-family:var(--f-doc);font-weight:600;letter-spacing:.1px}
 .pfoot{flex:none;padding:14px 0 18px;border-top:1px solid var(--line)}
 .box.tabbed .ptab>.card,.box.tabbed .ptab>.sec{flex:none}
 .box.tabbed .fld input:focus,.box.tabbed .fld select:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+
+/* Nueva cita: la ✕ va pegada al borde derecho (la regla general reserva 62 px a la derecha para una ✕ flotante) */
+.modal>.box>.row.aphd:first-child:has(h3){padding-right:18px;align-items:flex-start}
+@media (max-width:560px){.modal>.box>.row.aphd:first-child:has(h3){padding-right:14px}}
