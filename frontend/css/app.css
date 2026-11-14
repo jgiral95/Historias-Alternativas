@@ -563,18 +563,20 @@ h1,h2,h3{font-family:var(--f-doc);font-weight:600;letter-spacing:.1px}
 .modal>.box>.row.aphd:first-child:has(h3){padding-right:18px;align-items:flex-start}
 @media (max-width:560px){.modal>.box>.row.aphd:first-child:has(h3){padding-right:14px}}
 
-/* Celular: la cabecera en varias filas no puede ser una píldora; las secciones se deslizan dentro de ella */
+/* Celular: iniciales arriba a la derecha, buscador con «+» y modo oscuro debajo, y las secciones en una barra abajo con iconos */
+.nav .navico{display:none}
 @media (max-width:640px){
   .top{border-radius:22px;padding:10px 12px;gap:10px}
-  .nav{min-width:0;max-width:100%;overflow-x:auto;justify-content:flex-start;scrollbar-width:none}
-  .nav::-webkit-scrollbar{display:none}
-  .nav button{flex:none;white-space:nowrap}
-  .brand{order:1;flex:1 1 auto;min-width:0}.brand b{font-size:17px}.brand svg{width:30px;height:30px}
-  .top-actions{order:2;margin-left:0;gap:6px}.top-actions .btn.pri{width:38px;height:38px;padding:0;display:flex;align-items:center;justify-content:center}
+  .brand{order:1;flex:1 1 60%;min-width:0}.brand b{font-size:17px}.brand svg{width:30px;height:30px}
+  .top-actions{display:contents}
+  .top-actions .avwrap{order:2;margin-left:auto}
+  .top-search{order:3;flex:1 1 140px}
+  .top-actions>.iconbtn{order:4}
+  .top-actions>.btn.pri{order:5;width:38px;height:38px;padding:0;display:flex;align-items:center;justify-content:center}
+  .nav{position:fixed;left:0;right:0;bottom:0;order:0;z-index:30;border-radius:0;background:var(--surface);border-top:1px solid var(--line);padding:6px 6px calc(6px + env(safe-area-inset-bottom,0px));gap:0;box-shadow:0 -2px 12px rgba(30,40,30,.08);overflow:visible;justify-content:stretch}
+  .nav button{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 2px;font-size:11.5px;border-radius:12px;background:none!important;box-shadow:none!important;white-space:nowrap}
+  .nav button.on{color:var(--accent-fg);font-weight:600}
+  .nav .navico{display:block;width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+  #app{padding-bottom:78px}#fb-root{bottom:calc(84px + env(safe-area-inset-bottom,0px))}.toast{bottom:calc(86px + env(safe-area-inset-bottom,0px))}
+  body:has(#fb-root .fbbtn) .shell{padding-bottom:78px}
 }
-
-/* Ojito de las contraseñas (js/ojito.js) */
-.pwwrap{position:relative;display:flex;flex:1 1 auto;min-width:0}
-.pwwrap>input{flex:1;min-width:0;padding-right:42px}
-.pwojo{position:absolute;right:4px;top:50%;transform:translateY(-50%);width:34px;height:34px;display:flex;align-items:center;justify-content:center;background:none;border:0;border-radius:99px;color:var(--muted);cursor:pointer;padding:0}
-.pwojo:hover{color:var(--accent-fg);background:var(--accent-soft)}
