@@ -125,7 +125,7 @@ function renderMain() {
 const GROUPS = [['Activo', 'Activos'], ['En pausa', 'En pausa'], ['Remitido', 'Remitidos'], ['Alta', 'De alta'], ['Cerrado', 'Cerrados']];
 function prowHTML(p) {
   const st = sessionStats(p);
-  return `<button class="prow ${p.id === S.pid ? 'on' : ''}" data-act="open" data-id="${p.id}"><span class="av av${avTone(p)}" aria-hidden="true">${esc(avIni(p))}</span><span class="dot ${p.estado === 'En pausa' ? 'pausa' : isClosed(p) ? 'alta' : ''}"></span><span><div class="nm">${esc(fullName(p))}${p.demo ? ' <span class="chip" style="font-size:10px">Ejemplo</span>' : ''}</div><div class="sub">${esc(p.documento || 'sin documento')}${st.last ? ' · últ. ' + esc(fmtD(st.last).replace(/ de /g, ' ')) : ''}</div></span></button>`;
+  return `<button class="prow ${p.id === S.pid ? 'on' : ''}" data-act="open" data-id="${p.id}"><span class="dot ${p.estado === 'En pausa' ? 'pausa' : isClosed(p) ? 'alta' : ''}"></span><span><div class="nm">${esc(fullName(p))}${p.demo ? ' <span class="chip" style="font-size:10px">Ejemplo</span>' : ''}</div><div class="sub">${esc(p.documento || 'sin documento')}${st.last ? ' · últ. ' + esc(fmtD(st.last).replace(/ de /g, ' ')) : ''}</div></span></button>`;
 }
 const norm = v => String(v || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
 /* Búsqueda de símbolos: «virgo» también encuentra ♍ y ♍ también encuentra «virgo» (nombres del banco de símbolos, simbolos.js).
@@ -322,10 +322,6 @@ function homeHTML() {
   ${notesListHTML()}
   <p style="color:var(--muted);margin:0">Selecciona un consultante de la lista o crea uno nuevo. Cada consentimiento, primera vez, nota de sesión e informe queda firmado con tu firma, la fecha y la hora, y no se puede modificar después; solo se pueden agregar adendas.</p></div></div>`;
 }
-
-/* Avatar de la lista: iniciales sobre un tono tierra/salvia estable por consultante. */
-const avIni = p => (fullName(p).match(/\p{L}/gu) || ['?']).slice(0, 2).join('').toUpperCase();
-const avTone = p => { let h = 0; for (const c of String(p.id || fullName(p))) h = (h * 31 + c.charCodeAt(0)) % 5; return h; };
 
 /* Saludo según la hora, con el primer nombre del terapeuta si ya lo tiene en «Mi perfil». */
 function saludo() {
