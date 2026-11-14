@@ -48,6 +48,7 @@ FastAPI + SQLAlchemy. `main.py` (endpoints; registros cifrados por tipo: profile
 | Datos del consultante: campos fijos (nombre, apellido, documento) | `datos_fijos_e2e.js` |
 | Popups: clic fuera para cerrar | `popup_fuera_e2e.js` |
 | Idioma EN | `i18n_e2e.js` (lista el español sin traducir), `publicas_i18n_e2e.js`, `test_traduccion.py` |
+| Ingreso con Google | `google_login_e2e.js`, `test_registro.py -k google` |
 | Reservas por enlace | `test_booking.py` |
 | Formularios de datos | `test_formularios.py` |
 | Recordatorio por cita (pestaña en el popup, días y frecuencia) | `recordatorio_cita_e2e.js`, `test_reminders.py` |

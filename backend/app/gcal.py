@@ -43,6 +43,25 @@ def redirect_uri() -> str:
     return BASE_URL + "/api/google/callback"
 
 
+def login_url(state: str) -> str:
+    """Ingreso/creación de cuenta con Google: solo identidad (correo y nombre), mismo redirect que el calendario."""
+    q = {"client_id": CLIENT_ID, "redirect_uri": redirect_uri(), "response_type": "code", "scope": "openid email profile",
+         "prompt": "select_account", "state": state}
+    return AUTH_URL + "?" + urllib.parse.urlencode(q)
+
+
+def login_profile(code: str) -> dict:
+    """Cambia el código por la identidad de la persona: {email, email_verified, name}."""
+    st, j = http("POST", TOKEN_URL, {"code": code, "client_id": CLIENT_ID, "client_secret": CLIENT_SECRET,
+                                     "redirect_uri": redirect_uri(), "grant_type": "authorization_code"}, form=True)
+    if st != 200 or not j.get("access_token"):
+        raise GoogleError(st, j.get("error_description") or j.get("error") or "Google no confirmó la identidad")
+    st, info = http("GET", "https://openidconnect.googleapis.com/v1/userinfo", token=j["access_token"])
+    if st != 200 or not info.get("email"):
+        raise GoogleError(st, "Google no entregó el correo")
+    return info
+
+
 def http(method: str, url: str, body: dict | None = None, token: str | None = None, form: bool = False):
     """Llamada HTTP a Google. Devuelve (estado, json). Se reemplaza en las pruebas."""
     headers = {"Accept": "application/json"}

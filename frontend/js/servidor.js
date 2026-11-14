@@ -20,11 +20,15 @@ function renderDown() {
   clearTimeout(renderDown.t); renderDown.t = setTimeout(() => location.reload(), 30000);
 }
 /* Cuenta nueva con correo: se envía un enlace para confirmarlo y la cuenta se crea al abrirlo. */
+/* Logo «G» y estilo del botón según las guías de marca de Google. */
+const GOOGLE_G = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="18" height="18" aria-hidden="true" style="display:block;flex:none"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>';
+const GOOGLE_BTN = txt => `<a class="btn" href="/api/auth/google/start" style="display:flex;align-items:center;justify-content:center;gap:10px;text-decoration:none;background:#fff;color:#1f1f1f;border:1px solid #747775;font-weight:500">${GOOGLE_G}<span>${txt}</span></a>`;
 function renderRegistro(msg, v) {
   v = v || {};
   $('#app').innerHTML = `<div class="panel" style="width:100%;max-width:400px;box-sizing:border-box;margin:8vh auto 0"><form class="body" id="regform" autocomplete="on">
     <a class="brand" href="/" aria-label="Alter-Karute: ir a la página principal" style="text-decoration:none;color:inherit">${logoSVG(60)}<b>Alter-Karute</b></a><p style="margin:0;color:var(--muted)">Cree su cuenta para empezar.</p>
     ${msg ? `<div class="banner" role="alert">${esc(msg)}</div>` : ''}
+    ${GOOGLE_BTN('Crear cuenta con Google')}<p style="margin:0;text-align:center;color:var(--muted);font-size:13px">o con su correo</p>
     <div class="fld"><label for="rg_name">Nombre completo</label><input id="rg_name" autocomplete="name" value="${esc(v.name || '')}" required></div>
     <div class="fld"><label for="rg_email">Correo</label><input id="rg_email" type="email" autocomplete="username" value="${esc(v.email || '')}" required></div>
     <div class="fld"><label for="rg_pass">Contraseña</label><input id="rg_pass" type="password" autocomplete="new-password" minlength="10" required></div>
@@ -54,7 +58,7 @@ function renderLogin(msg, email) {
     ${msg ? `<div class="banner" role="alert">${esc(msg)}</div>` : ''}
     <div class="fld"><label for="lg_email">Correo</label><input id="lg_email" type="email" autocomplete="username" value="${esc(email || '')}" required></div>
     <div class="fld"><label for="lg_pass">Contraseña</label><input id="lg_pass" type="password" autocomplete="current-password" required></div>
-    <button class="btn pri" type="submit">Ingresar</button><button class="btn" type="button" id="lg_reg">Crear cuenta</button><p style="margin:0;font-size:13px;text-align:center"><a href="privacidad" target="_blank" rel="noopener" style="color:var(--muted)">Política de privacidad</a></p></form></div>`;
+    <button class="btn pri" type="submit">Ingresar</button><button class="btn" type="button" id="lg_reg">Crear cuenta</button>${GOOGLE_BTN('Ingresar con Google')}<p style="margin:0;font-size:13px;text-align:center"><a href="privacidad" target="_blank" rel="noopener" style="color:var(--muted)">Política de privacidad</a></p></form></div>`;
   $('#lg_reg').onclick = () => renderRegistro();
   $('#loginform').onsubmit = async ev => {
     ev.preventDefault();
@@ -248,7 +252,18 @@ new MutationObserver(ms => ms.forEach(m => m.addedNodes.forEach(n => { if (n.nod
   });
   await Store.init();
   if (S.mode === 'down') { renderDown(); return; }
-  const qs = new URLSearchParams(location.search), vt = qs.get('verificar');
+  if (S.mode === 'server' && !S.user && /^#gs=/.test(location.hash)) {  // volvió de Google: se canjea el permiso por la sesión
+    const gs = location.hash.slice(4);
+    history.replaceState(null, '', location.pathname);
+    try {
+      const r = await api('/auth/google/session', { method: 'POST', body: { ticket: gs }, noRedirect: true });
+      if (r.need_2fa) { renderCode(r.ticket, r.email, '', r.remember_days); return; }  // cuenta con dos pasos en un dispositivo no recordado
+      S.user = r;
+    } catch (err) { renderLogin(err.message); return; }
+  }
+  const qs = new URLSearchParams(location.search), vt = qs.get('verificar'), gl = qs.get('gl');
+  if (gl) history.replaceState(null, '', location.pathname);
+  if (S.mode === 'server' && !S.user && gl) { renderLogin({ cancel: 'No se concedió el permiso en Google.', off: 'El ingreso con Google no está disponible por ahora.', inactive: 'Esta cuenta está desactivada.', limit: 'Se crearon demasiadas cuentas desde esta conexión hoy. Intente de nuevo mañana.' }[gl] || 'No se pudo ingresar con Google. Intente de nuevo.'); return; }
   if (S.mode === 'server' && !S.user && vt) {
     history.replaceState(null, '', location.pathname);
     try { S.user = await api('/auth/verify', { method: 'POST', body: { token: vt }, noRedirect: true }); }

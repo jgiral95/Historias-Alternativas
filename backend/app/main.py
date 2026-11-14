@@ -1375,11 +1375,89 @@ def google_connect(body: GDetail, user: User = Depends(pro_user)):
     return {"url": gcal.auth_url(state)}
 
 
+@app.get("/api/auth/google/start")
+def google_login_start():
+    """Botón «Ingresar / Crear cuenta con Google»: lleva a Google a confirmar la identidad."""
+    if not gcal.enabled():
+        return RedirectResponse("/app?gl=off", status_code=303)
+    state = jwt.encode({"p": "glogin", "exp": int(time.time()) + 600}, SESSION_SECRET, algorithm="HS256")
+    return RedirectResponse(gcal.login_url(state), status_code=303)
+
+
+def _google_login(request: Request, code: str, error: str, db: Session) -> RedirectResponse:
+    if error or not code:
+        return RedirectResponse("/app?gl=cancel" if error == "access_denied" else "/app?gl=error", status_code=303)
+    try:
+        info = gcal.login_profile(code)
+    except gcal.GoogleError:
+        return RedirectResponse("/app?gl=error", status_code=303)
+    email = str(info["email"]).strip().lower()
+    if not info.get("email_verified") or not EMAIL_RE.match(email):
+        return RedirectResponse("/app?gl=error", status_code=303)
+    user = db.scalar(select(User).where(User.email == email))
+    if user and not user.active:
+        return RedirectResponse("/app?gl=inactive", status_code=303)
+    if not user:
+        if _signup_limit(client_ip(request) or "?"):
+            return RedirectResponse("/app?gl=limit", status_code=303)
+        name = (info.get("name") or email.split("@")[0]).strip()[:200]
+        user = User(email=email, name=name, password_hash=hash_password(secrets.token_urlsafe(32)), role="user")
+        db.add(user)
+        db.commit()
+        audit(db, user.id, "user.create", f"{email} (Google)", ip=client_ip(request))
+    # La sesión no se abre aquí: una cookie «Strict» puesta durante la redirección desde Google la descartan algunos navegadores.
+    # La página canjea este permiso de un solo uso con una llamada propia (POST /api/auth/google/session).
+    ticket = jwt.encode({"sub": str(user.id), "p": "gsess", "jti": secrets.token_urlsafe(12), "exp": int(time.time()) + 120},
+                        SESSION_SECRET, algorithm="HS256")
+    return RedirectResponse("/app#gs=" + ticket, status_code=303)
+
+
+_g_used: dict[str, int] = {}
+
+
+class GSessionIn(BaseModel):
+    ticket: str
+
+
+@app.post("/api/auth/google/session")
+def google_session(body: GSessionIn, request: Request, response: Response, db: Session = Depends(get_db)):
+    """Canjea el permiso de un solo uso que dejó el ingreso con Google por la sesión."""
+    try:
+        t = jwt.decode(body.ticket, SESSION_SECRET, algorithms=["HS256"])
+        assert t.get("p") == "gsess"
+    except Exception:
+        raise HTTPException(400, "El ingreso con Google venció. Intente de nuevo.")
+    with _lock:
+        now = int(time.time())
+        for k in [k for k, e in _g_used.items() if e < now]:
+            del _g_used[k]
+        if t["jti"] in _g_used:
+            raise HTTPException(400, "El ingreso con Google venció. Intente de nuevo.")
+        _g_used[t["jti"]] = int(t["exp"])
+    user = db.get(User, int(t["sub"]))
+    if not user or not user.active:
+        raise HTTPException(400, "El ingreso con Google venció. Intente de nuevo.")
+    if user.totp_enabled:
+        # Con dos pasos activos, Google solo confirma la identidad: en un dispositivo de confianza entra directo; si no, falta el segundo paso.
+        if _trusted_device(request, response, db, user):
+            set_session(request, response, user.id)
+            audit(db, user.id, "login.ok", "Google · dispositivo de confianza", ip=client_ip(request))
+            return {**user_out(user, None), "idle_minutes": IDLE_MINUTES, "comentarios": BETA_COMENTARIOS}
+        audit(db, user.id, "login.google_ok", "falta el segundo paso", ip=client_ip(request))
+        t2 = jwt.encode({"sub": str(user.id), "p": "2fa", "exp": int(time.time()) + 300}, SESSION_SECRET, algorithm="HS256")
+        return {"need_2fa": True, "ticket": t2, "email": user.email, "remember_days": TRUSTED_DEVICE_DAYS}
+    set_session(request, response, user.id)
+    audit(db, user.id, "login.ok", "Google", ip=client_ip(request))
+    return {**user_out(user, None), "idle_minutes": IDLE_MINUTES, "comentarios": BETA_COMENTARIOS}
+
+
 @app.get("/api/google/callback")
-def google_callback(bg: BackgroundTasks, state: str = "", code: str = "", error: str = "", db: Session = Depends(get_db)):
+def google_callback(request: Request, bg: BackgroundTasks, state: str = "", code: str = "", error: str = "", db: Session = Depends(get_db)):
     """Google vuelve aquí tras el permiso. La cookie no llega (SameSite=Strict), así que el usuario sale del «state» firmado."""
     try:
         st = jwt.decode(state, SESSION_SECRET, algorithms=["HS256"])
+        if st.get("p") == "glogin":
+            return _google_login(request, code, error, db)
         assert st.get("p") == "gcal"
         uid = int(st["sub"])
     except Exception:
