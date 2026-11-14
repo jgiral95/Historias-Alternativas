@@ -41,10 +41,16 @@ const DIRTY_SEL = '#noteform, #intakeform, #reportform, #cierreform, #scaleform,
 function askDiscard(go) {
   if ($('#discardask')) return;
   const d = document.createElement('div'); d.className = 'idle'; d.id = 'discardask';
-  d.innerHTML = '<div class="box" role="alertdialog" aria-labelledby="dk_t"><b id="dk_t">Tiene cambios sin guardar</b><p style="margin:0">Si sale ahora, lo que escribió se pierde. Pulse «Seguir escribiendo» y guárdelo.</p><div class="row end"><button class="btn warn" id="dk_go">Descartar y salir</button><button class="btn pri" id="dk_stay">Seguir escribiendo</button></div></div>';
+  d.innerHTML = '<div class="box" role="alertdialog" aria-labelledby="dk_t"><b id="dk_t">Tiene cambios sin guardar</b><p style="margin:0">Si sale ahora, lo que escribió se pierde. Guárdelo como borrador o pulse «Seguir escribiendo».</p><div class="row end"><button class="btn warn" id="dk_go">Descartar y salir</button><button class="btn" id="dk_draft">Guardar borrador y salir</button><button class="btn pri" id="dk_stay">Seguir escribiendo</button></div></div>';
   document.body.appendChild(d);
   $('#dk_stay').onclick = () => d.remove();
   $('#dk_go').onclick = () => { d.remove(); go(); };
+  $('#dk_draft').onclick = async () => {  // igual que el guardado automático: acepta datos incompletos
+    const db = draftBtn(); AUTO.busy = AUTO.on = true;
+    try { if (db) await ACT[db.dataset.act](db); else await saveBorradorForm(); } catch (e) { /* queda sin guardar */ }
+    AUTO.busy = AUTO.on = false;
+    if (!S.dirty) { d.remove(); go(); } else { d.remove(); toast('No se pudo guardar el borrador.'); }
+  };
   $('#dk_stay').focus();
 }
 /* ----- Botón «Atrás» del navegador (y gesto de volver en el celular) -----

@@ -21,6 +21,11 @@ let bad = 0; const ok = (c, m) => { console.log((c ? 'OK   ' : 'FALLA') + ' ' + 
   ok(p && p.apellidos === 'Prueba' && p.documento === '12345678', 'se guarda con nombre, apellido y documento sin configurar campos propios');
   await page.evaluate(() => ACT.formats && ACT.formats()); await page.waitForTimeout(300);
   ok(/Campos fijos/.test(await page.locator('body').innerText()) || true, 'editor abierto');
+  await page.evaluate(() => { const r = document.querySelector('#modal-root'); if (r) r.innerHTML = ''; });
+  // «Guardar borrador y salir» del aviso de cambios sin guardar: guarda incompleto y sale
+  await page.click('[data-act="newPatient"]'); await page.waitForSelector('[data-f="nombres"]'); await page.fill('[data-f="nombres"]', 'Solo Nombre'); await page.dispatchEvent('[data-f="nombres"]', 'input');
+  await page.click('[data-act="home"]'); await page.waitForSelector('#discardask'); await page.click('#dk_draft'); await page.waitForTimeout(800);
+  ok(await page.locator('#discardask').count() === 0 && await page.evaluate(() => S.patients.some(x => x.nombres === 'Solo Nombre')), '«Guardar borrador y salir» guarda el borrador incompleto y sale');
   ok(errors.length === 0, 'sin errores de JavaScript' + (errors.length ? ': ' + errors[0] : ''));
   await b.close(); process.exit(bad);
 })().catch(e => { console.error(e); process.exit(1); });
