@@ -125,9 +125,9 @@ def send_mail(to: str, body: str, prof: dict, acc: dict) -> None:
     reply = acc.get("from") if acc.get("propio") else prof.get("correo")
     if reply:
         m["Reply-To"] = reply
-    m.set_content(body + "\n\nSi no esperaba este mensaje, ignórelo o comunícate con el consultorio.\n")
+    m.set_content(body + "\n\nSi no esperabas este mensaje, ignóralo o comunícate con el consultorio.\n")
     antes, url, despues = correo.separar_enlace(body)
     correo.agregar(m, correo.layout("Completa tus datos", [antes, despues], boton=("Llenar el formulario", url) if url else None,
-                                    notas=["Si no esperaba este mensaje, ignórelo o comunícate con el consultorio."], firma=("Atentamente,", prof.get("nombre") or place)), prof.get("idioma"))
+                                    notas=["Si no esperabas este mensaje, ignóralo o comunícate con el consultorio."], firma=("Atentamente,", prof.get("nombre") or place)), prof.get("idioma"))
     with survey.smtp_open(acc) as s:
         s.send_message(m)

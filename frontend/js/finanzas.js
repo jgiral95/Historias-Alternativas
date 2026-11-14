@@ -89,7 +89,7 @@ function tabFinanzas(p) {
   const pagosT = pagos.length ? `<table class="sttab"><thead><tr><th>Fecha</th><th>Monto</th><th>Detalle</th><th>Registró</th><th></th></tr></thead><tbody>${pagos.map(x => `<tr${x.anulado ? ' class="anul"' : ''}><td>${esc(fmtD(x.fecha))}</td><td class="n">${x.anulado ? '<s>' + money(x.monto) + '</s>' : '<b>' + money(x.monto) + '</b>'}</td><td>${esc(x.medio)}${pagoSesion(x)}${x.nota ? ' · ' + esc(x.nota) : ''}</td><td>${finQuien(x)}${x.anulado ? '<br><small>Anulado: ' + esc(x.anuladoMotivo || '') + '</small>' : ''}</td><td class="r">${x.anulado ? '' : `<button class="btn sm" data-act="finRecibo" data-id="${x.id}">Recibo</button> <button class="btn sm warn" data-act="finAnular" data-id="${x.id}">Anular</button>`}</td></tr>`).join('')}</tbody></table>` : finVacio('Todavía no hay pagos registrados.');
   return `<div class="sec fin"><div class="row" style="justify-content:space-between;flex-wrap:wrap"><h3 style="margin:0">Finanzas</h3><span class="row"><button class="btn pri" data-act="finPago" data-id="${p.id}">+ Registrar pago</button>${pr}</span></div>
   <div class="fk-grid">${finK('Atendido', money(c.total))}${finK('Pagado', money(c.pagado), 'ok')}${finK('Saldo', money(c.saldo), c.saldo ? 'warn' : 'ok', c.saldo ? 'Por cobrar' : 'Al día')}${c.favor ? finK('A favor', money(c.favor), 'fav') : ''}</div>
-  ${!p.tarifa && !Object.values(tar).some(Boolean) ? `<p class="stnote">Aún no hay tarifas.${TEAM() ? ' El profesional las define en Finanzas → Tarifas.' : ' Defínalas en Finanzas → Tarifas, o pon el valor en cada cita.'}</p>` : ''}
+  ${!p.tarifa && !Object.values(tar).some(Boolean) ? `<p class="stnote">Aún no hay tarifas.${TEAM() ? ' El profesional las define en Finanzas → Tarifas.' : ' Defínelas en Finanzas → Tarifas, o pon el valor en cada cita.'}</p>` : ''}
   ${finCard('Citas cobradas', c.citas.length, citasT)}
   ${inasist}
   ${finCard('Pagos', pagos.length, pagosT)}</div>`;
@@ -162,7 +162,7 @@ ACT.finCita = b => {
 };
 ACT.finTarifaPac = () => {
   const p = curPatient();
-  finModal('Tarifa de ' + fullName(p), `<p class="stnote">Cuánto cobra por sesión a este consultante.</p>
+  finModal('Tarifa de ' + fullName(p), `<p class="stnote">Cuánto cobras por sesión a este consultante.</p>
     <div class="ftar" style="grid-template-columns:minmax(0,260px);justify-content:center"><div class="ftc"><span class="fti"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg></span><label for="ft_valor">Valor por sesión</label><div class="ftin"><span>$</span>${moneyInput('ft_valor', p.tarifa || '')}</div></div></div>
     <div class="fnote">Reemplaza la tarifa general en las citas de este consultante que no tengan un valor propio. Vacío = usar la tarifa general.</div>`, 'Guardar', async btn => {
     const v = parseCop($('#ft_valor').value), snap = clone(p);
@@ -179,7 +179,7 @@ const TAR_ICO = {
 };
 ACT.finTarifas = () => {
   const t = S.profile.tarifas || {}, vals = MODS_TARIFA.map(m => t[m] || 0), igual = vals[0] > 0 && vals.every(v => v === vals[0]);
-  finModal('Tarifas generales', `<p class="stnote">Cuánto cobra por sesión según el tipo de consulta.</p>
+  finModal('Tarifas generales', `<p class="stnote">Cuánto cobras por sesión según el tipo de consulta.</p>
     <div class="ftar">${MODS_TARIFA.map(m => `<div class="ftc"><span class="fti">${TAR_ICO[m] || ''}</span><label for="fm_${m}">${m}</label><div class="ftin"><span>$</span>${moneyInput('fm_' + m, t[m] || '')}</div></div>`).join('')}</div>
     <label class="fsw"><input type="checkbox" id="fm_same" ${igual ? 'checked' : ''}><span class="fsg"></span>Usar el mismo valor en las tres</label>
     <div class="fnote">Las citas atendidas sin valor propio toman la tarifa vigente. Puedes fijar otro valor por consultante o por cita.</div>`, 'Guardar', async btn => {

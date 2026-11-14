@@ -86,7 +86,7 @@ function ask(msg) {
   if (d.estado !== 'pendiente') { const [k, t] = STATES[d.estado] || ['bad', 'Este enlace ya no está disponible.']; return card(head() + `<div class="res ${k}">${t}</div>`); }
   card(head() + (msg || '') + `<p>Para ver el documento, escribe el número de documento de identidad de ${d.quien === 'Acudiente' ? 'la persona que firma como acudiente o representante' : 'tú (consultante)'}.</p>
     <form id="f" class="btns" autocomplete="off"><label for="doc">Número de documento</label><input type="text" id="doc" inputmode="text" autocomplete="off" required><button type="submit">Ver el documento</button></form>
-    <p class="muted">El enlace vence el ${esc(fmt(d.vence))}. Es personal: no lo reenvíe.</p>`);
+    <p class="muted">El enlace vence el ${esc(fmt(d.vence))}. Es personal: no lo reenvíes.</p>`);
   $('#doc').focus();
   $('#f').onsubmit = async e => {
     e.preventDefault(); doc = $('#doc').value.trim(); if (!doc) return;

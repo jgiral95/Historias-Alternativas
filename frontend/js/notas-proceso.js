@@ -58,7 +58,7 @@ function pnListHTML() {
   }).join('');
 }
 function pnEditorHTML(n) {
-  if (!n) return `<div class="pned"><h3 style="margin:0">Notas de proceso</h3><div class="banner" style="margin:0"><b>Son tus notas de trabajo, no la ficha.</b> Aquí van hipótesis, formulaciones, lo que habló en supervisión e ideas para el caso. No se firman, no salen en la historia completa ni en copias o informes, y tu equipo no las ve. Puedes editarlas y borrarlas cuando quieras.</div>
+  if (!n) return `<div class="pned"><h3 style="margin:0">Notas de proceso</h3><div class="banner" style="margin:0"><b>Son tus notas de trabajo, no la ficha.</b> Aquí van hipótesis, formulaciones, lo que hablaste en supervisión e ideas para el caso. No se firman, no salen en la historia completa ni en copias o informes, y tu equipo no las ve. Puedes editarlas y borrarlas cuando quieras.</div>
     <p class="stnote" style="margin:0">Lo que haga parte de la atención (lo ocurrido en la sesión, la impresión, las decisiones del proceso) debe quedar en la sesión de la historia.</p>
     <div class="row"><button class="btn pri" data-act="pnNew">+ Nueva nota</button></div></div>`;
   const pts = S.patients.slice().sort((a, b) => fullName(a).localeCompare(fullName(b), 'es'));

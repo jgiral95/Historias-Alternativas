@@ -91,7 +91,7 @@ function currentDx(p, exceptId) {
   return { items: [], from: '' };
 }
 function dxListHTML() {
-  if (!Dx.items.length) return '<p style="margin:0;color:var(--muted);font-size:14px">Aún no ha agregado impresiones.</p>';
+  if (!Dx.items.length) return '<p style="margin:0;color:var(--muted);font-size:14px">Aún no has agregado impresiones.</p>';
   return `<div class="dxlist">${Dx.items.map((d, k) => `<div class="dxrow ${d.estado && d.estado !== 'Activo' ? 'off' : ''}"><span class="dxname">${esc(d.nombre)}${k === 0 ? ' <span class="chip">Principal</span>' : ''}${d.fecha ? `<small class="dxmeta">registrada el ${esc(fmtD(d.fecha))}</small>` : ''}</span>
   <span class="dxctl"><select data-dx="estado:${k}" aria-label="Estado de ${esc(d.nombre)}">${DX_ESTADOS.map(t => `<option ${t === (d.estado || 'Activo') ? 'selected' : ''}>${t}</option>`).join('')}</select>${k ? `<button type="button" class="btn sm" data-dx="up:${k}">Hacer principal</button>` : ''}<button type="button" class="btn sm warn" data-dx="del:${k}" aria-label="Quitar ${esc(d.nombre)}">Quitar</button></span></div>`).join('')}</div>`;
 }
@@ -106,7 +106,7 @@ function dxBlock(i, o = {}) {
   <div id="dxlist">${dxListHTML()}</div>
   ${F(o.note ? 'Observaciones o motivo del cambio (opcional)' : 'Observaciones (opcional)', 'dxObs', i.dxObs || '', { type: 'area', rows: 2, wide: true, ph: '' })}</div>`;
 }
-function dxChgHTML() { return dxChanged() ? '<span class="chip warn">Impresión actualizada en esta sesión. Si quieres, explique el motivo abajo.</span>' : ''; }
+function dxChgHTML() { return dxChanged() ? '<span class="chip warn">Impresión actualizada en esta sesión. Si quieres, explica el motivo abajo.</span>' : ''; }
 function dxRedraw() { $('#dxlist').innerHTML = dxListHTML(); const c = $('#dxchg'); if (c && $('#dxblock').dataset.note) c.innerHTML = dxChgHTML(); }
 function dxMount() {}
 function dxAdd() {
@@ -217,7 +217,7 @@ function verifBox(r) {
   const base = r.verificarEn || location.origin, url = base + '/verificar?c=' + r.verificacion;
   let qr = '';
   try { const q = qrcode(0, 'M'); q.addData(url); q.make(); qr = q.createSvgTag(3, 0); } catch (e) { /* sin librería de QR */ }
-  return `<div style="display:flex;gap:14px;align-items:center;margin-top:22px;padding-top:10px;border-top:1px solid #c9d2d4;font-size:12px;line-height:1.5"><div style="flex:none;width:96px">${qr.replace('<svg ', '<svg style="width:96px;height:96px" ')}</div><div>Código de verificación: <b style="font-family:monospace;font-size:14px;letter-spacing:.05em">${esc(r.verificacion)}</b><br>Compruebe que este documento es auténtico y que tu contenido no fue alterado en<br>${esc(base)}/verificar</div></div>`;
+  return `<div style="display:flex;gap:14px;align-items:center;margin-top:22px;padding-top:10px;border-top:1px solid #c9d2d4;font-size:12px;line-height:1.5"><div style="flex:none;width:96px">${qr.replace('<svg ', '<svg style="width:96px;height:96px" ')}</div><div>Código de verificación: <b style="font-family:monospace;font-size:14px;letter-spacing:.05em">${esc(r.verificacion)}</b><br>Comprueba que este documento es auténtico y que su contenido no fue alterado en<br>${esc(base)}/verificar</div></div>`;
 }
 
 /* ----- Sesión ----- */

@@ -161,9 +161,9 @@ def ensure_acceso(user: User, db: Session, escritura: bool = False) -> None:
     hasta = billing.aware(sub.paid_until)
     if hasta and datetime.now(timezone.utc) - hasta <= timedelta(days=GRACIA_DIAS):
         if escritura:
-            raise HTTPException(402, "Tu suscripción venció: por 30 días puede ver y descargar tus fichas, pero no modificarlas. Renueva en «Mi suscripción».")
+            raise HTTPException(402, "Tu suscripción venció: por 30 días puedes ver y descargar tus fichas, pero no modificarlas. Renueva en «Mi suscripción».")
         return
-    raise HTTPException(402, "Tu suscripción venció hace más de 30 días. Tus fichas están guardadas: vuelve a suscribirse en «Mi suscripción» para verlas y descargarlas.")
+    raise HTTPException(402, "Tu suscripción venció hace más de 30 días. Tus fichas están guardadas: vuelve a suscribirte en «Mi suscripción» para verlas y descargarlas.")
 
 
 def ensure_writable(user: User, db: Session, nuevo_consultante: bool = False) -> None:
@@ -1756,7 +1756,7 @@ def surveys_test(body: SurveyTestIn, user: User = Depends(pro_user), db: Session
     with _lock:  # máximo 10 pruebas por hora por cuenta
         hits = [t for t in _shits.get(f"t{user.id}", []) if t > time.time() - 3600]
         if len(hits) >= 10:
-            raise HTTPException(429, "Ya envió varias pruebas. Espera un rato.")
+            raise HTTPException(429, "Ya enviaste varias pruebas. Espera un rato.")
         hits.append(time.time())
         _shits[f"t{user.id}"] = hits
     prof = next((decrypt(r.payload) for r in db.scalars(select(Record).where(Record.user_id == user.id, Record.kind == "profile"))), {})
@@ -1771,7 +1771,7 @@ def surveys_test(body: SurveyTestIn, user: User = Depends(pro_user), db: Session
     audit(db, user.id, "survey.test", "")
     acc = survey.account(db, user.id)
     if not survey.smtp_enabled(acc):
-        return {"enviado": False, "enlace": token, "motivo": "Aún no ha configurado tu correo de envío (más arriba, en «Correo de envío»)."}
+        return {"enviado": False, "enlace": token, "motivo": "Aún no has configurado tu correo de envío (más arriba, en «Correo de envío»)."}
     try:
         survey.send_mail(to, token, {"nombres": "Prueba"}, prof, acc)
     except Exception as e:  # noqa: BLE001 — se muestra al terapeuta para que corrija la configuración
@@ -1953,7 +1953,7 @@ def billing_cancelar(user: User = Depends(pro_user), db: Session = Depends(get_d
         logging.getLogger("uvicorn.error").warning("ePayco: no se pudo cancelar (%s)", type(e).__name__)
         raise HTTPException(502, "No se pudo cancelar en ePayco. Intenta de nuevo en unos minutos.")
     if not subs:
-        raise HTTPException(404, "No encontramos una suscripción recurrente con el correo de tu cuenta. Si pagó con otro correo, cancélala desde el enlace del correo de ePayco.")
+        raise HTTPException(404, "No encontramos una suscripción recurrente con el correo de tu cuenta. Si pagaste con otro correo, cancélala desde el enlace del correo de ePayco.")
     audit(db, user.id, "billing.cancelada", f"{len(subs)} suscripción(es)")
     return {"canceladas": len(subs)}
 
@@ -2125,7 +2125,7 @@ def _remote_mail(db: Session, user: User, r: ConsentRequest, request: Request) -
         return {"correoEnviado": False, "motivo": "El consultante no tiene un correo válido en tus datos."}
     acc = survey.account(db, user.id)
     if not survey.smtp_enabled(acc):
-        return {"correoEnviado": False, "motivo": "Aún no ha configurado tu correo de envío."}
+        return {"correoEnviado": False, "motivo": "Aún no has configurado tu correo de envío."}
     prof_row = db.get(Record, (user.id, "profile"))
     prof = decrypt(prof_row.payload) if prof_row else {}
     d = decrypt(r.payload)
@@ -2481,7 +2481,7 @@ def _form_mail(db: Session, user: User, r: IntakeForm, request: Request) -> dict
         return {"correoEnviado": False, "motivo": "Escribe un correo válido para enviarlo."}
     acc = survey.account(db, user.id)
     if not survey.smtp_enabled(acc):
-        return {"correoEnviado": False, "motivo": "Aún no ha configurado tu correo de envío."}
+        return {"correoEnviado": False, "motivo": "Aún no has configurado tu correo de envío."}
     prof_row = db.get(Record, (user.id, "profile"))
     prof = decrypt(prof_row.payload) if prof_row else {}
     try:
@@ -2660,7 +2660,7 @@ def feedback_create(body: FeedbackIn, user: User = Depends(current_user), db: Se
     with _lock:
         hits = [t for t in _fbhits.get(user.id, []) if t > time.time() - 3600]
         if len(hits) >= 30:
-            raise HTTPException(429, "Ha enviado muchos comentarios en la última hora. Intenta más tarde.")
+            raise HTTPException(429, "Has enviado muchos comentarios en la última hora. Intenta más tarde.")
         hits.append(time.time())
         _fbhits[user.id] = hits
     texto = body.texto.strip()
@@ -2879,11 +2879,11 @@ def access_log(body: AccessIn, request: Request, user: User = Depends(current_us
     audit(db, user.id, "history.view", vista, patient_id=body.patientId, ip=client_ip(request))
 
 
-AUDIT_TXT = {"account.export": "Exportó todos tus datos", "history.view": "Abrió la historia", "record.put": "Guardó", "record.delete": "Eliminó", "history.export": "Descargó la historia completa",
-             "blob.put": "Subió un adjunto", "blob.get": "Abrió un adjunto", "verify": "Se verificó un informe con tu código", "records.list": "Cargó la lista de consultantes",
+AUDIT_TXT = {"account.export": "Exportó todos sus datos", "history.view": "Abrió la historia", "record.put": "Guardó", "record.delete": "Eliminó", "history.export": "Descargó la historia completa",
+             "blob.put": "Subió un adjunto", "blob.get": "Abrió un adjunto", "verify": "Se verificó un informe con su código", "records.list": "Cargó la lista de consultantes",
              "consent.remote.create": "Envió un consentimiento para firmar a distancia", "consent.remote.sign": "El consultante firmó a distancia",
              "login.ok": "Ingresó", "login.fail": "Intento de ingreso fallido", "login.2fa_fail": "Código de verificación equivocado",
-             "access.denied": "Intento de acceso sin permiso", "password.change": "Cambió tu contraseña", "record.import": "Importó",
+             "access.denied": "Intento de acceso sin permiso", "password.change": "Cambió su contraseña", "record.import": "Importó",
              }
 KIND_TXT = {"patient": "datos o documentos de la historia", "note": "una sesión", "report": "un informe", "scale": "una escala", "appt": "una cita", "file": "un adjunto", "pago": "un pago"}
 

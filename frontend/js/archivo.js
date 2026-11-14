@@ -43,7 +43,7 @@ function tabArchivo(p) {
   <p style="margin:0;font-size:13px;color:var(--muted)">La ficha es reservada: solo se entrega al consultante, a su representante, a terceros con autorización del consultante y a las autoridades cuando corresponda. El plazo que se muestra es de 10 días hábiles (sin descontar festivos).</p>
   ${solForm}${solList || (S.newSol ? '' : '<p style="margin:0;color:var(--muted)">No hay solicitudes registradas.</p>')}</div>
   <div class="sec"><h3>Exportación</h3><dl class="kv"><dt>Última atención</dt><dd>${last ? esc(fmtD(last)) : 'Sin atenciones firmadas'}</dd></dl>
-  <p style="margin:0;font-size:13px;color:var(--muted)">La copia completa incluye consentimientos, primera vez, sesiones, informes, cierres y adjuntos. Sirve para entregar copia al consultante o para trasladar la historia si deja de usar esta plataforma.</p>
+  <p style="margin:0;font-size:13px;color:var(--muted)">La copia completa incluye consentimientos, primera vez, sesiones, informes, cierres y adjuntos. Sirve para entregar copia al consultante o para trasladar la historia si dejas de usar esta plataforma.</p>
   <div class="row"><button class="btn pri" data-act="exportZip">Descargar historia completa (ZIP)</button></div></div>
   <div class="sec"><h3>Eliminar consultante</h3><p style="margin:0;font-size:13px;color:var(--muted)">Borra del servidor a este consultante con todo lo suyo: notas, informes, citas, adjuntos y consentimientos. No se puede deshacer.</p><div class="row"><button class="btn warn" data-act="delPatient">Eliminar consultante</button></div></div>`;
 }
@@ -169,7 +169,7 @@ function docIncorp(p, c) {
   <tr><td><b>Ubicación de los originales</b></td><td>${esc(c.originales || '')}</td></tr></table>
   <h2>Archivos digitalizados</h2><table>${c.archivos.map((f, i) => `<tr><td>${i + 1}. ${esc(f.nombre)} (${esc(fmtSize(f.size))})</td><td style="font-family:monospace;font-size:11px;word-break:break-all">${f.sha256 ? 'SHA-256: ' + esc(f.sha256) : ''}</td></tr>`).join('')}</table>
   ${c.observaciones ? `<p><b>Observaciones.</b> ${esc(c.observaciones)}</p>` : ''}
-  <p>Declaro que las copias digitales corresponden fielmente a los documentos originales. La huella SHA-256 de cada archivo permite comprobar que no ha sido modificado desde tu incorporación.</p>
+  <p>Declaro que las copias digitales corresponden fielmente a los documentos originales. La huella SHA-256 de cada archivo permite comprobar que no ha sido modificado desde su incorporación.</p>
   ${sigBlock([therSig(c, c.signedAt)])}</div>`;
 }
 function incorpHTML(p) {
@@ -269,7 +269,7 @@ ACT.exportAll = async () => {
   const dos = S.mode === 'server' && S.user && S.user.totp;   // con dos pasos activos se pide un código
   root.innerHTML = `<div class="modal" role="dialog" aria-modal="true" aria-label="Exportar todos mis datos"><div class="box" style="width:min(520px,100%)"><h3>Exportar todos mis datos</h3>
     <p style="margin:0">Se descargará un archivo ZIP con todos tus datos de Alter-Karute: perfil, consultantes, fichas, notas de proceso, citas, escalas, informes y adjuntos. Puedes tardar si tienes muchos adjuntos.</p>
-    <div class="banner" role="alert" style="margin:0"><b>Tú eres la persona responsable de estos datos.</b> Son datos de tus consultantes: guarda la copia en un lugar seguro (dispositivo suyo, protegido con contraseña o cifrado) y no la envíes por canales abiertos. Esta descarga queda registrada en tu bitácora de accesos.</div>
+    <div class="banner" role="alert" style="margin:0"><b>Tú eres la persona responsable de estos datos.</b> Son datos de tus consultantes: guarda la copia en un lugar seguro (un dispositivo tuyo, protegido con contraseña o cifrado) y no la envíes por canales abiertos. Esta descarga queda registrada en tu bitácora de accesos.</div>
     ${dos ? `<div class="fld"><label for="xa_code">Para continuar, escribe tu código de verificación en dos pasos (de la app o de recuperación)</label>${CODE_INPUT('xa_code')}</div>` : ''}
     <label class="check"><input type="checkbox" id="xa_ok"> <span>Entiendo que soy responsable de proteger esta copia y de los datos de mis consultantes.</span></label>
     <p class="merr" id="xa_err" role="alert" hidden></p>

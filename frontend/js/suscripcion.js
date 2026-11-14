@@ -14,14 +14,14 @@ async function subDraw(msg) {
     ${msg ? `<div class="banner" role="alert">${esc(msg)}</div>` : ''}<p style="margin:0">${estado}</p>
     ${st.exigido && !st.activa ? `<div class="subplanes">${st.planes.map(p => { const an = p.id === 'anual', d = SUB_INFO[p.id] || {}; return `<div class="subcard ${an ? 'f' : ''}">${an ? '<span class="subahorro">Ahorra 2 meses</span>' : ''}<h4>${esc(p.nombre)}</h4><div class="subprecio">${esc(d.precio || '')} <small>${esc(d.per || '')}</small></div><ul><li>Acceso completo a la plataforma</li><li>Fichas cifradas y notas de sesión</li><li>Acuerdos, consentimientos e informes</li><li>Agenda con recordatorios</li><li>${esc(d.prueba || '')} de prueba gratis</li></ul><a class="btn ${an ? 'pri' : ''}" href="${esc(p.url)}" target="_blank" rel="noopener">Suscribirme</a></div>`; }).join('')}</div>
     <p class="stnote">Para que se active sola, paga con <b>el mismo correo de esta cuenta</b>. Luego vuelve aquí y pulsa «Ya me suscribí».</p><div class="row end"><button class="btn" data-sub="refresh">Ya me suscribí</button></div>` : ''}
-    ${st.activa && st.puedeCancelar && st.exigido ? '<div class="row end"><button class="btn warn" data-sub="cancel">Cancelar mi suscripción</button></div><p class="stnote">Al cancelar, conserva el acceso hasta el fin del periodo pagado.</p>' : ''}</div></div>`;
+    ${st.activa && st.puedeCancelar && st.exigido ? '<div class="row end"><button class="btn warn" data-sub="cancel">Cancelar mi suscripción</button></div><p class="stnote">Al cancelar, conservas el acceso hasta el fin del periodo pagado.</p>' : ''}</div></div>`;
   root.onclick = async e => {
     const b = e.target.closest('[data-sub]'); if (!b) return;
     if (b.dataset.sub === 'close') { root.innerHTML = ''; root.onclick = null; return; }
     if (b.dataset.sub === 'refresh') { await subDraw(); if (S.pid === null) { try { await Store.load(); render(); } catch (err) { /* sigue */ } } return; }
     if (b.dataset.sub === 'cancel') {
       if (!b.dataset.sure) { b.dataset.sure = 1; b.textContent = 'Confirmar cancelación'; return; }
-      try { await api('/billing/cancelar', { method: 'POST' }); subDraw('Suscripción cancelada. Conserva el acceso hasta el fin del periodo.'); } catch (err) { toast(err.message); }
+      try { await api('/billing/cancelar', { method: 'POST' }); subDraw('Suscripción cancelada. Conservas el acceso hasta el fin del periodo.'); } catch (err) { toast(err.message); }
     }
   };
 }

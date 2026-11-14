@@ -31,12 +31,12 @@ ACT.forms = async () => {
   const draw = () => {
     FORMS.n = list.filter(f => f.estado === 'recibido').length; FORMS.at = Date.now(); formsBadge();
     const an = list.filter(f => f.estado === 'anulado').length;
-    $('#fm_list').innerHTML = (an > 1 ? '<div class="row end"><button class="btn sm warn" data-fm="delall">Eliminar anulados (' + an + ')</button></div>' : '') + (list.map(formRow).join('') || '<p class="stnote">Aún no ha enviado formularios.</p>');
+    $('#fm_list').innerHTML = (an > 1 ? '<div class="row end"><button class="btn sm warn" data-fm="delall">Eliminar anulados (' + an + ')</button></div>' : '') + (list.map(formRow).join('') || '<p class="stnote">Aún no has enviado formularios.</p>');
   };
   const load = async () => { try { list = await api('/formularios'); return true; } catch (e) { toast(e.message); return false; } };
   if (!(await load())) return;
   root.innerHTML = `<div class="modal" role="dialog" aria-modal="true" aria-label="Formularios de datos"><div class="box" id="fmform" style="width:min(680px,100%)"><div class="row" style="justify-content:space-between"><h3>Formularios de datos</h3><button class="btn sm" data-fm="close">Cerrar</button></div>
-    <p style="margin:0;font-size:14px">Envía un formulario para que el consultante registre sus datos antes de la primera atención. Lo que responda queda pendiente de tu revisión: tú decides cuándo crear tu ficha. El enlace se usa una vez y vence en 7 días.</p>
+    <p style="margin:0;font-size:14px">Envía un formulario para que el consultante registre sus datos antes de la primera atención. Lo que responda queda pendiente de tu revisión: tú decides cuándo crear su ficha. El enlace se usa una vez y vence en 7 días.</p>
     <div class="card"><div class="grid">${F('Nombre del consultante (opcional)', 'fm_nombre', '')}${F('Correo del consultante', 'fm_correo', '', { type: 'email' })}</div>
       <div class="row end"><button class="btn" data-fm="new" data-send="0">Crear enlace para copiar</button><button class="btn pri" data-fm="new" data-send="1">Enviar por correo</button></div></div>
     <div id="fm_list"></div></div></div>`;

@@ -160,7 +160,7 @@ def messages(prof: dict, start: datetime, dur: int, mod: str, who: str, patient_
     filas = [("Cuándo", cuando), ("Modalidad", f"{mod} · {dur} min"), ("Con", ter + (f" · {prof['consultorio']}" if prof.get("consultorio") and prof["consultorio"].strip().lower() != ter.strip().lower() else ""))]
     meet = enlace_ok(enlace)
     cal = gcal_link(start, dur, ter, mod, prof.get("consultorio") or "", meet)
-    cierre = "¿Tuvo un imprevisto? Puedes ver o cancelar tu cita en cualquier momento con este botón." if url else "¡Te esperamos!"
+    cierre = "¿Tuviste un imprevisto? Puedes ver o cancelar tu cita en cualquier momento con este botón." if url else "¡Te esperamos!"
     otro = ("Si prefieres otra hora, cancela la cita y", "elige un nuevo horario", otra_hora) if url and otra_hora else None
     txt = (f"¡Hola, {first}!\n\nTu cita está confirmada. Ya reservamos tu espacio con {ter}.\n\n" + "\n".join(f"{k}: {v}" for k, v in filas)
            + f"\n\n{cierre}" + (f"\n\nEntrar a la videollamada: {meet}" if meet else "")

@@ -6,11 +6,11 @@ import re
 EN = {
     "El equipo de Alter-Karute": "The Alter-Karute team", "Atentamente,": "Kind regards,", "Que tengas un buen día,": "Have a nice day,", "Gracias por tu tiempo,": "Thank you for your time,",
     "Mensaje automático enviado con Alter-Karute.": "Automatic message sent with Alter-Karute.", "Conoce Alter-Karute →": "Discover Alter-Karute →",
-    "Alter-Karute es un espacio sereno para que terapeutas de terapias alternativas lleven el seguimiento de tus consultantes: sesiones, agenda y acuerdos en un solo lugar. No es una herramienta clínica.":
+    "Alter-Karute es un espacio sereno para que terapeutas de terapias alternativas lleven el seguimiento de sus consultantes: sesiones, agenda y acuerdos en un solo lugar. No es una herramienta clínica.":
         "Alter-Karute is a calm space for alternative-therapy practitioners to follow up with their clients: sessions, calendar and agreements in one place. It is not a clinical tool.",
     "Si el botón no funciona, copia y pega esta dirección en tu navegador:": "If the button doesn't work, copy and paste this address into your browser:",
     "tu terapeuta": "your therapist", "tu consulta": "your practice", "Cita con {0}": "Appointment with {0}", "Cita de {0} con {1}.": "{0}'s appointment with {1}.", "Cita con {0}.": "Appointment with {0}.", "Videollamada: {0}": "Video call: {0}",
-    "¿Tuvo un imprevisto? Puedes ver o cancelar tu cita en cualquier momento con este botón.": "Something came up? You can view or cancel your appointment at any time with this button.", "¡Te esperamos!": "We look forward to seeing you!",
+    "¿Tuviste un imprevisto? Puedes ver o cancelar tu cita en cualquier momento con este botón.": "Something came up? You can view or cancel your appointment at any time with this button.", "¡Te esperamos!": "We look forward to seeing you!",
     "¡Tu cita está confirmada!": "Your appointment is confirmed!", "¡Tu cita está confirmada! — {0}": "Your appointment is confirmed! — {0}", "Nueva cita agendada": "New appointment booked", "Nueva cita agendada: {0}": "New appointment booked: {0}",
     "Es un consultante nuevo: todavía no tiene ficha en la app. Cuando quieras, créala y vincula la cita desde tu agenda.": "This is a new client: they don't have a file in the app yet. Whenever you like, create it and link the appointment from your calendar.",
     "La cita ya está en tu agenda.": "The appointment is already in your calendar.", "Cuándo": "When", "Modalidad": "Format", "Con": "With", "Consultante": "Client", "Correo": "Email", "Teléfono": "Phone", "(nuevo)": "(new)",
@@ -28,7 +28,7 @@ EN = {
     "{0} {1} de {2} a las {3}": "{0}, {2} {1} at {3}",
     "lunes": "Monday", "martes": "Tuesday", "miércoles": "Wednesday", "jueves": "Thursday", "viernes": "Friday", "sábado": "Saturday", "domingo": "Sunday",
     "enero": "January", "febrero": "February", "marzo": "March", "abril": "April", "mayo": "May", "junio": "June", "julio": "July", "agosto": "August", "septiembre": "September", "octubre": "October", "noviembre": "November", "diciembre": "December",
-    "¿Cómo te pareció la atención en {0}?": "How was your experience at {0}?", "¿Cómo te pareció la atención?": "How was your experience?", "Tu terapeuta(a)": "Your therapist",
+    "¿Cómo te pareció la atención en {0}?": "How was your experience at {0}?", "¿Cómo te pareció la atención?": "How was your experience?", "Tu terapeuta": "Your therapist",
     "Hola{0}. {1} te invita a responder una encuesta corta sobre la atención que recibiste. Toma unos 2 minutos y tus respuestas se guardan sin tu nombre.": "Hello{0}. {1} invites you to answer a short survey about the care you received. It takes about 2 minutes and your answers are saved without your name.",
     "El enlace estará abierto {0} días. Responder es voluntario.": "The link will be open for {0} days. Answering is voluntary.", "Responder la encuesta": "Answer the survey", "Si no deseas recibir más encuestas,": "If you don't want to receive more surveys,", "Si no deseas recibir más encuestas: {0}": "If you don't want to receive more surveys: {0}", "Gracias por tu tiempo.": "Thank you for your time.",
     "Bienvenido(a) a Alter-Karute: confirma tu correo para activar tu cuenta": "Welcome to Alter-Karute: confirm your email to activate your account", "Bienvenido(a) a Alter-Karute{0}": "Welcome to Alter-Karute{0}", "Bienvenido(a) a Alter-Karute{0}.": "Welcome to Alter-Karute{0}.",
@@ -39,7 +39,7 @@ EN = {
     "Hola{0}, {1} te envía el documento «{2}» para que lo leas y lo firmes desde tu celular: {3} Para abrirlo se te pedirá tu número de documento. El enlace vence en {4} días.": "Hello{0}, {1} is sending you the document “{2}” to read and sign from your phone: {3} You will be asked for your ID number to open it. The link expires in {4} days.",
     "Consentimiento para firmar — {0}": "Consent to sign — {0}", "Tienes un documento para firmar": "You have a document to sign", "Leer y firmar el documento": "Read and sign the document",
     "Hola:": "Hello:", "Hola{0}:": "Hello{0}:", "{0} te invita a responder una encuesta corta sobre la atención que recibiste. Toma unos 2 minutos y tus respuestas se guardan sin tu nombre.": "{0} invites you to answer a short survey about the care you received. It takes about 2 minutes and your answers are saved without your name.",
-    "Si no esperaba este mensaje, ignórelo o comunícate con el consultorio.": "If you weren't expecting this message, ignore it or contact the practice.",
+    "Si no esperabas este mensaje, ignóralo o comunícate con el consultorio.": "If you weren't expecting this message, ignore it or contact the practice.",
 }
 
 _PAT = []

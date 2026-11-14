@@ -156,7 +156,7 @@ async function sigFromImage(file, clean) {
         px[i * 4] = 16; px[i * 4 + 1] = 34; px[i * 4 + 2] = 42; px[i * 4 + 3] = alpha;
         if (alpha > 60) { if (xx < box.x0) box.x0 = xx; if (xx > box.x1) box.x1 = xx; if (y < box.y0) box.y0 = y; if (y > box.y1) box.y1 = y; }
       }
-      if (box.x1 < 0) throw new Error('No se encontró la firma en la imagen. Prueba con más luz o desmarque «Quitar el fondo».');
+      if (box.x1 < 0) throw new Error('No se encontró la firma en la imagen. Prueba con más luz o desmarca «Quitar el fondo».');
       x.putImageData(d, 0, 0);
     }
     const pad = Math.round(Math.max(box.x1 - box.x0, box.y1 - box.y0) * 0.04) + 4;
@@ -188,7 +188,7 @@ async function logoFromImage(file) {
 async function draw2fa(step, data) {
   const box = $('#tfbody'); if (!box) return;
   let st; try { st = await api('/auth/2fa'); } catch (e) { box.innerHTML = `<p>${esc(e.message)}</p>`; return; }
-  const codesHTML = codes => `<div class="banner ok"><b>Guarda estos códigos de recuperación</b> en un lugar seguro (impresos o en tu gestor de contraseñas). Cada uno sirve una sola vez si pierde el teléfono. No se volverán a mostrar.</div>
+  const codesHTML = codes => `<div class="banner ok"><b>Guarda estos códigos de recuperación</b> en un lugar seguro (impresos o en tu gestor de contraseñas). Cada uno sirve una sola vez si pierdes el teléfono. No se volverán a mostrar.</div>
     <div class="card" style="font-family:var(--f-mono);font-size:15px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px 16px" id="tfcodes">${codes.map(c => `<span>${esc(c)}</span>`).join('')}</div>
     <div class="row"><button class="btn sm" type="button" id="tfcopy">Copiar</button><button class="btn sm" type="button" id="tfdl">Descargar .txt</button></div>`;
   if (step === 'codes') {
@@ -280,7 +280,7 @@ function edField(f, path, noSize) {
 }
 function secCard(sc, si, isDatos) {
   const head = `<div class="edf"><span class="dragh" draggable="true" data-dk="s" data-dv="${si}" title="Arrastra para cambiar el orden" aria-hidden="true">⠿</span><input type="text" data-fm-t="${si}" value="${esc(sc.t)}" maxlength="120" aria-label="Título del apartado" style="font-weight:600"><button class="btn sm warn" data-fm="sdel:${si}" aria-label="Quitar apartado">✕</button></div>`;
-  if (sc.img) return `<div class="card">${head}<p style="margin:0;font-size:13px;color:var(--muted)">Apartado de imagen: el terapeuta sube una imagen de tu computador en cada ficha. Quítalo con ✕ si no lo usas.</p></div>`;
+  if (sc.img) return `<div class="card">${head}<p style="margin:0;font-size:13px;color:var(--muted)">Apartado de imagen: el terapeuta sube una imagen de su computador en cada ficha. Quítalo con ✕ si no lo usas.</p></div>`;
   if (sc.g && !sc.fs.length) return `<div class="card">${head}<p style="margin:0;font-size:13px;color:var(--muted)">Apartado de genograma: espacio para dibujarlo o subir una imagen. Quítalo con ✕ si no lo usas.</p></div>`;
   const body = sc.fs.length ? sc.fs.map((f, fi) => edField(f, si + '.' + fi, isDatos)).join('') : `<p style="margin:0;font-size:13px;color:var(--muted)">Solo título: se escribe en un único espacio, sin subtítulos. Usa «+ Campo» si quieres dividirlo.</p>${isDatos ? '' : edInit(sc.soloD, `data-fm-sd="${si}"`, sc.t)}`;
   const geno = sc.g ? `<div class="row"><span class="chip">Incluye el genograma al final</span><button class="btn sm warn" data-fm="gdel:${si}">Quitar genograma</button></div>` : '';
@@ -302,14 +302,14 @@ function filtroCard() {
   if (!own.length) return '';
   if (!ED.filtros) ED.filtros = ((S.profile.formatos || {}).filtros || []).slice();
   const row = ([k, n]) => `<div class="row"><span style="flex:1">${esc(n)}</span><button class="btn sm ${ED.filtros.includes(k) ? 'pri' : ''}" data-fm="fi:${k}">${ED.filtros.includes(k) ? 'Es filtro · quitar' : 'Usar como filtro'}</button></div>`;
-  return `<div class="card"><b>Filtros del buscador</b><p class="stnote" style="margin:4px 0">Elige con qué campos de este formato se puede filtrar la búsqueda. Los campos nuevos aparecen aquí cuando los guarda en este formato.</p>${own.map(row).join('')}</div>`;
+  return `<div class="card"><b>Filtros del buscador</b><p class="stnote" style="margin:4px 0">Elige con qué campos de este formato se puede filtrar la búsqueda. Los campos nuevos aparecen aquí cuando los guardas en este formato.</p>${own.map(row).join('')}</div>`;
 }
 function drawFormats() {
   const root = $('#modal-root'), prev = root.querySelector('.modal > .box'), top = prev ? prev.scrollTop : 0, w = ED.which;
   const isX = String(w).startsWith('x_'), hasGeno = (isX ? ED[w] : ED.intake).some(sc => sc.g);
   const intro = {  intake: 'Los cambios solo se aplican a las <b>nuevas</b> consultas de primera vez. Las ya firmadas conservan el formato con el que se firmaron.', evol: 'Los cambios solo se aplican a las <b>nuevas</b> sesiones. Las ya firmadas conservan el formato con el que se firmaron.', datos: 'Agrega los datos que tomas de cada consultante, además de los campos fijos. Aparecen al final de esa pestaña para todos tus consultantes.' }[w] || 'Arma los apartados y campos de esta pestaña. Los cambios se aplican a todas las fichas; lo ya escrito se conserva.';
   const body = w === 'evol'
-    ? `<p class="stnote" style="margin:0">La fecha y hora, la modalidad, las personas presentes van siempre en la sesión: aquí arma el resto.</p><div class="card">${ED.evol.map((f, fi) => edField(f, String(fi))).join('') || '<p style="margin:0;color:var(--muted)">Aún no tienes campos. Agrégalos uno por uno o usa el formato sugerido.</p>'}<div class="row"><button class="btn sm" data-fm="fadd:">+ Campo</button>${ED.evol.length ? '' : '<button class="btn sm" data-fm="reset">Usar el formato sugerido</button>'}</div></div>`
+    ? `<p class="stnote" style="margin:0">La fecha y hora, la modalidad, las personas presentes van siempre en la sesión: aquí armas el resto.</p><div class="card">${ED.evol.map((f, fi) => edField(f, String(fi))).join('') || '<p style="margin:0;color:var(--muted)">Aún no tienes campos. Agrégalos uno por uno o usa el formato sugerido.</p>'}<div class="row"><button class="btn sm" data-fm="fadd:">+ Campo</button>${ED.evol.length ? '' : '<button class="btn sm" data-fm="reset">Usar el formato sugerido</button>'}</div></div>`
     : (false ? `<div class="card"><b>Apartados de la ficha</b><p class="stnote" style="margin:4px 0">Identificación siempre se muestra. Muestra solo los que quieras usar; los datos ya escritos no se borran.</p>${BASE_SECS.map(([id, n]) => `<div class="row"><span style="flex:1">${n}</span><button class="btn sm ${ED.ocultos.includes(id) ? '' : 'pri'}" data-fm="oc:${id}">${ED.ocultos.includes(id) ? 'Mostrar' : 'Visible · ocultar'}</button></div>`).join('')}</div>` : '') + (w === 'datos' ? `<div class="card"><b>Campos fijos</b><p class="stnote" style="margin:4px 0 8px">Siempre aparecen primero en la pestaña Datos y no se pueden quitar ni cambiar:</p><div class="row"><span class="chip">Nombre</span><span class="chip">Apellido</span><span class="chip">Documento de identidad</span></div></div>` : '') + secList().map((sc, si) => secCard(sc, si, w === 'datos')).join('') + `<div class="row"><button class="btn" data-fm="sadd">+ Apartado</button>${(w === 'intake' || isX) && !hasGeno ? '<button class="btn" data-fm="gadd">+ Genograma</button>' : ''}${isX ? '<button class="btn" data-fm="iadd">+ Imagen</button>' : ''}</div>` + (w === 'datos' ? formCard() : '');
   root.innerHTML = `<div class="modal" role="dialog" aria-modal="true" aria-label="Mis formatos"><div class="box" id="fmform"><div class="row mfhead" style="justify-content:space-between"><h3 style="flex:1">Mis formatos</h3><button class="btn sm pri" data-fm="save">Guardar</button><button class="btn sm" data-fm="close">Cerrar</button></div>
   ${hubTabs(w)}
@@ -398,7 +398,7 @@ const tabsDraw = () => {
   root.innerHTML = `<div class="modal" role="dialog" aria-modal="true" aria-label="Mis formatos"><div class="box"><div class="row mfhead" style="justify-content:space-between"><h3 style="flex:1">Mis formatos</h3><button class="btn sm pri" data-tm="save">Guardar</button><button class="btn sm" data-tm="close">Cerrar</button></div>${hubTabs('pestanas')}
   <p style="margin:0;font-size:13px;color:var(--muted)">Crea las pestañas de la ficha del consultante. Para cada pestaña nueva elige «Una sola vez» (datos que casi no cambian, como los del consultante) o «Por sesión» (una entrada con fecha en cada encuentro).</p>
   <h4 style="margin:12px 0 4px">Pestañas de la ficha</h4>
-  <div class="row" style="justify-content:space-between;margin:12px 0 4px"><span></span><button class="btn sm" data-tm="add:">+ Pestaña nueva</button></div><div class="card">${TM.extra.map(x => row(x.id, x.nombre, false, true)).join('') || '<p style="margin:0;color:var(--muted);font-size:13px">Aún no ha creado pestañas propias. Usa «+ Pestaña nueva».</p>'}</div>
+  <div class="row" style="justify-content:space-between;margin:12px 0 4px"><span></span><button class="btn sm" data-tm="add:">+ Pestaña nueva</button></div><div class="card">${TM.extra.map(x => row(x.id, x.nombre, false, true)).join('') || '<p style="margin:0;color:var(--muted);font-size:13px">Aún no has creado pestañas propias. Usa «+ Pestaña nueva».</p>'}</div>
   <div class="row end"><button class="btn pri" data-tm="save">Guardar</button></div></div></div>`;
   const nm = root.querySelector('.modal'); if (nm) nm.scrollTop = top;
 };

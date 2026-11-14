@@ -23,7 +23,7 @@ const SV_DEFAULT = [
   ['cp5', 'Características del terapeuta', 'La confianza y la confidencialidad que te transmitió el terapeuta fueron:', 'escala'],
   ['cp6', 'Características del terapeuta', 'La información que recibiste sobre tus derechos, deberes y el consentimiento informado fue:', 'escala'],
   ['cp7', 'Características del terapeuta', 'La utilidad de las sesiones para tu situación ha sido:', 'escala'],
-  ['eg1', 'Experiencia general', 'En general, ¿cómo califica tu experiencia con el servicio?', 'escala'],
+  ['eg1', 'Experiencia general', 'En general, ¿cómo calificas tu experiencia con el servicio?', 'escala'],
   ['eg2', 'Experiencia general', '¿Recomendarías este servicio a tus familiares y amigos?', 'recomienda'],
   ['com', 'Comentarios', '¿Qué podríamos mejorar? (opcional)', 'texto']
 ].map(([id, dim, texto, tipo]) => ({ id, dim, texto, tipo }));
@@ -98,7 +98,7 @@ ACT.survey = () => {
     if (a === 'save' || a === 'draw') {
       cfg.preguntas = cfg.preguntas.filter(q => q.texto);
       if (!cfg.preguntas.some(q => q.tipo !== 'texto')) { toast('La encuesta necesita al menos una pregunta con opciones.'); return; }
-      if (a === 'draw' && !cfg.activa) { toast('Active «Enviar encuestas automáticamente» para sortear.'); return; }
+      if (a === 'draw' && !cfg.activa) { toast('Activa «Enviar encuestas automáticamente» para sortear.'); return; }
       const snap = clone(S.profile); S.profile.encuesta = clone(cfg);
       if (!(await persist([S.profile], b))) { restore(S.profile, snap); return; }
       if (a === 'draw') { try { const r = await api('/encuestas/sortear', { method: 'POST' }); toast(r.creadas ? `Se sortearon ${r.creadas} consultante(s).` : 'No hay consultantes para invitar ahora: deben haber sido atendidos en el periodo, tener la autorización de datos y no haber sido invitados en los últimos 6 meses.'); } catch (err) { toast(err.message); } }
@@ -112,7 +112,7 @@ function mailHTML(m, okMsg) {
   if (!m) return '<p class="stnote">Cargando el correo de envío…</p>';
   const known = /@(gmail|googlemail|outlook|hotmail|live|msn|yahoo|ymail|icloud|me|mac|zoho)\./i;
   const head = `<b>Correo de envío</b> ${m.propio ? `<span class="chip ok">${esc(m.correo)}</span>` : '<span class="chip warn">Sin configurar</span>'}`;
-  if (m.propio && !m.editar) return `<div class="card">${head}${okMsg ? `<div class="banner" style="background:var(--ok-soft,#DDF0E4);color:var(--ok,#2B7A4B)">${esc(okMsg)}</div>` : ''}<p class="stnote">Las encuestas salen desde este correo, con tu nombre, y las respuestas de los consultantes te llegan ahí. A los consultantes sin correo la encuesta les aparece en Pendientes para enviarla por WhatsApp.</p><div class="row"><button type="button" class="btn sm" data-sv="mailedit">Cambiar</button><button type="button" class="btn sm warn" data-sv="maildel">Quitar</button></div></div>`;
+  if (m.propio && !m.editar) return `<div class="card">${head}${okMsg ? `<div class="banner" style="background:var(--ok-soft,#DDF0E4);color:var(--ok,#2B7A4B)">${esc(okMsg)}</div>` : ''}<p class="stnote">Las encuestas salen desde este correo, con tu nombre, y las respuestas de los consultantes te llegan ahí. A los consultantes sin correo la encuesta te aparece en Pendientes para enviarla por WhatsApp.</p><div class="row"><button type="button" class="btn sm" data-sv="mailedit">Cambiar</button><button type="button" class="btn sm warn" data-sv="maildel">Quitar</button></div></div>`;
   const mail = m.correo || S.profile.correo || (S.user && S.user.email) || '';
   return `<div class="card">${head}${okMsg ? `<p class="stnote">${esc(okMsg)}</p>` : ''}
   <p class="stnote">Las encuestas se envían desde tu propio correo. ${m.servidor ? 'Mientras no lo configures, se usa el correo general del servidor.' : 'Mientras no lo configures, las encuestas sorteadas aparecen en Pendientes para enviarlas a mano.'}</p>
@@ -230,7 +230,7 @@ function statsHTML(forDoc, part) {
   ${(S.sv && !S.sv.invitaciones.length && !(S.profile.encuesta || {}).activa && !forDoc) ? '<div class="banner">La encuesta aún no está activa. Actívala y pruébala con «Configurar encuesta».</div>' : ''}
   <div class="sec stsec"><h3>Resultado encuesta de satisfacción al usuario${incT && nTest ? ' <span class="chip warn">Incluye pruebas</span>' : ''}</h3>${!forDoc && (nTest || nTestInv) ? `<div class="row" style="justify-content:space-between">${nTest ? `<label class="check"><input type="checkbox" id="st_test" ${incT ? 'checked' : ''}> <span>Incluir las respuestas de prueba (${nTest})</span></label>` : '<span></span>'}<button class="btn sm warn" data-act="svDelTests">Borrar las pruebas</button></div>` : ''}${!forDoc && enc[0].n > res.length ? `<div class="banner">${enc[0].n - res.length} encuesta(s) aparecen como respondidas pero no tienen respuestas guardadas. Pasa con las encuestas de prueba respondidas antes de la actualización que empezó a guardarlas. Usa «Borrar las pruebas» y envía una prueba nueva.</div>` : ''}${`${svTable}${dimBars}${ag.comments.length ? `<h4 style="margin:6px 0 0">Comentarios (${ag.comments.length})</h4><ul class="stcom">${ag.comments.map(c => `<li>${esc(c)}</li>`).join('')}</ul>` : ''}`}</div>
   ${stBlock('Cantidad de personas encuestadas', `Encuestas enviadas en el periodo${pend ? `; además hay ${pend} pendiente(s) de respuesta, que no se cuentan aún` : ''}.`, enc, closedN)}
-  <div class="sec stsec"><h3>Acciones de mejora</h3>${acciones.length ? `<ul class="stcom">${acciones.map(a => `<li><b>${esc(fmtD(a.fecha))}:</b> ${esc(a.texto)}${forDoc ? '' : ` <button class="btn sm warn" data-act="accDel" data-id="${esc(a.id)}">Quitar</button>`}</li>`).join('')}</ul>` : '<p class="stnote">Aún no ha registrado acciones de mejora.</p>'}${forDoc ? '' : `<div class="row" id="accform"><input id="acc_txt" style="flex:1;min-width:220px" placeholder="Ej.: Enviar recordatorio de cita el día anterior" aria-label="Nueva acción de mejora"><button class="btn" data-act="accAdd">Agregar</button></div>`}</div>`;
+  <div class="sec stsec"><h3>Acciones de mejora</h3>${acciones.length ? `<ul class="stcom">${acciones.map(a => `<li><b>${esc(fmtD(a.fecha))}:</b> ${esc(a.texto)}${forDoc ? '' : ` <button class="btn sm warn" data-act="accDel" data-id="${esc(a.id)}">Quitar</button>`}</li>`).join('')}</ul>` : '<p class="stnote">Aún no has registrado acciones de mejora.</p>'}${forDoc ? '' : `<div class="row" id="accform"><input id="acc_txt" style="flex:1;min-width:220px" placeholder="Ej.: Enviar recordatorio de cita el día anterior" aria-label="Nueva acción de mejora"><button class="btn" data-act="accAdd">Agregar</button></div>`}</div>`;
 }
 ACT.statsDoc = b => { const part = b.dataset.part, per = S.stPer && S.stPer !== 'todo' ? S.stPer : 'todo', t = part === 'enc' ? 'Encuesta de satisfacción' : 'Estadísticas'; showDoc(t, `<div class="docpage">${letterhead(S.profile)}<h2>${t} · ${per === 'todo' ? 'todo el periodo' : per}</h2><p style="font-size:13px">Generado el ${esc(fmtDT(nowISO()))}. Datos agregados, sin información de consultantes individuales.</p>${statsHTML(true, part)}</div>`, (part === 'enc' ? 'encuesta-' : 'estadisticas-') + per + '.html'); };
 ACT.svDelTests = async b => {

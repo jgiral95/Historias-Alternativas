@@ -4,7 +4,7 @@ const SCALES_BASE = [
   { id: 'bienestar', nombre: 'Chequeo de bienestar', instruccion: 'Pensando en las últimas 2 semanas, ¿con qué frecuencia te pasó lo siguiente?', opciones: [[0, 'Nunca'], [1, 'A veces'], [2, 'Casi siempre'], [3, 'Siempre']],
     items: ['Me sentí con energía', 'Dormí y descansé bien', 'Me sentí en calma', 'Disfruté de mis actividades', 'Me sentí acompañado(a)', 'Pude hacer pausas para cuidarme'],
     rangos: [[0, 6, 'Por cuidar'], [7, 12, 'En camino'], [13, 18, 'Bien']], alertas: [] },
-  { id: 'equilibrio', nombre: 'Rueda del equilibrio', instruccion: 'Del 1 (muy bajo) al 5 (muy alto), ¿cómo siente hoy cada área de tu vida?', opciones: [[1, 'Muy bajo'], [2, 'Bajo'], [3, 'Medio'], [4, 'Alto'], [5, 'Muy alto']],
+  { id: 'equilibrio', nombre: 'Rueda del equilibrio', instruccion: 'Del 1 (muy bajo) al 5 (muy alto), ¿cómo sientes hoy cada área de tu vida?', opciones: [[1, 'Muy bajo'], [2, 'Bajo'], [3, 'Medio'], [4, 'Alto'], [5, 'Muy alto']],
     items: ['Cuerpo y movimiento', 'Descanso', 'Alimentación', 'Emociones', 'Relaciones', 'Trabajo o estudio', 'Tiempo para sí mismo(a) y espiritualidad'],
     rangos: [[7, 17, 'Por cuidar'], [18, 27, 'En camino'], [28, 35, 'Bien']], alertas: [] }
 ];

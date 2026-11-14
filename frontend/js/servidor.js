@@ -13,8 +13,8 @@ function renderDown() {
   $('#modal-root').innerHTML = '';
   $('#app').innerHTML = `<div class="panel" style="max-width:440px;margin:8vh auto 0"><div class="body">
     <a class="brand" href="/" aria-label="Alter-Karute: ir a la página principal" style="text-decoration:none;color:inherit">${logoSVG(60)}<b>Alter-Karute</b></a>
-    <div class="banner" role="alert"><b>El servidor no responde.</b> La página cargó, pero el servicio de la aplicación no está disponible en este momento. Puedes estar reiniciándose después de una actualización.</div>
-    <p style="margin:0;color:var(--muted);font-size:14px">Espera un minuto y pulsa «Reintentar». Si sigue igual, avise al administrador.</p>
+    <div class="banner" role="alert"><b>El servidor no responde.</b> La página cargó, pero el servicio de la aplicación no está disponible en este momento. Puede estar reiniciándose después de una actualización.</div>
+    <p style="margin:0;color:var(--muted);font-size:14px">Espera un minuto y pulsa «Reintentar». Si sigue igual, avisa al administrador.</p>
     <button class="btn pri" id="dn_retry">Reintentar</button></div></div>`;
   $('#dn_retry').onclick = () => location.reload();
   clearTimeout(renderDown.t); renderDown.t = setTimeout(() => location.reload(), 30000);

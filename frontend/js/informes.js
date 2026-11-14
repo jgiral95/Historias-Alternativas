@@ -8,10 +8,10 @@ function reportForm(p, r) {
   <div class="grid"><div class="fld"><label for="f_plantilla">Plantilla</label><select id="f_plantilla" data-f="plantilla">${tplOptions(sel)}</select></div>
   <div class="fld"><label for="f_tipo">Título del informe</label><input id="f_tipo" data-f="tipo" type="text" value="${esc(tipo)}" data-auto="${esc(r.tipo ? '' : tipo)}"></div>
   ${F('Dirigido a', 'destinatario', r.destinatario, { ph: 'Ej.: el consultante; otro terapeuta' })}${F('Asunto', 'asunto', r.asunto, { wide: true })}</div>
-  <div class="fld"><label for="f_contenido">Contenido (revísalo y ajústelo: comparte solo lo necesario)</label>${richBar('f_contenido')}<textarea id="f_contenido" data-f="contenido" data-tpl="${esc(r.contenido ? '' : tpl)}" rows="14">${esc(r.contenido || tpl)}</textarea></div>
+  <div class="fld"><label for="f_contenido">Contenido (revísalo y ajústalo: comparte solo lo necesario)</label>${richBar('f_contenido')}<textarea id="f_contenido" data-f="contenido" data-tpl="${esc(r.contenido ? '' : tpl)}" rows="14">${esc(r.contenido || tpl)}</textarea></div>
   <div class="row"><button class="btn sm" data-act="regenReport">Regenerar desde plantilla</button><button class="btn sm" data-act="formats" data-hub="informes">Editar plantillas</button><button class="btn sm" data-act="tplManage">Mis plantillas</button></div>
   <div class="grid">${F('Divulgación autorizada por', 'autorizaPor', r.autorizaPor || (ageOf(p.nacimiento) !== null && ageOf(p.nacimiento) < 18 && p.acudNombre ? 'Acudiente: ' + p.acudNombre : 'El consultante'))}</div>
-  <label class="check"><input type="checkbox" id="r_ok" data-f="autoriza" ${r.autoriza ? 'checked' : ''}> <span>Cuento con autorización escrita del consultante o su acudiente para entregar este informe y tu contenido.</span></label>
+  <label class="check"><input type="checkbox" id="r_ok" data-f="autoriza" ${r.autoriza ? 'checked' : ''}> <span>Cuento con autorización escrita del consultante o su acudiente para entregar este informe y su contenido.</span></label>
   <div class="fld"><span class="lbl">Firma del terapeuta (de tu perfil)</span>${therPreview()}</div>
   <p class="lock-note">Al guardar, el documento queda firmado con tu firma, la fecha y la hora, y <b>no podrá modificarse</b>. Solo podrás agregar adendas.</p><div class="row end"><button class="btn" data-act="cancelReport">Cancelar</button><button class="btn" data-act="saveReport" data-sign="0">Guardar borrador</button><button class="btn pri" data-act="saveReport" data-sign="1">Firmar y guardar</button></div></div>`;
 }
@@ -153,10 +153,10 @@ ACT.remConfig = async () => {
   await remLoad();
   const r = S.rem || { activo: false, horas: 24, nota: '', correo: false }, root = $('#modal-root');
   root.innerHTML = `<div class="modal" role="dialog" aria-modal="true" aria-label="Recordatorios de citas"><div class="box" id="remform" style="max-width:600px"><div class="row" style="justify-content:space-between"><h3>Recordatorios de citas</h3><button class="btn sm" id="rc_close">Cerrar</button></div>
-  <p class="stnote">Antes de cada cita programada, el consultante recibe un recordatorio con un enlace para confirmar o cancelar. Tu respuesta aparece en la agenda. El mensaje no lleva información de las sesiones: solo fecha, hora, modalidad y tu nombre.</p>
+  <p class="stnote">Antes de cada cita programada, el consultante recibe un recordatorio con un enlace para confirmar o cancelar. Su respuesta aparece en la agenda. El mensaje no lleva información de las sesiones: solo fecha, hora, modalidad y tu nombre.</p>
   <label class="check"><input type="checkbox" id="rc_on" ${r.activo ? 'checked' : ''}> <span><b>Enviar recordatorios</b></span></label>
   <div class="grid"><div class="fld"><label for="rc_h">Cuándo</label><select id="rc_h">${[[2, '2 horas antes'], [12, '12 horas antes'], [24, '24 horas antes'], [48, '2 días antes']].map(([v, l]) => `<option value="${v}" ${r.horas === v ? 'selected' : ''}>${l}</option>`).join('')}</select></div></div>
-  <div class="fld"><label for="rc_nota">Nota para todos los recordatorios (opcional)</label><input id="rc_nota" type="text" maxlength="300" value="${esc(r.nota || '')}" placeholder="Ej.: Por favor llegue 10 minutos antes."></div>
+  <div class="fld"><label for="rc_nota">Nota para todos los recordatorios (opcional)</label><input id="rc_nota" type="text" maxlength="300" value="${esc(r.nota || '')}" placeholder="Ej.: Por favor llega 10 minutos antes."></div>
   <div class="card"><b>Cómo se envían</b><p class="stnote">${r.correo ? '<b>Correo:</b> automático, desde tu correo de envío, a los consultantes que tengan correo.' : '<b>Correo:</b> aún no tienes tu correo de envío configurado (está en «Mi encuesta de satisfacción» → «Correo de envío»). Sin él, todos los recordatorios se envían a mano.'}<br><b>WhatsApp:</b> los demás aparecen en Pendientes con un botón que abre WhatsApp con el mensaje listo; tu equipo también puede enviarlos.</p></div>
   <div class="row end"><button class="btn pri" id="rc_save">Guardar</button></div></div></div>`;
   $('#rc_close').onclick = () => { root.innerHTML = ''; };

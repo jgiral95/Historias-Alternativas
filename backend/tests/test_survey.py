@@ -154,7 +154,7 @@ def test_test_survey_email_does_not_count(monkeypatch):
     setup_account(c)
     monkeypatch.setattr(survey, "smtp_enabled", lambda *a: False)
     r = c.post("/api/encuestas/prueba", json={"correo": "yo@prueba.co"}, headers=HEADERS).json()
-    assert r["enviado"] is False and "no ha configurado su correo" in r["motivo"] and r["enlace"]
+    assert r["enviado"] is False and "no has configurado tu correo" in r["motivo"] and r["enlace"]
     assert c.post("/api/encuestas/prueba", json={"correo": "no-es-correo"}, headers=HEADERS).status_code == 400
     sent = []
     monkeypatch.setattr(survey, "smtp_enabled", lambda *a: True)

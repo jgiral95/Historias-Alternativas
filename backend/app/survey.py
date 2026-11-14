@@ -52,7 +52,7 @@ DEFAULT_QUESTIONS = [
     {"id": "cp5", "dim": "Características del terapeuta", "texto": "La confianza y la confidencialidad que te transmitió el terapeuta fueron:", "tipo": "escala"},
     {"id": "cp6", "dim": "Características del terapeuta", "texto": "La información que recibiste sobre tus derechos, deberes y el consentimiento informado fue:", "tipo": "escala"},
     {"id": "cp7", "dim": "Características del terapeuta", "texto": "La utilidad de las sesiones para tu situación ha sido:", "tipo": "escala"},
-    {"id": "eg1", "dim": "Experiencia general", "texto": "En general, ¿cómo califica tu experiencia con el servicio?", "tipo": "escala"},
+    {"id": "eg1", "dim": "Experiencia general", "texto": "En general, ¿cómo calificas tu experiencia con el servicio?", "tipo": "escala"},
     {"id": "eg2", "dim": "Experiencia general", "texto": "¿Recomendarías este servicio a tus familiares y amigos?", "tipo": "recomienda"},
     {"id": "com", "dim": "Comentarios", "texto": "¿Qué podríamos mejorar? (opcional)", "tipo": "texto"},
 ]
@@ -252,7 +252,7 @@ def link(token: str, base: str = "") -> str:
 
 def message(to: str, token: str, p: dict, prof: dict, acc: dict | None = None) -> EmailMessage:
     acc = acc or {}
-    who = prof.get("nombre") or "Tu terapeuta(a)"
+    who = prof.get("nombre") or "Tu terapeuta"
     place = prof.get("consultorio") or who
     first = str(p.get("nombres") or "").split(" ")[0]
     url = link(token, acc.get("base") or "")

@@ -41,7 +41,7 @@ const DIRTY_SEL = '#noteform, #intakeform, #reportform, #cierreform, #scaleform,
 function askDiscard(go) {
   if ($('#discardask')) return;
   const d = document.createElement('div'); d.className = 'idle'; d.id = 'discardask';
-  d.innerHTML = '<div class="box" role="alertdialog" aria-labelledby="dk_t"><b id="dk_t">Tienes cambios sin guardar</b><p style="margin:0">Si sale ahora, lo que escribió se pierde. Guárdalo como borrador o pulsa «Seguir escribiendo».</p><div class="row end"><button class="btn warn" id="dk_go">Descartar y salir</button><button class="btn" id="dk_draft">Guardar borrador y salir</button><button class="btn pri" id="dk_stay">Seguir escribiendo</button></div></div>';
+  d.innerHTML = '<div class="box" role="alertdialog" aria-labelledby="dk_t"><b id="dk_t">Tienes cambios sin guardar</b><p style="margin:0">Si sales ahora, lo que escribiste se pierde. Guárdalo como borrador o pulsa «Seguir escribiendo».</p><div class="row end"><button class="btn warn" id="dk_go">Descartar y salir</button><button class="btn" id="dk_draft">Guardar borrador y salir</button><button class="btn pri" id="dk_stay">Seguir escribiendo</button></div></div>';
   document.body.appendChild(d);
   $('#dk_stay').onclick = () => d.remove();
   $('#dk_go').onclick = () => { d.remove(); go(); };

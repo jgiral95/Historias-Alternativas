@@ -1,8 +1,8 @@
 /* Definiciones, documentos (HTML para ver y descargar) y guardado confirmado. Parte de app.html (scripts clásicos que comparten el ámbito global; el orden de carga importa). */
 /* ===== Definiciones y generación de documentos ===== */
 const INTAKE = [
-  ['Motivo y expectativas', [['motivo', '¿Qué le trae a consulta?', 3], ['remitido', '¿Quién se lo recomendó?', 1], ['historiaProblema', 'Cómo empezó lo que le preocupa', 4]]],
-  ['Salud y bienestar', [['antMedicos', 'Salud física y lo que toma (opcional)', 3], ['antPsi', 'Otros procesos, terapias o prácticas que ha probado', 3], ['antFam', 'Familia', 3], ['sustancias', 'Hábitos (alimentación, sueño, consumo de sustancias)', 2]]],
+  ['Motivo y expectativas', [['motivo', '¿Qué te trae a consulta?', 3], ['remitido', '¿Quién te lo recomendó?', 1], ['historiaProblema', 'Cómo empezó lo que te preocupa', 4]]],
+  ['Salud y bienestar', [['antMedicos', 'Salud física y lo que tomas (opcional)', 3], ['antPsi', 'Otros procesos, terapias o prácticas que has probado', 3], ['antFam', 'Familia', 3], ['sustancias', 'Hábitos (alimentación, sueño, consumo de sustancias)', 2]]],
   ['Tu historia y entorno', [['desarrollo', 'Tu historia personal', 4], ['familia', 'Familia y red de apoyo', 3], ['social', 'Relaciones y vida social', 3], ['academicoLaboral', 'Estudio o trabajo', 3]], 'genograma'],
   ['Cómo llega hoy', [['examenMental', 'Estado de ánimo, energía y presencia en la sesión', 4]]],
   ['Metas y plan de acompañamiento', [['formulacion', 'Lo que observas (de lo que cuenta a lo que se propone)', 4], ['objetivos', 'Metas del proceso', 3], ['plan', 'Plan de acompañamiento: prácticas, frecuencia y cómo se hará el seguimiento', 3], ['expectativas', 'Lo que espera el consultante', 2], ['impresion', 'Impresión inicial', 3]]]
@@ -348,14 +348,14 @@ function saveError(e) {
   if (e && e.status === 401) { relogin(); return; }
   const off = navigator.onLine === false;
   const d = document.createElement('div'); d.className = 'savefail'; d.setAttribute('role', 'alert');
-  d.innerHTML = `<div><b>No se guardó.</b> ${esc(off ? 'No hay conexión a internet.' : (e instanceof TypeError || /fetch|network|load failed/i.test(e && e.message || '')) ? 'No se pudo conectar con el servidor.' : (e && e.message) || 'El servidor no respondió.')} Lo que escribió sigue en pantalla: revisa la conexión y vuelve a intentarlo.</div><button class="btn sm">Cerrar</button>`;
+  d.innerHTML = `<div><b>No se guardó.</b> ${esc(off ? 'No hay conexión a internet.' : (e instanceof TypeError || /fetch|network|load failed/i.test(e && e.message || '')) ? 'No se pudo conectar con el servidor.' : (e && e.message) || 'El servidor no respondió.')} Lo que escribiste sigue en pantalla: revisa la conexión y vuelve a intentarlo.</div><button class="btn sm">Cerrar</button>`;
   d.querySelector('button').onclick = () => d.remove();
   document.body.appendChild(d);
 }
 function relogin() {
   if ($('#relogin')) return;
   const d = document.createElement('div'); d.className = 'idle'; d.id = 'relogin';
-  d.innerHTML = `<form class="box" style="text-align:left"><b>Tu sesión terminó</b><p style="margin:0">Ingresa tu contraseña para continuar. Lo que escribió sigue en pantalla; después vuelve a pulsar el botón de guardar.</p>
+  d.innerHTML = `<form class="box" style="text-align:left"><b>Tu sesión terminó</b><p style="margin:0">Ingresa tu contraseña para continuar. Lo que escribiste sigue en pantalla; después vuelve a pulsar el botón de guardar.</p>
   <div class="fld"><label for="rl_pass">Contraseña de ${esc(S.user ? S.user.email : '')}</label><input id="rl_pass" type="password" autocomplete="current-password" required></div>
   <div class="row end"><button type="button" class="btn" id="rl_out">Salir</button><button class="btn pri">Continuar</button></div></form>`;
   document.body.appendChild(d);
