@@ -595,3 +595,4 @@ h1,h2,h3{font-family:var(--f-doc);font-weight:600;letter-spacing:.1px}
   body.escribiendo #fb-root{bottom:16px}
   body.escribiendo .toast{bottom:18px}
 }
+@media (max-width:640px){body.simabierto #app{padding-bottom:50vh}body.simabierto .nav{display:none}body.simabierto #fb-root{display:none}}
