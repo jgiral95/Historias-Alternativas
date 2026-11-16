@@ -17,7 +17,30 @@ function apptBtn(a, prox) {
 const AG_VIEWS = [['dia', 'Día'], ['semana', 'Semana'], ['mes', 'Mes']];
 function agView() { if (!S.agView) { try { S.agView = localStorage.getItem('ac_agview') || 'semana'; } catch (e) { S.agView = 'semana'; } } return AG_VIEWS.some(v => v[0] === S.agView) ? S.agView : 'semana'; }
 const agAnchor = () => S.agDate ? new Date(S.agDate + 'T12:00:00') : (() => { const d = new Date(); d.setHours(12, 0, 0, 0); return d; })();
+/* Disponibilidad: huecos libres según el horario de «Reservas» (franjas por fecha, duración y descanso) menos las citas. Se calcula aquí, solo con tus datos. */
+const dispOn = () => { try { return localStorage.getItem('ac_disp') !== '0'; } catch (e) { return true; } };
+async function dispLoad() {
+  if (S.disp !== undefined || S.mode !== 'server' || TEAM()) return;
+  S.disp = null;
+  try { const r = await api('/reserva'); S.disp = r.config || null; } catch (e) { S.disp = null; }
+  if (S.view === 'agenda' && !$('.modal')) render();
+}
+function dispSlots(key) {
+  const c = S.disp, f = c && c.fechas && c.fechas[key]; if (!f || !dispOn()) return [];
+  const dur = c.duracion || 50, gap = c.descanso || 0, now = Date.now();
+  const busy = S.appts.filter(a => a.startAt && !String(a.estado || '').startsWith('Cancelada') && dayKey(new Date(a.startAt)) === key).map(a => { const t = new Date(a.startAt).getTime(); return [t, t + (+a.duracion || 50) * 60000]; });
+  const out = [];
+  (f.franjas || []).forEach(([a, b]) => {
+    const t0 = new Date(key + 'T' + a + ':00').getTime(), end = new Date(key + 'T' + b + ':00').getTime();
+    for (let t = t0; t + dur * 60000 <= end; t += (dur + gap) * 60000) {
+      if (t > now && !busy.some(([x, y]) => x - gap * 60000 < t + dur * 60000 && y + gap * 60000 > t)) out.push(new Date(t).toTimeString().slice(0, 5));
+    }
+  });
+  return out;
+}
+const huecoBtn = (k, t, hr) => `<button class="hueco" data-act="apptEdit" data-date="${k}" data-time="${t}" aria-label="Hueco libre a las ${t}: nueva cita">${hr ? 'Libre ' : ''}${t}</button>`;
 function agendaHTML() {
+  dispLoad();
   if (typeof finMemoReset === 'function') finMemoReset();
   const v = agView(), anchor = agAnchor(), today = dayKey(new Date());
   const fmt = d => d.toLocaleDateString(I18N.locale(), { day: 'numeric', month: 'short' });
@@ -25,8 +48,8 @@ function agendaHTML() {
   if (v === 'dia') {
     const k = dayKey(anchor), list = apptsOn(k);
     title = anchor.toLocaleDateString(I18N.locale(), { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
-    const hours = [...new Set([...Array(16)].map((_, i) => i + 6).concat(list.map(a => new Date(a.startAt).getHours())))].sort((a, b) => a - b);
-    body = `<div class="dayview">${hours.map(h => { const at = list.filter(a => new Date(a.startAt).getHours() === h); return `<div class="hrow"><span class="hlbl">${String(h).padStart(2, '0')}:00</span><div class="hcell">${at.map(apptBtn).join('')}<button class="add" data-act="apptEdit" data-date="${k}" data-hour="${h}" aria-label="Nueva cita a las ${h}:00">+</button></div></div>`; }).join('')}</div>`;
+    const libres = dispSlots(k), hours = [...new Set([...Array(16)].map((_, i) => i + 6).concat(list.map(a => new Date(a.startAt).getHours()), libres.map(t => +t.slice(0, 2))))].sort((a, b) => a - b);
+    body = `<div class="dayview">${hours.map(h => { const at = list.filter(a => new Date(a.startAt).getHours() === h); return `<div class="hrow"><span class="hlbl">${String(h).padStart(2, '0')}:00</span><div class="hcell">${at.map(apptBtn).join('')}${libres.filter(t => +t.slice(0, 2) === h).map(t => huecoBtn(k, t, true)).join('')}<button class="add" data-act="apptEdit" data-date="${k}" data-hour="${h}" aria-label="Nueva cita a las ${h}:00">+</button></div></div>`; }).join('')}</div>`;
   } else if (v === 'mes') {
     const first = new Date(anchor.getFullYear(), anchor.getMonth(), 1, 12), start = mondayOf(first), month = anchor.getMonth();
     title = anchor.toLocaleDateString(I18N.locale(), { month: 'long', year: 'numeric' });
@@ -36,20 +59,21 @@ function agendaHTML() {
     body = `<div class="month"><div class="mhead">${wd.map(x => `<span>${esc(x)}</span>`).join('')}</div><div class="mgrid">${weeks.map(d => { const k = dayKey(d), l = apptsOn(k).filter(a => a.estado !== 'Cancelada');
       return `<div class="mcell ${d.getMonth() !== month ? 'out' : ''} ${k === today ? 'today' : ''}"><button class="mday" data-act="agDay" data-date="${k}" aria-label="Ver el ${esc(fmt(d))}">${d.getDate()}</button>
       ${l.slice(0, 3).map(a => `<button class="mapt" data-act="apptEdit" data-id="${a.id}" title="${esc(hhmm(a.startAt) + ' · ' + apName(a))}"><b>${esc(hhmm(a.startAt))}</b> ${esc(apName(a))}</button>`).join('')}
-      ${l.length > 3 ? `<button class="mmore" data-act="agDay" data-date="${k}">+${l.length - 3} más</button>` : ''}${l.length ? `<span class="mdots" aria-hidden="true">${'•'.repeat(Math.min(l.length, 5))}</span>` : ''}</div>`; }).join('')}</div></div>`;
+      ${l.length > 3 ? `<button class="mmore" data-act="agDay" data-date="${k}">+${l.length - 3} más</button>` : ''}${l.length ? `<span class="mdots" aria-hidden="true">${'•'.repeat(Math.min(l.length, 5))}</span>` : ''}${(n => n ? `<button class="mlibre" data-act="agDay" data-date="${k}" title="Ver los huecos libres">${n} ${n === 1 ? 'libre' : 'libres'}</button>` : '')(dispSlots(k).length)}</div>`; }).join('')}</div></div>`;
   } else {
     const mon = mondayOf(anchor), days = [...Array(7)].map((_, i) => { const d = new Date(mon); d.setDate(d.getDate() + i); return d; });
     title = `${fmt(days[0])} – ${fmt(days[6])} ${days[6].getFullYear()}`;
-    body = `<div class="week">${days.map(d => { const k = dayKey(d); return `<div class="day ${k === today ? 'today' : ''}"><h4><button class="mday" data-act="agDay" data-date="${k}"><span>${esc(d.toLocaleDateString(I18N.locale(), { weekday: 'short' }))}</span><b>${d.getDate()}</b></button></h4>${apptsOn(k).map(apptBtn).join('')}<button class="add" data-act="apptEdit" data-date="${k}" aria-label="Nueva cita el ${esc(fmt(d))}">+</button></div>`; }).join('')}</div>`;
+    body = `<div class="week">${days.map(d => { const k = dayKey(d); return `<div class="day ${k === today ? 'today' : ''}"><h4><button class="mday" data-act="agDay" data-date="${k}"><span>${esc(d.toLocaleDateString(I18N.locale(), { weekday: 'short' }))}</span><b>${d.getDate()}</b></button></h4>${apptsOn(k).map(apptBtn).join('')}${(l => l.length ? `<div class="libres">${l.map(t => huecoBtn(k, t)).join('')}</div>` : '')(dispSlots(k))}<button class="add" data-act="apptEdit" data-date="${k}" aria-label="Nueva cita el ${esc(fmt(d))}">+</button></div>`; }).join('')}</div>`;
   }
   const unit = { dia: 'Día', semana: 'Semana', mes: 'Mes' }[v];
   return `<div class="panel"><div class="ag-head"><div><h2>Agenda</h2><span style="font-size:13px;color:var(--muted)">${esc(title)}</span></div>
   <div class="row"><div class="seg" role="group" aria-label="Vista">${AG_VIEWS.map(([k, l]) => `<button class="${k === v ? 'on' : ''}" data-act="agView" data-v="${k}" aria-pressed="${k === v}">${l}</button>`).join('')}</div>
   <button class="btn sm" data-act="agNav" data-d="-1" aria-label="${unit} anterior">←</button><button class="btn sm" data-act="agNav" data-d="0">Hoy</button><button class="btn sm" data-act="agNav" data-d="1" aria-label="${unit} siguiente">→</button>
-  ${S.mode === 'server' && !TEAM() ? '<button class="btn sm" data-act="remConfig">Recordatorios</button><button class="btn sm" data-act="gcal">Google Calendar</button><button class="btn sm" data-act="reservas">Reservas</button>' : ''}<button class="btn pri" data-act="apptEdit">+ Nueva cita</button></div></div>
+  ${S.mode === 'server' && !TEAM() && S.disp ? `<button class="btn sm" data-act="dispToggle" aria-pressed="${dispOn()}" title="Mostrar u ocultar los huecos libres de tu horario de Reservas">Disponibilidad: ${dispOn() ? 'sí' : 'no'}</button>` : ''}${S.mode === 'server' && !TEAM() ? '<button class="btn sm" data-act="remConfig">Recordatorios</button><button class="btn sm" data-act="gcal">Google Calendar</button><button class="btn sm" data-act="reservas">Reservas</button>' : ''}<button class="btn pri" data-act="apptEdit">+ Nueva cita</button></div></div>
   ${body}</div>`;
 }
 ACT.agView = b => { S.agView = b.dataset.v; try { localStorage.setItem('ac_agview', S.agView); } catch (e) { /* sin almacenamiento */ } render(); };
+ACT.dispToggle = () => { try { localStorage.setItem('ac_disp', dispOn() ? '0' : '1'); } catch (e) { /* sin almacenamiento */ } render(); };
 ACT.agDay = b => { S.agView = 'dia'; S.agDate = b.dataset.date; render(); };
 ACT.agNav = b => {
   const d = +b.dataset.d; if (!d) { S.agDate = null; render(); return; }
@@ -74,7 +98,7 @@ ACT.apptEdit = b => {
   const a = b && b.dataset.id ? S.appts.find(x => x.id === b.dataset.id) : null;
   const pats = [...S.patients].filter(p => !isClosed(p) || (a && a.patientId === p.id)).sort((x, y) => fullName(x).localeCompare(fullName(y)));
   
-  const start = a ? new Date(a.startAt) : (() => { const d = b && b.dataset.date ? new Date(b.dataset.date + 'T' + String(b.dataset.hour || 9).padStart(2, '0') + ':00:00') : new Date(); if (!(b && b.dataset.date)) { d.setMinutes(0, 0, 0); d.setHours(d.getHours() + 1); } return d; })();
+  const start = a ? new Date(a.startAt) : (() => { const d = b && b.dataset.date ? new Date(b.dataset.date + 'T' + (b.dataset.time || String(b.dataset.hour || 9).padStart(2, '0') + ':00') + ':00') : new Date(); if (!(b && b.dataset.date)) { d.setMinutes(0, 0, 0); d.setHours(d.getHours() + 1); } return d; })();
   const t = localInput(start), pre = a ? a.patientId : (b && b.dataset.patient) || (S.pid && !S.draft ? S.pid : '');
   const root = $('#modal-root'), mv = a ? a.modalidad : 'Presencial', mods = MODS.includes(mv) ? MODS : MODS.concat([mv]);
   const rc = (a && a.rec) || {}, REC_U = ['horas', 'días', 'semanas', 'meses'], recOn = S.mode === 'server' && !TEAM() && !(a && a.evento);
@@ -300,7 +324,7 @@ ACT.reservas = async () => {
       if (g === 'new' && !b.dataset.sure) { b.dataset.sure = 1; b.textContent = 'Confirmar: el anterior dejará de funcionar'; return; }
       sync();
       r = await api('/reserva', { method: 'PUT', body: Object.assign({ activo: st.activo, dias: {}, fechas: st.fechas, duracion: st.duracion, descanso: st.descanso, aviso: st.aviso, cancelacion: st.cancelacion, horizonte: st.horizonte }, g === 'new' ? { renovar: true } : {}) });
-      draw(); toast(g === 'new' ? 'Enlace nuevo creado.' : 'Guardado.');
+      S.disp = r.config || undefined; draw(); toast(g === 'new' ? 'Enlace nuevo creado.' : 'Guardado.');
     } catch (err) { toast(err.message); }
   };
 };

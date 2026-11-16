@@ -606,3 +606,10 @@ h1,h2,h3{font-family:var(--f-doc);font-weight:600;letter-spacing:.1px}
 /* Botón Resumen: separado de la lista de consultantes */
 .homebtn{display:flex;align-items:center;gap:10px;width:100%;margin-bottom:10px;padding:11px 14px;cursor:pointer;font:inherit;font-weight:600;color:inherit;text-align:left}
 .homeico{width:20px;height:20px;flex:none;fill:none;stroke:var(--muted);stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}.homebtn:hover,.homebtn.on{background:var(--accent-soft)}
+
+/* Disponibilidad en la agenda: huecos libres del horario de Reservas */
+.hueco{background:var(--accent-bg,#E4EBE2);border:1px dashed var(--accent);border-radius:6px;color:var(--accent-fg,#2F4A3A);cursor:pointer;font:inherit;font-size:12px;padding:3px 8px}
+.hueco:hover{background:var(--accent);color:#fff}
+.libres{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}.libres .hueco{padding:2px 6px;font-size:11px}
+.mlibre{background:none;border:0;color:var(--accent-fg,#2F4A3A);cursor:pointer;font:inherit;font-size:11px;padding:0;text-align:left}
+.mlibre:hover{text-decoration:underline}
