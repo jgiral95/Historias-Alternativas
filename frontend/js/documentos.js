@@ -213,7 +213,10 @@ function letterhead(pr) {
   const logo = pr.logo !== undefined ? pr.logo : (S.profile && S.profile.logo);
   return `${logo ? `<div style="text-align:center;margin-bottom:6px"><img src="${logo}" alt="Logo" style="max-height:80px;max-width:260px"></div>` : ''}<h1>${esc(pr.consultorio || 'Espacio de bienestar')}</h1><div class="lh">${esc(l2)}${l3 ? '<br>' + esc(l3) : ''}</div>`;
 }
+/* En la historia completa los datos del consultante van una sola vez al inicio: mientras se arma, patientTable no se repite en cada documento. */
+let FULL_ONCE = false;
 function patientTable(p) {
+  if (FULL_ONCE) return '';
   const a = ageOf(p.nacimiento), r = [
     ['Consultante', fullName(p)], ['Documento', [p.tipoDoc, p.documento].filter(Boolean).join(' ')],
     [p.nacimiento ? 'Nacimiento' : 'Lugar de nacimiento', p.nacimiento ? fmtD(p.nacimiento) + (a !== null ? ` (${a} años)` : '') + (p.lugarNac ? ', ' + p.lugarNac : '') : p.lugarNac], ['Sexo', p.sexo], ['Identidad de género', p.identidadGenero], ['Pertenencia étnica', [p.etnia, p.etniaPueblo].filter(Boolean).join(' · ')],
@@ -298,6 +301,12 @@ function partCount(p, k) {
     reports: S.reports.filter(r => r.patientId === p.id && r.signedAt).length, cierres: (p.cierres || []).length, incorp: (p.incorporaciones || []).length, anexos: S.files.filter(f => f.patientId === p.id).length }[k];
 }
 function docFull(p, sin = []) {
+  const pr = { nombre: S.profile.nombre, titulo: S.profile.titulo, registro: S.profile.registro, consultorio: S.profile.consultorio, ciudad: S.profile.ciudad, telefono: S.profile.telefono, correo: S.profile.correo };
+  const head = `<div class="docpage">${letterhead(pr)}<h2>Datos del consultante</h2>${patientTable(p)}</div>`;
+  let body; FULL_ONCE = true; try { body = docFullParts(p, sin); } finally { FULL_ONCE = false; }
+  return body.startsWith('<p>Aún no hay') ? body : head + '<div class="pb"></div>' + body;
+}
+function docFullParts(p, sin = []) {
   let h = '';
   const no = k => sin.includes(k), sep = () => h ? '<div class="pb"></div>' : '';
   const omit = fullParts(p).filter(([k]) => no(k) && partCount(p, k)).map(([, l]) => l.toLowerCase());
