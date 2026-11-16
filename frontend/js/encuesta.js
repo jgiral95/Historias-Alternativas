@@ -181,8 +181,8 @@ function svAggregate(responses) {
 const r1 = v => (Math.round(v * 10) / 10).toLocaleString(I18N.locale());
 /* Cuadros de Estadísticas (Mis formatos → Estadísticas): el estado de los casos y los campos de tipo Lista o País del formato «Datos del consultante»; se guarda la lista de los elegidos (formatos.statsVer). */
 const statFields = () => datosSchema().flatMap(([, fs]) => (fs || []).filter(f => f[1] && (f[3] === 'country' || (f[3] === 'list' && Array.isArray(f[4])))).map(f => [f[0], f[1], f[3] === 'list' ? f[4] : []]));
-const STAT_ITEMS = () => [['estado', 'Estado de los casos'], ['razon', 'Razón de inactividad de los consultantes']].concat(statFields().map(([k, l]) => [k, l]));
-const stSel = () => { const v = (S.profile.formatos || {}).statsVer; return Array.isArray(v) ? v : ['estado', 'razon']; };
+const STAT_ITEMS = () => statFields().map(([k, l]) => [k, l]);
+const stSel = () => { const v = (S.profile.formatos || {}).statsVer; return Array.isArray(v) ? v : []; };
 const stOn = k => stSel().includes(k);
 function statsHTML(forDoc, part) {
   const enc_ = part === 'enc';
@@ -210,9 +210,7 @@ function statsHTML(forDoc, part) {
   const head = forDoc ? '' : `<div class="row" style="justify-content:space-between;align-items:flex-end"><h2 style="font-family:var(--f-doc);font-size:22px;margin:0">${enc_ ? 'Encuesta de satisfacción' : 'Estadísticas'}</h2><span class="row"><span class="fld" style="min-width:160px"><label for="st_per">Periodo</label><select id="st_per"><option value="todo" ${per === 'todo' ? 'selected' : ''}>Todo</option>${years.map(y => `<option ${per === y ? 'selected' : ''}>${y}</option>`).join('')}</select></span>${enc_ ? '<button class="btn" data-act="survey">Configurar encuesta</button>' : ''}<button class="btn" data-act="statsDoc" data-part="${enc_ ? 'enc' : 'stats'}">Imprimir o guardar PDF</button></span></div>`;
   if (!enc_) return `${head}
   <div class="stats"><div class="stat"><b>${pats.length}</b><span>${per === 'todo' ? 'consultantes registrados' : 'consultantes atendidos en ' + per}</span></div><div class="stat"><b>${est[1].n}</b><span>casos activos</span></div><div class="stat"><b>${est[0].n}</b><span>casos finalizados</span></div></div>
-  ${statFields().filter(([k]) => stOn(k)).map(([k, l, o]) => stBlock(l, 'Respuestas registradas en «' + l + '» de ' + perTxt + '.', group(pats, p => p[k] || 'Sin registrar', o), pats.length)).join('')}
-  ${stOn('estado') ? stBlock('Estado de los casos', 'Finalizados: alta, cerrado o remitido. Otros: en pausa.', est, pats.length, '# Total') : ''}
-  ${stOn('razon') ? stBlock('Razón de inactividad de los consultantes', 'Consultantes que no están activos. La razón se registra en Datos → Estado del proceso.', raz, inact.length, '# Total') : ''}`;
+  ${statFields().filter(([k]) => stOn(k)).map(([k, l, o]) => stBlock(l, 'Respuestas registradas en «' + l + '» de ' + perTxt + '.', group(pats, p => p[k] || 'Sin registrar', o), pats.length)).join('')}`;
   if (S.mode !== 'server') return head + '<p class="stnote">La encuesta de satisfacción requiere el servidor.</p>';
   const sent = invs.length;
   return `${head}

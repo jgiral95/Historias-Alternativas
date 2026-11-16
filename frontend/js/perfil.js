@@ -272,8 +272,8 @@ function openHub(k) {
 function statsManage() {
   const root = $('#modal-root'), on = new Set(stSel()), items = STAT_ITEMS(); ED = null;
   root.innerHTML = `<div class="modal" role="dialog" aria-modal="true" aria-label="Mis formatos"><div class="box"><div class="row mfhead" style="justify-content:space-between"><h3 style="flex:1">Mis formatos</h3><button class="btn sm pri" data-st="save">Guardar</button><button class="btn sm" data-st="close">Cerrar</button></div>${hubTabs('estadisticas')}
-  <p style="margin:0;font-size:13px;color:var(--muted)">Elige qué cuadros quieres ver en Estadísticas. Aquí salen el estado de los casos y los campos de tipo «Lista» o «País» de tu formato de Datos del consultante (créalos en esa pestaña). Los datos no se borran: solo se ocultan.</p>
-  <div class="sec">${items.map(([k, l]) => `<label class="check"><input type="checkbox" data-sti="${k}" ${on.has(k) ? 'checked' : ''}> <span>${esc(l)}</span></label>`).join('')}</div>
+  <p style="margin:0;font-size:13px;color:var(--muted)">Elige qué cuadros quieres ver en Estadísticas. Aquí salen los campos de tipo «Lista» o «País» de tu formato de Datos del consultante. Los datos no se borran: solo se ocultan.</p>
+  <div class="sec">${items.length ? '' : '<p class="stnote">Aún no tienes campos de tipo Lista o País en Datos del consultante.</p>'}${items.map(([k, l]) => `<label class="check"><input type="checkbox" data-sti="${k}" ${on.has(k) ? 'checked' : ''}> <span>${esc(l)}</span></label>`).join('')}</div>
   <div class="row end"><button class="btn pri" data-st="save">Guardar</button></div></div></div>`;
   root.onclick = e => {
     const h = e.target.closest('[data-hub]'); if (h) return openHub(h.dataset.hub);
