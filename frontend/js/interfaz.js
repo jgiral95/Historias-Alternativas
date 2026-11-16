@@ -235,11 +235,10 @@ function rowsHTML() {
   const q = S.q.toLowerCase();
   const list = S.patients.filter(p => !q || norm(fullName(p) + ' ' + (p.documento || '')).includes(norm(q)))
     .sort((a, b) => (a.apellidos || '').localeCompare(b.apellidos || '') || (a.nombres || '').localeCompare(b.nombres || ''));
-  const home = `<button class="prow home ${!S.pid ? 'on' : ''}" data-act="home"><span class="ico" aria-hidden="true">⌂</span><span class="nm">Resumen</span></button>`;
-  if (!list.length) return home + (hitsHTML(S.q) || `<div class="empty">${S.patients.length ? 'Ningún consultante ni nota coincide.' : 'Aún no hay consultantes. Crea el primero con «Nuevo consultante».'}</div>`);
+  if (!list.length) return (hitsHTML(S.q) || `<div class="empty">${S.patients.length ? 'Ningún consultante ni nota coincide.' : 'Aún no hay consultantes. Crea el primero con «Nuevo consultante».'}</div>`);
   S.openGroups = S.openGroups || ['Activo'];
   const cur = S.patients.find(x => x.id === S.pid);
-  return home + hitsHTML(S.q) + GROUPS.map(([k, label]) => {
+  return hitsHTML(S.q) + GROUPS.map(([k, label]) => {
     const g = list.filter(p => (p.estado || 'Activo') === k);
     if (!g.length) return '';
     const open = q || S.openGroups.includes(k) || (cur && (cur.estado || 'Activo') === k);
@@ -247,7 +246,7 @@ function rowsHTML() {
   }).join('');
 }
 function listHTML() {
-  return `<div class="panel plist"><div class="plist-head"><span>Consultantes</span><span id="pcount">${S.patients.length}</span></div>${S.mode === 'server' && !TEAM() ? `<button class="btn sm" id="formsbtn" data-act="forms" style="width:calc(100% - 20px);margin:8px 10px">Enviar formulario a nuevo consultante${typeof FORMS !== 'undefined' && FORMS.n ? ` <span class="chip ok">${FORMS.n} recibido${FORMS.n === 1 ? '' : 's'}</span>` : ''}</button>` : ''}<div id="rows">${rowsHTML()}</div></div>`;
+  return `<button class="panel homebtn ${!S.pid ? 'on' : ''}" data-act="home"><span class="ico" aria-hidden="true">⌂</span><span>Resumen</span></button><div class="panel plist"><div class="plist-head"><span>Consultantes</span><span id="pcount">${S.patients.length}</span></div>${S.mode === 'server' && !TEAM() ? `<button class="btn sm" id="formsbtn" data-act="forms" style="width:calc(100% - 20px);margin:8px 10px">Enviar formulario a nuevo consultante${typeof FORMS !== 'undefined' && FORMS.n ? ` <span class="chip ok">${FORMS.n} recibido${FORMS.n === 1 ? '' : 's'}</span>` : ''}</button>` : ''}<div id="rows">${rowsHTML()}</div></div>`;
 }
 ACT.home = () => { S.view = 'patients'; S.pid = null; S.draft = false; S.draftObj = null; S.homeOpen = true; render(); scrollTo(0, 0); };
 function todoHTML() {

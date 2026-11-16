@@ -43,7 +43,7 @@ const W = 375;
   }, W);
   const check = async (name, shot) => { await page.waitForTimeout(250); const o = await overflow(); ok(!o.length, name + (o.length ? ' → ' + o.join(' | ') : '')); if (shot || o.length) await page.screenshot({ path: OUT + 'movil_' + name.replace(/\W+/g, '_') + '.png', fullPage: true }); };
   await check('lista de pacientes', true);
-  await page.click('.prow.home'); await page.waitForSelector('[data-act="homeTab"]');
+  await page.click('.homebtn'); await page.waitForSelector('[data-act="homeTab"]');
   ok(await page.locator('[data-act="homeTab"][data-t="stats"]').isVisible() && await page.locator('.file-wrap .back').isVisible(), 'en el celular «Resumen» abre el resumen, con botón para volver');
   await check('resumen', true);
   for (const t of ['stats', 'enc']) { await page.click(`[data-act="homeTab"][data-t="${t}"]`); await check('resumen ' + t); }
