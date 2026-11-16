@@ -37,8 +37,8 @@ def build(p):
     head = re.sub(r'(<link rel="canonical" href="__ORIGIN__)[^"]*"', r'\1/en' + (u if u != '/' else '/') + '"', head)
     head = re.sub(r'(<meta property="og:url" content="__ORIGIN__)[^"]*"', r'\1/en' + (u if u != '/' else '/') + '"', head)
     alt = ('<link rel="alternate" hreflang="es" href="__ORIGIN__%s">\n<link rel="alternate" hreflang="en" href="__ORIGIN__/en%s">\n<link rel="alternate" hreflang="x-default" href="__ORIGIN__%s">\n') % (u, u, u)
-    head = head.replace('<link rel="icon"', alt + '<link rel="icon"', 1)
-    head = re.sub(r'(href|src)="(?!/|https?:|mailto:|#|__ORIGIN__|data:)([^"]+)"', r'\1="/\2"', head)
+    if 'hreflang=' not in head: head = head.replace('<link rel="icon"', alt + '<link rel="icon"', 1)
+    head = re.sub(r'(href|src)"="(?!/|https?:|mailto:|#|__ORIGIN__|data:)([^"]+)"', r'\1="/\2"', head)
     head = head.replace('<html lang="es">', '<html lang="en">')
     # cuerpo
     body = re.sub(r'(href|src)="(?!/|https?:|mailto:|#|__ORIGIN__|data:)([^"]+)"', r'\1="/\2"', body)
