@@ -186,3 +186,28 @@ def test_professional_appt_mails_existing_patient_with_calendar_button(monkeypat
     assert len(sent) == 1 and sent[0][0] == "maria@pac.co" and "calendar.google.com/calendar/render" in sent[0][2] and "meet.google.com" in sent[0][2]
     c.put("/api/records/a_2", json={**ap, "id": "a_2", "avisarCorreo": True, "duracion": 60}, headers=HEADERS)
     assert len(sent) == 1  # editar la cita no reenvía
+
+
+def test_cuenta_admin_agenda_reunion_informativa(monkeypatch):
+    monkeypatch.setattr(booking, "REUNION_URL", "https://zoom.us/j/123456")
+    c, slug, sent = setup(monkeypatch)
+    from conftest import SessionLocal, User
+    from sqlalchemy import select
+    with SessionLocal() as db:
+        u = db.scalar(select(User).where(User.email == "ana@x.co"))
+        u.role = "admin"
+        db.commit()
+    pub = anon()
+    day, hour = first_slot(pub, slug)
+    assert pub.get(f"/api/reservar/{slug}").json()["reunion"] is True
+    body = {"inicio": f"{day}T{hour}", "modalidad": "Virtual", "nombres": "Luis", "apellidos": "Gómez", "correo": "luis@mail.co", "telefono": "3001234567"}
+    assert pub.post(f"/api/reservar/{slug}", json=body).status_code == 400  # faltan profesión y ciudad
+    r = pub.post(f"/api/reservar/{slug}", json={**body, "profesion": "Terapeuta", "ciudad": "Medellín"})
+    assert r.status_code == 200, r.text
+    recs = c.get("/api/records").json()
+    assert not [x for x in recs if x["kind"] == "patient"]
+    a = next(x for x in recs if x["kind"] == "appt")
+    assert a["reunion"] is True and a["nuevo"]["profesion"] == "Terapeuta" and a["nuevo"]["ciudad"] == "Medellín"
+    pac = next(b for t, _, b in sent if t == "luis@mail.co")
+    assert "reunión" in pac and "https://zoom.us/j/123456" in pac
+    assert any("Nueva reunión informativa" in subj for _, subj, _ in sent)

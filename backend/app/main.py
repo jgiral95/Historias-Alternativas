@@ -2397,7 +2397,8 @@ def public_booking(slug: str, request: Request, db: Session = Depends(get_db)):
     b, u, prof, _acc = _booking_link(db, slug)
     cfg = decrypt(b.payload)
     return {"profesional": prof.get("nombre") or u.name, "consultorio": prof.get("consultorio") or "", "idioma": prof.get("idioma") or "", "modalidades": cfg["modalidades"], "modalidadDia": booking.modalidades_por_dia(cfg),
-            "duracion": cfg["duracion"], "dias": booking.slots(cfg, booking.busy_of(_appts_of(db, u.id)))}
+            "duracion": cfg["duracion"], "dias": booking.slots(cfg, booking.busy_of(_appts_of(db, u.id))),
+            "reunion": u.role == "admin"}  # cuentas admin: reunión informativa (sin datos de consultante)
 
 
 class BookIn(BaseModel):
@@ -2409,6 +2410,8 @@ class BookIn(BaseModel):
     documento: str = ""
     correo: str = ""
     telefono: str = ""
+    profesion: str = ""  # solo reuniones informativas (cuentas admin)
+    ciudad: str = ""
 
 
 def _norm(v) -> str:
@@ -2425,6 +2428,12 @@ def public_booking_create(slug: str, body: BookIn, request: Request, bg: Backgro
         raise HTTPException(400, "Escribe nombres, apellidos y un correo válido")
     if not booking.modalidad_ok(cfg, body.inicio[:10], body.modalidad):
         raise HTTPException(400, "Modalidad no válida")
+    reunion = u.role == "admin"
+    profesion, ciudad = body.profesion.strip()[:80], body.ciudad.strip()[:80]
+    if reunion:  # reunión informativa: nunca se busca ni se crea un consultante
+        if len(_norm(tel)) < 7 or not profesion or not ciudad:
+            raise HTTPException(400, "Escribe tu teléfono, profesión y ciudad")
+        body.nuevo = True
     if body.nuevo and len(_norm(tel)) < 7:
         raise HTTPException(400, "Escribe un teléfono de contacto")
     if not body.nuevo and not _norm(body.documento):
@@ -2435,7 +2444,7 @@ def public_booking_create(slug: str, body: BookIn, request: Request, bg: Backgro
         raise HTTPException(400, "Horario no válido")
     pid, nuevo = None, None
     if body.nuevo:
-        nuevo = {"nombres": nombres, "apellidos": apellidos, "correo": correo, "telefono": tel}
+        nuevo = {"nombres": nombres, "apellidos": apellidos, "correo": correo, "telefono": tel, **({"profesion": profesion, "ciudad": ciudad} if reunion else {})}
     else:
         for r in db.scalars(select(Record).where(Record.user_id == u.id, Record.kind == "patient")):
             p = decrypt(r.payload)
@@ -2449,7 +2458,7 @@ def public_booking_create(slug: str, body: BookIn, request: Request, bg: Backgro
             raise HTTPException(409, "Ese horario ya no está disponible. Elige otro.")
         aid, now_iso = "a_" + secrets.token_hex(8), datetime.now(timezone.utc).isoformat()
         payload = {"id": aid, "kind": "appt", "createdAt": now_iso, "updatedAt": now_iso, "startAt": start.astimezone(timezone.utc).isoformat(),
-                   "duracion": cfg["duracion"], "modalidad": body.modalidad, "estado": "Programada", "origen": "enlace",
+                   "duracion": cfg["duracion"], "modalidad": body.modalidad, "estado": "Programada", "origen": "enlace", **({"reunion": True} if reunion else {}),
                    **({"patientId": pid} if pid else {"nuevo": nuevo})}
         db.add(Record(user_id=u.id, id=aid, kind="appt", patient_id=pid, payload=encrypt(payload)))
         _rem, tok = reminders.make(db, u.id, payload, "correo")  # enlace para ver o cancelar la cita (el mismo de los recordatorios)
@@ -2458,7 +2467,7 @@ def public_booking_create(slug: str, body: BookIn, request: Request, bg: Backgro
     bg.add_task(gcal.sync, u.id, [aid])
     base = acc.get("base") or PUBLIC_URL or ""
     bg.add_task(booking.notify, prof, acc, start, cfg["duracion"], body.modalidad, f"{nombres} {apellidos}", correo, prof.get("correo") or u.email, nuevo,
-                reminders.link(tok, base), f"{base}/reservar?c={slug}")
+                reminders.link(tok, base), f"{base}/reservar?c={slug}", "", reunion)
     return {"cuando": reminders.when_text(start), "modalidad": body.modalidad}
 
 
