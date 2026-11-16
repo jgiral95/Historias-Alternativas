@@ -140,11 +140,16 @@ async function remSend(id) {
   root.innerHTML = `<div class="modal" role="dialog" aria-modal="true" aria-label="Recordatorio de cita"><div class="box" style="max-width:560px"><h3>Recordatorio para ${esc(fullName(p))}</h3>
   <p class="stnote">Cita: ${esc(fmtDT(a.startAt))} — el consultante puede confirmar o cancelar con el enlace; su respuesta aparece en la agenda.</p>
   <div class="fld"><label for="rm_txt">Mensaje</label><textarea id="rm_txt" rows="5">${esc(text)}</textarea></div>
-  <div class="row">${ph ? `<a class="btn pri" id="rm_wa" href="https://wa.me/${ph}?text=${encodeURIComponent(text)}" target="_blank" rel="noopener">Abrir en WhatsApp</a>` : '<span class="chip warn">El consultante no tiene teléfono</span>'}${p.correo ? `<a class="btn" href="mailto:${esc(p.correo)}?subject=${encodeURIComponent('Recordatorio de tu cita')}&body=${encodeURIComponent(text)}">Correo</a>` : ''}<button class="btn" id="rm_copy">Copiar mensaje</button></div>
+  <div class="row">${ph ? `<a class="btn pri" id="rm_wa" href="https://wa.me/${ph}?text=${encodeURIComponent(text)}" target="_blank" rel="noopener">Abrir en WhatsApp</a>` : '<span class="chip warn">El consultante no tiene teléfono</span>'}${p.correo ? (S.rem && S.rem.correo ? '<button class="btn" id="rm_mail">Enviar por correo</button>' : `<a class="btn" href="mailto:${esc(p.correo)}?subject=${encodeURIComponent('Recordatorio de tu cita')}&body=${encodeURIComponent(text)}">Abrir en mi correo</a>`) : ''}<button class="btn" id="rm_copy">Copiar mensaje</button></div>
   <div class="row end"><button class="btn" id="rm_close">Cerrar</button><button class="btn pri" id="rm_sent">Ya lo envié</button></div></div></div>`;
   const close = () => { root.innerHTML = ''; };
   $('#rm_txt').oninput = () => { const w = $('#rm_wa'); if (w) w.href = `https://wa.me/${ph}?text=${encodeURIComponent($('#rm_txt').value)}`; };
   $('#rm_close').onclick = close;
+  if ($('#rm_mail')) $('#rm_mail').onclick = async ev => {
+    const bt = ev.currentTarget; bt.disabled = true;
+    try { await api('/recordatorios/' + id + '/correo', { method: 'POST', body: { texto: $('#rm_txt').value } }); await remLoad(); close(); render(); toast('Recordatorio enviado a ' + p.correo + '.'); }
+    catch (e) { bt.disabled = false; toast(e.message); }
+  };
   $('#rm_copy').onclick = async () => { try { await navigator.clipboard.writeText($('#rm_txt').value); toast('Mensaje copiado.'); } catch (e) { $('#rm_txt').select(); toast('Copia el mensaje seleccionado.'); } };
   $('#rm_sent').onclick = async () => { try { await api('/recordatorios/' + id + '/enviado', { method: 'POST' }); await remLoad(); close(); render(); toast('Recordatorio marcado como enviado.'); } catch (e) { toast(e.message); } };
 }

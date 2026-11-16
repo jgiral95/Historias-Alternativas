@@ -2178,6 +2178,43 @@ def reminders_link(appt_id: str, user: User = Depends(current_user), db: Session
     return {"enlace": token}
 
 
+class ReminderMailIn(BaseModel):
+    texto: str
+
+
+@app.post("/api/recordatorios/{appt_id}/correo", status_code=204)
+def reminders_mail(appt_id: str, body: ReminderMailIn, user: User = Depends(current_user), db: Session = Depends(get_db)):
+    """Envía el recordatorio por correo al consultante, desde el correo de envío de la cuenta, y lo marca como enviado."""
+    oid = owner_id(user)
+    row = db.get(Record, (oid, appt_id)) if ID_RE.match(appt_id) else None
+    if not row or row.kind != "appt":
+        raise HTTPException(404, "Cita no encontrada")
+    appt = decrypt(row.payload)
+    if appt.get("demo"):
+        raise HTTPException(400, "Es una cita de ejemplo: no se envían correos.")
+    prow = db.get(Record, (oid, appt.get("patientId") or ""))
+    p = (decrypt(prow.payload) if prow and prow.kind == "patient" else None) or appt.get("nuevo") or {}
+    mail = str(p.get("correo") or "").strip()
+    if not EMAIL_RE.match(mail):
+        raise HTTPException(400, "El consultante no tiene un correo válido.")
+    texto = body.texto.strip()[:2000]
+    if not texto:
+        raise HTTPException(400, "Escribe el mensaje.")
+    acc = survey.account(db, oid)
+    if not survey.smtp_enabled(acc):
+        raise HTTPException(503, "El envío de correos no está disponible: configura tu correo de envío.")
+    prof_row = db.get(Record, (oid, "profile"))
+    prof = decrypt(prof_row.payload) if prof_row else {}
+    try:
+        reminders.send_mail(mail, texto, prof, acc)
+    except Exception:
+        raise HTTPException(502, "No se pudo enviar el correo. Revisa la dirección e intenta de nuevo.")
+    r, _ = reminders.make(db, oid, appt, "correo")
+    r.channel, r.sent_at, r.error = "correo", datetime.now(timezone.utc), None
+    db.commit()
+    audit(db, user.id, "reminder.mail", appt_id)
+
+
 @app.post("/api/recordatorios/{appt_id}/enviado", status_code=204)
 def reminders_sent(appt_id: str, user: User = Depends(current_user), db: Session = Depends(get_db)):
     oid = owner_id(user)

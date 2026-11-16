@@ -100,3 +100,21 @@ def test_team_can_send_whatsapp_reminders():
     assert c.get("/api/recordatorios").json()["items"]["a_3"]["canal"] == "whatsapp"
     make_user("otro@x.co")
     assert client_for("otro@x.co").post("/api/recordatorios/a_3/enlace", headers=HEADERS).status_code == 404
+
+
+def test_send_reminder_by_mail_from_the_modal(monkeypatch):
+    make_user("ana@x.co")
+    c = client_for("ana@x.co")
+    setup(c)
+    sent = []
+    monkeypatch.setattr(survey, "account", lambda db, u: {"host": "h", "from": "ana@gmail.com", "base": "https://h.co", "propio": True})
+    monkeypatch.setattr(reminders, "send_mail", lambda to, body, prof, acc: sent.append((to, body)))
+    r = c.post("/api/recordatorios/a_1/correo", json={"texto": "Hola María, tu cita: https://h.co/cita?t=x"})
+    assert r.status_code == 204 and sent == [("maria@pac.co", "Hola María, tu cita: https://h.co/cita?t=x")]
+    it = c.get("/api/recordatorios").json()["items"]["a_1"]
+    assert it["canal"] == "correo" and it["enviado"]
+    assert c.post("/api/recordatorios/a_3/correo", json={"texto": "Hola"}).status_code == 400  # sin correo
+    assert c.post("/api/recordatorios/a_1/correo", json={"texto": "  "}).status_code == 400
+    assert c.post("/api/recordatorios/nope/correo", json={"texto": "Hola"}).status_code == 404
+    monkeypatch.setattr(survey, "account", lambda db, u: None)
+    assert c.post("/api/recordatorios/a_1/correo", json={"texto": "Hola"}).status_code == 503
