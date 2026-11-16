@@ -179,10 +179,11 @@ function svAggregate(responses) {
   return { dims, comments, global: dims.length ? dims.reduce((a, b) => a + b.pc, 0) / dims.length : null };
 }
 const r1 = v => (Math.round(v * 10) / 10).toLocaleString(I18N.locale());
-/* Cuadros de Estadísticas : el estado de los casos y los campos de tipo Lista o País de «Datos del consultante» marcados con «Incluir en Estadísticas» (se guarda la lista en formatos.statsVer). */
+/* Cuadros de Estadísticas (Mis formatos → Estadísticas): el estado de los casos y los campos de tipo Lista o País del formato «Datos del consultante»; se guarda la lista de los elegidos (formatos.statsVer). */
 const statFields = () => datosSchema().flatMap(([, fs]) => (fs || []).filter(f => f[1] && (f[3] === 'country' || (f[3] === 'list' && Array.isArray(f[4])))).map(f => [f[0], f[1], f[3] === 'list' ? f[4] : []]));
-const stSel = () => { const v = (S.profile.formatos || {}).statsVer; return Array.isArray(v) ? v : []; };
-const stOn = k => k === 'estado' || k === 'razon' || stSel().includes(k);
+const STAT_ITEMS = () => [['estado', 'Estado de los casos'], ['razon', 'Razón de inactividad de los consultantes']].concat(statFields().map(([k, l]) => [k, l]));
+const stSel = () => { const v = (S.profile.formatos || {}).statsVer; return Array.isArray(v) ? v : ['estado', 'razon']; };
+const stOn = k => stSel().includes(k);
 function statsHTML(forDoc, part) {
   const enc_ = part === 'enc';
   const years = [...new Set((enc_ ? [...((S.sv && S.sv.invitaciones) || []).map(i => i.creada.slice(0, 4)), ...(S.svRes || []).map(r => (r.mes || '').slice(0, 4)), ...(S.profile.acciones || []).map(a => (a.fecha || '').slice(0, 4))]
