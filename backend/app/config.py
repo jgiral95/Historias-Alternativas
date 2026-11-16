@@ -23,6 +23,10 @@ IDLE_MINUTES = max(5, int(os.environ.get("IDLE_MINUTES", "30") or 30))
 # al menos una vez cada tantos días. 0 desactiva la opción (el código se pide siempre).
 TRUSTED_DEVICE_DAYS = max(0, int(os.environ.get("TRUSTED_DEVICE_DAYS", "30") or 0))
 MIN_PASSWORD = 10
+# Versión vigente de la política de privacidad (la misma fecha de «Vigente desde» en frontend/privacidad.html): al cambiarla,
+# todos los usuarios deben aceptarla de nuevo al ingresar. Las pruebas de navegador la apagan con PRIVACY_REQUIRED=0.
+PRIVACY_VERSION = "2026-11-16"
+PRIVACY_REQUIRED = os.environ.get("PRIVACY_REQUIRED", "1") != "0"
 MAX_RECORD_BYTES = 2_000_000
 MAX_FILE_BYTES = 8 * 1024 * 1024
 # Conexión directa con Google Calendar (opcional). Si faltan, solo funciona el enlace iCal.

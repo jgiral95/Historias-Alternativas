@@ -36,6 +36,9 @@ class User(Base):
     # Cuenta creada (o contraseña restablecida) por otra persona: debe elegir su propia contraseña al entrar.
     must_change_password: Mapped[bool] = mapped_column(Boolean, default=False, server_default=sa_false())
     recovery_codes: Mapped[str | None] = mapped_column(Text, nullable=True)
+    # Política de privacidad aceptada: versión (fecha de vigencia) y momento en que se aceptó.
+    privacy_version: Mapped[str | None] = mapped_column(String(10), nullable=True)
+    privacy_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     # Subcuentas de equipo (secretaría, asistentes): trabajan sobre los datos del terapeuta dueño.
     owner_id: Mapped[int | None] = mapped_column(Integer, nullable=True, index=True)
     # Datos de las personas del equipo para el historial de cambios (documento y firma), cifrados.

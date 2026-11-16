@@ -2,6 +2,7 @@
 /* ----- Modo servidor: acceso, cuenta y usuarios ----- */
 async function startApp() {
   if (S.mode === 'server' && S.user && S.user.cambiarClave) { renderFirstPassword(); return; }
+  if (S.mode === 'server' && S.user && S.user.privacidadOk === false) { renderPrivacidad(); return; }
   if (S.mode === 'server') await syncClock();
   S.pid = null; S.draft = false; S.tab = 'datos'; S.view = 'patients'; Idle.last = Idle.ping = Date.now();
   try { await Store.load(); } catch (e) { if (e.status === 402) { S.loading = false; if (!S.profile) S.profile = { id: 'profile', kind: 'profile' }; render(); subDraw(e.message); return; } toast('No se pudieron cargar los datos guardados.'); if (!S.profile) S.profile = { id: 'profile', kind: 'profile' }; }
@@ -28,18 +29,20 @@ function renderRegistro(msg, v) {
   $('#app').innerHTML = `<div class="panel" style="width:100%;max-width:400px;box-sizing:border-box;margin:8vh auto 0"><form class="body" id="regform" autocomplete="on">
     <a class="brand" href="/" aria-label="Alter-Karute: ir a la página principal" style="text-decoration:none;color:inherit">${logoSVG(60)}<b>Alter-Karute</b></a><p style="margin:0;color:var(--muted)">Crea tu cuenta para empezar.</p>
     ${msg ? `<div class="banner" role="alert">${esc(msg)}</div>` : ''}
-    ${GOOGLE_BTN('Crear cuenta con Google')}<p style="margin:0;text-align:center;color:var(--muted);font-size:13px">o con tu correo</p>
+    ${GOOGLE_BTN('Crear cuenta con Google')}<p style="margin:0;text-align:center;color:var(--muted);font-size:12px">Con Google, la política de privacidad se te pedirá aceptar al entrar.</p><p style="margin:0;text-align:center;color:var(--muted);font-size:13px">o con tu correo</p>
     <div class="fld"><label for="rg_name">Nombre completo</label><input id="rg_name" autocomplete="name" value="${esc(v.name || '')}" required></div>
     <div class="fld"><label for="rg_email">Correo</label><input id="rg_email" type="email" autocomplete="username" value="${esc(v.email || '')}" required></div>
     <div class="fld"><label for="rg_pass">Contraseña</label><input id="rg_pass" type="password" autocomplete="new-password" minlength="10" required></div>
     <div class="fld"><label for="rg_pass2">Confirmar contraseña</label><input id="rg_pass2" type="password" autocomplete="new-password" minlength="10" required></div>
+    <label class="chk" style="display:flex;gap:8px;align-items:flex-start;font-size:14px"><input type="checkbox" id="rg_acepto" ${v.acepto ? 'checked' : ''}> <span>He leído y acepto la <a href="/privacidad" target="_blank" rel="noopener">política de privacidad</a>.</span></label>
     <button class="btn pri" type="submit">Crear cuenta</button>
     <button class="btn" type="button" id="rg_back">Ya tengo cuenta</button>
     <a class="btn" href="/" style="display:flex;align-items:center;justify-content:center;text-decoration:none;color:inherit">← Volver al inicio</a></form></div>`;
   $('#rg_back').onclick = () => renderLogin();
   $('#regform').onsubmit = async ev => {
     ev.preventDefault();
-    const b = { name: $('#rg_name').value.trim(), email: $('#rg_email').value.trim(), password: $('#rg_pass').value, idioma: I18N.lang };
+    const b = { name: $('#rg_name').value.trim(), email: $('#rg_email').value.trim(), password: $('#rg_pass').value, idioma: I18N.lang, acepto: $('#rg_acepto').checked };
+    if (!b.acepto) { renderRegistro('Para crear la cuenta debes aceptar la política de privacidad.', b); return; }
     if (b.password !== $('#rg_pass2').value) { renderRegistro('Las contraseñas no coinciden.', b); return; }
     try {
       await api('/auth/register', { method: 'POST', body: b, noRedirect: true });
@@ -49,6 +52,24 @@ function renderRegistro(msg, v) {
         <button class="btn" id="rg_ok">Volver al ingreso</button></div></div>`;
       $('#rg_ok').onclick = () => renderLogin('', b.email);
     } catch (err) { renderRegistro(err.message, b); }
+  };
+}
+/* Política de privacidad: se pide aceptarla al estrenar la cuenta (Google, equipo) y cada vez que cambia la versión vigente. */
+function renderPrivacidad() {
+  S.loading = false; $('#modal-root').innerHTML = '';
+  const antes = !!S.user.privacidadAntes;
+  $('#app').innerHTML = `<div class="panel" style="max-width:440px;margin:8vh auto 0"><div class="body">
+    ${BRAND_A}
+    <h2 style="margin:0">${antes ? 'Actualizamos nuestra política de privacidad' : 'Política de privacidad'}</h2>
+    <p style="margin:0">${antes ? 'Cambió la forma en que se describe el tratamiento de los datos. Léela y acéptala para seguir usando Alter-Karute.' : 'Para usar Alter-Karute, lee y acepta la política de privacidad y tratamiento de datos personales.'}</p>
+    <p style="margin:0"><a href="/privacidad" target="_blank" rel="noopener">Leer la política de privacidad</a> (versión del ${esc(S.user.privacidadVersion || '')})</p>
+    <label class="chk" style="display:flex;gap:8px;align-items:flex-start;font-size:14px"><input type="checkbox" id="pv_ok"> <span>He leído y acepto la política de privacidad de Alter-Karute.</span></label>
+    <button class="btn pri" id="pv_acepto" disabled>Aceptar y continuar</button> <button class="btn" id="pv_out">Salir</button></div></div>`;
+  $('#pv_ok').onchange = () => { $('#pv_acepto').disabled = !$('#pv_ok').checked; };
+  $('#pv_out').onclick = () => ACT.logout();
+  $('#pv_acepto').onclick = async () => {
+    try { await api('/auth/privacidad', { method: 'POST' }); S.user.privacidadOk = true; S.user.privacidadAntes = true; await startApp(); }
+    catch (err) { toast(err.message); }
   };
 }
 /* Recuperar la contraseña: se envía al correo un enlace de un solo uso; al abrirlo (?recuperar=…) se elige la nueva. */

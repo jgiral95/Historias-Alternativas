@@ -26,6 +26,7 @@ trap cleanup EXIT
 unset GOOGLE_CLIENT_ID GOOGLE_CLIENT_SECRET PUBLIC_URL SMTP_HOST SMTP_USER SMTP_PASSWORD SMTP_FROM
 export SURVEY_SCHEDULER=0   # el sorteo se prueba con «sortear ahora»
 export RECIFRAR_AL_ARRANCAR=0
+export PRIVACY_REQUIRED=0   # el aviso de aceptación de la política se prueba en el servidor (test_privacidad.py)
 export DATABASE_URL="sqlite:///$TMP/e2e.db"
 export SESSION_SECRET="$(head -c 48 /dev/urandom | base64 | tr -d '\n')"
 export DATA_KEY="$("$PY" -c 'from cryptography.fernet import Fernet;print(Fernet.generate_key().decode())')"

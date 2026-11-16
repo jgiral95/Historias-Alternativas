@@ -21,7 +21,7 @@ from sqlalchemy.orm import Session
 import jwt
 
 from .config import (FILE_UNDO_MINUTES, IDLE_MINUTES, MAX_FILE_BYTES, MAX_RECORD_BYTES,
-                     MIN_PASSWORD, SESSION_HOURS, SESSION_SECRET)
+                     MIN_PASSWORD, PRIVACY_REQUIRED, PRIVACY_VERSION, SESSION_HOURS, SESSION_SECRET)
 from . import billing, booking, compress, firmas, formularios, gcal, reminders, survey
 from .config import (BETA_COMENTARIOS, BILLING_ENFORCE, EPAYCO_PLAN_URL_ANUAL, EPAYCO_PLAN_URL_MENSUAL, EPAYCO_PRIVATE_KEY, PUBLIC_URL, RECIFRAR_AL_ARRANCAR, SURVEY_SCHEDULER, TRUSTED_DEVICE_DAYS)
 from .db import (Booking, IntakeForm, TrustedDevice, ApptReminder, Audit, ConsentRequest, Feedback, Blob, Feed, GoogleLink, MailAccount, Record, SessionLocal, Subscription, SurveyInvite, SurveyOptOut, SurveyResponse,
@@ -199,7 +199,9 @@ def require_admin(request: Request, user: User = Depends(current_user), db: Sess
 
 def user_out(u: User, owner: User | None = None) -> dict:
     out = {"id": u.id, "email": u.email, "name": u.name, "role": u.role, "active": u.active, "totp": bool(u.totp_enabled),
-           "cambiarClave": bool(u.must_change_password)}
+           "cambiarClave": bool(u.must_change_password),
+           "privacidadOk": (not PRIVACY_REQUIRED) or u.privacy_version == PRIVACY_VERSION, "privacidadVersion": PRIVACY_VERSION,
+           "privacidadAntes": bool(u.privacy_version)}
     if u.owner_id:
         out["ownerId"] = u.owner_id
         out["tieneFirma"] = bool(u.profile and decrypt(u.profile).get("firma"))
@@ -328,6 +330,17 @@ class RegisterIn(BaseModel):
     email: str
     password: str
     idioma: str = ""
+    acepto: bool = False  # acepta la política de privacidad
+
+
+@app.post("/api/auth/privacidad", status_code=204)
+def aceptar_privacidad(request: Request, user: User = Depends(current_user), db: Session = Depends(get_db)):
+    """La persona acepta la versión vigente de la política de privacidad (al estrenar cuenta o cuando cambia)."""
+    antes = user.privacy_version
+    user.privacy_version, user.privacy_at = PRIVACY_VERSION, datetime.now(timezone.utc)
+    db.add(user)
+    db.commit()
+    audit(db, user.id, "privacy.accept", f"versión {PRIVACY_VERSION}" + (f" (antes {antes})" if antes else ""), ip=client_ip(request))
 
 
 SIGNUPS_POR_IP = 3  # cuentas nuevas por IP cada 24 horas
@@ -357,6 +370,8 @@ def register(body: RegisterIn, request: Request, db: Session = Depends(get_db)):
         raise HTTPException(400, "Correo no válido")
     if len(body.password) < MIN_PASSWORD:
         raise HTTPException(400, f"La contraseña debe tener al menos {MIN_PASSWORD} caracteres")
+    if not body.acepto:
+        raise HTTPException(400, "Para crear la cuenta debes aceptar la política de privacidad.")
     acc = survey.server_account()
     if not survey.smtp_enabled(acc):
         raise HTTPException(503, "El envío de correos no está disponible por ahora. Intenta más tarde.")
@@ -365,7 +380,7 @@ def register(body: RegisterIn, request: Request, db: Session = Depends(get_db)):
     _register_fail(email, ip)
     if not db.scalar(select(User).where(User.email == email)):  # si ya existe no se revela: la respuesta es la misma
         en = body.idioma.lower().startswith("en")
-        tok = jwt.encode({"p": "reg", "e": email, "n": name, "h": hash_password(body.password), "exp": int(time.time()) + 86400},
+        tok = jwt.encode({"p": "reg", "e": email, "n": name, "h": hash_password(body.password), "a": PRIVACY_VERSION, "exp": int(time.time()) + 86400},
                          SESSION_SECRET, algorithm="HS256")
         try:
             survey.send_verify(email, name, f"{acc.get('base') or PUBLIC_URL}/app?verificar={tok}" + ("&lang=en" if en else ""), acc, "en" if en else None)
@@ -390,6 +405,8 @@ def verify_email(body: VerifyIn, request: Request, response: Response, db: Sessi
     if _signup_limit(client_ip(request) or "?"):
         raise HTTPException(429, "Se crearon demasiadas cuentas desde esta conexión hoy. Intenta de nuevo mañana.")
     user = User(email=t["e"], name=t["n"], password_hash=t["h"], role="user")
+    if t.get("a") == PRIVACY_VERSION:  # aceptó la política al registrarse
+        user.privacy_version, user.privacy_at = PRIVACY_VERSION, datetime.now(timezone.utc)
     db.add(user)
     db.commit()
     audit(db, user.id, "user.create", f"{user.email} (correo verificado)", ip=client_ip(request))

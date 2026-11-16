@@ -4,7 +4,7 @@ from app import main, survey
 from app.config import SESSION_SECRET
 from conftest import HEADERS, anon
 
-OK = {"name": "Luz Prueba", "email": "luz@x.co", "password": "una-clave-larga-1"}
+OK = {"name": "Luz Prueba", "email": "luz@x.co", "password": "una-clave-larga-1", "acepto": True}
 
 
 def _con_correo(monkeypatch):

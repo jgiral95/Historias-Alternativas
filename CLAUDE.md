@@ -54,6 +54,8 @@ FastAPI + SQLAlchemy. `main.py` (endpoints; registros cifrados por tipo: profile
 | Recordatorio por cita (pestaña en el popup, días y frecuencia) | `recordatorio_cita_e2e.js`, `test_reminders.py` |
 | Recordatorios / firma a distancia / encuesta / bitácora / comentarios / inicio / caída / Google | `<nombre>_e2e.js` |
 
+**Política de privacidad**: `frontend/privacidad.html`; la versión vigente es `PRIVACY_VERSION` (`config.py`, = fecha de «Vigente desde»; actualizar también `en/privacidad.html` y `scripts/site_en.json`). Al cambiar el texto, subir esa fecha: todos los usuarios deben volver a aceptarla al ingresar (`renderPrivacidad` en `servidor.js`, `POST /api/auth/privacidad`; se guarda `privacy_version`/`privacy_at` en `users`, y el registro con correo exige `acepto`). Las pruebas de navegador la apagan con `PRIVACY_REQUIRED=0`; prueba de servidor: `test_privacidad.py`.
+
 ## Reglas que no cambian
 Exportar todos los datos solo desde «Exportar todos mis datos» (ZIP armado en el navegador, con código de dos pasos si está activo); documentos firmados inmutables (solo adendas; única excepción: eliminar un consultante completo desde Archivo); el equipo nunca recibe datos clínicos; commits a `main` con las líneas Co-Authored-By y Claude-Session.
 
