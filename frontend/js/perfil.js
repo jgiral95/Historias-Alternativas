@@ -252,7 +252,7 @@ async function draw2fa(step, data) {
 
 /* ----- Mis formatos: único lugar para estructuras, plantillas, modelos y frases ----- */
 /* Mismo orden que las pestañas de la ficha del consultante; luego lo que se usa en varias partes. */
-const HUB = [['pestanas', 'Pestañas'], ['datos', 'Datos del consultante'], ['consent', 'Consentimientos'], ['estadisticas', 'Estadísticas']];
+const HUB = [['pestanas', 'Pestañas'], ['datos', 'Datos del consultante'], ['consent', 'Consentimientos']];
 /* Barra de Mis formatos: sin las pestañas ocultas, con los nombres propios y con las pestañas nuevas. */
 const hubList = () => { const c = tabsConf(), oc = c.ocultas || [], nm = c.nombres || {};
   return HUB.filter(([k]) => !oc.includes(k)).map(([k, l]) => [k, nm[k] || l]).concat((c.extra || []).map(x => [x.id, x.nombre])); };
@@ -263,26 +263,9 @@ function openHub(k) {
   const root = $('#modal-root'); root.onclick = root.oninput = root.onchange = null; ED = null;
   if (isFmt(k)) return ACT.formats({ dataset: { hub: k } });
   if (k === 'pestanas') return tabsManage();
-  if (k === 'estadisticas') return statsManage();
   if (k === 'consent') return ACT.consentManage();
   if (k === 'informes') return ACT.tplManage();
   if (k === 'escalas') return ACT.scaleManage();
-}
-/* Estadísticas: elegir qué cuadros se muestran. */
-function statsManage() {
-  const root = $('#modal-root'), on = new Set(stSel()), items = STAT_ITEMS(); ED = null;
-  root.innerHTML = `<div class="modal" role="dialog" aria-modal="true" aria-label="Mis formatos"><div class="box"><div class="row mfhead" style="justify-content:space-between"><h3 style="flex:1">Mis formatos</h3><button class="btn sm pri" data-st="save">Guardar</button><button class="btn sm" data-st="close">Cerrar</button></div>${hubTabs('estadisticas')}
-  <p style="margin:0;font-size:13px;color:var(--muted)">Elige qué cuadros quieres ver en Estadísticas. Aquí salen el estado de los casos y los campos de tipo «Lista» o «País» de tu formato de Datos del consultante (créalos en esa pestaña). Los datos no se borran: solo se ocultan.</p>
-  <div class="sec">${items.map(([k, l]) => `<label class="check"><input type="checkbox" data-sti="${k}" ${on.has(k) ? 'checked' : ''}> <span>${esc(l)}</span></label>`).join('')}</div>
-  <div class="row end"><button class="btn pri" data-st="save">Guardar</button></div></div></div>`;
-  root.onclick = e => {
-    const h = e.target.closest('[data-hub]'); if (h) return openHub(h.dataset.hub);
-    const b = e.target.closest('[data-st]'); if (!b) return;
-    if (b.dataset.st === 'close') { root.innerHTML = ''; root.onclick = null; return; }
-    const sel = [...root.querySelectorAll('[data-sti]')].filter(x => x.checked).map(x => x.dataset.sti), snap = clone(S.profile);
-    S.profile.formatos = Object.assign({}, S.profile.formatos, { statsVer: sel });
-    persist([S.profile], b).then(ok => { if (!ok) { restore(S.profile, snap); return; } toast('Estadísticas guardadas.'); render(); });
-  };
 }
 /* Al cerrar Mis formatos, lo que esté abierto debajo se actualiza (selectores de plantilla, modelos, frases). */
 function hubClosed() {
@@ -294,7 +277,7 @@ function hubClosed() {
 let ED = null;
 /* Un apartado sin campos es «solo título»: se guarda como un único campo sin nombre (no repite subtítulo). */
 const secFrom = ([t, fs, g]) => { const solo = fs.length === 1 && !fs[0][1]; return { t, g: g === 'genograma', img: g === 'imagen', soloKey: solo ? fs[0][0] : null, soloR: solo ? fs[0][2] : 4, soloD: solo ? fs[0][3] || '' : '', fs: solo ? [] : fs.map(([k, l, r, d, o]) => ({ k, l, r, d: d || '', o })) }; };
-const edFrom = (intake, evol, datos) => ({ intake: intake.map(secFrom), evol: evol.map(([k, l, r, d]) => ({ k, l, r, d: d || '' })), datos: (datos || []).map(sc => { const x = secFrom(sc); x.fs.forEach(f => { f.tp = f.d; f.d = ''; f.ol = Array.isArray(f.o) ? f.o.join('\n') : ''; }); return x; }) });
+const edFrom = (intake, evol, datos) => ({ intake: intake.map(secFrom), evol: evol.map(([k, l, r, d]) => ({ k, l, r, d: d || '' })), datos: (datos || []).map(sc => { const x = secFrom(sc); x.fs.forEach(f => { f.tp = f.d; f.d = ''; f.ol = Array.isArray(f.o) ? f.o.join('\n') : ''; f.st = stSel().includes(fkey(f.k)); }); return x; }) });
 const newKey = () => 'c' + Math.random().toString(36).slice(2, 8);
 const ROWS = [[2, 'Corto'], [3, 'Medio'], [5, 'Largo']];
 const secList = () => ED[ED.which === 'datos' ? 'datos' : String(ED.which).startsWith('x_') ? ED.which : 'intake'];
@@ -302,9 +285,10 @@ const secList = () => ED[ED.which === 'datos' ? 'datos' : String(ED.which).start
 const edInit = (val, attr, label) => `<details class="edinit" ${val ? 'open' : ''}><summary>Texto inicial${val ? '' : ' (opcional)'}</summary><textarea ${attr} rows="2" aria-label="Texto inicial de ${esc(label)}" placeholder="Lo que este campo trae escrito en cada nota nueva">${esc(val || '')}</textarea></details>`;
 const CAMPO_TIPOS = [['', 'Texto'], ['date', 'Fecha'], ['time', 'Hora'], ['number', 'Número'], ['tel', 'Teléfono'], ['country', 'País'], ['list', 'Lista']];
 const CATALOGOS = { 'Sexo': ['Femenino', 'Masculino', 'Intersexual', 'Prefiere no responder'], 'Género': ['Mujer', 'Hombre', 'No binario', 'Otro', 'Prefiere no responder'], 'Estado civil': ['Soltero/a', 'Casado/a', 'Unión libre', 'Separado/a', 'Divorciado/a', 'Viudo/a', 'No responde'], 'Nivel de estudios': ['Ninguno', 'Primaria', 'Secundaria', 'Técnico/tecnólogo', 'Pregrado', 'Posgrado', 'No responde'], 'Sí / No': ['Sí', 'No'] };
+const stCheck = (f, path) => `<label class="check" style="margin:6px 0 0"><input type="checkbox" data-fm-st="${path}" ${f.st ? 'checked' : ''}> <span>Incluir en Estadísticas</span></label>`;
 const listEd = (f, path) => `<div class="edinit"><select data-fm-cat="${path}" aria-label="Llenar con una lista lista para usar"><option value="">Usar una lista lista para usar…</option>${Object.keys(CATALOGOS).map(n => `<option>${esc(n)}</option>`).join('')}</select><textarea data-fm-ol="${path}" rows="4" aria-label="Opciones de la lista" placeholder="Una opción por línea">${esc(f.ol || '')}</textarea></div>`;
 function edField(f, path, noSize) {
-  return `<div class="edfw"><div class="edf"><span class="dragh" draggable="true" data-dk="f" data-dv="${path}" title="Arrastra para cambiar el orden" aria-hidden="true">⠿</span><input type="text" data-fm-l="${path}" value="${esc(f.l)}" maxlength="120" aria-label="Nombre del campo">${noSize ? `<select data-fm-tp="${path}" aria-label="Tipo de campo">${CAMPO_TIPOS.map(([v, n]) => `<option value="${v}" ${(f.tp || '') === v ? 'selected' : ''}>${n}</option>`).join('')}</select>` : `<select data-fm-r="${path}" aria-label="Tamaño">${ROWS.map(([v, n]) => `<option value="${v}" ${[2, 3, 5].reduce((a, x) => Math.abs(x - (+f.r || 3)) < Math.abs(a - (+f.r || 3)) ? x : a, 3) === v ? 'selected' : ''}>${n}</option>`).join('')}</select>`}<button class="btn sm warn" data-fm="fdel:${path}" aria-label="Quitar campo">✕</button></div>${noSize ? (f.tp === 'list' ? listEd(f, path) : '') : edInit(f.d, `data-fm-d="${path}"`, f.l)}</div>`;
+  return `<div class="edfw"><div class="edf"><span class="dragh" draggable="true" data-dk="f" data-dv="${path}" title="Arrastra para cambiar el orden" aria-hidden="true">⠿</span><input type="text" data-fm-l="${path}" value="${esc(f.l)}" maxlength="120" aria-label="Nombre del campo">${noSize ? `<select data-fm-tp="${path}" aria-label="Tipo de campo">${CAMPO_TIPOS.map(([v, n]) => `<option value="${v}" ${(f.tp || '') === v ? 'selected' : ''}>${n}</option>`).join('')}</select>` : `<select data-fm-r="${path}" aria-label="Tamaño">${ROWS.map(([v, n]) => `<option value="${v}" ${[2, 3, 5].reduce((a, x) => Math.abs(x - (+f.r || 3)) < Math.abs(a - (+f.r || 3)) ? x : a, 3) === v ? 'selected' : ''}>${n}</option>`).join('')}</select>`}<button class="btn sm warn" data-fm="fdel:${path}" aria-label="Quitar campo">✕</button></div>${noSize ? (f.tp === 'list' ? listEd(f, path) : '') + (['list', 'country'].includes(f.tp) ? stCheck(f, path) : '') : edInit(f.d, `data-fm-d="${path}"`, f.l)}</div>`;
 }
 function secCard(sc, si, isDatos) {
   const head = `<div class="edf"><span class="dragh" draggable="true" data-dk="s" data-dv="${si}" title="Arrastra para cambiar el orden" aria-hidden="true">⠿</span><input type="text" data-fm-t="${si}" value="${esc(sc.t)}" maxlength="120" aria-label="Título del apartado" style="font-weight:600"><button class="btn sm warn" data-fm="sdel:${si}" aria-label="Quitar apartado">✕</button></div>`;
@@ -365,6 +349,7 @@ ACT.formats = b => {
     if (t.dataset.fmT !== undefined) secList()[+t.dataset.fmT].t = t.value;
     else if (t.dataset.fmL !== undefined) edList(t.dataset.fmL)[edIdx(t.dataset.fmL)].l = t.value;
     else if (t.dataset.fmTp !== undefined) { edList(t.dataset.fmTp)[edIdx(t.dataset.fmTp)].tp = t.value; return drawFormats(); }
+    else if (t.dataset.fmSt !== undefined) edList(t.dataset.fmSt)[edIdx(t.dataset.fmSt)].st = t.checked;
     else if (t.dataset.fmOl !== undefined) edList(t.dataset.fmOl)[edIdx(t.dataset.fmOl)].ol = t.value;
     else if (t.dataset.fmCat !== undefined) { if (t.value) edList(t.dataset.fmCat)[edIdx(t.dataset.fmCat)].ol = CATALOGOS[t.value].join('\n'); return drawFormats(); }
     else if (t.dataset.fmR !== undefined) edList(t.dataset.fmR)[edIdx(t.dataset.fmR)].r = +t.value;
@@ -418,7 +403,7 @@ function saveFormats() {
   if (extra.some(x => x.secs.some(sc => !sc[0]))) return bad('Cada apartado necesita un título.');
   if (extra.some(x => x.secs.filter(sc => sc[2] === 'genograma').length > 1)) return bad('Solo puede haber un genograma por pestaña.');
   const snap = clone(S.profile);
-  S.profile.formatos = Object.assign({}, S.profile.formatos, { intake, evol, datos, filtros: ED.filtros || (S.profile.formatos || {}).filtros || [], ocultos: ED.ocultos || [], formulario: ED.formulario ? ED.formulario.filter(k => datos.some(sc => (sc[1] || []).some(f => f[0] === k))) : undefined, pestanas: Object.assign({}, pc, { extra }) });
+  S.profile.formatos = Object.assign({}, S.profile.formatos, { intake, evol, datos, statsVer: ED.datos.flatMap(sc => sc.fs.filter(f => f.st && ['list', 'country'].includes(f.tp)).map(f => fkey(f.k))), filtros: ED.filtros || (S.profile.formatos || {}).filtros || [], ocultos: ED.ocultos || [], formulario: ED.formulario ? ED.formulario.filter(k => datos.some(sc => (sc[1] || []).some(f => f[0] === k))) : undefined, pestanas: Object.assign({}, pc, { extra }) });
   persist([S.profile], $('[data-fm="save"]')).then(ok => { if (!ok) { restore(S.profile, snap); return; } finishFormats(); });
 }
 /* Pestañas de la ficha: renombrar, ocultar y crear propias (texto libre por consultante). */
