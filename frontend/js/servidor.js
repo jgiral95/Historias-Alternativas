@@ -58,8 +58,10 @@ function renderLogin(msg, email) {
     ${msg ? `<div class="banner" role="alert">${esc(msg)}</div>` : ''}
     <div class="fld"><label for="lg_email">Correo</label><input id="lg_email" type="email" autocomplete="username" value="${esc(email || '')}" required></div>
     <div class="fld"><label for="lg_pass">Contraseña</label><input id="lg_pass" type="password" autocomplete="current-password" required></div>
-    <button class="btn pri" type="submit">Ingresar</button><button class="btn" type="button" id="lg_reg">Crear cuenta</button>${GOOGLE_BTN('Ingresar con Google')}<p style="margin:0;font-size:13px;text-align:center"><a href="privacidad" target="_blank" rel="noopener" style="color:var(--muted)">Política de privacidad</a></p></form></div>`;
-  $('#lg_reg').onclick = () => renderRegistro();
+    <button class="btn pri" type="submit">Ingresar</button>${GOOGLE_BTN('Ingresar con Google')}
+    <p style="margin:0;font-size:14px;display:flex;justify-content:flex-end"><a href="#" id="lg_reg">Crear cuenta</a></p>
+    <p style="margin:0;font-size:13px;text-align:center;color:var(--muted)"><a href="/" style="color:var(--muted)">← Volver al inicio</a> · <a href="privacidad" target="_blank" rel="noopener" style="color:var(--muted)">Privacidad</a></p></form></div>`;
+  $('#lg_reg').onclick = ev => { ev.preventDefault(); renderRegistro(); };
   $('#loginform').onsubmit = async ev => {
     ev.preventDefault();
     const em = $('#lg_email').value.trim(), pw = $('#lg_pass').value;
