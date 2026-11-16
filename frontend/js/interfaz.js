@@ -246,7 +246,7 @@ function rowsHTML() {
   }).join('');
 }
 function listHTML() {
-  return `<button class="panel homebtn ${!S.pid ? 'on' : ''}" data-act="home"><span class="ico" aria-hidden="true">⌂</span><span>Resumen</span></button><div class="panel plist"><div class="plist-head"><span>Consultantes</span><span id="pcount">${S.patients.length}</span></div>${S.mode === 'server' && !TEAM() ? `<button class="btn sm" id="formsbtn" data-act="forms" style="width:calc(100% - 20px);margin:8px 10px">Enviar formulario a nuevo consultante${typeof FORMS !== 'undefined' && FORMS.n ? ` <span class="chip ok">${FORMS.n} recibido${FORMS.n === 1 ? '' : 's'}</span>` : ''}</button>` : ''}<div id="rows">${rowsHTML()}</div></div>`;
+  return `<button class="panel homebtn ${!S.pid ? 'on' : ''}" data-act="home"><svg class="homeico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/></svg><span>Resumen</span></button><div class="panel plist"><div class="plist-head"><span>Consultantes</span><span id="pcount">${S.patients.length}</span></div>${S.mode === 'server' && !TEAM() ? `<button class="btn sm" id="formsbtn" data-act="forms" style="width:calc(100% - 20px);margin:8px 10px">Enviar formulario a nuevo consultante${typeof FORMS !== 'undefined' && FORMS.n ? ` <span class="chip ok">${FORMS.n} recibido${FORMS.n === 1 ? '' : 's'}</span>` : ''}</button>` : ''}<div id="rows">${rowsHTML()}</div></div>`;
 }
 ACT.home = () => { S.view = 'patients'; S.pid = null; S.draft = false; S.draftObj = null; S.homeOpen = true; render(); scrollTo(0, 0); };
 function todoHTML() {

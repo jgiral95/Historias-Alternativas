@@ -605,4 +605,4 @@ h1,h2,h3{font-family:var(--f-doc);font-weight:600;letter-spacing:.1px}
 
 /* Botón Resumen: separado de la lista de consultantes */
 .homebtn{display:flex;align-items:center;gap:10px;width:100%;margin-bottom:10px;padding:11px 14px;cursor:pointer;font:inherit;font-weight:600;color:inherit;text-align:left}
-.homebtn .ico{color:var(--muted)}.homebtn:hover,.homebtn.on{background:var(--accent-soft)}
+.homeico{width:20px;height:20px;flex:none;fill:none;stroke:var(--muted);stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}.homebtn:hover,.homebtn.on{background:var(--accent-soft)}
