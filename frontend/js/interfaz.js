@@ -25,6 +25,30 @@ const TABS = [['datos', 'Datos'], ['consent', 'Consentimiento'], ['intake', 'Pri
 const tabsConf = () => (S.profile && S.profile.formatos && S.profile.formatos.pestanas) || {};
 const tabsList = () => { const c = tabsConf(), ex = c.extra || [];
   return TABS.filter(([k]) => ['datos', 'consent', 'archivo'].includes(k) || (k === 'finanzas' && S.mode === 'server')).map(([k, l]) => [k, (c.nombres || {})[k] || l]).concat(ex.map(x => [x.id, x.nombre])).sort((a, b) => ((a[0] === 'finanzas') + 2 * (a[0] === 'archivo')) - ((b[0] === 'finanzas') + 2 * (b[0] === 'archivo'))); };
+/* Pestañas de la ficha; las pestañas propias con el mismo «Grupo» (Mis formatos) se juntan en un botón con menú desplegable. */
+const tabGrupo = k => ((tabsConf().extra || []).find(x => x.id === k) || {}).grupo;
+const tabCorto = (l, g) => String(l).replace(new RegExp('^' + g.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\s*[-–:·]\\s*', 'i'), '') || l;
+function tabBtns() {
+  const dis = k => S.draft && k !== 'datos' ? 'disabled style="opacity:.4;cursor:not-allowed"' : '', team = TEAM(), seen = new Set();
+  return (team ? TABS.filter(t => t[0] === 'datos' || t[0] === 'finanzas') : tabsList()).map(([k, l]) => {
+    const g = team ? '' : (tabGrupo(k) || '').trim();
+    if (!g) return `<button class="tab ${S.tab === k ? 'on' : ''}" role="tab" data-act="tab" data-tab="${k}" ${dis(k)}>${l}</button>`;
+    if (seen.has(g)) return ''; seen.add(g);
+    const cur = tabsList().find(t => t[0] === S.tab && (tabGrupo(t[0]) || '').trim() === g);
+    return `<button class="tab ${cur ? 'on' : ''}" role="tab" aria-haspopup="menu" aria-expanded="false" data-act="tabgrp" data-g="${esc(g)}" ${dis(k)}>${esc(g)}${cur ? ' · ' + esc(tabCorto(cur[1], g)) : ''} ▾</button>`;
+  }).join('');
+}
+ACT.tabgrp = b => {
+  const old = $('#tabmenu'), g = b.dataset.g; if (old) old.remove(); if (old && old.dataset.g === g) { b.setAttribute('aria-expanded', 'false'); return; }
+  const m = document.createElement('div'); m.id = 'tabmenu'; m.className = 'tabmenu'; m.dataset.g = g; m.setAttribute('role', 'menu');
+  m.innerHTML = tabsList().filter(t => (tabGrupo(t[0]) || '').trim() === g).map(([k, l]) => `<button type="button" role="menuitem" class="tabmi ${S.tab === k ? 'on' : ''}" data-act="tab" data-tab="${k}">${esc(tabCorto(l, g))}</button>`).join('');
+  const r = b.getBoundingClientRect(); m.style.left = Math.max(8, Math.min(r.left, innerWidth - 248)) + 'px'; m.style.top = r.bottom + 4 + 'px';
+  b.setAttribute('aria-expanded', 'true'); $('#app').appendChild(m);
+};
+const tabMenuOff = () => { const m = $('#tabmenu'); if (m) m.remove(); };
+document.addEventListener('click', e => { if (!e.target.closest('#tabmenu, [data-act="tabgrp"]') || e.target.closest('#tabmenu')) tabMenuOff(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') tabMenuOff(); });
+addEventListener('resize', tabMenuOff);
 const OPT = {
   tipoDoc: ['CC', 'TI', 'CE', 'Registro civil', 'Pasaporte', 'Permiso por protección temporal (PPT)', 'Permiso especial de permanencia (PEP)', 'Menor sin documento', 'Otro'],
   zona: ['', 'Urbana', 'Rural', 'No responde'],
@@ -340,7 +364,7 @@ function fileHTML(p) {
   return `<div class="panel file"><div class="file-head"><div><button class="btn sm back" data-act="back">← Consultantes</button><h2>${esc(S.draft ? 'Nuevo consultante' : fullName(p))}</h2>
   <div class="meta"><span class="mono">${esc([p.tipoDoc, p.documento].filter(Boolean).join(' ') || 'sin documento')}</span>${!S.draft && openedAt(p) ? `<span>Historia abierta el ${esc(fmtD(openedAt(p)))}</span>` : ''}${a !== null ? `<span>${a} años</span>` : ''}${p.estado ? `<span class="chip ${p.estado === 'Activo' ? 'ok' : 'warn'}">${esc(p.estado)}</span>` : ''}${p.servicio && p.servicio !== 'Individual' ? `<span class="chip">${esc(p.servicio)}${linked(p).length ? ' · con ' + esc(linked(p).map(x => x.nombres || fullName(x)).join(', ')) : ''}</span>` : ''}${S.draft ? '' : nextApptHTML(p)}</div></div>
   ${S.draft || TEAM() ? '' : `<span class="row" style="gap:6px"><button class="btn sm" data-act="pnFor" data-id="${p.id}" title="Ideas, consejos de colegas y seguimiento: no forman parte de la ficha">Notas de proceso${S.pnotes.filter(n => n.patientId === p.id).length ? ' (' + S.pnotes.filter(n => n.patientId === p.id).length + ')' : ''}</button><button class="btn sm" data-act="accessLog" title="Quién abrió esta historia y qué hizo">Accesos</button><button class="btn sm" data-act="fullDoc">Historia completa</button></span>`}</div>
-  <div class="tabwrap"><div class="tabs" role="tablist">${(TEAM() ? TABS.filter(t => t[0] === 'datos' || t[0] === 'finanzas') : tabsList()).map(([k, l]) => `<button class="tab ${S.tab === k ? 'on' : ''}" role="tab" data-act="tab" data-tab="${k}" ${S.draft && k !== 'datos' ? 'disabled style="opacity:.4;cursor:not-allowed"' : ''}>${l}</button>`).join('')}</div><button type="button" class="tabarrow l" aria-label="Pestañas anteriores">‹</button><button type="button" class="tabarrow r" aria-label="Más pestañas">›</button></div>
+  <div class="tabwrap"><div class="tabs" role="tablist">${tabBtns()}</div><button type="button" class="tabarrow l" aria-label="Pestañas anteriores">‹</button><button type="button" class="tabarrow r" aria-label="Más pestañas">›</button></div>
   <div class="body" id="tabbody">${tabHTML(p)}</div></div>`;
 }
 function tabHTML(p) {
