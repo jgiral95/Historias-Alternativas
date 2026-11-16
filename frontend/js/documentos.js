@@ -276,14 +276,30 @@ function docReport(r, p) {
 }
 /* Partes de la historia completa; el terapeuta puede excluir algunas al generarla. */
 const FULL_PARTS = [['consents', 'Consentimientos y autorizaciones'], ['intake', 'Primera vez'], ['notes', 'Sesiones'], ['scales', 'Chequeos'], ['reports', 'Informes'], ['cierres', 'Notas de cierre'], ['incorp', 'Constancias de historia en papel'], ['anexos', 'Anexos (lista y archivos)']];
+/* Pestañas propias de «Mis formatos»: también son partes de la historia completa (id «x_…»). */
+const fullParts = () => FULL_PARTS.concat((((S.profile.formatos || {}).pestanas || {}).extra || []).map(x => [x.id, x.nombre]));
+const extraBody = (x, v) => !(x.secs || []).length ? (v.extra ? `<p>${esc(v.extra)}</p>` : '') : x.secs.map(([t, fs, g]) => {
+  if (g === 'genograma' || g === 'imagen') { const im = g === 'imagen' ? v[fs[0][0]] : v.genograma; return im ? `<h2>${esc(t)}</h2><img class="geno" src="${esc(im)}" alt="${esc(t)}">` : ''; }
+  const rows = fs.filter(f => v[f[0]]); return rows.length ? `<h2>${esc(t)}</h2>` + rows.map(f => f[1] ? `<p><b>${esc(f[1])}.</b> ${esc(v[f[0]])}</p>` : `<p>${esc(v[f[0]])}</p>`).join('') : '';
+}).join('');
+function extraEntries(p, x) {
+  const v = (p.extras || {})[x.id];
+  const list = x.modo === 'sesion' ? (Array.isArray(v) ? v.filter(e => !e.borrador).sort((a, b) => (a.at || '').localeCompare(b.at || '')) : []) : (typeof v === 'string' ? [{ v: { extra: v } }] : v && typeof v === 'object' && !v.borrador ? [{ v }] : []);
+  return list.filter(e => extraBody(x, e.v || {}));
+}
+function docExtra(p, x) {
+  const pr = { nombre: S.profile.nombre, titulo: S.profile.titulo, registro: S.profile.registro, consultorio: S.profile.consultorio, ciudad: S.profile.ciudad, telefono: S.profile.telefono, correo: S.profile.correo };
+  return `<div class="docpage">${letterhead(pr)}<h2>${esc(x.nombre)}</h2>${patientTable(p)}` + extraEntries(p, x).map(e => (e.at ? `<p><b>${esc([fmtD(e.at.slice(0, 10) + 'T12:00:00'), e.hora, e.lugar].filter(Boolean).join(' · '))}</b></p>` : '') + extraBody(x, e.v || {})).join('') + '</div>';
+}
 function partCount(p, k) {
+  if (String(k).startsWith('x_')) { const x = ((S.profile.formatos.pestanas || {}).extra || []).find(y => y.id === k); return x ? extraEntries(p, x).length : 0; }
   return { consents: (p.consents || []).length, intake: p.intake && p.intake.signedAt ? 1 : 0, notes: S.notes.filter(n => n.patientId === p.id && n.signedAt).length, scales: S.scales.filter(e => e.patientId === p.id && e.signedAt).length,
     reports: S.reports.filter(r => r.patientId === p.id && r.signedAt).length, cierres: (p.cierres || []).length, incorp: (p.incorporaciones || []).length, anexos: S.files.filter(f => f.patientId === p.id).length }[k];
 }
 function docFull(p, sin = []) {
   let h = '';
   const no = k => sin.includes(k), sep = () => h ? '<div class="pb"></div>' : '';
-  const omit = FULL_PARTS.filter(([k]) => no(k) && partCount(p, k)).map(([, l]) => l.toLowerCase());
+  const omit = fullParts().filter(([k]) => no(k) && partCount(p, k)).map(([, l]) => l.toLowerCase());
   if (omit.length) h += `<p style="font-size:13px"><i>Copia parcial de la ficha de ${esc(fullName(p))}, generada el ${esc(fmtDT(nowISO()))}. No incluye: ${esc(omit.join(', '))}.</i></p>`;
   if (!no('consents')) (p.consents || []).forEach(c => { h += sep() + docConsent(p, c); });
   if (!no('intake') && p.intake && p.intake.signedAt) h += sep() + docIntake(p);
@@ -292,6 +308,7 @@ function docFull(p, sin = []) {
   if (!no('reports')) S.reports.filter(r => r.patientId === p.id && r.signedAt).sort((a, b) => a.signedAt.localeCompare(b.signedAt)).forEach(r => { h += sep() + docReport(r, p); });
   if (!no('cierres')) (p.cierres || []).forEach(c => { h += sep() + docCierre(p, c); });
   if (!no('incorp')) (p.incorporaciones || []).forEach(c => { h += sep() + docIncorp(p, c); });
+  (((S.profile.formatos || {}).pestanas || {}).extra || []).forEach(x => { if (!no(x.id) && extraEntries(p, x).length) h += sep() + docExtra(p, x); });
   const fs = no('anexos') ? [] : S.files.filter(f => f.patientId === p.id);
   if (fs.length) h += '<div class="pb"></div><div class="docpage"><h2>Anexos de la ficha</h2><table>' + fs.map(f => `<tr><td>${esc(fmtShort(f.uploadedAt))}</td><td>${esc(f.categoria)}</td><td>${esc(f.nombre)}${f.descripcion ? ' · ' + esc(f.descripcion) : ''}</td></tr>`).join('') + '</table></div>';
   return h || '<p>Aún no hay registros firmados.</p>';
