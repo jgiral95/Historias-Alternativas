@@ -556,7 +556,7 @@ function chooseParts(p, title, go) {
   const root = $('#modal-root');
   root.innerHTML = `<div class="modal" role="dialog" aria-modal="true" aria-label="${esc(title)}"><div class="box" id="partsform" style="width:min(520px,100%)"><div class="row" style="justify-content:space-between"><h3>${esc(title)}</h3><button class="btn sm" id="pt_cl">Cerrar</button></div>
   <p style="margin:0;font-size:14px">Marca lo que quieres incluir. Si quitas algo, el documento lo indica al inicio como copia parcial.</p>
-  <div class="sec">${fullParts().map(([k, l]) => { const n = partCount(p, k); return `<label class="check"><input type="checkbox" data-part="${k}" ${n ? 'checked' : 'disabled'}> <span>${esc(l)} <span style="color:var(--muted)">(${n})</span></span></label>`; }).join('')}</div>
+  <div class="sec">${fullParts(p).map(([k, l]) => { const n = partCount(p, k); return `<label class="check"><input type="checkbox" data-part="${k}" ${n ? 'checked' : 'disabled'}> <span>${esc(l)} <span style="color:var(--muted)">(${n})</span></span></label>`; }).join('')}</div>
   <div class="row end"><button class="btn pri" id="pt_go">Generar</button></div></div></div>`;
   $('#pt_cl').onclick = () => { root.innerHTML = ''; };
   $('#pt_go').onclick = () => { const sin = $$('#partsform [data-part]').filter(x => !x.checked).map(x => x.dataset.part); root.innerHTML = ''; go(sin); };

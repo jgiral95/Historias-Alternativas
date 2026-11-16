@@ -277,7 +277,8 @@ function docReport(r, p) {
 /* Partes de la historia completa; el terapeuta puede excluir algunas al generarla. */
 const FULL_PARTS = [['consents', 'Consentimientos y autorizaciones'], ['intake', 'Primera vez'], ['notes', 'Sesiones'], ['scales', 'Chequeos'], ['reports', 'Informes'], ['cierres', 'Notas de cierre'], ['incorp', 'Constancias de historia en papel'], ['anexos', 'Anexos (lista y archivos)']];
 /* Pestañas propias de «Mis formatos»: también son partes de la historia completa (id «x_…»). */
-const fullParts = () => FULL_PARTS.concat((((S.profile.formatos || {}).pestanas || {}).extra || []).map(x => [x.id, x.nombre]));
+/* Solo lo que el terapeuta usa: partes con datos (para no dejar registros por fuera), las pestañas fijas visibles (Consentimiento, Archivo) y sus pestañas propias. */
+const fullParts = p => FULL_PARTS.filter(([k]) => partCount(p, k) || (k === 'consents' && tabsList().some(t => t[0] === 'consent')) || (k === 'anexos' && tabsList().some(t => t[0] === 'archivo'))).concat((((S.profile.formatos || {}).pestanas || {}).extra || []).map(x => [x.id, x.nombre]));
 const extraBody = (x, v) => !(x.secs || []).length ? (v.extra ? `<p>${esc(v.extra)}</p>` : '') : x.secs.map(([t, fs, g]) => {
   if (g === 'genograma' || g === 'imagen') { const im = g === 'imagen' ? v[fs[0][0]] : v.genograma; return im ? `<h2>${esc(t)}</h2><img class="geno" src="${esc(im)}" alt="${esc(t)}">` : ''; }
   const rows = fs.filter(f => v[f[0]]); return rows.length ? `<h2>${esc(t)}</h2>` + rows.map(f => f[1] ? `<p><b>${esc(f[1])}.</b> ${esc(v[f[0]])}</p>` : `<p>${esc(v[f[0]])}</p>`).join('') : '';
@@ -299,7 +300,7 @@ function partCount(p, k) {
 function docFull(p, sin = []) {
   let h = '';
   const no = k => sin.includes(k), sep = () => h ? '<div class="pb"></div>' : '';
-  const omit = fullParts().filter(([k]) => no(k) && partCount(p, k)).map(([, l]) => l.toLowerCase());
+  const omit = fullParts(p).filter(([k]) => no(k) && partCount(p, k)).map(([, l]) => l.toLowerCase());
   if (omit.length) h += `<p style="font-size:13px"><i>Copia parcial de la ficha de ${esc(fullName(p))}, generada el ${esc(fmtDT(nowISO()))}. No incluye: ${esc(omit.join(', '))}.</i></p>`;
   if (!no('consents')) (p.consents || []).forEach(c => { h += sep() + docConsent(p, c); });
   if (!no('intake') && p.intake && p.intake.signedAt) h += sep() + docIntake(p);
