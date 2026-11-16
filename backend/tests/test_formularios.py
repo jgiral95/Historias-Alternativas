@@ -116,3 +116,23 @@ def test_campos_de_fecha_hora_y_numero():
     for malo in ({**ok, "xf": "ayer"}, {**ok, "xh": "25:00"}, {**ok, "xn": "abc"}):
         assert anon().post(f"/api/formulario/{t}", json={"datos": malo}).status_code == 400
     assert anon().post(f"/api/formulario/{t}", json={"datos": ok}).status_code == 200
+
+
+def test_campos_lista_y_pais():
+    from app import formularios
+    fmt = {"datos": [["Extra", [["xa", "Sexo", 3, "list", ["Femenino", "Masculino"]], ["xb", "País", 3, "country"], ["xc", "Vacía", 3, "list", ["Solo una"]]]]]}
+    sp = {c["k"]: c for c in formularios.spec(fmt)}
+    assert sp["xa"]["t"] == "select" and sp["xa"]["o"] == ["Femenino", "Masculino"]
+    assert sp["xb"]["t"] == "country" and sp["xc"]["t"] == "text"
+    assert formularios.clean({"xa": "Masculino", "xb": "Chile", "xc": "x"}, fmt)["xa"] == "Masculino"
+    with pytest.raises(ValueError):
+        formularios.clean({"xa": "Otro", "xb": "Chile", "xc": "x"}, fmt)
+
+
+def test_campo_telefono():
+    from app import formularios
+    fmt = {"datos": [["Extra", [["xt", "Celular", 3, "tel"]]]]}
+    assert formularios.clean({"xt": "+57 300 123 4567"}, fmt)["xt"] == "+57 300 123 4567"
+    for mal in ("+57", "abc1234567", "12"):
+        with pytest.raises(ValueError):
+            formularios.clean({"xt": mal}, fmt)

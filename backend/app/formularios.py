@@ -46,6 +46,18 @@ FIELDS = [
 EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 
 
+def _tipo(x) -> tuple:
+    """(tipo, opciones) de un campo propio: texto, fecha, hora, número, país o lista (select con sus opciones)."""
+    t = x[3] if len(x) > 3 else ""
+    if t in ("date", "time", "number", "tel", "country"):
+        return t, None
+    if t == "list" and len(x) > 4 and isinstance(x[4], list):
+        o = [str(v)[:80] for v in x[4] if str(v).strip()][:100]
+        if len(o) > 1:
+            return "select", o
+    return "text", None
+
+
 def fields(fmt: dict | None) -> list[tuple]:
     """Campos del formulario: solo los de los apartados de «Datos del consultante» (Mis formatos) que el terapeuta marcó
     (formatos.formulario); si nunca eligió, todos. Todos son obligatorios. (clave, etiqueta, tipo, opciones, obligatorio, sección)."""
@@ -55,7 +67,7 @@ def fields(fmt: dict | None) -> list[tuple]:
     for sc in (fmt or {}).get("datos") or []:
         try:
             titulo, fs = str(sc[0]), sc[1]
-            out += [(str(x[0]), str(x[1] or titulo)[:120], x[3] if len(x) > 3 and x[3] in ("date", "time", "number") else "text", None, True, titulo[:120]) for x in fs if re.match(r"^[A-Za-z0-9_-]{1,40}$", str(x[0])) and (sel is None or str(x[0]) in sel)]
+            out += [(str(x[0]), str(x[1] or titulo)[:120], *_tipo(x), True, titulo[:120]) for x in fs if re.match(r"^[A-Za-z0-9_-]{1,40}$", str(x[0])) and (sel is None or str(x[0]) in sel)]
         except (IndexError, TypeError):
             continue
     return out
@@ -94,6 +106,8 @@ def clean(raw: dict, fmt: dict | None = None) -> dict:
                 raise ValueError(f"La fecha de «{label}» no es válida")
         if t == "time" and not re.match(r"^([01]\d|2[0-3]):[0-5]\d$", v):
             raise ValueError(f"La hora de «{label}» no es válida")
+        if t == "tel" and not (re.match(r"^\+?[\d\s().-]{6,30}$", v) and len(re.sub(r"\D", "", v)) >= 7):
+            raise ValueError(f"El teléfono de «{label}» no es válido")
         if t == "number" and not re.match(r"^-?\d+([.,]\d+)?$", v):
             raise ValueError(f"«{label}» debe ser un número")
         out[k] = v

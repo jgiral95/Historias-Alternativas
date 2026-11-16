@@ -18,7 +18,7 @@ function simUI() {
 function simPos() {  // el botón circular va a la derecha del campo que se edita; el panel se abre debajo (o arriba si no cabe)
   const [b, p] = simUI(), el = SIM.campo, on = el && document.body.contains(el);
   document.querySelectorAll('.simcampo').forEach(x => { if (x !== el) x.classList.remove('simcampo'); });
-  if (!on) { b.hidden = true; p.hidden = true; return; }
+  if (!on || (S.profile && S.profile.simbolos === false)) { b.hidden = true; p.hidden = true; return; }
   const r = el.getBoundingClientRect(), vh = (window.visualViewport && visualViewport.height) || innerHeight, tam = 30;
   if (r.bottom < 0 || r.top > vh) { b.hidden = true; p.hidden = true; return; }
   el.classList.add('simcampo'); b.hidden = false;
