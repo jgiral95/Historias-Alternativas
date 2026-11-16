@@ -2501,7 +2501,7 @@ def public_booking_create(slug: str, body: BookIn, request: Request, bg: Backgro
     profesion, ciudad = body.profesion.strip()[:80], body.ciudad.strip()[:80]
     if reunion:  # reunión informativa: nunca se busca ni se crea un consultante
         if len(_norm(tel)) < 7 or not profesion or not ciudad:
-            raise HTTPException(400, "Escribe tu teléfono, profesión y ciudad")
+            raise HTTPException(400, "Escribe tu teléfono, tipo de terapia y ciudad")
         body.nuevo = True
     if body.nuevo and len(_norm(tel)) < 7:
         raise HTTPException(400, "Escribe un teléfono de contacto")

@@ -185,7 +185,7 @@ def messages(prof: dict, start: datetime, dur: int, mod: str, who: str, patient_
     if nuevo:
         t_filas.append(("Teléfono", nuevo.get("telefono") or ""))
         if reunion:
-            t_filas += [("Profesión", nuevo.get("profesion") or ""), ("Ciudad", nuevo.get("ciudad") or "")]
+            t_filas += [("Tipo de terapia", nuevo.get("profesion") or ""), ("Ciudad", nuevo.get("ciudad") or "")]
     t_cierre = "Es una persona interesada en Alter-Karute: no se creó ninguna ficha. La reunión ya está en tu agenda." if reunion else "Es un consultante nuevo: todavía no tiene ficha en la app. Cuando quieras, créala y vincula la cita desde tu agenda." if nuevo else "La cita ya está en tu agenda."
     t_txt = f"Tienes {'una nueva reunión informativa agendada' if reunion else 'una nueva cita agendada'} por tu enlace.\n\n" + "\n".join(f"{k}: {v}" for k, v in t_filas) + f"\n\n{t_cierre}\n\nMensaje automático enviado con Alter-Karute.\n"
     t_html = correo.layout("Nueva reunión informativa agendada" if reunion else "Nueva cita agendada", [f"{first} acaba de agendar {'una reunión informativa' if reunion else 'una cita'} por tu enlace de reservas."], t_filas, [t_cierre], firma=("Que tengas un buen día,", "El equipo de Alter-Karute"))

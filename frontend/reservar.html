@@ -113,7 +113,7 @@ function draw(msg) {
     ${hour ? `${modsOf(hour).length > 1 ? `<div class="fld"><label for="mod">Modalidad</label><select id="mod">${modsOf(hour).map(m => `<option ${m === pickMod(hour) ? 'selected' : ''}>${esc(m)}</option>`).join('')}</select></div>` : ''}
     ${d.reunion ? '' : `<label class="chk"><input type="checkbox" id="nuevo" ${nuevo ? 'checked' : ''}> Soy consultante nuevo</label>`}
     ${f('nombres', 'Nombres', 'text', 'given-name')}${f('apellidos', 'Apellidos', 'text', 'family-name')}${f('correo', 'Correo electrónico', 'email', 'email')}
-    ${d.reunion ? f('telefono', 'Teléfono de contacto', 'tel', 'tel') + f('profesion', 'Profesión') + f('ciudad', 'Ciudad', 'text', 'address-level2') : nuevo ? f('telefono', 'Teléfono de contacto', 'tel', 'tel') : f('documento', 'Número de documento')}
+    ${d.reunion ? f('telefono', 'Teléfono de contacto', 'tel', 'tel') + f('profesion', '¿Qué tipo de terapia realizas?') + f('ciudad', 'Ciudad', 'text', 'address-level2') : nuevo ? f('telefono', 'Teléfono de contacto', 'tel', 'tel') : f('documento', 'Número de documento')}
     ${msg || ''}<button id="go" type="button">${d.reunion ? 'Agendar reunión' : 'Agendar cita'}</button>
     <p class="muted">${d.reunion ? 'No se crea ninguna ficha: es una reunión para conocer Alter-Karute.' : nuevo ? 'Tu cita queda agendada; el terapeuta abrirá tu ficha más adelante.' : 'Debemos encontrar tu ficha con el documento y el correo registrados.'} Recibirá una confirmación por correo.</p>` : (msg || '')}`);
   document.querySelectorAll('[data-day]').forEach(b => b.onclick = () => { keep(); day = b.dataset.day; hour = ''; draw(); });
