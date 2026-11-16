@@ -344,6 +344,7 @@ table.sttab th{font-size:12px;color:var(--muted);font-weight:600}table.sttab td.
 .ulist{display:flex;flex-direction:column;gap:10px}.ugroup{display:flex;flex-direction:column;gap:6px}
 .uteam{margin-left:22px;border-left:3px solid var(--accent-soft);padding-left:10px}.uteam>summary{cursor:pointer;color:var(--accent-fg);font-weight:500;font-size:14px;padding:4px 0}
 .uteam .usub{margin-top:6px}.card.usub{background:var(--surface)}
+.ugrp{margin:6px 0}.ugrp>summary{cursor:pointer;font-size:15px;padding:6px 0}.ugrp>.ugroup{margin-top:10px}
 /* Primeros pasos y datos de ejemplo */
 .banner.demo{background:var(--accent-soft);border-color:var(--accent);color:var(--ink)}
 .steps{border:1px solid var(--accent);background:var(--accent-soft);border-radius:12px;padding:14px 16px;display:flex;flex-direction:column;gap:10px}

@@ -120,13 +120,13 @@ ACT.dropLocal = b => {
 /* Usuarios (administrador): buscador y, dentro de cada terapeuta, las cuentas de su equipo. */
 function userCard(u, sub) {
   const role = u.role === 'admin' ? 'Administrador' : u.role === 'asistente' ? 'Equipo' : 'Terapeuta';
-  return `<div class="card ${sub ? 'usub' : ''}"><div class="row" style="justify-content:space-between"><span><b>${esc(u.name)}</b><br><span class="ts">${esc(u.email)}</span></span><span class="row"><span class="chip ${u.role === 'admin' ? '' : 'warn'}">${role}</span><span class="chip ${u.active ? 'ok' : 'danger'}">${u.active ? 'Activa' : 'Inactiva'}</span>${u.totp ? '<span class="chip ok">2 pasos</span>' : ''}${u.cambiarClave ? '<span class="chip warn">Debe cambiar la contraseña</span>' : ''}</span></div>
+  return `<div class="card ${sub ? 'usub' : ''}"><div class="row" style="justify-content:space-between"><span><b>${esc(u.name)}</b><br><span class="ts">${esc(u.email)}</span></span><span class="row"><span class="chip ${u.role === 'admin' ? '' : 'warn'}">${role}</span><span class="chip ${u.active ? 'ok' : 'danger'}">${u.active ? 'Activa' : 'Inactiva'}</span>${u.totp ? '<span class="chip ok">2 pasos</span>' : ''}${u.suscripcion ? (u.suscripcion.activa ? `<span class="chip ok">Suscrito${u.suscripcion.hasta ? ' hasta ' + esc(new Date(u.suscripcion.hasta).toLocaleDateString('es-CO')) : ''}</span>` : `<span class="chip warn">${u.suscripcion.hasta ? 'Suscripción vencida' : 'Sin suscripción'}</span>`) : ''}${u.cambiarClave ? '<span class="chip warn">Debe cambiar la contraseña</span>' : ''}</span></div>
     <div class="row"><button class="btn sm" data-u="toggle" data-id="${u.id}" data-active="${u.active ? 1 : 0}">${u.active ? 'Desactivar' : 'Reactivar'}</button>${u.role === 'asistente' ? '' : `<button class="btn sm" data-u="role" data-id="${u.id}" data-role="${u.role}">${u.role === 'admin' ? 'Quitar administrador' : 'Hacer administrador'}</button>`}
     <input type="password" id="rp_${u.id}" placeholder="Nueva contraseña (mín. 10)" aria-label="Nueva contraseña de ${esc(u.name)}" style="max-width:220px;background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:5px 8px"><button class="btn sm" data-u="reset" data-id="${u.id}">Restablecer contraseña</button>${u.role === 'user' ? `<input type="number" id="gm_${u.id}" min="1" max="36" value="1" aria-label="Meses gratis para ${esc(u.name)}" style="width:64px;background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:5px 8px"><button class="btn sm" data-u="gift" data-id="${u.id}">Dar meses gratis</button>${u.suscripcion && u.suscripcion.activa ? `<button class="btn sm warn" data-u="ungift" data-id="${u.id}">Quitar meses</button>` : ''}` : ''}${u.totp ? `<button class="btn sm warn" data-u="no2fa" data-id="${u.id}">Quitar verificación en dos pasos</button>` : ''}</div></div>`;
 }
 ACT.users = async () => {
   const root = $('#modal-root'); let list = [], q = '';
-  const open = new Set();
+  const open = new Set(), closedG = new Set();
   const fold = t => String(t || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
   const drawList = () => {
     const hit = u => !q || fold(u.name + ' ' + u.email).includes(fold(q));
@@ -134,10 +134,14 @@ ACT.users = async () => {
     const pros = list.filter(u => u.role !== 'asistente').sort((a, b) => a.name.localeCompare(b.name, 'es'));
     const orphans = list.filter(u => u.role === 'asistente' && !pros.some(p => p.id === u.ownerId));
     const shown = pros.filter(p => hit(p) || (team[p.id] || []).some(hit));
-    const html = shown.map(p => {
+    const bloque = p => {
       const t = (team[p.id] || []).sort((a, b) => a.name.localeCompare(b.name, 'es')), tm = q ? t.filter(hit) : t, showOpen = open.has(p.id) || (q && tm.length && !hit(p));
       return `<div class="ugroup">${userCard(p)}${t.length ? `<details class="uteam" data-owner="${p.id}" ${showOpen || (q && tm.length) ? 'open' : ''}><summary>Equipo de ${esc(p.name.split(' ')[0])} (${t.length})${q && tm.length !== t.length ? ` · ${tm.length} coincide${tm.length === 1 ? '' : 'n'}` : ''}</summary>${(q && !hit(p) ? tm : t).map(u => userCard(u, true)).join('')}</details>` : ''}</div>`;
-    }).join('') + (orphans.filter(hit).length ? `<div class="ugroup"><b class="ts">Cuentas de equipo sin terapeuta</b>${orphans.filter(hit).map(u => userCard(u, true)).join('')}</div>` : '');
+    };
+    const grupo = (id, titulo, arr) => arr.length ? `<details class="ugrp" data-g="${id}" ${closedG.has(id) && !q ? '' : 'open'}><summary><b>${titulo} (${arr.length})</b></summary>${arr.map(bloque).join('')}</details>` : '';
+    const html = grupo('con', 'Con suscripción', shown.filter(p => p.role === 'user' && p.suscripcion && p.suscripcion.activa))
+      + grupo('sin', 'Sin suscripción', shown.filter(p => p.role === 'user' && !(p.suscripcion && p.suscripcion.activa)))
+      + grupo('adm', 'Administradores', shown.filter(p => p.role !== 'user')) + (orphans.filter(hit).length ? `<div class="ugroup"><b class="ts">Cuentas de equipo sin terapeuta</b>${orphans.filter(hit).map(u => userCard(u, true)).join('')}</div>` : '');
     $('#u_list').innerHTML = html || '<p class="stnote">Ningún usuario coincide con la búsqueda.</p>';
     $('#u_count').textContent = `${pros.length} terapeuta${pros.length === 1 ? '' : 'es'} · ${list.length - pros.length} cuenta${list.length - pros.length === 1 ? '' : 's'} de equipo`;
   };
@@ -155,7 +159,7 @@ ACT.users = async () => {
     <p style="margin:0;font-size:13px;color:var(--muted)">Cada terapeuta ve únicamente sus propios consultantes. Las cuentas de equipo (asistentes, secretarias) las crea cada terapeuta y aparecen dentro de su usuario. Los usuarios no se eliminan: se desactivan, y sus registros se conservan.</p></div></div>`;
   $('#ucl').onclick = () => { root.innerHTML = ''; root.onclick = null; };
   $('#u_q').oninput = e => { q = e.target.value.trim(); drawList(); };
-  $('#u_list').addEventListener('toggle', e => { const d = e.target; if (d.matches && d.matches('details.uteam') && !q) { if (d.open) open.add(+d.dataset.owner); else open.delete(+d.dataset.owner); } }, true);
+  $('#u_list').addEventListener('toggle', e => { const d = e.target; if (d.matches && d.matches('details.ugrp') && !q) { if (d.open) closedG.delete(d.dataset.g); else closedG.add(d.dataset.g); } if (d.matches && d.matches('details.uteam') && !q) { if (d.open) open.add(+d.dataset.owner); else open.delete(+d.dataset.owner); } }, true);
   root.onclick = async e => {
     const b = e.target.closest('[data-u]'); if (!b) return;
     const id = b.dataset.id, act = b.dataset.u;
