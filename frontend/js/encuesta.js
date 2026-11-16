@@ -179,6 +179,9 @@ function svAggregate(responses) {
   return { dims, comments, global: dims.length ? dims.reduce((a, b) => a + b.pc, 0) / dims.length : null };
 }
 const r1 = v => (Math.round(v * 10) / 10).toLocaleString(I18N.locale());
+/* Cuadros de Estadísticas que el terapeuta puede ocultar (Mis formatos → Estadísticas; se guarda la lista de los ocultos). */
+const STAT_ITEMS = [['sexo', 'Sexo'], ['dx', 'Impresiones frecuentes'], ['servicio', 'Tipo de servicio'], ['modalidad', 'Modalidad de atención'], ['estado', 'Estado de los casos'], ['razon', 'Razón de inactividad de los consultantes']];
+const stOn = k => !(((S.profile.formatos || {}).estadisticas) || []).includes(k);
 function statsHTML(forDoc, part) {
   const enc_ = part === 'enc';
   const years = [...new Set((enc_ ? [...((S.sv && S.sv.invitaciones) || []).map(i => i.creada.slice(0, 4)), ...(S.svRes || []).map(r => (r.mes || '').slice(0, 4)), ...(S.profile.acciones || []).map(a => (a.fecha || '').slice(0, 4))]
@@ -217,12 +220,12 @@ function statsHTML(forDoc, part) {
   const head = forDoc ? '' : `<div class="row" style="justify-content:space-between;align-items:flex-end"><h2 style="font-family:var(--f-doc);font-size:22px;margin:0">${enc_ ? 'Encuesta de satisfacción' : 'Estadísticas'}</h2><span class="row"><span class="fld" style="min-width:160px"><label for="st_per">Periodo</label><select id="st_per"><option value="todo" ${per === 'todo' ? 'selected' : ''}>Todo</option>${years.map(y => `<option ${per === y ? 'selected' : ''}>${y}</option>`).join('')}</select></span>${enc_ ? '<button class="btn" data-act="survey">Configurar encuesta</button>' : ''}<button class="btn" data-act="statsDoc" data-part="${enc_ ? 'enc' : 'stats'}">Imprimir o guardar PDF</button></span></div>`;
   if (!enc_) return `${head}
   <div class="stats"><div class="stat"><b>${pats.length}</b><span>${per === 'todo' ? 'consultantes registrados' : 'consultantes atendidos en ' + per}</span></div><div class="stat"><b>${est[1].n}</b><span>casos activos</span></div><div class="stat"><b>${est[0].n}</b><span>casos finalizados</span></div><div class="stat"><b>${withDx.length}</b><span>con impresión registrada</span></div></div>
-  ${stBlock('Sexo', 'Sexo registrado en los datos de ' + perTxt + '.', sexo, pats.length)}
-  ${stBlock('Impresiones frecuentes', 'Impresión principal activa de ' + perTxt + '. Se muestran los 5 más frecuentes.' + (sinDx ? ` ${sinDx} consultante(s) sin impresión registrada no se cuentan.` : ''), dxRows, withDx.length)}
-  ${stBlock('Tipo de servicio', 'Tipo de servicio registrado en los datos de ' + perTxt + '. En pareja, familia o grupo cada persona cuenta por separado.', serv, pats.length, '# Total')}
-  ${stBlock('Modalidad de atención', 'Modalidad registrada en los datos de ' + perTxt + '.', moda, pats.length, '# Total')}
-  ${stBlock('Estado de los casos', 'Finalizados: alta, cerrado o remitido. Otros: en pausa.', est, pats.length, '# Total')}
-  ${stBlock('Razón de inactividad de los consultantes', 'Consultantes que no están activos. La razón se registra en Datos → Estado del proceso.', raz, inact.length, '# Total')}`;
+  ${stOn('sexo') ? stBlock('Sexo', 'Sexo registrado en los datos de ' + perTxt + '.', sexo, pats.length) : ''}
+  ${stOn('dx') ? stBlock('Impresiones frecuentes', 'Impresión principal activa de ' + perTxt + '. Se muestran los 5 más frecuentes.' + (sinDx ? ` ${sinDx} consultante(s) sin impresión registrada no se cuentan.` : ''), dxRows, withDx.length) : ''}
+  ${stOn('servicio') ? stBlock('Tipo de servicio', 'Tipo de servicio registrado en los datos de ' + perTxt + '. En pareja, familia o grupo cada persona cuenta por separado.', serv, pats.length, '# Total') : ''}
+  ${stOn('modalidad') ? stBlock('Modalidad de atención', 'Modalidad registrada en los datos de ' + perTxt + '.', moda, pats.length, '# Total') : ''}
+  ${stOn('estado') ? stBlock('Estado de los casos', 'Finalizados: alta, cerrado o remitido. Otros: en pausa.', est, pats.length, '# Total') : ''}
+  ${stOn('razon') ? stBlock('Razón de inactividad de los consultantes', 'Consultantes que no están activos. La razón se registra en Datos → Estado del proceso.', raz, inact.length, '# Total') : ''}`;
   if (S.mode !== 'server') return head + '<p class="stnote">La encuesta de satisfacción requiere el servidor.</p>';
   const sent = invs.length;
   return `${head}

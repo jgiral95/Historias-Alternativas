@@ -252,7 +252,7 @@ async function draw2fa(step, data) {
 
 /* ----- Mis formatos: único lugar para estructuras, plantillas, modelos y frases ----- */
 /* Mismo orden que las pestañas de la ficha del consultante; luego lo que se usa en varias partes. */
-const HUB = [['pestanas', 'Pestañas'], ['datos', 'Datos del consultante'], ['consent', 'Consentimientos']];
+const HUB = [['pestanas', 'Pestañas'], ['datos', 'Datos del consultante'], ['consent', 'Consentimientos'], ['estadisticas', 'Estadísticas']];
 /* Barra de Mis formatos: sin las pestañas ocultas, con los nombres propios y con las pestañas nuevas. */
 const hubList = () => { const c = tabsConf(), oc = c.ocultas || [], nm = c.nombres || {};
   return HUB.filter(([k]) => !oc.includes(k)).map(([k, l]) => [k, nm[k] || l]).concat((c.extra || []).map(x => [x.id, x.nombre])); };
@@ -263,9 +263,26 @@ function openHub(k) {
   const root = $('#modal-root'); root.onclick = root.oninput = root.onchange = null; ED = null;
   if (isFmt(k)) return ACT.formats({ dataset: { hub: k } });
   if (k === 'pestanas') return tabsManage();
+  if (k === 'estadisticas') return statsManage();
   if (k === 'consent') return ACT.consentManage();
   if (k === 'informes') return ACT.tplManage();
   if (k === 'escalas') return ACT.scaleManage();
+}
+/* Estadísticas: elegir qué cuadros se muestran. */
+function statsManage() {
+  const root = $('#modal-root'), off = new Set(((S.profile.formatos || {}).estadisticas) || []); ED = null;
+  root.innerHTML = `<div class="modal" role="dialog" aria-modal="true" aria-label="Mis formatos"><div class="box"><div class="row mfhead" style="justify-content:space-between"><h3 style="flex:1">Mis formatos</h3><button class="btn sm pri" data-st="save">Guardar</button><button class="btn sm" data-st="close">Cerrar</button></div>${hubTabs('estadisticas')}
+  <p style="margin:0;font-size:13px;color:var(--muted)">Elige los cuadros que quieres ver en Estadísticas. Los datos no se borran: solo se ocultan.</p>
+  <div class="sec">${STAT_ITEMS.map(([k, l]) => `<label class="check"><input type="checkbox" data-sti="${k}" ${off.has(k) ? '' : 'checked'}> <span>${esc(l)}</span></label>`).join('')}</div>
+  <div class="row end"><button class="btn pri" data-st="save">Guardar</button></div></div></div>`;
+  root.onclick = e => {
+    const h = e.target.closest('[data-hub]'); if (h) return openHub(h.dataset.hub);
+    const b = e.target.closest('[data-st]'); if (!b) return;
+    if (b.dataset.st === 'close') { root.innerHTML = ''; root.onclick = null; return; }
+    const hid = [...root.querySelectorAll('[data-sti]')].filter(x => !x.checked).map(x => x.dataset.sti), snap = clone(S.profile);
+    S.profile.formatos = Object.assign({}, S.profile.formatos, { estadisticas: hid });
+    persist([S.profile], b).then(ok => { if (!ok) { restore(S.profile, snap); return; } toast('Estadísticas guardadas.'); render(); });
+  };
 }
 /* Al cerrar Mis formatos, lo que esté abierto debajo se actualiza (selectores de plantilla, modelos, frases). */
 function hubClosed() {
