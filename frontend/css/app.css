@@ -571,7 +571,7 @@ h1,h2,h3{font-family:var(--f-doc);font-weight:600;letter-spacing:.1px}
 .nav .navico{display:none}
 @media (max-width:640px){
   .top{border-radius:22px;padding:10px 12px;gap:10px}
-  .brand{order:1;flex:1 1 60%;min-width:0}.brand b{font-size:17px}.brand svg{width:30px;height:30px}
+  .brand{order:1;flex:1 1 60%;min-width:0}.brand b{font-size:17px}.brand .logo{width:30px;height:30px}
   .top-actions{display:contents}
   .top-actions .avwrap{order:2;margin-left:auto}
   .top-search{order:3;flex:1 1 140px}
