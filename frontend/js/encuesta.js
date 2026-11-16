@@ -179,9 +179,11 @@ function svAggregate(responses) {
   return { dims, comments, global: dims.length ? dims.reduce((a, b) => a + b.pc, 0) / dims.length : null };
 }
 const r1 = v => (Math.round(v * 10) / 10).toLocaleString(I18N.locale());
-/* Cuadros de Estadísticas que el terapeuta puede ocultar (Mis formatos → Estadísticas; se guarda la lista de los ocultos). */
-const STAT_ITEMS = [['sexo', 'Sexo'], ['dx', 'Impresiones frecuentes'], ['servicio', 'Tipo de servicio'], ['modalidad', 'Modalidad de atención'], ['estado', 'Estado de los casos'], ['razon', 'Razón de inactividad de los consultantes']];
-const stOn = k => !(((S.profile.formatos || {}).estadisticas) || []).includes(k);
+/* Cuadros de Estadísticas (Mis formatos → Estadísticas): el estado de los casos y los campos de tipo Lista o País del formato «Datos del consultante»; se guarda la lista de los elegidos (formatos.statsVer). */
+const statFields = () => datosSchema().flatMap(([, fs]) => (fs || []).filter(f => f[1] && (f[3] === 'country' || (f[3] === 'list' && Array.isArray(f[4])))).map(f => [f[0], f[1], f[3] === 'list' ? f[4] : []]));
+const STAT_ITEMS = () => [['estado', 'Estado de los casos'], ['razon', 'Razón de inactividad de los consultantes']].concat(statFields().map(([k, l]) => [k, l]));
+const stSel = () => { const v = (S.profile.formatos || {}).statsVer; return Array.isArray(v) ? v : ['estado', 'razon']; };
+const stOn = k => stSel().includes(k);
 function statsHTML(forDoc, part) {
   const enc_ = part === 'enc';
   const years = [...new Set((enc_ ? [...((S.sv && S.sv.invitaciones) || []).map(i => i.creada.slice(0, 4)), ...(S.svRes || []).map(r => (r.mes || '').slice(0, 4)), ...(S.profile.acciones || []).map(a => (a.fecha || '').slice(0, 4))]
@@ -190,23 +192,11 @@ function statsHTML(forDoc, part) {
   const pats = per === 'todo' ? S.patients : S.patients.filter(p => attendedIn(p, per));
   const perTxt = per === 'todo' ? 'todos los consultantes registrados' : `consultantes atendidos en ${per}`;
   const group = (list, fn, labels) => { const m = new Map(labels.map(l => [l, 0])); list.forEach(p => { const k = fn(p); m.set(k, (m.get(k) || 0) + 1); }); return [...m.entries()].map(([label, n]) => ({ label, n })).filter(r => r.n || labels.includes(r.label)); };
-  // Sexo
-  const sexo = group(pats, p => ({ Femenino: 'Mujeres', Masculino: 'Hombres', Intersexual: 'Intersexual' })[p.sexo] || 'Sin registrar', ['Mujeres', 'Hombres']);
   // Estado de los casos
   const est = group(pats, p => isClosed(p) ? 'Casos finalizados' : (!p.estado || p.estado === 'Activo') ? 'Casos activos' : 'Otros (en pausa)', ['Casos finalizados', 'Casos activos', 'Otros (en pausa)']);
-  // Modalidad de atención
-  const moda = group(pats, p => ({ Presencial: 'Presencial', Virtual: 'Virtual', 'Mixta (presencial y virtual)': 'Mixta' })[p.modalidadAt] || 'Sin registrar', ['Presencial', 'Virtual', 'Mixta']);
-  // Tipo de servicio
-  const serv = group(pats, p => p.servicio || 'Sin registrar', ['Individual', 'Pareja', 'Familiar', 'Grupal']);
   // Razón de inactividad
   const inact = pats.filter(p => p.estado && p.estado !== 'Activo');
   const raz = group(inact, p => p.razonInactividad || 'Sin registrar', []).sort((a, b) => b.n - a.n);
-  // Impresiones frecuentes (impresión principal vigente)
-  const withDx = pats.map(p => dxActive(currentDx(p).items)[0]).filter(Boolean);
-  const dxc = new Map(); withDx.forEach(d => { const k = d.nombre; dxc.set(k, (dxc.get(k) || 0) + 1); });
-  let dxRows = [...dxc.entries()].map(([label, n]) => ({ label, n })).sort((a, b) => b.n - a.n);
-  if (dxRows.length > 6) { const rest = dxRows.slice(5).reduce((a, b) => a + b.n, 0); dxRows = dxRows.slice(0, 5).concat([{ label: 'Otros', n: rest }]); }
-  const sinDx = pats.length - withDx.length;
   // Encuestas
   const nTest = (S.svRes || []).filter(r => r.prueba).length, nTestInv = ((S.sv && S.sv.invitaciones) || []).filter(i => i.prueba).length, incT = S.stTest !== undefined ? S.stTest : !(S.svRes || []).some(r => !r.prueba);
   const invs = ((S.sv && S.sv.invitaciones) || []).filter(i => (per === 'todo' || i.creada.startsWith(per)) && (incT || !i.prueba));
@@ -219,11 +209,8 @@ function statsHTML(forDoc, part) {
   const dimBars = ag.dims.length ? `<div class="bars">${ag.dims.map(d => `<div class="bar" title="${esc(d.dim)}: ${r1(d.pc)} %"><span class="bl">${esc(d.dim)}</span><span class="bt"><i style="width:${d.pc}%"></i></span><span class="bv">${r1(d.pc)} %</span></div>`).join('')}</div>` : '';
   const head = forDoc ? '' : `<div class="row" style="justify-content:space-between;align-items:flex-end"><h2 style="font-family:var(--f-doc);font-size:22px;margin:0">${enc_ ? 'Encuesta de satisfacción' : 'Estadísticas'}</h2><span class="row"><span class="fld" style="min-width:160px"><label for="st_per">Periodo</label><select id="st_per"><option value="todo" ${per === 'todo' ? 'selected' : ''}>Todo</option>${years.map(y => `<option ${per === y ? 'selected' : ''}>${y}</option>`).join('')}</select></span>${enc_ ? '<button class="btn" data-act="survey">Configurar encuesta</button>' : ''}<button class="btn" data-act="statsDoc" data-part="${enc_ ? 'enc' : 'stats'}">Imprimir o guardar PDF</button></span></div>`;
   if (!enc_) return `${head}
-  <div class="stats"><div class="stat"><b>${pats.length}</b><span>${per === 'todo' ? 'consultantes registrados' : 'consultantes atendidos en ' + per}</span></div><div class="stat"><b>${est[1].n}</b><span>casos activos</span></div><div class="stat"><b>${est[0].n}</b><span>casos finalizados</span></div><div class="stat"><b>${withDx.length}</b><span>con impresión registrada</span></div></div>
-  ${stOn('sexo') ? stBlock('Sexo', 'Sexo registrado en los datos de ' + perTxt + '.', sexo, pats.length) : ''}
-  ${stOn('dx') ? stBlock('Impresiones frecuentes', 'Impresión principal activa de ' + perTxt + '. Se muestran los 5 más frecuentes.' + (sinDx ? ` ${sinDx} consultante(s) sin impresión registrada no se cuentan.` : ''), dxRows, withDx.length) : ''}
-  ${stOn('servicio') ? stBlock('Tipo de servicio', 'Tipo de servicio registrado en los datos de ' + perTxt + '. En pareja, familia o grupo cada persona cuenta por separado.', serv, pats.length, '# Total') : ''}
-  ${stOn('modalidad') ? stBlock('Modalidad de atención', 'Modalidad registrada en los datos de ' + perTxt + '.', moda, pats.length, '# Total') : ''}
+  <div class="stats"><div class="stat"><b>${pats.length}</b><span>${per === 'todo' ? 'consultantes registrados' : 'consultantes atendidos en ' + per}</span></div><div class="stat"><b>${est[1].n}</b><span>casos activos</span></div><div class="stat"><b>${est[0].n}</b><span>casos finalizados</span></div></div>
+  ${statFields().filter(([k]) => stOn(k)).map(([k, l, o]) => stBlock(l, 'Respuestas registradas en «' + l + '» de ' + perTxt + '.', group(pats, p => p[k] || 'Sin registrar', o), pats.length)).join('')}
   ${stOn('estado') ? stBlock('Estado de los casos', 'Finalizados: alta, cerrado o remitido. Otros: en pausa.', est, pats.length, '# Total') : ''}
   ${stOn('razon') ? stBlock('Razón de inactividad de los consultantes', 'Consultantes que no están activos. La razón se registra en Datos → Estado del proceso.', raz, inact.length, '# Total') : ''}`;
   if (S.mode !== 'server') return head + '<p class="stnote">La encuesta de satisfacción requiere el servidor.</p>';
