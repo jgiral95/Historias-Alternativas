@@ -294,6 +294,24 @@ def send_verify(to: str, name: str, url: str, acc: dict, lang: str | None = None
         s.send_message(m)
 
 
+def send_reset(to: str, name: str, url: str, acc: dict, lang: str | None = None) -> None:
+    """Correo con el enlace de un solo uso para elegir una contraseña nueva. Se reemplaza en las pruebas."""
+    m = EmailMessage()
+    m["Subject"] = "Alter-Karute: restablece tu contraseña"
+    m["From"] = formataddr(("Alter-Karute", acc.get("from") or SMTP_FROM))
+    m["To"] = to
+    nombre = (name or "").strip()
+    m.set_content(
+        f"Hola{(', ' + nombre) if nombre else ''}.\n\nRecibimos una solicitud para restablecer la contraseña de tu cuenta de Alter-Karute. "
+        f"Usa este enlace para elegir una nueva (vale 1 hora y sirve una sola vez):\n\n{url}\n\n"
+        "Si no lo solicitaste, ignora este mensaje: tu contraseña actual no cambia.\n\nAtentamente,\nAlter-Karute\n")
+    correo.agregar(m, correo.layout("Restablece tu contraseña",
+                                    [f"Hola{(', ' + nombre) if nombre else ''}. Recibimos una solicitud para restablecer la contraseña de tu cuenta. Usa el siguiente botón para elegir una nueva; el enlace vale 1 hora y sirve una sola vez."],
+                                    boton=("Elegir nueva contraseña", url), notas=["Si no lo solicitaste, ignora este mensaje: tu contraseña actual no cambia."]), lang)
+    with smtp_open(acc) as s:
+        s.send_message(m)
+
+
 def send_mail(to: str, token: str, p: dict, prof: dict, acc: dict | None) -> None:
     """Envía el correo con el enlace desde el correo de la cuenta. Se reemplaza en las pruebas."""
     m = message(to, token, p, prof, acc)

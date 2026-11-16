@@ -51,6 +51,48 @@ function renderRegistro(msg, v) {
     } catch (err) { renderRegistro(err.message, b); }
   };
 }
+/* Recuperar la contraseña: se envía al correo un enlace de un solo uso; al abrirlo (?recuperar=…) se elige la nueva. */
+const BRAND_A = `<a class="brand" href="/" aria-label="Alter-Karute: ir a la página principal" style="text-decoration:none;color:inherit">${logoSVG(60)}<b>Alter-Karute</b></a>`;
+function renderRecuperar(msg, email) {
+  $('#app').innerHTML = `<div class="panel" style="width:100%;max-width:400px;box-sizing:border-box;margin:8vh auto 0"><form class="body" id="recform">
+    ${BRAND_A}<p style="margin:0;color:var(--muted)">Escribe el correo de tu cuenta y te enviaremos un enlace para elegir una contraseña nueva.</p>
+    ${msg ? `<div class="banner" role="alert">${esc(msg)}</div>` : ''}
+    <div class="fld"><label for="rc_email">Correo</label><input id="rc_email" type="email" autocomplete="username" value="${esc(email || '')}" required></div>
+    <button class="btn pri" type="submit">Enviar enlace</button>
+    <button class="btn" type="button" id="rc_back">Volver</button></form></div>`;
+  $('#rc_back').onclick = () => renderLogin('', email);
+  $('#recform').onsubmit = async ev => {
+    ev.preventDefault();
+    const em = $('#rc_email').value.trim();
+    try {
+      await api('/auth/recover', { method: 'POST', body: { email: em, idioma: I18N.lang }, noRedirect: true });
+      $('#app').innerHTML = `<div class="panel" style="width:100%;max-width:400px;box-sizing:border-box;margin:8vh auto 0"><div class="body">
+        ${BRAND_A}<h2 style="margin:0">Revisa tu correo</h2>
+        <p style="margin:0">Si hay una cuenta con <b>${esc(em)}</b>, te enviamos un enlace para elegir una contraseña nueva (vale 1 hora). Si no lo ves, revisa la carpeta de spam.</p>
+        <button class="btn" id="rc_ok">Volver al ingreso</button></div></div>`;
+      $('#rc_ok').onclick = () => renderLogin('', em);
+    } catch (err) { renderRecuperar(err.message, em); }
+  };
+}
+function renderReset(token, msg) {
+  $('#app').innerHTML = `<div class="panel" style="width:100%;max-width:400px;box-sizing:border-box;margin:8vh auto 0"><form class="body" id="rsform">
+    ${BRAND_A}<p style="margin:0;color:var(--muted)">Elige tu nueva contraseña.</p>
+    ${msg ? `<div class="banner" role="alert">${esc(msg)}</div>` : ''}
+    <div class="fld"><label for="rs_pass">Contraseña nueva</label><input id="rs_pass" type="password" autocomplete="new-password" minlength="10" required></div>
+    <div class="fld"><label for="rs_pass2">Confirmar contraseña</label><input id="rs_pass2" type="password" autocomplete="new-password" minlength="10" required></div>
+    <button class="btn pri" type="submit">Guardar contraseña</button>
+    <button class="btn" type="button" id="rs_back">Volver al ingreso</button></form></div>`;
+  $('#rs_back').onclick = () => renderLogin();
+  $('#rsform').onsubmit = async ev => {
+    ev.preventDefault();
+    const pw = $('#rs_pass').value;
+    if (pw !== $('#rs_pass2').value) { renderReset(token, 'Las contraseñas no coinciden.'); return; }
+    try {
+      await api('/auth/reset', { method: 'POST', body: { token, password: pw }, noRedirect: true });
+      renderLogin('Contraseña actualizada. Ingresa con la nueva.');
+    } catch (err) { renderReset(token, err.message); }
+  };
+}
 function renderLogin(msg, email) {
   $('#modal-root').innerHTML = ''; $('#fb-root').innerHTML = '';
   $('#app').innerHTML = `<div class="panel" style="width:100%;max-width:400px;box-sizing:border-box;margin:8vh auto 0"><form class="body" id="loginform" autocomplete="on">
@@ -59,9 +101,10 @@ function renderLogin(msg, email) {
     <div class="fld"><label for="lg_email">Correo</label><input id="lg_email" type="email" autocomplete="username" value="${esc(email || '')}" required></div>
     <div class="fld"><label for="lg_pass">Contraseña</label><input id="lg_pass" type="password" autocomplete="current-password" required></div>
     <button class="btn pri" type="submit">Ingresar</button>${GOOGLE_BTN('Ingresar con Google')}
-    <p style="margin:0;font-size:14px;display:flex;justify-content:flex-end"><a href="#" id="lg_reg">Crear cuenta</a></p>
+    <p style="margin:0;font-size:14px;display:flex;justify-content:space-between"><a href="#" id="lg_forgot">¿Olvidaste tu contraseña?</a><a href="#" id="lg_reg">Crear cuenta</a></p>
     <p style="margin:0;font-size:13px;text-align:center;color:var(--muted)"><a href="/" style="color:var(--muted)">← Volver al inicio</a> · <a href="privacidad" target="_blank" rel="noopener" style="color:var(--muted)">Privacidad</a></p></form></div>`;
   $('#lg_reg').onclick = ev => { ev.preventDefault(); renderRegistro(); };
+  $('#lg_forgot').onclick = ev => { ev.preventDefault(); renderRecuperar('', $('#lg_email').value.trim()); };
   $('#loginform').onsubmit = async ev => {
     ev.preventDefault();
     const em = $('#lg_email').value.trim(), pw = $('#lg_pass').value;
@@ -269,8 +312,9 @@ new MutationObserver(ms => ms.forEach(m => m.addedNodes.forEach(n => { if (n.nod
       S.user = r;
     } catch (err) { renderLogin(err.message); return; }
   }
-  const qs = new URLSearchParams(location.search), vt = qs.get('verificar'), gl = qs.get('gl');
-  if (gl) history.replaceState(null, '', location.pathname);
+  const qs = new URLSearchParams(location.search), vt = qs.get('verificar'), gl = qs.get('gl'), rt = qs.get('recuperar');
+  if (gl || rt) history.replaceState(null, '', location.pathname);
+  if (S.mode === 'server' && !S.user && rt) { renderReset(rt); return; }
   if (S.mode === 'server' && !S.user && gl) { renderLogin({ cancel: 'No se concedió el permiso en Google.', off: 'El ingreso con Google no está disponible por ahora.', inactive: 'Esta cuenta está desactivada.', limit: 'Se crearon demasiadas cuentas desde esta conexión hoy. Intenta de nuevo mañana.' }[gl] || 'No se pudo ingresar con Google. Intenta de nuevo.'); return; }
   if (S.mode === 'server' && !S.user && vt) {
     history.replaceState(null, '', location.pathname);

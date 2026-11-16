@@ -39,6 +39,10 @@ EN = {
     "Hola{0}, {1} te envía el documento «{2}» para que lo leas y lo firmes desde tu celular: {3} Para abrirlo se te pedirá tu número de documento. El enlace vence en {4} días.": "Hello{0}, {1} is sending you the document “{2}” to read and sign from your phone: {3} You will be asked for your ID number to open it. The link expires in {4} days.",
     "Consentimiento para firmar — {0}": "Consent to sign — {0}", "Tienes un documento para firmar": "You have a document to sign", "Leer y firmar el documento": "Read and sign the document",
     "Hola:": "Hello:", "Hola{0}:": "Hello{0}:", "{0} te invita a responder una encuesta corta sobre la atención que recibiste. Toma unos 2 minutos y tus respuestas se guardan sin tu nombre.": "{0} invites you to answer a short survey about the care you received. It takes about 2 minutes and your answers are saved without your name.",
+    "Alter-Karute: restablece tu contraseña": "Alter-Karute: reset your password", "Restablece tu contraseña": "Reset your password", "Elegir nueva contraseña": "Choose a new password",
+    "Hola{0}.": "Hello{0}.", "Recibimos una solicitud para restablecer la contraseña de tu cuenta de Alter-Karute. Usa este enlace para elegir una nueva (vale 1 hora y sirve una sola vez):": "We received a request to reset the password for your Alter-Karute account. Use this link to choose a new one (valid for 1 hour, single use):",
+    "Hola{0}. Recibimos una solicitud para restablecer la contraseña de tu cuenta. Usa el siguiente botón para elegir una nueva; el enlace vale 1 hora y sirve una sola vez.": "Hello{0}. We received a request to reset your account password. Use the button below to choose a new one; the link is valid for 1 hour and works once.",
+    "Si no lo solicitaste, ignora este mensaje: tu contraseña actual no cambia.": "If you didn't request it, ignore this message: your current password won't change.",
     "Si no esperabas este mensaje, ignóralo o comunícate con el consultorio.": "If you weren't expecting this message, ignore it or contact the practice.",
 }
 

@@ -466,6 +466,75 @@ class PasswordIn(BaseModel):
     new: str
 
 
+def _pw_fp(user: User) -> str:
+    """Huella de la contraseña actual: al cambiarla, los enlaces de recuperación anteriores dejan de servir (un solo uso)."""
+    return hashlib.sha256(user.password_hash.encode()).hexdigest()[:16]
+
+
+def _send_reset(to: str, name: str, url: str, acc: dict, lang: str | None = None) -> None:
+    try:
+        survey.send_reset(to, name, url, acc, lang)
+    except Exception:
+        pass  # la respuesta ya salió igual para cuentas que existen y que no
+
+
+class RecoverIn(BaseModel):
+    email: str
+    idioma: str = ""
+
+
+@app.post("/api/auth/recover", status_code=202)
+def recover_password(body: RecoverIn, request: Request, bg: BackgroundTasks, db: Session = Depends(get_db)):
+    """Envía al correo de la cuenta un enlace de un solo uso (1 hora) para elegir una contraseña nueva.
+    La respuesta es la misma exista o no la cuenta; el correo sale en segundo plano."""
+    email, ip = body.email.strip().lower(), client_ip(request) or "?"
+    if not EMAIL_RE.match(email):
+        raise HTTPException(400, "Correo no válido")
+    acc = survey.server_account()
+    if not survey.smtp_enabled(acc):
+        raise HTTPException(503, "El envío de correos no está disponible por ahora. Intenta más tarde.")
+    if _locked("rec:" + email, ip):
+        raise HTTPException(429, "Demasiados intentos. Espera unos minutos e intenta de nuevo.")
+    _register_fail("rec:" + email, ip)  # cuenta todo intento, exista o no la cuenta
+    user = db.scalar(select(User).where(User.email == email))
+    if user and user.active:
+        en = body.idioma.lower().startswith("en")
+        tok = jwt.encode({"p": "pwreset", "sub": str(user.id), "f": _pw_fp(user), "exp": int(time.time()) + 3600}, SESSION_SECRET, algorithm="HS256")
+        audit(db, user.id, "password.recover", ip=ip)
+        bg.add_task(_send_reset, user.email, user.name, f"{acc.get('base') or PUBLIC_URL}/app?recuperar={tok}" + ("&lang=en" if en else ""), acc, "en" if en else None)
+    return {"ok": True}
+
+
+class ResetIn(BaseModel):
+    token: str
+    password: str
+
+
+@app.post("/api/auth/reset", status_code=204)
+def reset_password(body: ResetIn, request: Request, db: Session = Depends(get_db)):
+    """Cambia la contraseña con el enlace del correo. No abre sesión: si la cuenta tiene verificación en dos pasos, se sigue pidiendo."""
+    ip = client_ip(request) or "?"
+    who = "reset:" + hashlib.sha256(body.token.encode()).hexdigest()[:16]
+    if _locked(who, ip):
+        raise HTTPException(429, "Demasiados intentos. Espera unos minutos e intenta de nuevo.")
+    try:
+        t = jwt.decode(body.token, SESSION_SECRET, algorithms=["HS256"])
+        assert t.get("p") == "pwreset"
+        user = db.get(User, int(t["sub"]))
+        assert user and user.active and t.get("f") == _pw_fp(user)
+    except Exception:
+        _register_fail(who, ip)
+        raise HTTPException(400, "El enlace venció o ya se usó. Pide uno nuevo.")
+    if len(body.password) < MIN_PASSWORD:
+        raise HTTPException(400, f"La contraseña debe tener al menos {MIN_PASSWORD} caracteres")
+    user.password_hash = hash_password(body.password)
+    user.must_change_password = False
+    db.add(user)
+    db.commit()
+    forget_devices(db, user.id)
+    audit(db, user.id, "password.reset", ip=ip)
+
+
 @app.post("/api/auth/password", status_code=204)
 def change_password(body: PasswordIn, user: User = Depends(current_user), db: Session = Depends(get_db)):
     if not check_password(user.password_hash, body.current):
