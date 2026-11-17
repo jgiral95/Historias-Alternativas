@@ -613,3 +613,17 @@ h1,h2,h3{font-family:var(--f-doc);font-weight:600;letter-spacing:.1px}
 .libres{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}.libres .hueco{padding:2px 6px;font-size:11px}
 .mlibre{background:none;border:0;color:var(--accent-fg,#2F4A3A);cursor:pointer;font:inherit;font-size:11px;padding:0;text-align:left}
 .mlibre:hover{text-decoration:underline}
+
+/* Agenda: cada cita se tiñe según el tipo (presencial, virtual, telefónica) */
+:root{--mv:#3A6EA5}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--mv:#8DB7E8}}
+:root[data-theme="dark"]{--mv:#8DB7E8}
+.ap,.mapt{--mc:var(--accent);background:color-mix(in srgb,var(--mc) 13%,var(--surface));border-color:color-mix(in srgb,var(--mc) 28%,var(--line));border-left-color:var(--mc)}
+.ap.mp,.mapt.mp,.aglegend .mp{--mc:var(--accent)}.ap.mv,.mapt.mv,.aglegend .mv{--mc:var(--mv)}.ap.mt,.mapt.mt,.aglegend .mt{--mc:var(--warn)}
+.ap.evento{--mc:var(--muted);background:var(--surface2)}
+.ap.Atendida,.ap.No-asistió,.ap.impaga{border-left-color:var(--mc);background:color-mix(in srgb,var(--mc) 13%,var(--surface))}
+.ap.Atendida{box-shadow:inset -3px 0 0 var(--ok)}.ap.No-asistió{box-shadow:inset -3px 0 0 var(--warn)}.ap.impaga{box-shadow:inset -3px 0 0 var(--danger)}
+.ap.Cancelada{--mc:var(--muted);background:var(--surface2);border-left-color:var(--muted)}
+.ap.prox{box-shadow:0 0 0 3px var(--accent-soft),0 4px 14px rgba(78,107,88,.18)}
+.aglegend{display:flex;flex-wrap:wrap;gap:6px 16px;padding:8px 16px 0;font-size:12px;color:var(--muted)}
+.aglegend span{display:inline-flex;align-items:center;gap:6px}.aglegend span::before{content:"";width:12px;height:12px;border-radius:4px;background:color-mix(in srgb,var(--mc) 25%,var(--surface));border-left:3px solid var(--mc)}

@@ -9,9 +9,10 @@ const patName = id => { const p = S.patients.find(x => x.id === id); return p ? 
 const apName = a => a.evento ? a.evento : a.patientId ? patName(a.patientId) : a.nuevo ? [a.nuevo.nombres, a.nuevo.apellidos].join(' ') + ' (nuevo)' : 'Sin consultante';
 const apptsOn = key => S.appts.filter(a => dayKey(new Date(a.startAt)) === key).sort((a, b) => a.startAt.localeCompare(b.startAt));
 const remChip = a => { const c = a.confirmacion && a.confirmacion.estado, r = S.rem && S.rem.items && S.rem.items[a.id]; return c === 'Confirmada' ? ' · ✓ confirmó' : c ? ' · canceló' : r && r.enviado ? ' · recordada' : ''; };
+const modCls = a => ({ Presencial: ' mp', Virtual: ' mv', 'Telefónica': ' mt' })[a.modalidad] || '';
 function apptBtn(a, prox) {
   const fe = typeof finEstadoCita === 'function' ? finEstadoCita(a) : '', impaga = fe === 'Pendiente' || fe === 'Abonada';
-  return `<button class="ap${prox ? ' prox' : ''}${!prox && a.startAt && new Date(a.startAt) < new Date() && (!a.estado || a.estado === 'Programada') ? ' pasada' : ''} ${esc((a.estado || 'Programada').replace(/\s/g, '-'))}${a.evento ? ' evento' : ''}${impaga ? ' impaga' : ''}" data-act="apptEdit" data-id="${a.id}"><b>${esc(hhmm(a.startAt))}</b><span>${esc(apName(a))}</span><small>${esc(remChip(a).replace(/^ · /, '') ? remChip(a).replace(/^ · /, '') + ' · ' : '')}${esc([a.duracion ? a.duracion + ' min' : '', a.modalidad, a.estado && a.estado !== 'Programada' ? a.estado : ''].filter(Boolean).join(' · '))}</small></button>`;
+  return `<button class="ap${modCls(a)}${prox ? ' prox' : ''}${!prox && a.startAt && new Date(a.startAt) < new Date() && (!a.estado || a.estado === 'Programada') ? ' pasada' : ''} ${esc((a.estado || 'Programada').replace(/\s/g, '-'))}${a.evento ? ' evento' : ''}${impaga ? ' impaga' : ''}" data-act="apptEdit" data-id="${a.id}"><b>${esc(hhmm(a.startAt))}</b><span>${esc(apName(a))}</span><small>${esc(remChip(a).replace(/^ · /, '') ? remChip(a).replace(/^ · /, '') + ' · ' : '')}${esc([a.duracion ? a.duracion + ' min' : '', a.modalidad, a.estado && a.estado !== 'Programada' ? a.estado : ''].filter(Boolean).join(' · '))}</small></button>`;
 }
 /* Vista de la agenda (día, semana o mes): preferencia de este navegador. */
 const AG_VIEWS = [['dia', 'Día'], ['semana', 'Semana'], ['mes', 'Mes']];
@@ -58,7 +59,7 @@ function agendaHTML() {
     const wd = [...Array(7)].map((_, i) => { const d = new Date(start); d.setDate(d.getDate() + i); return d.toLocaleDateString(I18N.locale(), { weekday: 'short' }); });
     body = `<div class="month"><div class="mhead">${wd.map(x => `<span>${esc(x)}</span>`).join('')}</div><div class="mgrid">${weeks.map(d => { const k = dayKey(d), l = apptsOn(k).filter(a => a.estado !== 'Cancelada');
       return `<div class="mcell ${d.getMonth() !== month ? 'out' : ''} ${k === today ? 'today' : ''}"><button class="mday" data-act="agDay" data-date="${k}" aria-label="Ver el ${esc(fmt(d))}">${d.getDate()}</button>
-      ${l.slice(0, 3).map(a => `<button class="mapt" data-act="apptEdit" data-id="${a.id}" title="${esc(hhmm(a.startAt) + ' · ' + apName(a))}"><b>${esc(hhmm(a.startAt))}</b> ${esc(apName(a))}</button>`).join('')}
+      ${l.slice(0, 3).map(a => `<button class="mapt${modCls(a)}" data-act="apptEdit" data-id="${a.id}" title="${esc(hhmm(a.startAt) + ' · ' + apName(a))}"><b>${esc(hhmm(a.startAt))}</b> ${esc(apName(a))}</button>`).join('')}
       ${l.length > 3 ? `<button class="mmore" data-act="agDay" data-date="${k}">+${l.length - 3} más</button>` : ''}${l.length ? `<span class="mdots" aria-hidden="true">${'•'.repeat(Math.min(l.length, 5))}</span>` : ''}${(n => n ? `<button class="mlibre" data-act="agDay" data-date="${k}" title="Ver los huecos libres">${n} ${n === 1 ? 'libre' : 'libres'}</button>` : '')(dispSlots(k).length)}</div>`; }).join('')}</div></div>`;
   } else {
     const mon = mondayOf(anchor), days = [...Array(7)].map((_, i) => { const d = new Date(mon); d.setDate(d.getDate() + i); return d; });
@@ -70,6 +71,7 @@ function agendaHTML() {
   <div class="row"><div class="seg" role="group" aria-label="Vista">${AG_VIEWS.map(([k, l]) => `<button class="${k === v ? 'on' : ''}" data-act="agView" data-v="${k}" aria-pressed="${k === v}">${l}</button>`).join('')}</div>
   <button class="btn sm" data-act="agNav" data-d="-1" aria-label="${unit} anterior">←</button><button class="btn sm" data-act="agNav" data-d="0">Hoy</button><button class="btn sm" data-act="agNav" data-d="1" aria-label="${unit} siguiente">→</button>
   ${S.mode === 'server' && !TEAM() && S.disp ? `<button class="btn sm" data-act="dispToggle" aria-pressed="${dispOn()}" title="Mostrar u ocultar los huecos libres de tu horario de Reservas">Disponibilidad: ${dispOn() ? 'sí' : 'no'}</button>` : ''}${S.mode === 'server' && !TEAM() ? '<button class="btn sm" data-act="remConfig">Recordatorios</button><button class="btn sm" data-act="gcal">Google Calendar</button><button class="btn sm" data-act="reservas">Reservas</button>' : ''}<button class="btn pri" data-act="apptEdit">+ Nueva cita</button></div></div>
+  <div class="aglegend" aria-label="Colores por tipo de cita"><span class="mp">Presencial</span><span class="mv">Virtual</span><span class="mt">Telefónica</span></div>
   ${body}</div>`;
 }
 ACT.agView = b => { S.agView = b.dataset.v; try { localStorage.setItem('ac_agview', S.agView); } catch (e) { /* sin almacenamiento */ } render(); };
