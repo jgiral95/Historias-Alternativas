@@ -75,6 +75,9 @@ ACT.profile = () => {
   <div class="ptab" role="tabpanel" data-pp="datos">
   <div class="grid">${F('Nombre completo', 'nombre', pr.nombre)}${F('Cédula (documento de identidad)', 'cedula', pr.cedula || '')}${F('Título', 'titulo', pr.titulo)}${F('Registro (si lo tienes)', 'registro', pr.registro)}${F('Lugar de práctica', 'consultorio', pr.consultorio)}${F('Plataforma habitual de teleterapia', 'plataforma', pr.plataforma || '', { ph: 'Ej.: Google Meet' })}${F('Ciudad', 'ciudad', pr.ciudad)}${F('Teléfono', 'telefono', pr.telefono, { type: 'tel' })}${F('Correo', 'correo', pr.correo, { type: 'email' })}${F('Idioma de la app', 'idioma', pr.idioma === 'en' ? 'English' : 'Español', { type: 'select', opts: ['Español', 'English'] })}</div>
   <label class="check"><input type="checkbox" id="f_simbolos" data-f="simbolos" ${pr.simbolos === false ? '' : 'checked'}> <span>Mostrar el menú de símbolos al escribir</span></label>
+  ${S.mode === 'server' ? `<div class="card" style="margin-top:4px"><label class="check"><input type="checkbox" data-f="cumpleActivo" ${pr.cumpleActivo ? 'checked' : ''}> <span><b>Avisarme por correo los cumpleaños de mis consultantes</b></span></label>
+  <div class="fld" style="max-width:320px"><label for="f_cumpleDias">¿Con cuántos días de anticipación?</label><select id="f_cumpleDias" data-f="cumpleDias">${[[0, 'El mismo día'], [1, '1 día antes'], [2, '2 días antes'], [3, '3 días antes'], [5, '5 días antes'], [7, '1 semana antes'], [14, '2 semanas antes']].map(([v, t]) => `<option value="${v}" ${(pr.cumpleDias ?? 1) === v ? 'selected' : ''}>${t}</option>`).join('')}</select></div>
+  <p style="margin:0;font-size:13px;color:var(--muted)">Recibirás un correo cada mañana con los consultantes que cumplen años en ese plazo, en la dirección de tu perfil (o la de tu cuenta). Solo funciona con consultantes que tengan la fecha de nacimiento.</p></div>` : ''}
   <p style="margin:0;font-size:13px;color:var(--muted)">Tus modelos de consentimiento (adultos, familia, niños…) se administran en «Mis consentimientos», desde la pestaña Consentimiento de cualquier consultante.</p>
   </div>
   <div class="ptab" role="tabpanel" data-pp="firma">
@@ -130,6 +133,7 @@ ACT.profile = () => {
   $('#pcl').onclick = () => root.innerHTML = '';
   $('#psave').onclick = async () => {
     const o = readForm($('#profform'), {}); o.idioma = o.idioma === 'English' ? 'en' : 'es';
+    o.cumpleDias = [0, 1, 2, 3, 5, 7, 14].includes(+o.cumpleDias) ? +o.cumpleDias : 1;
     if (!o.nombre) { toast('Escribe tu nombre completo.'); return; }
     const snap = clone(S.profile);
     Object.assign(S.profile, o); if (upFirma) S.profile.firma = upFirma; else if (!pad.isEmpty()) S.profile.firma = pad.data();

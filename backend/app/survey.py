@@ -352,10 +352,10 @@ _stop = threading.Event()
 def start_scheduler(every_seconds: int = 900) -> None:
     """Cada 15 minutos: recordatorios de citas; el sorteo de encuestas respeta tu propia frecuencia."""
     def loop():
-        from . import reminders  # importación tardía: reminders usa este módulo
+        from . import cumples, reminders  # importación tardía: reminders usa este módulo
         _stop.wait(60)
         while not _stop.is_set():
-            for job in (reminders.run_all, run_all):
+            for job in (reminders.run_all, cumples.run_all, run_all):
                 try:
                     job()
                 except Exception:  # noqa: BLE001

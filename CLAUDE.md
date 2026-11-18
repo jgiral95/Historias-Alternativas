@@ -51,6 +51,7 @@ FastAPI + SQLAlchemy. `main.py` (endpoints; registros cifrados por tipo: profile
 | Ingreso con Google | `google_login_e2e.js`, `test_registro.py -k google` |
 | Reservas por enlace | `test_booking.py` |
 | Formularios de datos | `test_formularios.py` |
+| Aviso de cumpleaños al terapeuta (`cumples.py`, opción en Mi perfil) | `test_cumples.py` |
 | Recordatorio por cita (pestaña en el popup, días y frecuencia) | `recordatorio_cita_e2e.js`, `test_reminders.py` |
 | Recordatorios / firma a distancia / encuesta / bitácora / comentarios / inicio / caída / Google | `<nombre>_e2e.js` |
 
