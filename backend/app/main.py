@@ -1,5 +1,6 @@
 import base64
 import hashlib
+import io
 import json
 import logging
 import math
@@ -9,11 +10,12 @@ import threading
 import time
 import urllib.parse
 from contextlib import asynccontextmanager
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
+from functools import lru_cache
 
 from fastapi import BackgroundTasks, Body, Depends, FastAPI, HTTPException, Request, Response
 from fastapi.responses import PlainTextResponse, RedirectResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from starlette.concurrency import run_in_threadpool
 from sqlalchemy import delete, func, select
 from sqlalchemy.orm import Session
@@ -22,9 +24,9 @@ import jwt
 
 from .config import (FILE_UNDO_MINUTES, IDLE_MINUTES, MAX_FILE_BYTES, MAX_RECORD_BYTES,
                      MIN_PASSWORD, PRIVACY_REQUIRED, PRIVACY_VERSION, SESSION_HOURS, SESSION_SECRET)
-from . import billing, booking, compress, firmas, formularios, gcal, reminders, survey
+from . import billing, booking, compress, correo, firmas, formularios, gcal, reminders, survey
 from .config import (BETA_COMENTARIOS, BILLING_ENFORCE, EPAYCO_PLAN_URL_ANUAL, EPAYCO_PLAN_URL_MENSUAL, EPAYCO_PRIVATE_KEY, PUBLIC_URL, RECIFRAR_AL_ARRANCAR, SURVEY_SCHEDULER, TRUSTED_DEVICE_DAYS)
-from .db import (Booking, IntakeForm, TrustedDevice, ApptReminder, Audit, ConsentRequest, Feedback, Blob, Feed, GoogleLink, MailAccount, Record, SessionLocal, Subscription, SurveyInvite, SurveyOptOut, SurveyResponse,
+from .db import (Booking, Company, CompanyNote, Consultorio, IntakeForm, TrustedDevice, ApptReminder, Audit, ConsentRequest, Feedback, Blob, Feed, GoogleLink, MailAccount, Record, SessionLocal, Subscription, SurveyInvite, SurveyOptOut, SurveyResponse,
                  User, Verification, init_db)
 from .security import (DUMMY_HASH, check_password, decrypt, decrypt_bytes, encrypt, encrypt_bytes,
                        recovery_hash, recovery_new, totp_check, totp_new_secret,
@@ -88,6 +90,8 @@ def get_db():
         yield db
     finally:
         db.close()
+        if db.info.pop("agenda_lock", None):
+            _book_lock.release()
 
 
 def audit(db: Session, user_id: int | None, action: str, detail: str = "", patient_id: str | None = None, ip: str | None = None) -> None:
@@ -103,6 +107,16 @@ def set_session(request: Request, response: Response, user_id: int, exp: int | N
     response.set_cookie(COOKIE, make_token(user_id, exp), httponly=True, samesite="strict", path="/",
                         secure=request.headers.get("x-forwarded-proto") == "https",
                         max_age=SESSION_HOURS * 3600)
+
+
+def _cuenta_activa(db: Session, u: User | None) -> bool:
+    """Cuenta activa y, si es del equipo, con su terapeuta también activo (desactivado o archivado): así no se puede ni abrir sesión."""
+    if not u or not u.active:
+        return False
+    if u.owner_id:
+        owner = db.get(User, u.owner_id)
+        return bool(owner and owner.active)
+    return True
 
 
 def current_user(request: Request, response: Response, db: Session = Depends(get_db)) -> User:
@@ -122,7 +136,30 @@ def current_user(request: Request, response: Response, db: Session = Depends(get
         set_session(request, response, user.id, tok["exp"])
     if user.must_change_password and request.url.path not in PASSWORD_FIRST_OK:
         raise HTTPException(403, "Debes elegir tu propia contraseña antes de continuar")
+    pro = request.headers.get("x-empresa-pro")
+    if pro:
+        user = _actuar_como(db, request, user, pro)
     return user
+
+
+# Rutas donde el administrador de empresa nunca «actúa como» un profesional (son de su propia cuenta).
+NO_ACTUAR = ("/api/auth", "/api/billing", "/api/empresa", "/api/equipo", "/api/admin")
+
+
+def _actuar_como(db: Session, request: Request, admin: User, raw: str) -> User:
+    """El administrador de una empresa trabaja la agenda y las finanzas de uno de sus profesionales: con la cabecera X-Empresa-Pro
+    recibe exactamente lo que recibe el equipo (asistente) de ese profesional, sin nada clínico. Es una copia solo en memoria:
+    no se guarda, y las acciones quedan en la bitácora con el identificador del administrador."""
+    if request.url.path.startswith(NO_ACTUAR):
+        raise HTTPException(400, "Esta función no se usa en nombre de un profesional")
+    t = db.get(User, int(raw)) if raw.isdigit() else None
+    if not admin.company_admin or not admin.company_id or admin.owner_id or not t or t.company_id != admin.company_id \
+            or t.owner_id or t.role != "user" or not t.active or t.id == admin.id or t.company_admin:
+        raise HTTPException(403, "No puede trabajar en nombre de ese profesional")
+    if admin.company_secretary and not (_sec_permisos(admin)["agenda"] or _sec_permisos(admin)["fin"]):
+        raise HTTPException(403, "No tiene permiso para trabajar en nombre de un profesional")
+    return User(id=admin.id, email=admin.email, name=admin.name, role="asistente", owner_id=t.id, active=True, profile=admin.profile,
+                company_id=admin.company_id, company_admin=True)
 
 
 # Mientras la persona no elija su propia contraseña, solo puede usar esto.
@@ -149,6 +186,10 @@ def suscrito(user: User, db: Session) -> bool:
     """Suscripción vigente. Sin BILLING_ENFORCE=1 no se exige, y los administradores siempre pasan."""
     if not BILLING_ENFORCE or user.role == "admin":
         return True
+    if user.company_secretary and user.company_id:  # el apoyo administrativo usa la suscripción del administrador de su empresa
+        adm = db.scalar(select(User).where(User.company_id == user.company_id, User.company_admin.is_(True), User.company_secretary.is_(False), User.owner_id.is_(None)))
+        if adm:
+            return suscrito(adm, db)
     sub = db.get(Subscription, owner_id(user))
     return billing.vigente(sub.paid_until if sub else None, datetime.now(timezone.utc))
 
@@ -197,11 +238,85 @@ def require_admin(request: Request, user: User = Depends(current_user), db: Sess
     return user
 
 
-def user_out(u: User, owner: User | None = None) -> dict:
+SEC_SECCIONES = ("pros", "agenda", "cons", "fin", "stats", "notas")  # secciones de la vista de administrador que se le pueden dejar o quitar al secretario
+SEC_DEFECTO = {"pros": True, "agenda": True, "cons": True, "fin": True, "stats": True, "notas": False}  # las notas del administrador son privadas: se activan a propósito
+
+
+def _sec_permisos(u: User) -> dict:
+    """Secciones que el administrador le dejó al secretario (sí/no; lo que no fijó sigue el valor por defecto)."""
+    try:
+        raw = json.loads(u.permisos) if u.permisos else {}
+    except ValueError:
+        raw = {}
+    return {k: raw[k] if isinstance(raw.get(k), bool) else SEC_DEFECTO[k] for k in SEC_SECCIONES}
+
+
+PERMISOS_EMPRESA = ("citas", "pagos")  # citas: crear citas nuevas; pagos: gestionar cobros y pagos
+
+
+def _permisos_propios(pro: User | None) -> dict:
+    """Lo que el administrador fijó para este profesional (solo las claves con sí/no); el resto sigue el general."""
+    try:
+        raw = json.loads(pro.permisos) if pro is not None and pro.permisos else {}
+    except ValueError:
+        raw = {}
+    return {k: raw[k] for k in PERMISOS_EMPRESA if isinstance(raw.get(k), bool)}
+
+
+COLOR_RE = re.compile(r"^#[0-9A-Fa-f]{6}$")
+
+
+def _color_pro(pro: User | None) -> str | None:
+    """Color con el que el administrador de la empresa ve a este profesional en la agenda (vacío = automático)."""
+    try:
+        c = json.loads(pro.permisos).get("color") if pro is not None and pro.permisos else None
+    except (ValueError, AttributeError):
+        c = None
+    return c if isinstance(c, str) and COLOR_RE.match(c) else None
+
+
+def _permisos_empresa(company_id: int | None, pro: User | None = None) -> dict:
+    """Lo que el administrador de la empresa deja hacer a sus profesionales; sin configurar, todo."""
+    p = {k: True for k in PERMISOS_EMPRESA}
+    if not company_id:
+        return p
+    with SessionLocal() as db:
+        c = db.get(Company, company_id)
+        try:
+            raw = json.loads(c.permisos) if c and c.permisos else {}
+        except ValueError:
+            raw = {}
+    return {**{k: raw.get(k) is not False for k in PERMISOS_EMPRESA}, **_permisos_propios(pro), "comprobante": raw.get("comprobante") is True}  # comprobante: se exige solo si se activó
+
+
+def _hay_consultorios(company_id: int) -> bool:
+    with SessionLocal() as db:
+        return db.scalar(select(Consultorio.id).where(Consultorio.company_id == company_id, Consultorio.activo.is_(True)).limit(1)) is not None
+
+
+def user_out(u: User, owner: User | None = None, logo: bool = False) -> dict:
     out = {"id": u.id, "email": u.email, "name": u.name, "role": u.role, "active": u.active, "totp": bool(u.totp_enabled),
            "cambiarClave": bool(u.must_change_password),
            "privacidadOk": (not PRIVACY_REQUIRED) or u.privacy_version == PRIVACY_VERSION, "privacidadVersion": PRIVACY_VERSION,
            "privacidadAntes": bool(u.privacy_version)}
+    if u.company_id:
+        out["companyId"], out["companyAdmin"] = u.company_id, bool(u.company_admin)
+        with SessionLocal() as _db:
+            _c = _db.get(Company, u.company_id)
+            out["companyName"] = _c.name if _c else ""
+        if u.company_secretary:
+            out["companySecretary"], out["secPermisos"] = True, _sec_permisos(u)
+        if not u.company_admin:
+            out["permisos"] = {k: v for k, v in _permisos_empresa(u.company_id, u).items() if k in PERMISOS_EMPRESA}
+    cid_logo = u.company_id or (owner.company_id if u.owner_id and owner is not None else None)
+    if logo and cid_logo:  # logo de la empresa: reemplaza el del perfil en los documentos de todos sus terapeutas y su equipo
+        with SessionLocal() as _db:
+            _c = _db.get(Company, cid_logo)
+            if _c and _c.logo:
+                out["companyLogo"] = _c.logo
+    cid_cons = (owner.company_id if u.owner_id and owner is not None else u.company_id) if not u.company_admin else None
+    if cid_cons:
+        out["consultorios"] = _hay_consultorios(cid_cons)
     if u.owner_id:
         out["ownerId"] = u.owner_id
         out["tieneFirma"] = bool(u.profile and decrypt(u.profile).get("firma"))
@@ -305,7 +420,7 @@ def login(body: LoginIn, request: Request, response: Response, db: Session = Dep
         raise HTTPException(429, "Demasiados intentos. Espera unos minutos e intenta de nuevo.")
     user = db.scalar(select(User).where(User.email == email))
     ok = check_password(user.password_hash if user else DUMMY_HASH, body.password)
-    if not (user and user.active and ok):
+    if not (_cuenta_activa(db, user) and ok):
         _register_fail(email, ip)
         audit(db, user.id if user else None, "login.fail", email, ip=client_ip(request))
         raise HTTPException(401, "Correo o contraseña incorrectos")
@@ -451,7 +566,7 @@ def login_2fa(body: TwoFAIn, request: Request, response: Response, db: Session =
     except Exception:
         raise HTTPException(401, "El ingreso venció. Escribe de nuevo tu correo y contraseña.")
     ip = request.client.host if request.client else "?"
-    if not user or not user.active or not user.totp_enabled:
+    if not _cuenta_activa(db, user) or not user.totp_enabled:
         raise HTTPException(401, "El ingreso venció. Escribe de nuevo tu correo y contraseña.")
     if _locked(user.email, ip):
         raise HTTPException(429, "Demasiados intentos. Espera unos minutos e intenta de nuevo.")
@@ -480,7 +595,7 @@ def health(db: Session = Depends(get_db)):
 
 @app.get("/api/auth/me")
 def me(user: User = Depends(current_user), db: Session = Depends(get_db)):
-    return {**user_out(user, db.get(User, user.owner_id) if user.owner_id else None), "idle_minutes": IDLE_MINUTES,
+    return {**user_out(user, db.get(User, user.owner_id) if user.owner_id else None, logo=True), "idle_minutes": IDLE_MINUTES,
             "comentarios": BETA_COMENTARIOS}
 
 
@@ -1041,7 +1156,7 @@ def _avisar_cita(db: Session, oid: int, ap: dict, bg: BackgroundTasks, who: str,
         return
     profrow = db.get(Record, (oid, "profile"))
     prof = decrypt(profrow.payload) if profrow else {}
-    bg.add_task(booking.notify, prof, acc, start, int(ap.get("duracion") or 50), ap.get("modalidad") or "", who, correo, "", nuevo, "", "", str(ap.get("enlace") or ""))
+    bg.add_task(booking.notify, _lugar(db, prof, ap.get("consultorioId")), acc, start, int(ap.get("duracion") or 50), ap.get("modalidad") or "", who, correo, "", nuevo, "", "", str(ap.get("enlace") or ""))
 
 
 MAX_INVITADOS = 10
@@ -1125,6 +1240,55 @@ def _check_cruce(db: Session, oid: int, rid: str, old: dict | None, payload: dic
         if o < fin and fa > ini:
             h = lambda d: d.astimezone(booking.TZ).strftime("%H:%M")
             raise HTTPException(409, f"Ya tienes otra cita en ese horario ({h(o)} a {h(fa)}). Elige otra hora.")
+
+
+def _motivo_cancelacion(user: User, old: dict | None, ap: dict) -> None:
+    """Cuando el administrador de la empresa cancela una cita debe escribir el motivo (se guarda en la cita y se le avisa al terapeuta, nunca al consultante)."""
+    adm = user.role == "asistente" and bool(user.company_admin)
+    cancela = bool(old) and old.get("estado") != "Cancelada" and ap.get("estado") == "Cancelada"
+    mot = str(ap.get("motivoCancelacion") or "").strip()[:300] if adm and cancela else str((old or {}).get("motivoCancelacion") or "")
+    if adm and cancela and not mot and not ap.get("evento"):
+        raise HTTPException(400, "Escribe el motivo de la cancelación")
+    if mot:
+        ap["motivoCancelacion"] = mot
+    else:
+        ap.pop("motivoCancelacion", None)
+
+
+def _avisar_cancelacion(db: Session, oid: int, old: dict | None, ap: dict, bg: BackgroundTasks, admin: str = "") -> None:
+    """El terapeuta, su equipo o el administrador cancelaron una cita futura, o le cambiaron la fecha u hora: se avisa al consultante por correo (si tiene correo y hay correo de envío).
+    Si cancela el administrador de la empresa, el terapeuta recibe además el aviso con el motivo."""
+    if not old or ap.get("evento") or ap.get("reunion"):
+        return
+    start = reminders.parse(ap.get("startAt"))
+    if not start or start < datetime.now(timezone.utc):
+        return
+    cancela = old.get("estado") != "Cancelada" and ap.get("estado") == "Cancelada"
+    antes = reminders.parse(old.get("startAt"))
+    muda = ap.get("estado") == "Programada" and old.get("estado") == "Programada" and antes and antes != start
+    if not cancela and not muda:
+        return
+    acc = survey.account(db, oid)
+    if not survey.smtp_enabled(acc):
+        return
+    profrow = db.get(Record, (oid, "profile"))
+    prof = decrypt(profrow.payload) if profrow else {}
+    pat = {}
+    if ap.get("patientId") and ID_RE.match(str(ap["patientId"])):
+        prow = db.get(Record, (oid, ap["patientId"]))
+        pat = decrypt(prow.payload) if prow and prow.kind == "patient" else {}
+    elif isinstance(ap.get("nuevo"), dict):
+        pat = ap["nuevo"]
+    who = " ".join(x for x in (pat.get("nombres"), pat.get("apellidos")) if x).strip()
+    dur, mod = int(ap.get("duracion") or 50), ap.get("modalidad") or ""
+    correo = str(pat.get("correo") or "").strip().lower()
+    if EMAIL_RE.match(correo):
+        bg.add_task(booking.notify_cancel, prof, acc, start, dur, mod, who, correo, None if cancela else antes, bool(admin))
+    if admin and cancela:
+        owner = db.get(User, oid)
+        pro_mail = str(prof.get("correo") or (owner.email if owner else "") or "").strip().lower()
+        if EMAIL_RE.match(pro_mail):
+            bg.add_task(booking.notify_cancel_pro, prof, acc, start, dur, mod, who, str(ap.get("motivoCancelacion") or ""), admin, pro_mail)
 
 
 def _avisar_cita_nueva(db: Session, oid: int, ap: dict, bg: BackgroundTasks) -> None:
@@ -1245,6 +1409,18 @@ def put_record(rid: str, request: Request, bg: BackgroundTasks, payload: dict = 
         raise HTTPException(400, "Elige un consultante, escribe los datos de uno nuevo o el título del evento")
     ensure_acceso(user, db, True)
     ensure_writable(user, db, kind == "patient" and db.get(Record, (oid, rid)) is None)
+    perm = _perm_efectivo(db, user)  # None: sin límites (administrador de la empresa, también en nombre de otro; cuentas sin empresa)
+    if perm is not None:
+        if kind in ("pago", "cobro") and not perm["pagos"]:
+            raise HTTPException(403, "El administrador de tu empresa no habilitó la gestión de cobros y pagos")
+        if kind == "appt" and not perm["citas"]:
+            prev = db.get(Record, (oid, rid))
+            if prev is None:
+                raise HTTPException(403, "El administrador de tu empresa no habilitó la creación de citas")
+            antes = decrypt(prev.payload)  # sin el permiso solo se marca el estado (Atendida, No asistió…): ni mover ni cancelar
+            if any(payload.get(k) != antes.get(k) for k in ("startAt", "duracion", "modalidad", "consultorioId", "patientId")) \
+                    or (payload.get("estado") == "Cancelada") != (antes.get("estado") == "Cancelada"):
+                raise HTTPException(403, "El administrador de tu empresa no habilitó la gestión de citas: solo puedes marcar si se atendió")
     payload.pop("demo", None)  # la marca de «datos de ejemplo» solo la pone el servidor (POST /api/demo)
     if team and kind not in ("patient", "appt", "pago", "cobro"):
         raise HTTPException(403, "Tu cuenta de equipo solo puede modificar datos de consultantes, la agenda y los pagos")
@@ -1254,7 +1430,13 @@ def put_record(rid: str, request: Request, bg: BackgroundTasks, payload: dict = 
     envios: list[tuple[str, list[str]]] = []
     if kind == "appt":
         envios = _preparar_invitaciones(old, payload, db, oid)
+        if (payload.get("consultorioId") or not payload.get("evento")) and not db.info.get("agenda_lock"):  # revisar el cruce y guardar van juntos: dos guardados (o una reserva) a la vez no ocupan el mismo consultorio; get_db lo suelta al cerrar
+            if not _book_lock.acquire(timeout=15):
+                raise HTTPException(503, "El sistema está ocupado. Intenta de nuevo en unos segundos.")
+            db.info["agenda_lock"] = True
+        _check_consultorio(db, oid, rid, old, payload)
         _check_cruce(db, oid, rid, old, payload)
+        _motivo_cancelacion(user, old, payload)
     if kind == "patient":
         payload.pop("consentAgenda", None)  # dato calculado para el equipo; no se guarda
         if team:  # el equipo nunca ve ni toca lo que se habla en sesión (ni la retención especial): se conserva lo que ya había
@@ -1312,6 +1494,8 @@ def put_record(rid: str, request: Request, bg: BackgroundTasks, payload: dict = 
         _enviar_invitaciones(db, oid, payload, envios, bg)
         if not old:
             _avisar_cita_nueva(db, oid, payload, bg)
+        elif not restoring:
+            _avisar_cancelacion(db, oid, old, payload, bg, user.name if user.role == "asistente" and user.company_admin else "")
     elif kind == "patient" and old and (old.get("nombres"), old.get("apellidos")) != (payload.get("nombres"), payload.get("apellidos")):
         bg.add_task(lambda: gcal.sync(oid, gcal.patient_appts(oid, rid)))
     if kind == "patient":  # devuelve lo que calculó el servidor (fecha de apertura y registro de cambios)
@@ -1335,6 +1519,9 @@ def delete_record(rid: str, bg: BackgroundTasks, user: User = Depends(current_us
     ensure_acceso(user, db, True)
     oid = owner_id(user)
     row = db.get(Record, (oid, rid))
+    perm = _perm_efectivo(db, user)
+    if row and perm is not None and row.kind == "appt" and not perm["citas"]:
+        raise HTTPException(403, "El administrador de tu empresa no habilitó la gestión de citas")
     if row and user.role == "asistente" and row.kind != "appt":
         raise HTTPException(403, "Tu cuenta de equipo solo puede quitar citas")
     if row and row.kind in ("pago", "cobro"):
@@ -1547,6 +1734,8 @@ def get_blob(bid: str, user: User = Depends(pro_user), db: Session = Depends(get
     if not b:
         raise HTTPException(404, "No encontrado")
     frow = db.get(Record, (owner_id(user), bid))
+    if frow is None and user.company_id and not user.company_admin and not _permisos_empresa(user.company_id, user)["pagos"]:
+        raise HTTPException(403, "El administrador de tu empresa no habilitó la gestión de cobros y pagos")  # sin registro «file» es un comprobante de pago de una reserva
     audit(db, user.id, "blob.get", bid, patient_id=frow.patient_id if frow else None)
     return Response(compress.unpack(decrypt_bytes(b.data)), media_type=b.mime,
                     headers={"Content-Disposition": "attachment", "X-Content-Type-Options": "nosniff"})
@@ -1598,19 +1787,29 @@ class GDetail(BaseModel):
     detail: str = "iniciales"
 
 
-def _gstatus(link: GoogleLink | None) -> dict:
+def _gstatus(link: GoogleLink | None, user: User | None = None) -> dict:
+    admin = bool(user and user.company_admin and user.company_id)
+    with SessionLocal() as _db:
+        nombre = gcal.nombre_calendario_empresa(_db, user.company_id) if admin else gcal.CAL_NAME
     return {"enabled": gcal.enabled(), "connected": bool(link), "detail": link.detail if link else "iniciales",
             "last_sync": link.last_sync.isoformat() if link and link.last_sync else None,
-            "last_error": link.last_error if link else "", "calendar": gcal.CAL_NAME}
+            "last_error": link.last_error if link else "", "calendar": nombre, "empresa": admin}
+
+
+def google_user(user: User = Depends(pro_user)) -> User:
+    """El calendario de la empresa lo conecta el administrador; el apoyo administrativo no."""
+    if user.company_secretary:
+        raise HTTPException(403, "Solo el administrador de la empresa conecta Google Calendar")
+    return user
 
 
 @app.get("/api/google/status")
-def google_status(user: User = Depends(pro_user), db: Session = Depends(get_db)):
-    return _gstatus(db.get(GoogleLink, user.id))
+def google_status(user: User = Depends(google_user), db: Session = Depends(get_db)):
+    return _gstatus(db.get(GoogleLink, user.id), user)
 
 
 @app.post("/api/google/connect")
-def google_connect(body: GDetail, user: User = Depends(pro_user)):
+def google_connect(body: GDetail, user: User = Depends(google_user)):
     if not gcal.enabled():
         raise HTTPException(400, "La conexión con Google no está configurada en el servidor")
     if body.detail not in FEED_DETAILS:
@@ -1639,7 +1838,7 @@ def _google_login(request: Request, code: str, error: str, db: Session) -> Redir
     if not info.get("email_verified") or not EMAIL_RE.match(email):
         return RedirectResponse("/app?gl=error", status_code=303)
     user = db.scalar(select(User).where(User.email == email))
-    if user and not user.active:
+    if user and not _cuenta_activa(db, user):
         return RedirectResponse("/app?gl=inactive", status_code=303)
     if not user:
         if _signup_limit(client_ip(request) or "?"):
@@ -1711,7 +1910,10 @@ def google_callback(request: Request, bg: BackgroundTasks, state: str = "", code
         return RedirectResponse("/app?google=cancel" if error == "access_denied" else "/app?google=error", status_code=303)
     try:
         tok = gcal.exchange(code)
-        cal = gcal.create_calendar(tok["access_token"])
+        if user.company_admin and user.company_id and not user.company_secretary:
+            cal = gcal.create_calendar(tok["access_token"], gcal.nombre_calendario_empresa(db, user.company_id), "Citas de los terapeutas de la empresa, creadas desde Alter-Karute. No contiene información de las sesiones.")
+        else:
+            cal = gcal.create_calendar(tok["access_token"])
     except gcal.GoogleError:
         return RedirectResponse("/app?google=error", status_code=303)
     link = db.get(GoogleLink, uid)
@@ -1736,7 +1938,7 @@ def google_detail(body: GDetail, bg: BackgroundTasks, user: User = Depends(pro_u
     link.detail = body.detail
     db.commit()
     bg.add_task(gcal.sync, user.id, None, True)
-    return _gstatus(link)
+    return _gstatus(link, user)
 
 
 @app.post("/api/google/sync")
@@ -1745,7 +1947,7 @@ def google_sync(user: User = Depends(pro_user), db: Session = Depends(get_db)):
         raise HTTPException(404, "No hay conexión con Google")
     n = gcal.sync(user.id, None, True)
     db.expire_all()
-    return {**_gstatus(db.get(GoogleLink, user.id)), "synced": n}
+    return {**_gstatus(db.get(GoogleLink, user.id), user), "synced": n}
 
 
 @app.delete("/api/google", status_code=204)
@@ -2249,6 +2451,1124 @@ def team_profile_put(body: TeamProfileIn, user: User = Depends(current_user), db
 
 
 # ---------- Recordatorios de citas ----------
+class _Limite:
+    """Límite de intentos por clave en memoria (un solo proceso): `take` registra el intento solo si ninguna clave superó su límite y devuelve la clave que lo impidió."""
+    _hits: dict[str, list[float]] = {}
+    _lock = threading.Lock()
+
+    @classmethod
+    def take(cls, db, bucket: str, checks: list[tuple[str, int]], window: int = 900) -> str | None:
+        now = time.time()
+        with cls._lock:
+            vivos = {k: [t for t in v if now - t < window] for k, v in cls._hits.items() if k.startswith(bucket + "|")}
+            for key, lim in checks:
+                if len(vivos.get(f"{bucket}|{key}", [])) >= lim:
+                    return key
+            for key, _ in checks:
+                cls._hits.setdefault(f"{bucket}|{key}", []).append(now)
+                cls._hits[f"{bucket}|{key}"] = [t for t in cls._hits[f"{bucket}|{key}"] if now - t < window]
+        return None
+
+
+ratelimit = _Limite
+
+
+def _close_sessions(db: Session, user: User) -> None:
+    """Una cuenta desactivada deja de servir en la siguiente petición (current_user revisa `active`)."""
+
+
+# ---------- Empresas: un administrador y terapeutas bajo él ----------
+class EmpresaIn(BaseModel):
+    name: str
+    email: str  # correo del administrador de la empresa (cuenta nueva)
+    adminName: str
+    password: str
+
+
+SEC_RUTAS = {"pros": "pros", "profesionales": "pros", "pacientes": "pros", "reservas": "pros", "agenda": "agenda", "consultorios": "cons", "finanzas": "fin",
+             "estadisticas": "stats", "notas": "notas"}  # /api/empresa/<tramo> → sección del secretario; permisos, logo y secretarios son solo del administrador
+
+
+def empresa_admin(request: Request, user: User = Depends(pro_user)) -> User:
+    if not user.company_id or not user.company_admin:
+        raise HTTPException(403, "Solo para el administrador de la empresa")
+    if user.company_secretary:
+        partes = request.url.path.split("/")
+        tramo = partes[3] if len(partes) > 3 else ""
+        if tramo not in SEC_RUTAS or not _sec_permisos(user)[SEC_RUTAS[tramo]]:
+            raise HTTPException(403, "No tienes permiso para esta sección")
+    return user
+
+
+def empresa_dueno(user: User = Depends(empresa_admin)) -> User:
+    """Solo el administrador de la empresa (no el apoyo administrativo)."""
+    if user.company_secretary:
+        raise HTTPException(403, "Solo para el administrador de la empresa")
+    return user
+
+
+def _profesionales(db: Session, user: User, todos: bool = False) -> list[User]:
+    """Terapeutas de la empresa. Los archivados quedan fuera (agenda, reservas, consultantes, cupo del plan de prueba) salvo `todos=True`
+    (lista de archivados y cifras históricas: finanzas y estadísticas)."""
+    q = select(User).where(User.company_id == user.company_id, User.owner_id.is_(None), User.role == "user", User.company_admin.is_(False))  # el administrador de la empresa no es un profesional
+    if not todos:
+        q = q.where(User.company_archived.is_(False))
+    return list(db.scalars(q.order_by(User.name)))
+
+
+def _secretarios(db: Session, user: User) -> list[User]:
+    return list(db.scalars(select(User).where(User.company_id == user.company_id, User.company_secretary.is_(True), User.owner_id.is_(None)).order_by(User.name)))
+
+
+def _nombre_paciente(p: dict) -> str:
+    return " ".join(x for x in (p.get("nombres"), p.get("apellidos")) if x).strip()
+
+
+@app.get("/api/empresa")
+def empresa_get(user: User = Depends(pro_user), db: Session = Depends(get_db)):
+    c = db.get(Company, user.company_id) if user.company_id else None
+    if not c:
+        return {"empresa": None}
+    out = {"id": c.id, "name": c.name, "admin": bool(user.company_admin)}
+    if user.company_admin:
+        out["logo"] = c.logo or ""
+        out["eslogan"] = c.slogan or ""
+        out["textoCorreo"], out["textoReservas"] = c.texto_correo or "", c.texto_reservas or ""
+        out["colorReservas"] = c.color_reservas or ""
+        pros = _profesionales(db, user, todos=True)
+        ids = [u.id for u in pros]
+        subs = {x.user_id: x for x in db.scalars(select(Subscription).where(Subscription.user_id.in_(ids)))}
+        ids_ing = ids + [x.id for x in _secretarios(db, user)]
+        ingresos = dict(db.execute(select(Audit.user_id, func.max(Audit.at)).where(Audit.action == "login.ok", Audit.user_id.in_(ids_ing)).group_by(Audit.user_id)).all())
+        equipo: dict[int, list] = {}
+        for t in db.scalars(select(User).where(User.owner_id.in_(ids)).order_by(User.name)):
+            equipo.setdefault(t.owner_id, []).append(user_out(t))
+        now = datetime.now(timezone.utc)
+        lista = []
+        for u in pros:  # lo mismo que ve el administrador de la aplicación en «Usuarios», solo de su empresa
+            o = {**user_out(u), "admin": bool(u.company_admin), "equipo": equipo.get(u.id, [])}
+            o["archivado"] = bool(u.company_archived)
+            o["permisosPro"] = {k: _permisos_propios(u).get(k) for k in PERMISOS_EMPRESA}  # None = sigue el general
+            o["color"] = _color_pro(u)
+            o["ultimoIngreso"] = _iso(billing.aware(ingresos[u.id])) if ingresos.get(u.id) else None
+            sub = subs.get(u.id)
+            hasta = billing.aware(sub.paid_until) if sub and sub.paid_until else None
+            o["suscripcion"] = {"plan": sub.plan if sub else "", "hasta": _iso(hasta), "activa": billing.vigente(hasta, now)}
+            lista.append(o)
+        out["profesionales"] = lista
+        out["permisos"] = _permisos_empresa(c.id)
+        out["prueba"] = {"activa": not suscrito(user, db), "max": PRUEBA_EMPRESA_PROS}
+        if not user.company_secretary:
+            out["secretarios"] = [{"id": x.id, "email": x.email, "name": x.name, "active": x.active, "permisos": _sec_permisos(x),
+                                   "pendiente": bool(x.must_change_password), "ultimoIngreso": _iso(billing.aware(ingresos[x.id])) if ingresos.get(x.id) else None}
+                                  for x in _secretarios(db, user)]
+    return {"empresa": out}
+
+
+@app.post("/api/admin/empresas", status_code=201)
+def empresa_create(body: EmpresaIn, user: User = Depends(require_admin), db: Session = Depends(get_db)):
+    """Las empresas solo las crea un administrador de la aplicación: crea la empresa y la cuenta de su administrador."""
+    name, email = body.name.strip()[:200], body.email.strip().lower()
+    if not name or not body.adminName.strip():
+        raise HTTPException(400, "Escribe el nombre de la empresa y el de su administrador")
+    if not EMAIL_RE.match(email):
+        raise HTTPException(400, "Correo no válido")
+    if len(body.password) < MIN_PASSWORD:
+        raise HTTPException(400, f"La contraseña debe tener al menos {MIN_PASSWORD} caracteres")
+    if db.scalar(select(User).where(User.email == email)):
+        raise HTTPException(409, "Ya existe un usuario con ese correo")
+    c = Company(name=name)
+    db.add(c)
+    db.flush()
+    u = User(email=email, name=body.adminName.strip()[:200], password_hash=hash_password(body.password), role="user",
+             company_id=c.id, company_admin=True, must_change_password=True)
+    db.add(u)
+    db.commit()
+    audit(db, user.id, "empresa.crear", f"id={c.id} · {email}")
+    return {"id": c.id, "name": c.name, "admin": user_out(u)}
+
+
+@app.get("/api/admin/empresas")
+def empresa_list(user: User = Depends(require_admin), db: Session = Depends(get_db)):
+    out = []
+    for c in db.scalars(select(Company).order_by(Company.name)):
+        us = list(db.scalars(select(User).where(User.company_id == c.id, User.owner_id.is_(None), User.company_secretary.is_(False))))
+        adm = next((u for u in us if u.company_admin), None)
+        out.append({"id": c.id, "name": c.name, "admin": user_out(adm) if adm else None, "profesionales": len(us)})
+    return out
+
+
+PRUEBA_EMPRESA_PROS = 2  # plan de prueba de empresas: máximo de profesionales, que no se pueden modificar hasta suscribirse
+
+
+class EmpresaProIn(BaseModel):
+    email: str
+    name: str
+
+
+def _send_invitacion(to: str, name: str, empresa: str, url: str, acc: dict) -> None:
+    try:
+        survey.send_invitacion_empresa(to, name, empresa, url, acc)
+    except Exception as e:
+        logging.getLogger("uvicorn.error").warning("No se pudo enviar la invitación de empresa (%s)", type(e).__name__)
+
+
+@app.post("/api/empresa/profesionales", status_code=201)
+def empresa_pro_create(body: EmpresaProIn, bg: BackgroundTasks, user: User = Depends(empresa_admin), db: Session = Depends(get_db)):
+    email = body.email.strip().lower()
+    if not EMAIL_RE.match(email):
+        raise HTTPException(400, "Correo no válido")
+    if not body.name.strip():
+        raise HTTPException(400, "Escribe el nombre")
+    if not suscrito(user, db) and len(_profesionales(db, user)) >= PRUEBA_EMPRESA_PROS:
+        raise HTTPException(402, f"El plan de prueba de empresas permite crear {PRUEBA_EMPRESA_PROS} terapeutas. Suscríbete para agregar más.")
+    if ratelimit.take(db, "emp_crear", [(f"u{user.id}", 20)], 3600):  # el 409 de abajo permite saber si un correo ya existe: se limita para que no sirva de sondeo
+        raise HTTPException(429, "Creaste varios terapeutas en poco tiempo. Espera un rato e intenta de nuevo.")
+    if db.scalar(select(User).where(User.email == email)):
+        raise HTTPException(409, "Ya existe un usuario con ese correo")
+    u = User(email=email, name=body.name.strip()[:200], password_hash=hash_password(secrets.token_urlsafe(24)), role="user",  # sin contraseña conocida: la elige él con el enlace del correo
+             company_id=user.company_id, must_change_password=True)
+    db.add(u)
+    db.commit()
+    audit(db, user.id, "empresa.profesional", email)
+    out = user_out(u)
+    acc = survey.server_account()
+    out["correoEnviado"] = False
+    if survey.smtp_enabled(acc):
+        emp = db.get(Company, user.company_id)
+        tok = jwt.encode({"p": "pwreset", "sub": str(u.id), "f": _pw_fp(u), "exp": int(time.time()) + 7 * 86400}, SESSION_SECRET, algorithm="HS256")
+        bg.add_task(_send_invitacion, u.email, u.name, emp.name if emp else "su empresa", f"{acc.get('base') or PUBLIC_URL}/app?recuperar={tok}", acc)
+        out["correoEnviado"] = True
+    return out
+
+
+MAX_SECRETARIOS = 1
+
+
+class SecretarioIn(BaseModel):
+    email: str
+    name: str
+
+
+class SecretarioPatch(BaseModel):
+    name: str | None = None
+    active: bool | None = None
+    permisos: dict[str, bool] | None = None  # sección → sí/no (SEC_SECCIONES)
+
+
+def _secretario_de(db: Session, user: User, uid: int) -> User:
+    u = db.get(User, uid)
+    if not u or not u.company_secretary or u.company_id != user.company_id:
+        raise HTTPException(404, "No encontrado")
+    return u
+
+
+def _invitar(bg: BackgroundTasks, db: Session, admin: User, u: User, dias: int = 7) -> bool:
+    acc = survey.server_account()
+    if not survey.smtp_enabled(acc):
+        return False
+    emp = db.get(Company, admin.company_id)
+    tok = jwt.encode({"p": "pwreset", "sub": str(u.id), "f": _pw_fp(u), "exp": int(time.time()) + dias * 86400}, SESSION_SECRET, algorithm="HS256")
+    bg.add_task(_send_invitacion, u.email, u.name, emp.name if emp else "su empresa", f"{acc.get('base') or PUBLIC_URL}/app?recuperar={tok}", acc)
+    return True
+
+
+@app.post("/api/empresa/secretarios", status_code=201)
+def empresa_sec_create(body: SecretarioIn, bg: BackgroundTasks, user: User = Depends(empresa_dueno), db: Session = Depends(get_db)):
+    """El administrador crea una persona de apoyo administrativo: ve la vista de administrador de la empresa, solo en las secciones que le deje. Entra con el enlace del correo."""
+    email = body.email.strip().lower()
+    if not EMAIL_RE.match(email):
+        raise HTTPException(400, "Correo no válido")
+    if not body.name.strip():
+        raise HTTPException(400, "Escribe el nombre")
+    if len(_secretarios(db, user)) >= MAX_SECRETARIOS:
+        raise HTTPException(409, "La empresa solo puede tener una persona de apoyo administrativo. Usa la que ya tiene o desactívala.")
+    if ratelimit.take(db, "emp_crear", [(f"u{user.id}", 20)], 3600):
+        raise HTTPException(429, "Creaste varias cuentas en poco tiempo. Espera un rato e intenta de nuevo.")
+    if db.scalar(select(User).where(User.email == email)):
+        raise HTTPException(409, "Ya existe un usuario con ese correo")
+    u = User(email=email, name=body.name.strip()[:200], password_hash=hash_password(secrets.token_urlsafe(24)), role="user",
+             company_id=user.company_id, company_admin=True, company_secretary=True, must_change_password=True)
+    db.add(u)
+    db.commit()
+    audit(db, user.id, "empresa.secretario", email)
+    return {**user_out(u), "permisos": _sec_permisos(u), "correoEnviado": _invitar(bg, db, user, u)}
+
+
+@app.patch("/api/empresa/secretarios/{uid}")
+def empresa_sec_patch(uid: int, body: SecretarioPatch, user: User = Depends(empresa_dueno), db: Session = Depends(get_db)):
+    u = _secretario_de(db, user, uid)
+    if body.name is not None and body.name.strip():
+        u.name = body.name.strip()[:200]
+    if body.permisos is not None:
+        actual = _sec_permisos(u)
+        for k, v in body.permisos.items():
+            if k in SEC_SECCIONES:
+                actual[k] = bool(v)
+        u.permisos = json.dumps(actual)
+    if body.active is not None:
+        u.active = body.active
+        if not body.active:
+            _close_sessions(db, u)
+    db.commit()
+    audit(db, user.id, "empresa.secretario.edit", f"id={uid}")
+    return {**user_out(u), "permisos": _sec_permisos(u)}
+
+
+@app.post("/api/empresa/secretarios/{uid}/invitar")
+def empresa_sec_invitar(uid: int, bg: BackgroundTasks, user: User = Depends(empresa_dueno), db: Session = Depends(get_db)):
+    """Reenvía el correo para que el apoyo administrativo elija su contraseña (también sirve si la olvidaste)."""
+    u = _secretario_de(db, user, uid)
+    if not u.active:
+        raise HTTPException(409, "La persona de apoyo administrativo está desactivada: actívala antes de enviarle el correo.")
+    if ratelimit.take(db, "emp_reset", [(f"u{user.id}", 20), (f"p{u.id}", 3)], 3600):
+        raise HTTPException(429, "Ya se le enviaron varios correos. Espera un rato e intenta de nuevo.")
+    if not _invitar(bg, db, user, u, dias=1):
+        raise HTTPException(503, "El envío de correos no está disponible por ahora.")
+    audit(db, user.id, "empresa.secretario.invitar", f"id={uid}")
+    return {"ok": True}
+
+
+class PermisosIn(BaseModel):
+    citas: bool
+    pagos: bool
+    comprobante: bool = False  # exigir comprobante de pago para agendar por los enlaces de reservas
+
+
+@app.put("/api/empresa/permisos")
+def empresa_permisos(body: PermisosIn, user: User = Depends(empresa_dueno), db: Session = Depends(get_db)):
+    c = db.get(Company, user.company_id)
+    c.permisos = json.dumps({"citas": body.citas, "pagos": body.pagos, "comprobante": body.comprobante})
+    db.commit()
+    audit(db, user.id, "empresa.permisos", c.permisos)
+    return _permisos_empresa(c.id)
+
+
+class EmpresaLogoIn(BaseModel):
+    logo: str = Field(default="", max_length=400_000)  # data URL PNG/JPEG/WEBP; vacío = quitar
+
+
+class EmpresaEsloganIn(BaseModel):
+    eslogan: str = Field(default="", max_length=160)
+
+
+@app.put("/api/empresa/eslogan")
+def empresa_eslogan(body: EmpresaEsloganIn, user: User = Depends(empresa_dueno), db: Session = Depends(get_db)):
+    """Eslogan de la empresa: sale junto al logo en las reservas y en los correos que envían sus terapeutas."""
+    c = db.get(Company, user.company_id)
+    c.slogan = " ".join(body.eslogan.split()) or None
+    db.commit()
+    audit(db, user.id, "empresa.eslogan", "puesto" if c.slogan else "quitado")
+    return {"eslogan": c.slogan or ""}
+
+
+class EmpresaColorIn(BaseModel):
+    color: str = Field(default="", max_length=7)
+
+
+@app.put("/api/empresa/color")
+def empresa_color(body: EmpresaColorIn, user: User = Depends(empresa_dueno), db: Session = Depends(get_db)):
+    """Color de fondo de la página pública de reservas de la empresa (#rrggbb; vacío = el de Alter-Alter-Karute)."""
+    col = body.color.strip()
+    if col and not COLOR_RE.match(col):
+        raise HTTPException(400, "El color debe ser como #E85D75.")
+    c = db.get(Company, user.company_id)
+    c.color_reservas = col.lower() or None
+    db.commit()
+    audit(db, user.id, "empresa.color", "puesto" if col else "quitado")
+    return {"color": c.color_reservas or ""}
+
+
+class EmpresaTextosIn(BaseModel):
+    correo: str | None = Field(default=None, max_length=600)
+    reservas: str | None = Field(default=None, max_length=600)
+
+
+@app.put("/api/empresa/textos")
+def empresa_textos(body: EmpresaTextosIn, user: User = Depends(empresa_dueno), db: Session = Depends(get_db)):
+    """Texto propio de la empresa, por separado: uno se agrega a los correos de sus terapeutas y otro se muestra en su enlace de reservas."""
+    c = db.get(Company, user.company_id)
+    if body.correo is not None:
+        c.texto_correo = body.correo.strip() or None
+    if body.reservas is not None:
+        c.texto_reservas = body.reservas.strip() or None
+    db.commit()
+    audit(db, user.id, "empresa.textos", "cambió")
+    return {"correo": c.texto_correo or "", "reservas": c.texto_reservas or ""}
+
+
+@lru_cache(maxsize=64)
+def _logo_publico(cid: int, huella: str, datos: str) -> bytes:
+    """Versión pequeña del logo (máx. 360×120, PNG) para correos y páginas públicas."""
+    raw = base64.b64decode(datos.split(",", 1)[1])
+    try:
+        from PIL import Image
+    except ImportError:  # sin Pillow se entrega el logo tal cual
+        return raw
+    im = Image.open(io.BytesIO(raw))
+    im.thumbnail((360, 120))
+    out = io.BytesIO()
+    im.convert("RGBA").save(out, "PNG", optimize=True)
+    return out.getvalue()
+
+
+@app.get("/api/logo-empresa/{cid}")
+def logo_empresa(cid: int, db: Session = Depends(get_db)):
+    c = db.get(Company, cid)
+    if not c or not c.logo:
+        raise HTTPException(404, "Sin logo")
+    try:
+        png = _logo_publico(c.id, hashlib.sha256(c.logo.encode()).hexdigest()[:10], c.logo)
+    except Exception:  # noqa: BLE001 — imagen dañada
+        raise HTTPException(404, "Sin logo")
+    return Response(png, media_type="image/png", headers={"Cache-Control": "public, max-age=86400"})
+
+
+@app.put("/api/empresa/logo")
+def empresa_logo(body: EmpresaLogoIn, user: User = Depends(empresa_dueno), db: Session = Depends(get_db)):
+    """Logo de la empresa: sale en los documentos de todos sus terapeutas (ellos no suben el suyo)."""
+    logo = body.logo.strip()
+    if logo and not re.fullmatch(r"data:image/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+", logo):
+        raise HTTPException(400, "Usa una imagen PNG, JPG o WEBP.")
+    c = db.get(Company, user.company_id)
+    c.logo = logo or None
+    db.commit()
+    audit(db, user.id, "empresa.logo", "puesto" if logo else "quitado")
+    return {"logo": c.logo or ""}
+
+
+class EmpresaReservasIn(BaseModel):
+    activo: bool = False
+    renovar: bool = False
+
+
+def _empresa_reservas_out(db: Session, user: User) -> dict:
+    c = db.get(Company, user.company_id)
+    pros = []
+    for u in _profesionales(db, user):
+        b = db.get(Booking, u.id)
+        pros.append({"id": u.id, "name": u.name, "active": bool(u.active), "horario": bool(b and b.active), "suscrito": bool(suscrito(u, db))})
+    return {"activo": bool(c.reserva_activa and c.reserva_slug), "slug": c.reserva_slug, "profesionales": pros}
+
+
+@app.get("/api/empresa/reservas")
+def empresa_reservas_get(user: User = Depends(empresa_admin), db: Session = Depends(get_db)):
+    return _empresa_reservas_out(db, user)
+
+
+@app.put("/api/empresa/reservas")
+def empresa_reservas_put(body: EmpresaReservasIn, user: User = Depends(empresa_admin), db: Session = Depends(get_db)):
+    c = db.get(Company, user.company_id)
+    if body.renovar or (body.activo and not c.reserva_slug):
+        c.reserva_slug = secrets.token_urlsafe(12)
+    c.reserva_activa = bool(body.activo)
+    db.commit()
+    audit(db, user.id, "empresa.reservas", "activo" if c.reserva_activa else "inactivo")
+    return _empresa_reservas_out(db, user)
+
+
+class EmpresaProPatch(BaseModel):
+    active: bool | None = None
+    name: str | None = None
+    permisos: dict[str, bool | None] | None = None  # citas / pagos para este profesional: True, False o None (seguir el general)
+    color: str | None = Field(None, max_length=7)  # «#RRGGBB» con que se ve en la agenda; "" = automático
+    archivar: bool | None = None  # True: pasa a «Profesionales archivados» (inactivo, sin sesiones); False: lo reactiva. Sigue en la empresa y conserva su cuenta y sus datos
+
+
+@app.patch("/api/empresa/profesionales/{uid}")
+def empresa_pro_patch(uid: int, body: EmpresaProPatch, user: User = Depends(empresa_admin), db: Session = Depends(get_db)):
+    u = db.get(User, uid)
+    if not u or u.company_id != user.company_id or u.owner_id or u.id == user.id or u.company_admin:
+        raise HTTPException(404, "No encontrado")
+    if not suscrito(user, db):
+        raise HTTPException(402, "En el plan de prueba los terapeutas no se pueden modificar (ni desactivar ni archivar) hasta que te suscribas.")
+    if u.company_archived and body.archivar is not False:
+        raise HTTPException(409, "Este terapeuta está archivado: reactívalo primero.")
+    if body.archivar is True:
+        u.company_archived, u.active = True, False
+        _close_sessions(db, u)
+    elif body.archivar is False and u.company_archived:
+        u.company_archived, u.active = False, True
+    if body.active is not None and body.archivar is not True:
+        u.active = body.active
+    if body.name is not None and body.name.strip():
+        u.name = body.name.strip()[:200]
+    if body.permisos is not None or body.color is not None:
+        propios, color = _permisos_propios(u), _color_pro(u)
+        for k, v in (body.permisos or {}).items():
+            if k in PERMISOS_EMPRESA:
+                propios.pop(k, None) if v is None else propios.__setitem__(k, v)
+        if body.color is not None:  # color con que se ve en la agenda ("" = automático)
+            if body.color and not COLOR_RE.match(body.color):
+                raise HTTPException(400, "Color no válido")
+            color = body.color.upper() or None
+        resto = {**propios, **({"color": color} if color else {})}
+        u.permisos = json.dumps(resto) if resto else None
+    db.commit()
+    audit(db, user.id, "empresa.profesional.edit", f"id={uid}" + (" archivó" if body.archivar is True else " reactivó" if body.archivar is False else ""))
+    return user_out(u)
+
+
+@app.post("/api/empresa/profesionales/{uid}/restablecer")
+def empresa_pro_restablecer(uid: int, bg: BackgroundTasks, user: User = Depends(empresa_admin), db: Session = Depends(get_db)):
+    """El administrador no fija contraseñas: solo envía al terapeuta el correo para que elija una nueva (el enlace llega únicamente a su correo)."""
+    u = db.get(User, uid)
+    if not u or u.company_id != user.company_id or u.owner_id or u.id == user.id or u.company_admin:
+        raise HTTPException(404, "No encontrado")
+    if not suscrito(user, db):
+        raise HTTPException(402, "En el plan de prueba los terapeutas no se pueden modificar hasta que te suscribas.")
+    if u.company_archived or not u.active:
+        raise HTTPException(409, "El terapeuta está inactivo o archivado: actívalo antes de enviarle el correo.")
+    acc = survey.server_account()
+    if not survey.smtp_enabled(acc):
+        raise HTTPException(503, "El envío de correos no está disponible por ahora.")
+    if ratelimit.take(db, "emp_reset", [(f"u{user.id}", 20), (f"p{u.id}", 3)], 3600):
+        raise HTTPException(429, "Ya se le enviaron varios correos. Espera un rato e intenta de nuevo.")
+    tok = jwt.encode({"p": "pwreset", "sub": str(u.id), "f": _pw_fp(u), "exp": int(time.time()) + 3600}, SESSION_SECRET, algorithm="HS256")
+    audit(db, user.id, "empresa.profesional.restablecer", f"id={uid}")
+    bg.add_task(_send_reset, u.email, u.name, f"{acc.get('base') or PUBLIC_URL}/app?recuperar={tok}", acc)
+    return {"ok": True}
+
+
+def _rango(desde: str, hasta: str) -> tuple[str, str]:
+    for v in (desde, hasta):
+        try:
+            datetime.fromisoformat(v)
+        except ValueError:
+            raise HTTPException(400, "Fecha no válida (AAAA-MM-DD)")
+    return desde, hasta
+
+
+def _dia(iso, tz: int = 0) -> str:
+    """Día (AAAA-MM-DD) de una marca de tiempo ISO en la zona del navegador (`tz` = minutos que da `getTimezoneOffset()`): una cita a las 8 p. m. en Colombia ya es el día siguiente en UTC."""
+    t = str(iso or "")
+    if not tz or len(t) < 19:
+        return t[:10]
+    try:
+        d = datetime.fromisoformat(t.replace("Z", "+00:00"))
+    except ValueError:
+        return t[:10]
+    if d.tzinfo is None:
+        return t[:10]
+    return (d - timedelta(minutes=tz)).strftime("%Y-%m-%d")
+
+
+def _registros_de(db: Session, uid: int, q) -> list[Record]:
+    """Registros de un terapeuta de la empresa."""
+    return list(db.scalars(q))
+
+
+def _registros_empresa(db: Session, user: User, kinds: tuple[str, ...], todos: bool = False):
+    """Registros de los terapeutas de la empresa: (terapeuta, registro descifrado, nombres de sus consultantes). `todos`: incluye a los archivados."""
+    for u in _profesionales(db, user, todos=todos):
+        rows = list(_registros_de(db, u.id, select(Record).where(Record.user_id == u.id, Record.kind.in_(kinds + ("patient",)))))
+        pats = {r.id: _nombre_paciente(decrypt(r.payload)) for r in rows if r.kind == "patient"}
+        for r in rows:
+            if r.kind != "patient":
+                yield u, decrypt(r.payload), pats
+
+
+@app.get("/api/empresa/pacientes")
+def empresa_pacientes(user: User = Depends(empresa_admin), db: Session = Depends(get_db)):
+    """Consultantes de cada terapeuta (solo identificación y fechas de sus citas; nada clínico)."""
+    ahora, out = datetime.now(timezone.utc).isoformat(), []
+    for u in _profesionales(db, user):
+        pats, citas = {}, {}
+        for r in _registros_de(db, u.id, select(Record).where(Record.user_id == u.id, Record.kind.in_(("patient", "appt")))):
+            o = decrypt(r.payload)
+            if r.kind == "patient":
+                if not o.get("esGrupo"):
+                    pats[r.id] = o
+            elif o.get("patientId") and o.get("estado") != "Cancelada":
+                citas.setdefault(o["patientId"], []).append(o)
+        for pid, p in pats.items():
+            cs = sorted(str(a.get("startAt") or "") for a in citas.get(pid, []))
+            hechas = [a for a in citas.get(pid, []) if a.get("estado") == "Atendida"]
+            out.append({"proId": u.id, "proNombre": u.name, "id": pid, "nombre": _nombre_paciente(p) or "Consultante sin nombre",
+                        "documento": " ".join(x for x in (str(p.get("tipoDoc") or ""), str(p.get("documento") or "")) if x),
+                        "atendidas": len(hechas), "conEvolucion": sum(1 for x in citas.get(pid, []) if x.get("noteId")), "ultima": max([str(a.get("startAt") or "") for a in hechas], default=""),
+                        "proxima": next((c for c in cs if c > ahora), "")})
+    return sorted(out, key=lambda x: (x["proNombre"], x["nombre"]))
+
+
+@app.get("/api/empresa/agenda")
+def empresa_agenda(desde: str, hasta: str, tz: int = 0, user: User = Depends(empresa_admin), db: Session = Depends(get_db)):
+    """Citas de todos los terapeutas entre dos fechas (AAAA-MM-DD, ambas incluidas)."""
+    d, h = _rango(desde, hasta)
+    out = []
+    for u, a, pats in _registros_empresa(db, user, ("appt",)):
+        if d <= _dia(a.get("startAt"), tz) <= h:
+            out.append({**a, "proId": u.id, "proNombre": u.name, "paciente": pats.get(a.get("patientId"), "")})
+    return sorted(out, key=lambda a: a.get("startAt") or "")
+
+
+# ===== Consultorios de la empresa =====
+class ConsultorioIn(BaseModel):
+    name: str | None = Field(None, max_length=120)
+    activo: bool | None = None
+    horario: dict | None = None
+    direccion: str | None = Field(None, max_length=200)
+
+
+def _lugar(db: Session, prof: dict, cons_id=None) -> dict:
+    """Copia del perfil con `direccion` = la del consultorio de la cita (si lo tiene) o la del perfil: es lo que va en los correos de citas presenciales."""
+    d = ""
+    try:
+        c = db.get(Consultorio, int(cons_id)) if cons_id else None
+    except (TypeError, ValueError):
+        c = None
+    if c and c.direccion:
+        d = c.direccion
+    return {**prof, "direccion": (d or str(prof.get("direccion") or "")).strip()}
+
+
+HORA_RE = re.compile(r"^([01]\d|2[0-3]):[0-5]\d$")
+
+
+def _horario_valido(h: dict) -> dict:
+    """Semanal: {"0": [["08:00","12:00"], …], …} con lunes = 0; hasta 4 franjas por día, sin cruzarse."""
+    out = {}
+    for k, fr in h.items():
+        if str(k) not in "0123456" or len(str(k)) != 1 or not isinstance(fr, list) or len(fr) > 4:
+            raise HTTPException(400, "Horario no válido")
+        lista = []
+        for f in fr:
+            if not (isinstance(f, list) and len(f) == 2 and all(isinstance(x, str) and HORA_RE.match(x) for x in f)) or f[0] >= f[1]:
+                raise HTTPException(400, "Cada franja debe tener una hora de inicio anterior a la de fin")
+            lista.append([f[0], f[1]])
+        lista.sort()
+        if any(a[1] > b[0] for a, b in zip(lista, lista[1:])):
+            raise HTTPException(400, "Las franjas de un mismo día no pueden cruzarse")
+        if lista:
+            out[str(k)] = lista
+    return out
+
+
+def _cons_out(c: Consultorio) -> dict:
+    try:
+        h = json.loads(c.horario) if c.horario else {}
+    except ValueError:
+        h = {}
+    return {"id": c.id, "name": c.name, "activo": bool(c.activo), "horario": h, "direccion": c.direccion or ""}
+
+
+def _cons_de(db: Session, company_id: int | None, cid) -> Consultorio | None:
+    c = db.get(Consultorio, cid) if isinstance(cid, int) and not isinstance(cid, bool) else None
+    return c if c and company_id and c.company_id == company_id else None
+
+
+def _company_de(db: Session, user: User) -> int | None:
+    if user.role == "asistente":
+        o = db.get(User, user.owner_id) if user.owner_id else None
+        return o.company_id if o else None
+    return user.company_id
+
+
+def _utc(s) -> datetime | None:
+    try:
+        d = datetime.fromisoformat(str(s).replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    return d if d.tzinfo else d.replace(tzinfo=timezone.utc)
+
+
+def _cons_activos(db: Session, company_id: int | None) -> list[Consultorio]:
+    return list(db.scalars(select(Consultorio).where(Consultorio.company_id == company_id, Consultorio.activo.is_(True)).order_by(Consultorio.name))) if company_id else []
+
+
+def _cons_usos(db: Session, company_id: int) -> list[tuple]:
+    """Citas vigentes de la empresa que ocupan un consultorio: (consultorio, inicio, fin, id de la cita, terapeuta)."""
+    out = []
+    for u in db.scalars(select(User).where(User.company_id == company_id, User.owner_id.is_(None), User.role == "user", User.company_admin.is_(False), User.company_archived.is_(False))):  # un profesional archivado ya no ocupa consultorios
+        for r in _registros_de(db, u.id, select(Record).where(Record.user_id == u.id, Record.kind == "appt")):
+            o = decrypt(r.payload)
+            oi = _utc(o.get("startAt"))
+            if o.get("consultorioId") and o.get("estado") != "Cancelada" and oi:
+                out.append((o["consultorioId"], oi, oi + timedelta(minutes=int(o.get("duracion") or 50)), r.id, u.name))
+    return out
+
+
+def _cons_motivo(db: Session, c: Consultorio, ini: datetime, dur: int, excluir: str = "", usos: list | None = None) -> str:
+    """Vacío si el consultorio se puede usar en ese momento; si no, la razón."""
+    if not c.activo:
+        return "Consultorio desactivado"
+    loc, h = ini.astimezone(booking.TZ), _cons_out(c)["horario"]
+    fin = loc + timedelta(minutes=dur)
+    a, b = loc.strftime("%H:%M"), fin.strftime("%H:%M")
+    if fin.date() != loc.date() or not any(x <= a and b <= y for x, y in h.get(str(loc.weekday()), [])):
+        return "Fuera de su horario"
+    for cid, oi, of, rid, nombre in (usos if usos is not None else _cons_usos(db, c.company_id)):
+        if cid == c.id and rid != excluir and oi < ini + timedelta(minutes=dur) and of > ini:
+            return "Ocupado por " + nombre
+    return ""
+
+
+def _cons_libre(db: Session, company_id: int | None, ini: datetime, dur: int, usos: list | None = None) -> Consultorio | None:
+    """El primer consultorio activo libre a esa hora (None si no hay)."""
+    for c in _cons_activos(db, company_id):
+        if not _cons_motivo(db, c, ini, dur, "", usos):
+            return c
+    return None
+
+
+def _en_empresa(db: Session, u: User) -> bool:
+    return bool(u.company_id and not u.company_admin and _cons_activos(db, u.company_id))
+
+
+def _dias_con_consultorio(db: Session, u: User, cfg: dict, dias: dict) -> dict:
+    """En una empresa con consultorios, un hueco que solo puede ser presencial se ofrece únicamente si hay un consultorio libre."""
+    if not _en_empresa(db, u):
+        return dias
+    usos, mpd = _cons_usos(db, u.company_id), booking.modalidades_por_dia(cfg)
+    for dia, hs in list(dias.items()):
+        if (mpd.get(dia) == ["Presencial"]) if cfg.get("fechas") is not None else cfg["modalidades"] == ["Presencial"]:
+            dias[dia] = [h for h in hs if _cons_libre(db, u.company_id, datetime.strptime(f"{dia}T{h}", "%Y-%m-%dT%H:%M").replace(tzinfo=booking.TZ), cfg["duracion"], usos)]
+            if not dias[dia]:
+                del dias[dia]
+    return dias
+
+
+def _cons_reserva(db: Session, u: User, modalidad: str, start: datetime, dur: int) -> dict:
+    """Para una reserva presencial en una empresa con consultorios: asigna uno libre o rechaza. Devuelve los campos que se suman a la cita."""
+    if modalidad != "Presencial" or not _en_empresa(db, u):
+        return {}
+    c = _cons_libre(db, u.company_id, start, dur)
+    if not c:
+        raise HTTPException(409, "No hay consultorio disponible a esa hora. Elige otra hora u otra modalidad.")
+    return {"consultorioId": c.id}
+
+
+def _cons_cubierto(horarios: list[dict], dia: int, a: str, b: str) -> bool:
+    """¿Alguna franja de algún consultorio (unidas las que se tocan) cubre de a a b ese día de la semana?"""
+    uni: list[list[str]] = []
+    for x, y in sorted(f for h in horarios for f in h.get(str(dia), [])):
+        if uni and x <= uni[-1][1]:
+            uni[-1][1] = max(uni[-1][1], y)
+        else:
+            uni.append([x, y])
+    return any(x <= a and b <= y for x, y in uni)
+
+
+EMP_DIAS_NOM = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"]
+
+
+def _check_horario_reservas(db: Session, user: User, cfg: dict) -> None:
+    """En una empresa con consultorios, lo que un terapeuta ofrece como presencial debe caer en el horario de algún consultorio."""
+    cons = _cons_activos(db, user.company_id) if user.company_id and not user.company_admin else []
+    if not cons:
+        return
+    hs, hoy = [_cons_out(c)["horario"] for c in cons], datetime.now(booking.TZ).date().isoformat()
+
+    def revisar(dia: int, franjas, etiqueta: str):
+        for a, b in franjas:
+            if not _cons_cubierto(hs, dia, a, b):
+                raise HTTPException(400, f"{etiqueta}: la franja presencial {a}–{b} queda fuera del horario de los consultorios de la empresa. Ajústala o márcala como virtual o telefónica.")
+    if cfg.get("fechas") is not None:
+        for f, v in cfg["fechas"].items():
+            if f >= hoy and "Presencial" in (v.get("modalidades") or [v.get("modalidad")]):
+                revisar(datetime.strptime(f, "%Y-%m-%d").weekday(), v.get("franjas") or [], datetime.strptime(f, "%Y-%m-%d").strftime("%d/%m/%Y"))
+    elif "Presencial" in cfg["modalidades"]:
+        for k, fr in cfg["dias"].items():
+            revisar(int(k), fr, EMP_DIAS_NOM[int(k)])
+
+
+def _check_consultorio(db: Session, oid: int, rid: str, old: dict | None, payload: dict) -> None:
+    """Una cita presencial puede llevar `consultorioId`: debe ser de la empresa del terapeuta, caer en su horario y no cruzarse con otra cita."""
+    cid = payload.get("consultorioId")
+    if not cid or payload.get("modalidad") != "Presencial":
+        payload.pop("consultorioId", None)  # el consultorio solo aplica a citas presenciales
+    if payload.get("modalidad") != "Presencial" or payload.get("estado") == "Cancelada":
+        return
+    if old and all(old.get(k) == payload.get(k) for k in ("consultorioId", "startAt", "duracion", "modalidad")):
+        return  # no cambió lo que ocupa: marcar la cita como atendida no se bloquea por el horario de hoy
+    own = db.get(User, oid)
+    if not cid:
+        if own and _en_empresa(db, own):
+            raise HTTPException(409, "Elige un consultorio para la cita presencial.")
+        return
+    c = _cons_de(db, own.company_id if own else None, cid)
+    ini = _utc(payload.get("startAt"))
+    if not c or not ini:
+        raise HTTPException(400, "Consultorio no válido")
+    m = _cons_motivo(db, c, ini, int(payload.get("duracion") or 50), rid)
+    if m:
+        raise HTTPException(409, f"El consultorio «{c.name}» no está disponible: {m.lower()}.")
+
+
+@app.get("/api/empresa/consultorios")
+def empresa_consultorios(user: User = Depends(empresa_admin), db: Session = Depends(get_db)):
+    return [_cons_out(c) for c in db.scalars(select(Consultorio).where(Consultorio.company_id == user.company_id).order_by(Consultorio.name))]
+
+
+@app.post("/api/empresa/consultorios")
+def empresa_consultorio_nuevo(body: ConsultorioIn, user: User = Depends(empresa_admin), db: Session = Depends(get_db)):
+    nombre = (body.name or "").strip()
+    if not nombre:
+        raise HTTPException(400, "Escribe el nombre del consultorio")
+    c = Consultorio(company_id=user.company_id, name=nombre, activo=True, direccion=(body.direccion or "").strip() or None, horario=json.dumps(_horario_valido(body.horario or {})))
+    db.add(c)
+    db.commit()
+    audit(db, user.id, "empresa.consultorio", f"creó {c.id}")
+    return _cons_out(c)
+
+
+@app.patch("/api/empresa/consultorios/{cid}")
+def empresa_consultorio_editar(cid: int, body: ConsultorioIn, user: User = Depends(empresa_admin), db: Session = Depends(get_db)):
+    c = _cons_de(db, user.company_id, cid)
+    if not c:
+        raise HTTPException(404, "Consultorio no encontrado")
+    if body.name is not None:
+        if not body.name.strip():
+            raise HTTPException(400, "Escribe el nombre del consultorio")
+        c.name = body.name.strip()
+    if body.activo is not None:
+        c.activo = body.activo
+    if body.direccion is not None:
+        c.direccion = body.direccion.strip() or None
+    if body.horario is not None:
+        c.horario = json.dumps(_horario_valido(body.horario))
+    db.commit()
+    audit(db, user.id, "empresa.consultorio", f"editó {c.id}")
+    return _cons_out(c)
+
+
+@app.get("/api/consultorios")
+def consultorios_libres(inicio: str, duracion: int = 50, excluir: str = "", user: User = Depends(current_user), db: Session = Depends(get_db)):
+    """Consultorios activos de la empresa del terapeuta, con si están libres a esa hora (para elegir en una cita presencial)."""
+    cid, ini = _company_de(db, user), _utc(inicio)
+    if not cid or not ini:
+        return []
+    out, usos = [], _cons_usos(db, cid)
+    for c in _cons_activos(db, cid):
+        m = _cons_motivo(db, c, ini, max(5, min(600, duracion)), excluir, usos)
+        out.append({"id": c.id, "name": c.name, "libre": not m, "motivo": m, "direccion": c.direccion or ""})
+    return out
+
+
+@app.get("/api/empresa/comprobante/{pid}/{bid}")
+def empresa_comprobante(pid: int, bid: str, user: User = Depends(empresa_admin), db: Session = Depends(get_db)):
+    """El administrador abre el comprobante de pago que subió un consultante al agendar con un terapeuta de tu empresa."""
+    u = db.get(User, pid)
+    if not u or u.company_id != user.company_id or u.owner_id or u.company_admin or not ID_RE.match(bid):
+        raise HTTPException(404, "No encontrado")
+    with SessionLocal() as principal:  # los comprobantes vienen de reservas públicas (exigen suscripción): siempre en la principal
+        b = principal.get(Blob, (u.id, bid))
+        if b and principal.get(Record, (u.id, bid)) is not None:
+            b = None  # con registro «file» es un adjunto clínico del profesional, no un comprobante de pago: el administrador no lo ve
+    if not b:
+        raise HTTPException(404, "No encontrado")
+    audit(db, user.id, "empresa.comprobante", f"{u.id}:{bid}")
+    return Response(compress.unpack(decrypt_bytes(b.data)), media_type=b.mime, headers={"Content-Disposition": "attachment", "X-Content-Type-Options": "nosniff"})
+
+
+@app.get("/api/empresa/finanzas")
+def empresa_finanzas(desde: str, hasta: str, tz: int = 0, user: User = Depends(empresa_admin), db: Session = Depends(get_db)):
+    """Por terapeuta: lo cobrado (pagos no anulados), los pagos anulados y las citas por estado entre dos fechas."""
+    d, h = _rango(desde, hasta)
+    por = {u.id: {"proId": u.id, "proNombre": u.name, "cobrado": 0, "pagos": 0, "anulados": 0, "citas": {}} for u in _profesionales(db, user, todos=True)}
+    for u, r, _ in _registros_empresa(db, user, ("pago", "appt"), todos=True):
+        o = por[u.id]
+        if r.get("kind") == "pago" and d <= str(r.get("fecha") or "")[:10] <= h:
+            if r.get("anulado"):
+                o["anulados"] += 1
+            else:
+                o["cobrado"] += int(r.get("monto") or 0)
+                o["pagos"] += 1
+        elif r.get("kind") == "appt" and d <= _dia(r.get("startAt"), tz) <= h:
+            e = str(r.get("estado") or "")
+            o["citas"][e] = o["citas"].get(e, 0) + 1
+    return {"profesionales": list(por.values()), "total": sum(o["cobrado"] for o in por.values())}
+
+
+def _hora_min(t: str) -> int:
+    h, m = str(t).split(":")
+    return int(h) * 60 + int(m)
+
+
+@app.get("/api/empresa/estadisticas")
+def empresa_estadisticas(desde: str, hasta: str, tz: int = 0, user: User = Depends(empresa_admin), db: Session = Depends(get_db)):
+    """Estadísticas de la empresa entre dos fechas: citas, consultantes, ingresos y ocupación, en total y por terapeuta. Nada clínico."""
+    d, h = _rango(desde, hasta)
+    d0, h0 = date.fromisoformat(d[:10]), date.fromisoformat(h[:10])
+    if h0 < d0 or (h0 - d0).days > 731:
+        raise HTTPException(400, "Elige un rango de hasta 2 años")
+    por_mes = (h0 - d0).days > 62
+    clave = lambda dia: dia[:7] if por_mes else (date.fromisoformat(dia) - timedelta(days=date.fromisoformat(dia).weekday())).isoformat()
+    ahora = datetime.now(timezone.utc)
+    ESTADOS = ("Atendida", "Programada", "Cancelada", "No asistió")
+    pros, serie, dsem, franjas, medios = {}, {}, [0] * 7, {}, {}
+    cons_horas = {}
+    tot_origen = {"enlace": 0, "profesional": 0}
+    for u in _profesionales(db, user, todos=True):
+        pats, citas, pagos = {}, [], []
+        for r in _registros_de(db, u.id, select(Record).where(Record.user_id == u.id, Record.kind.in_(("patient", "appt", "pago")))):
+            o = decrypt(r.payload)
+            if r.kind == "patient":
+                if not o.get("esGrupo"):
+                    pats[r.id] = o
+            elif r.kind == "appt":
+                citas.append(o)
+            else:
+                pagos.append(o)
+        P = pros[u.id] = {"proId": u.id, "proNombre": u.name, "citas": {e: 0 for e in ESTADOS}, "modalidad": {}, "horasAtendidas": 0.0, "horasAgendadas": 0.0,
+                          "pacientesActivos": 0, "nuevos": 0, "sinVolver": 0, "recurrentes": 0, "cobrado": 0, "pagos": 0, "anulados": 0, "porEnlace": 0}
+        activos, ultimas, atendidas_n = set(), {}, {}
+        for a in citas:
+            if a.get("evento") or a.get("reunion") or not a.get("startAt"):
+                continue
+            ini = _utc(a.get("startAt"))
+            dia = _dia(a.get("startAt"), tz)
+            est = a.get("estado") or "Programada"
+            pid = a.get("patientId")
+            if pid and est == "Atendida":
+                ultimas[pid] = max(ultimas.get(pid, ""), str(a.get("startAt")))
+            if not (d <= dia <= h) or not ini:
+                continue
+            dur = int(a.get("duracion") or 50) / 60
+            P["citas"][est] = P["citas"].get(est, 0) + 1
+            if est != "Cancelada":
+                P["horasAgendadas"] += dur
+                P["modalidad"][a.get("modalidad") or "—"] = P["modalidad"].get(a.get("modalidad") or "—", 0) + 1
+                loc = ini - timedelta(minutes=tz)
+                dsem[loc.weekday()] += 1
+                franjas[loc.hour] = franjas.get(loc.hour, 0) + 1
+                if pid:
+                    activos.add(pid)
+                orig = "enlace" if a.get("origen") == "enlace" else "profesional"
+                tot_origen[orig] += 1
+                P["porEnlace"] += orig == "enlace"
+            if est == "Atendida":
+                P["horasAtendidas"] += dur
+                if pid:
+                    atendidas_n[pid] = atendidas_n.get(pid, 0) + 1
+            S = serie.setdefault(clave(dia), {"k": clave(dia), "atendidas": 0, "canceladas": 0, "noAsistio": 0, "cobrado": 0})
+            if est == "Atendida":
+                S["atendidas"] += 1
+            elif est == "Cancelada":
+                S["canceladas"] += 1
+            elif est == "No asistió":
+                S["noAsistio"] += 1
+            if est != "Cancelada" and a.get("consultorioId"):
+                cons_horas[a["consultorioId"]] = cons_horas.get(a["consultorioId"], 0.0) + dur
+        for pid, pt in pats.items():
+            if d <= _dia(pt.get("createdAt") or pt.get("abiertaEl") or "", tz)[:10] <= h:
+                P["nuevos"] += 1
+        P["pacientesActivos"] = len(activos)
+        P["recurrentes"] = sum(1 for n in atendidas_n.values() if n >= 2)
+        limite = (ahora - timedelta(days=60)).isoformat()
+        futuros = {a.get("patientId") for a in citas if a.get("patientId") and a.get("estado") == "Programada" and str(a.get("startAt") or "") > ahora.isoformat()}
+        P["sinVolver"] = sum(1 for pid in pats if ultimas.get(pid) and ultimas[pid] < limite and pid not in futuros)
+        for g in pagos:
+            f = str(g.get("fecha") or "")[:10]
+            if not (d <= f <= h):
+                continue
+            if g.get("anulado"):
+                P["anulados"] += 1
+            else:
+                m = int(g.get("monto") or 0)
+                P["cobrado"] += m
+                P["pagos"] += 1
+                medios[g.get("medio") or "Otro"] = medios.get(g.get("medio") or "Otro", 0) + m
+                S = serie.setdefault(clave(f), {"k": clave(f), "atendidas": 0, "canceladas": 0, "noAsistio": 0, "cobrado": 0})
+                S["cobrado"] += m
+        for k in ("horasAtendidas", "horasAgendadas"):
+            P[k] = round(P[k], 1)
+    cons = []
+    dias = [d0 + timedelta(days=i) for i in range((h0 - d0).days + 1)]
+    for c in db.scalars(select(Consultorio).where(Consultorio.company_id == user.company_id, Consultorio.activo.is_(True)).order_by(Consultorio.name)):
+        try:
+            hor = json.loads(c.horario or "{}")
+        except ValueError:
+            hor = {}
+        disp = sum(sum(_hora_min(b) - _hora_min(a) for a, b in hor.get(str(x.weekday()), [])) for x in dias) / 60
+        usadas = round(cons_horas.get(c.id, 0.0), 1)
+        cons.append({"id": c.id, "name": c.name, "horasUsadas": usadas, "horasDisponibles": round(disp, 1), "pct": round(100 * usadas / disp) if disp else None})
+    tot = lambda k: sum(P[k] for P in pros.values())
+    citas_t = {e: sum(P["citas"].get(e, 0) for P in pros.values()) for e in ESTADOS}
+    n_citas = sum(citas_t.values())
+    return {"desde": d, "hasta": h, "agrupa": "mes" if por_mes else "semana", "profesionales": list(pros.values()), "serie": sorted(serie.values(), key=lambda x: x["k"]),
+            "citas": citas_t, "totalCitas": n_citas, "tasaCancelacion": round(100 * citas_t["Cancelada"] / n_citas) if n_citas else 0,
+            "tasaInasistencia": round(100 * citas_t["No asistió"] / n_citas) if n_citas else 0,
+            "pacientesActivos": tot("pacientesActivos"), "nuevos": tot("nuevos"), "recurrentes": tot("recurrentes"), "sinVolver": tot("sinVolver"),
+            "cobrado": tot("cobrado"), "pagos": tot("pagos"), "ticket": round(tot("cobrado") / tot("pagos")) if tot("pagos") else 0, "anulados": tot("anulados"),
+            "horasAtendidas": round(tot("horasAtendidas"), 1), "horasAgendadas": round(tot("horasAgendadas"), 1),
+            "diaSemana": dsem, "franjas": {str(k): v for k, v in sorted(franjas.items())}, "medios": medios, "origen": tot_origen, "consultorios": cons}
+
+
+@app.get("/api/empresa/estadisticas/detalle")
+def empresa_estadisticas_detalle(tipo: str, desde: str, hasta: str, tz: int = 0, pro: int | None = None, user: User = Depends(empresa_admin), db: Session = Depends(get_db)):
+    """Quiénes componen una estadística (consultantes, citas o pagos del periodo), de toda la empresa o de un terapeuta. Solo identificación y fechas; nada clínico."""
+    CITAS = {"citas": None, "atendidas": "Atendida", "canceladas": "Cancelada", "noasistio": "No asistió", "programadas": "Programada"}
+    if tipo not in CITAS and tipo not in ("nuevos", "activos", "recurrentes", "sinvolver", "pagos"):
+        raise HTTPException(400, "Estadística no válida")
+    d, h = _rango(desde, hasta)
+    ahora = datetime.now(timezone.utc).isoformat()
+    filas = []
+    for u in _profesionales(db, user, todos=True):
+        if pro and u.id != pro:
+            continue
+        pats, citas, pagos = {}, [], []
+        for r in _registros_de(db, u.id, select(Record).where(Record.user_id == u.id, Record.kind.in_(("patient", "appt", "pago")))):
+            o = decrypt(r.payload)
+            if r.kind == "patient":
+                if not o.get("esGrupo"):
+                    pats[r.id] = o
+            elif r.kind == "appt":
+                citas.append(o)
+            else:
+                pagos.append(o)
+        doc = lambda p: " ".join(x for x in (str(p.get("tipoDoc") or ""), str(p.get("documento") or "")) if x)
+        nom = lambda pid: _nombre_paciente(pats.get(pid, {})) or "Consultante sin nombre"
+        base = lambda pid, **k: {"proId": u.id, "pro": u.name, "paciente": nom(pid), "documento": doc(pats.get(pid, {})), **k}
+        en = [a for a in citas if not a.get("evento") and not a.get("reunion") and a.get("startAt") and d <= _dia(a.get("startAt"), tz) <= h]
+        if tipo in CITAS:
+            for a in en:
+                if CITAS[tipo] and (a.get("estado") or "Programada") != CITAS[tipo]:
+                    continue
+                n = a.get("nuevo") if isinstance(a.get("nuevo"), dict) else {}
+                f = base(a.get("patientId"), fecha=a["startAt"], a=a.get("modalidad") or "", b=a.get("estado") or "Programada")
+                if not a.get("patientId"):
+                    f["paciente"] = (_nombre_paciente(n) + " (nuevo)") if n else "Sin consultante"
+                filas.append(f)
+        elif tipo == "pagos":
+            for g in pagos:
+                if d <= str(g.get("fecha") or "")[:10] <= h and not g.get("anulado"):
+                    filas.append(base(g.get("patientId"), fecha=str(g.get("fecha") or ""), a=int(g.get("monto") or 0), b=g.get("medio") or ""))
+        elif tipo == "nuevos":
+            for pid, pt in pats.items():
+                if d <= _dia(pt.get("createdAt") or pt.get("abiertaEl") or "", tz)[:10] <= h:
+                    filas.append(base(pid, fecha=str(pt.get("abiertaEl") or pt.get("createdAt") or "")))
+        elif tipo in ("activos", "recurrentes"):
+            n_act, n_ate = {}, {}
+            for a in en:
+                if a.get("patientId") in pats and a.get("estado") != "Cancelada":
+                    n_act[a["patientId"]] = n_act.get(a["patientId"], 0) + 1
+                    if a.get("estado") == "Atendida":
+                        n_ate[a["patientId"]] = n_ate.get(a["patientId"], 0) + 1
+            for pid, n in (n_act if tipo == "activos" else {k: v for k, v in n_ate.items() if v >= 2}).items():
+                filas.append(base(pid, a=n if tipo == "activos" else n_ate[pid]))
+        else:  # sinvolver
+            ult, fut = {}, set()
+            for a in citas:
+                pid = a.get("patientId")
+                if a.get("estado") == "Atendida" and pid:
+                    ult[pid] = max(ult.get(pid, ""), str(a.get("startAt") or ""))
+                if a.get("estado") == "Programada" and pid and str(a.get("startAt") or "") > ahora:
+                    fut.add(pid)
+            limite = (datetime.now(timezone.utc) - timedelta(days=60)).isoformat()
+            for pid in pats:
+                if ult.get(pid) and ult[pid] < limite and pid not in fut:
+                    filas.append(base(pid, fecha=ult[pid]))
+    filas.sort(key=lambda f: (f.get("fecha") or "") if tipo in CITAS or tipo == "pagos" else f["paciente"].lower(), reverse=tipo in CITAS or tipo == "pagos")
+    return {"tipo": tipo, "total": len(filas), "filas": filas[:2000]}
+
+
+# ===== Notas privadas del administrador (generales o sobre un profesional) =====
+NOTA_TIPOS = ("Seguimiento", "Acuerdo", "Pendiente", "Idea", "Otra")
+NOTA_ESTADOS = ("Abierta", "En seguimiento", "Cerrada")
+
+
+MAX_NOTAS_EMPRESA = 2000
+
+
+class NotaEmpresaIn(BaseModel):
+    titulo: str = Field("", max_length=200)
+    texto: str = Field("", max_length=20000)
+    tipo: str = "Otra"
+    estado: str = "Abierta"
+    revisar: str = Field("", max_length=10)
+    etiquetas: list[str] = Field(default_factory=list, max_length=12)
+    seguimiento: list[dict] = Field(default_factory=list, max_length=300)
+    proId: int | None = None
+
+
+def _nota_datos(b: NotaEmpresaIn) -> dict:
+    if not (b.titulo.strip() or b.texto.strip()):
+        raise HTTPException(400, "Escribe el título o el texto de la nota")
+    rev = b.revisar.strip()
+    if rev:
+        try:
+            date.fromisoformat(rev)
+        except ValueError:
+            raise HTTPException(400, "Fecha de revisión no válida")
+    seg = [{"at": str(x.get("at") or "")[:40], "texto": str(x.get("texto") or "").strip()[:5000]} for x in b.seguimiento if str(x.get("texto") or "").strip()]
+    return {"titulo": b.titulo.strip(), "texto": b.texto.strip(), "tipo": b.tipo if b.tipo in NOTA_TIPOS else "Otra", "estado": b.estado if b.estado in NOTA_ESTADOS else "Abierta",
+            "revisar": rev, "etiquetas": [t.strip()[:40] for t in b.etiquetas if t.strip()][:12], "seguimiento": seg}
+
+
+def _nota_out(n: CompanyNote) -> dict:
+    d = decrypt(n.datos)
+    return {"id": n.id, "proId": n.pro_id, "titulo": d.get("titulo", ""), "texto": d.get("texto", ""), "tipo": d.get("tipo", "Otra"), "estado": d.get("estado", "Abierta"), "revisar": d.get("revisar", ""),
+            "etiquetas": d.get("etiquetas", []), "seguimiento": d.get("seguimiento", []), "creada": n.created_at.isoformat(), "editada": n.updated_at.isoformat()}
+
+
+def _nota_de(db: Session, user: User, nid: int) -> CompanyNote:
+    n = db.get(CompanyNote, nid)
+    if not n or n.company_id != user.company_id:
+        raise HTTPException(404, "Nota no encontrada")
+    return n
+
+
+def _nota_pro(db: Session, user: User, pro: int | None) -> int | None:
+    if pro and pro not in {u.id for u in _profesionales(db, user, todos=True)}:
+        raise HTTPException(400, "Ese terapeuta no es de tu empresa")
+    return pro or None
+
+
+@app.get("/api/empresa/notas")
+def empresa_notas(user: User = Depends(empresa_admin), db: Session = Depends(get_db)):
+    """Todas las notas privadas del administrador (generales: `proId` vacío; o sobre un terapeuta)."""
+    q = select(CompanyNote).where(CompanyNote.company_id == user.company_id)
+    return [_nota_out(n) for n in sorted(db.scalars(q), key=lambda n: n.updated_at, reverse=True)]
+
+
+@app.post("/api/empresa/notas", status_code=201)
+def empresa_nota_nueva(body: NotaEmpresaIn, user: User = Depends(empresa_admin), db: Session = Depends(get_db)):
+    if (db.scalar(select(func.count()).select_from(CompanyNote).where(CompanyNote.company_id == user.company_id)) or 0) >= MAX_NOTAS_EMPRESA:
+        raise HTTPException(400, f"Llegó al máximo de {MAX_NOTAS_EMPRESA} notas. Borra algunas para crear más.")
+    n = CompanyNote(company_id=user.company_id, pro_id=_nota_pro(db, user, body.proId), datos=encrypt(_nota_datos(body)))
+    db.add(n)
+    db.commit()
+    audit(db, user.id, "empresa.nota", f"creó {n.id}")
+    return _nota_out(n)
+
+
+@app.patch("/api/empresa/notas/{nid}")
+def empresa_nota_editar(nid: int, body: NotaEmpresaIn, user: User = Depends(empresa_admin), db: Session = Depends(get_db)):
+    n = _nota_de(db, user, nid)
+    datos = _nota_datos(body)
+    if "proId" in body.model_fields_set:
+        n.pro_id = _nota_pro(db, user, body.proId)
+    n.datos = encrypt(datos)
+    n.updated_at = datetime.now(timezone.utc)
+    db.commit()
+    audit(db, user.id, "empresa.nota", f"editó {n.id}")
+    return _nota_out(n)
+
+
+@app.delete("/api/empresa/notas/{nid}", status_code=204)
+def empresa_nota_borrar(nid: int, user: User = Depends(empresa_admin), db: Session = Depends(get_db)):
+    n = _nota_de(db, user, nid)
+    db.delete(n)
+    db.commit()
+    audit(db, user.id, "empresa.nota", f"borró {nid}")
+
+
+@app.post("/api/consultantes/documento-empresa")
+def documento_en_empresa(body: dict = Body(...), user: User = Depends(pro_user), db: Session = Depends(get_db)):
+    """Aviso al crear un consultante: ¿otro terapeuta de la empresa ya tiene una ficha con ese documento?
+    Solo dice quién (nombre del terapeuta), nunca el contenido ni el nombre del consultante."""
+    d = firmas.norm_doc(body.get("documento"))
+    if len(d) < 3 or not user.company_id or user.company_admin:
+        return {"profesional": None}
+    for u in db.scalars(select(User).where(User.company_id == user.company_id, User.owner_id.is_(None), User.role == "user", User.company_admin.is_(False), User.id != user.id)):
+        for r in _registros_de(db, u.id, select(Record).where(Record.user_id == u.id, Record.kind == "patient")):
+            x = decrypt(r.payload)
+            if not x.get("esGrupo") and firmas.norm_doc(x.get("documento")) == d:
+                return {"profesional": u.name}
+    return {"profesional": None}
+
+
 @app.get("/api/recordatorios")
 def reminders_status(user: User = Depends(current_user), db: Session = Depends(get_db)):
     """Estado de los recordatorios de la cuenta (el equipo también los ve y los envía)."""
@@ -2583,6 +3903,7 @@ def booking_put(body: BookCfgIn, user: User = Depends(pro_user), db: Session = D
         cfg = booking.clean(body.model_dump(exclude={"activo", "renovar"}))
     except ValueError as e:
         raise HTTPException(400, str(e))
+    _check_horario_reservas(db, user, cfg)
     b = db.get(Booking, user.id) or Booking(user_id=user.id, slug=secrets.token_urlsafe(12))
     if body.renovar:
         b.slug = secrets.token_urlsafe(12)
@@ -2593,11 +3914,24 @@ def booking_put(body: BookCfgIn, user: User = Depends(pro_user), db: Session = D
     return booking_get(user, db)
 
 
+def _perm_efectivo(db: Session, user: User) -> dict | None:
+    """Permisos de empresa de quien escribe (el equipo usa los de su profesional); None si no tiene límites."""
+    if user.company_admin:
+        return None
+    pro = user if user.role == "user" else (db.get(User, user.owner_id) if user.owner_id else None)
+    return _permisos_empresa(pro.company_id, pro) if pro is not None and pro.company_id else None
+
+
+def _citas_ok(u: User) -> bool:
+    """Un profesional de empresa sin el permiso «citas» no recibe reservas públicas."""
+    return not u.company_id or u.company_admin or u.owner_id is not None or _permisos_empresa(u.company_id, u)["citas"]
+
+
 def _booking_link(db: Session, slug: str) -> tuple[Booking, User, dict, dict]:
     """El enlace público activo, tu profesional (con suscripción vigente), tu perfil y el correo de envío."""
     b = db.scalar(select(Booking).where(Booking.slug == slug, Booking.active.is_(True))) if re.match(r"^[A-Za-z0-9_-]{10,64}$", slug or "") else None
     u = db.get(User, b.user_id) if b else None
-    if not b or not u or not u.active or not suscrito(u, db):
+    if not b or not u or not u.active or not suscrito(u, db) or not _citas_ok(u):
         raise HTTPException(404, "Este enlace no está disponible")
     acc = survey.account(db, u.id)
     if not survey.smtp_enabled(acc):
@@ -2613,11 +3947,15 @@ def _appts_of(db: Session, oid: int) -> list[dict]:
 @app.get("/api/reservar/{slug}")
 def public_booking(slug: str, request: Request, db: Session = Depends(get_db)):
     _public_throttle(request)
-    b, u, prof, _acc = _booking_link(db, slug)
+    return _booking_info(db, *_booking_link(db, slug)[:3])
+
+
+def _booking_info(db: Session, b: Booking, u: User, prof: dict) -> dict:
     cfg = decrypt(b.payload)
     return {"profesional": prof.get("nombre") or u.name, "consultorio": prof.get("consultorio") or "", "idioma": prof.get("idioma") or "", "modalidades": cfg["modalidades"], "modalidadDia": booking.modalidades_por_dia(cfg),
-            "duracion": cfg["duracion"], "dias": booking.slots(cfg, booking.busy_of(_appts_of(db, u.id))),
-            "reunion": u.role == "admin"}  # cuentas admin: reunión informativa (sin datos de consultante)
+            "duracion": cfg["duracion"], "dias": _dias_con_consultorio(db, u, cfg, booking.slots(cfg, booking.busy_of(_appts_of(db, u.id)))),
+            "reunion": u.role == "admin", "comprobante": _exige_comprobante(db, u),  # cuentas admin: reunión informativa (sin datos de consultante)
+            "marca": correo.marca_empresa(db.get(Company, u.company_id)) if u.company_id else None}
 
 
 class BookIn(BaseModel):
@@ -2631,6 +3969,28 @@ class BookIn(BaseModel):
     telefono: str = ""
     profesion: str = ""  # solo reuniones informativas (cuentas admin)
     ciudad: str = ""
+    comprobante: str = Field("", max_length=14_000_000)  # base64 del comprobante de pago (empresas que lo exigen)
+    comprobanteTipo: str = ""
+
+
+def _exige_comprobante(db: Session, u: User) -> bool:
+    return bool(u.company_id and not u.company_admin and _permisos_empresa(u.company_id)["comprobante"])
+
+
+def _comprobante_ok(body: "BookIn") -> tuple[str, bytes]:
+    """Valida el comprobante que sube el consultante (mismas reglas que un adjunto) y lo pasa por los compresores: PDF con Ghostscript."""
+    if not body.comprobante:
+        raise HTTPException(400, "Sube el comprobante de pago para poder agendar la cita")
+    try:
+        data = base64.b64decode(body.comprobante, validate=True)
+    except ValueError:
+        raise HTTPException(400, "El comprobante no es válido")
+    mime = body.comprobanteTipo.strip().lower()
+    if mime not in MAGIC or not data or not any(data.startswith(m) for m in MAGIC[mime]) or (mime == "image/webp" and data[8:12] != b"WEBP"):
+        raise HTTPException(415, "El comprobante debe ser un PDF, PNG, JPG o WEBP")
+    if len(data) > MAX_FILE_BYTES:
+        raise HTTPException(413, f"El comprobante supera {MAX_FILE_BYTES // (1024 * 1024)} MB")
+    return mime, compress.optimize_pdf(data) if mime == "application/pdf" else data
 
 
 def _norm(v) -> str:
@@ -2641,6 +4001,10 @@ def _norm(v) -> str:
 def public_booking_create(slug: str, body: BookIn, request: Request, bg: BackgroundTasks, db: Session = Depends(get_db)):
     _public_throttle(request, 10)
     b, u, prof, acc = _booking_link(db, slug)
+    return _booking_create(db, b, u, prof, acc, body, request, bg, f"/reservar?c={slug}")
+
+
+def _booking_create(db: Session, b: Booking, u: User, prof: dict, acc: dict, body: "BookIn", request: Request, bg: BackgroundTasks, ruta: str):
     cfg = decrypt(b.payload)
     nombres, apellidos, correo, tel = body.nombres.strip()[:80], body.apellidos.strip()[:80], body.correo.strip().lower()[:120], body.telefono.strip()[:20]
     if not nombres or not apellidos or not EMAIL_RE.match(correo):
@@ -2661,6 +4025,7 @@ def public_booking_create(slug: str, body: BookIn, request: Request, bg: Backgro
         start = datetime.strptime(body.inicio, "%Y-%m-%dT%H:%M").replace(tzinfo=booking.TZ)
     except ValueError:
         raise HTTPException(400, "Horario no válido")
+    comp = _comprobante_ok(body) if _exige_comprobante(db, u) and not reunion else None
     pid, nuevo = None, None
     if body.nuevo:
         nuevo = {"nombres": nombres, "apellidos": apellidos, "correo": correo, "telefono": tel, **({"profesion": profesion, "ciudad": ciudad} if reunion else {})}
@@ -2675,9 +4040,14 @@ def public_booking_create(slug: str, body: BookIn, request: Request, bg: Backgro
     with _book_lock:
         if body.inicio[11:] not in booking.slots(cfg, booking.busy_of(_appts_of(db, u.id))).get(body.inicio[:10], []):
             raise HTTPException(409, "Ese horario ya no está disponible. Elige otro.")
+        extra = _cons_reserva(db, u, body.modalidad, start, cfg["duracion"])
         aid, now_iso = "a_" + secrets.token_hex(8), datetime.now(timezone.utc).isoformat()
+        if comp:
+            bid = "f_" + secrets.token_hex(8)
+            db.add(Blob(user_id=u.id, id=bid, mime=comp[0], size=len(comp[1]), data=encrypt_bytes(compress.pack(comp[1]))))
+            extra = {**extra, "comprobanteId": bid}
         payload = {"id": aid, "kind": "appt", "createdAt": now_iso, "updatedAt": now_iso, "startAt": start.astimezone(timezone.utc).isoformat(),
-                   "duracion": cfg["duracion"], "modalidad": body.modalidad, "estado": "Programada", "origen": "enlace", **({"reunion": True} if reunion else {}),
+                   "duracion": cfg["duracion"], "modalidad": body.modalidad, "estado": "Programada", "origen": "enlace", **extra, **({"reunion": True} if reunion else {}),
                    **({"patientId": pid} if pid else {"nuevo": nuevo})}
         db.add(Record(user_id=u.id, id=aid, kind="appt", patient_id=pid, payload=encrypt(payload)))
         _rem, tok = reminders.make(db, u.id, payload, "correo")  # enlace para ver o cancelar la cita (el mismo de los recordatorios)
@@ -2685,9 +4055,61 @@ def public_booking_create(slug: str, body: BookIn, request: Request, bg: Backgro
     audit(db, u.id, "booking.create", f"appt:{aid}", patient_id=pid, ip=client_ip(request))
     bg.add_task(gcal.sync, u.id, [aid])
     base = acc.get("base") or PUBLIC_URL or ""
-    bg.add_task(booking.notify, prof, acc, start, cfg["duracion"], body.modalidad, f"{nombres} {apellidos}", correo, prof.get("correo") or u.email, nuevo,
-                reminders.link(tok, base), f"{base}/reservar?c={slug}", "", reunion)
+    bg.add_task(booking.notify, _lugar(db, prof, extra.get("consultorioId")), acc, start, cfg["duracion"], body.modalidad, f"{nombres} {apellidos}", correo, prof.get("correo") or u.email, nuevo,
+                reminders.link(tok, base), f"{base}{ruta}", "", reunion)
     return {"cuando": reminders.when_text(start), "modalidad": body.modalidad}
+
+
+# ---------- Reservas de una empresa: el consultante elige terapeuta ----------
+def _empresa_link(db: Session, slug: str) -> Company:
+    c = db.scalar(select(Company).where(Company.reserva_slug == slug, Company.reserva_activa.is_(True))) if re.match(r"^[A-Za-z0-9_-]{10,64}$", slug or "") else None
+    if not c:
+        raise HTTPException(404, "Este enlace no está disponible")
+    return c
+
+
+def _pro_reserva(db: Session, c: Company, pid: int) -> tuple[Booking, User, dict, dict]:
+    """El horario público de un terapeuta de la empresa (el mismo que configura en su Agenda → Reservas)."""
+    u = db.get(User, pid)
+    b = db.get(Booking, pid) if u else None
+    if not u or u.company_id != c.id or u.owner_id or u.company_admin or u.role != "user" or not u.active or not b or not b.active or not suscrito(u, db) or not _citas_ok(u):
+        raise HTTPException(404, "Este terapeuta no tiene horario disponible")
+    acc = survey.account(db, u.id)
+    if not survey.smtp_enabled(acc):
+        raise HTTPException(503, "Las reservas no están disponibles por ahora")
+    row = db.get(Record, (u.id, "profile"))
+    return b, u, (decrypt(row.payload) if row else {}), acc
+
+
+@app.get("/api/reservar-empresa/{slug}")
+def public_empresa(slug: str, request: Request, db: Session = Depends(get_db)):
+    _public_throttle(request)
+    c = _empresa_link(db, slug)
+    pros = []
+    for u in _profesionales(db, User(company_id=c.id)):
+        try:
+            b, _, prof, _ = _pro_reserva(db, c, u.id)
+        except HTTPException:
+            continue
+        info = _booking_info(db, b, u, prof)  # primer hueco libre y modalidades de ese día, para la tarjeta
+        dias = sorted(k for k, v in info["dias"].items() if v)
+        prox = {"fecha": dias[0], "hora": min(info["dias"][dias[0]])} if dias else None
+        mods = (info["modalidadDia"] or {}).get(prox["fecha"]) if prox else None
+        pros.append({"id": u.id, "nombre": prof.get("nombre") or u.name, "consultorio": prof.get("consultorio") or "", "especialidad": str(prof.get("especialidad") or "").strip()[:80], "proximo": prox, "modalidades": mods or info["modalidades"]})
+    return {"empresa": c.name, "profesionales": pros, "marca": correo.marca_empresa(c)}
+
+
+@app.get("/api/reservar-empresa/{slug}/{pid}")
+def public_empresa_pro(slug: str, pid: int, request: Request, db: Session = Depends(get_db)):
+    _public_throttle(request)
+    return _booking_info(db, *_pro_reserva(db, _empresa_link(db, slug), pid)[:3])
+
+
+@app.post("/api/reservar-empresa/{slug}/{pid}")
+def public_empresa_pro_create(slug: str, pid: int, body: BookIn, request: Request, bg: BackgroundTasks, db: Session = Depends(get_db)):
+    _public_throttle(request, 10)
+    b, u, prof, acc = _pro_reserva(db, _empresa_link(db, slug), pid)
+    return _booking_create(db, b, u, prof, acc, body, request, bg, f"/reservar?e={slug}&p={pid}")
 
 
 @app.get("/api/cita/{token}")

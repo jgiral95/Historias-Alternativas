@@ -6,6 +6,7 @@ async function startApp() {
   if (S.mode === 'server') await syncClock();
   S.pid = null; S.draft = false; S.tab = 'datos'; S.view = 'patients'; Idle.last = Idle.ping = Date.now();
   try { await Store.load(); } catch (e) { if (e.status === 402) { S.loading = false; if (!S.profile) S.profile = { id: 'profile', kind: 'profile' }; render(); subDraw(e.message); return; } toast('No se pudieron cargar los datos guardados.'); if (!S.profile) S.profile = { id: 'profile', kind: 'profile' }; }
+  if (EMPRESA_ADMIN()) { S.view = 'empresa'; EMP.sec = empPrimera(); EMP.sel = null; EMP.tab = EMP.sec === 'pros' ? 'datos' : EMP.sec; EMP.data = {}; empLoad(); }  // el administrador de empresa empieza en su vista de administrador
   S.loading = false; if (I18N.fromProfile(S.profile)) return; render(); fbMount(); welcome();
   Promise.all([svLoad(), remLoad(), firmasSync()]).then(() => { if (S.view === 'patients' && !S.pid && !$('.modal') && !S.dirty && !$('#acmenu.open') && !(document.activeElement && /INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName))) render(); });
 }
@@ -162,7 +163,7 @@ function renderCode(ticket, email, msg, days, keep) {
 function hasLocal() { const l = Store.localRead(); return !!(l && ((l.patients || []).length || (l.notes || []).length)); }
 async function doLogout(msg) {
   try { await api('/auth/logout', { method: 'POST', noRedirect: true }); } catch (e) { /* igual se cierra en pantalla */ }
-  S.user = null; S.profile = null; S.patients = []; S.notes = []; S.reports = []; S.appts = []; S.files = []; S.scales = []; S.pid = null; S.view = 'patients'; hideIdleWarn(); renderLogin(msg);
+  S.user = null; S.actuar = null; S.profile = null; S.patients = []; S.notes = []; S.reports = []; S.appts = []; S.files = []; S.scales = []; S.pid = null; S.view = 'patients'; hideIdleWarn(); renderLogin(msg);
 }
 ACT.logout = () => doLogout();
 ACT.importLocal = async () => {

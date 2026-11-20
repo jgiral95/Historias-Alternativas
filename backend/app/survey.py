@@ -101,9 +101,16 @@ def server_account() -> dict | None:
 def account(db, user_id: int) -> dict | None:
     """Correo con el que se envían las encuestas de esta cuenta: el propio del terapeuta o, si no, el del servidor."""
     row = db.get(MailAccount, user_id)
-    if row:
-        return {**decrypt(row.payload), "propio": True}
-    return server_account()
+    acc = {**decrypt(row.payload), "propio": True} if row else server_account()
+    if acc and user_id:  # terapeuta (o su equipo) de una empresa con logo o eslogan: el correo sale con la marca de la empresa (`marca`, ver `smtp_open`)
+        from .db import Company
+        u = db.get(User, user_id)
+        cid = (u.company_id or (db.get(User, u.owner_id).company_id if u.owner_id else None)) if u else None
+        c = db.get(Company, cid) if cid else None
+        marca = correo.marca_empresa(c, (acc.get("base") or PUBLIC_URL or "").rstrip("/")) if c else None
+        if marca:
+            acc = {**acc, "marca": marca}
+    return acc
 
 
 def smtp_enabled(acc: dict | None) -> bool:
@@ -119,7 +126,31 @@ def smtp_open(acc: dict):
         s.starttls()
     if acc.get("user"):
         s.login(acc["user"], acc.get("password") or "")
-    return s
+    return _ConMarca(s, acc["marca"]) if acc.get("marca") else s
+
+
+class _ConMarca:
+    """Conexión SMTP que, al enviar, cambia la cabecera y el pie del HTML por los de la empresa del terapeuta."""
+    def __init__(self, s, marca):
+        self._s, self._marca = s, marca
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *a):
+        return self._s.__exit__(*a)
+
+    def __getattr__(self, n):
+        return getattr(self._s, n)
+
+    def send_message(self, m, *a, **k):
+        try:
+            h = m.get_body(("html",))
+            if h is not None:
+                h.set_content(correo.marcar(h.get_content(), self._marca), subtype="html")
+        except Exception:  # noqa: BLE001 — si algo falla, sale el correo con el diseño normal
+            pass
+        return self._s.send_message(m, *a, **k)
 
 
 def check_login(acc: dict) -> None:
@@ -290,6 +321,24 @@ def send_verify(to: str, name: str, url: str, acc: dict, lang: str | None = None
     correo.agregar(m, correo.layout(f"Bienvenido(a) a Alter-Karute{(', ' + nombre) if nombre else ''}",
                                     ["Para activar tu cuenta, confirma tu correo con el siguiente botón. El enlace estará vigente durante 24 horas."],
                                     boton=("Confirmar mi correo", url), notas=["Si no solicitaste esta cuenta, ignora este mensaje: no se creará ningún registro."]), lang)
+    with smtp_open(acc) as s:
+        s.send_message(m)
+
+
+def send_invitacion_empresa(to: str, name: str, empresa: str, url: str, acc: dict) -> None:
+    """Correo al terapeuta que el administrador de una empresa acaba de crear: enlace de un solo uso para confirmar y elegir su contraseña. Se reemplaza en las pruebas."""
+    m = EmailMessage()
+    m["Subject"] = f"Alter-Karute: te agregaron al equipo de {empresa}"
+    m["From"] = formataddr(("Alter-Karute", acc.get("from") or SMTP_FROM))
+    m["To"] = to
+    nombre = (name or "").strip()
+    saludo = f"Hola{(', ' + nombre) if nombre else ''}."
+    m.set_content(
+        f"{saludo}\n\nTe agregaron como terapeuta al equipo de {empresa} en Alter-Karute. Para confirmar tu acceso y elegir tu contraseña usa este enlace "
+        f"(vale 7 días y sirve una sola vez):\n\n{url}\n\nSi no esperabas este mensaje, ignóralo.\n\nAtentamente,\nEl equipo de Alter-Karute\n")
+    correo.agregar(m, correo.layout(f"Te agregaron al equipo de {empresa}",
+                                    [f"{saludo} Te agregaron como terapeuta al equipo de {empresa} en Alter-Karute. Confirma tu acceso y elige tu contraseña con el siguiente botón; el enlace vale 7 días y sirve una sola vez."],
+                                    boton=("Confirmar mi acceso", url), notas=["Si no esperabas este mensaje, ignóralo: no se activa nada sin tu confirmación."]))
     with smtp_open(acc) as s:
         s.send_message(m)
 

@@ -149,11 +149,11 @@ def test_cita_creada_por_el_profesional_para_paciente_nuevo_envia_confirmacion(m
     assert c.put("/api/records/a_1", json={**base, "id": "a_1", "startAt": "2099-03-04T15:00:00.000Z", "nuevoSerie": "s1"}).status_code in (200, 204)
     assert c.put("/api/records/a_2", json={**base, "id": "a_2", "startAt": "2099-03-11T15:00:00.000Z", "nuevoSerie": "s1"}).status_code in (200, 204)  # serie: un solo correo
     assert [t for t, _, _ in sent] == ["pepe@mail.co"]
-    assert c.put("/api/records/a_1", json={**base, "id": "a_1", "startAt": "2099-03-05T15:00:00.000Z", "nuevoSerie": "s1"}).status_code in (200, 204)  # editar no reenvía
-    assert len(sent) == 1
+    assert c.put("/api/records/a_1", json={**base, "id": "a_1", "startAt": "2099-03-05T15:00:00.000Z", "nuevoSerie": "s1"}).status_code in (200, 204)  # editar no reenvía la confirmación: avisa el cambio de fecha
+    assert len(sent) == 2 and "cambió" in sent[1][1]
     sin = {**base, "nuevo": {"nombres": "Sin", "apellidos": "Correo"}}
     assert c.put("/api/records/a_3", json={**sin, "id": "a_3", "startAt": "2099-03-12T15:00:00.000Z"}).status_code in (200, 204)
-    assert len(sent) == 1
+    assert len(sent) == 2
 
 
 def test_confirmation_includes_custom_meeting_link():

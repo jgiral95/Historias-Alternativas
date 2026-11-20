@@ -1,21 +1,30 @@
 /* Cuenta del equipo, mi equipo, perfil y «Mis formatos». Parte de app.html (scripts clásicos que comparten el ámbito global; el orden de carga importa). */
 /* ----- Cuenta de una persona del equipo: solo contraseña y verificación en dos pasos ----- */
 function accountModal() {
-  const root = $('#modal-root');
-  root.innerHTML = `<div class="modal" role="dialog" aria-modal="true" aria-label="Mi cuenta"><div class="box" id="profform"><div class="row" style="justify-content:space-between"><h3>Mi cuenta</h3><button class="btn sm" id="pcl">Cerrar</button></div>
-  <p class="stnote">${esc(S.user.name)} · ${esc(S.user.email)}<br>Cuenta de equipo de ${esc(S.user.ownerName || 'tu terapeuta')}.</p>
-  <div class="sec" id="tpbox"><h3>Mis datos para el historial</h3><p class="stnote">Tu documento y tu firma aparecen en el historial de cada cambio que hagas a los datos de un consultante.</p>
+  const root = $('#modal-root'), adm = EMPRESA_ADMIN() && !EMPRESA_SEC() && (!S.actuar || S.view === 'empresa');
+  root.innerHTML = `<div class="modal" role="dialog" aria-modal="true" aria-label="Mi cuenta"><div class="box${adm ? ' tabbed' : ''}" id="profform"><div class="row" style="justify-content:space-between"><h3>Mi cuenta</h3><button class="btn sm" id="pcl">Cerrar</button></div>
+  ${adm ? `<nav class="ptabs" role="tablist" aria-label="Secciones de la cuenta"><button type="button" role="tab" class="on" aria-selected="true" data-pt="empresa">Empresa</button><button type="button" role="tab" aria-selected="false" data-pt="permisos">Permisos</button><button type="button" role="tab" aria-selected="false" data-pt="reservas">Reservas</button><button type="button" role="tab" aria-selected="false" data-pt="secretarios">Apoyo administrativo</button><button type="button" role="tab" aria-selected="false" data-pt="seg">Seguridad</button></nav>
+  <div class="ptab" role="tabpanel" data-pp="empresa"><p class="stnote" style="margin:0">${esc(S.user.name)} · ${esc(S.user.email)}<br>Administrador de ${esc(S.user.companyName || 'la empresa')}.</p><div class="card" id="emp_logo_box"></div></div>
+  <div class="ptab" role="tabpanel" data-pp="permisos" hidden><div class="card" id="emp_perm_box"><p class="stnote" style="margin:0">Cargando permisos…</p></div></div>
+  <div class="ptab" role="tabpanel" data-pp="reservas" hidden><div class="card" id="emp_comp_box"></div></div>
+  <div class="ptab" role="tabpanel" data-pp="secretarios" hidden><div class="card" id="emp_sec_box"></div></div>
+  <div class="ptab" role="tabpanel" data-pp="seg" hidden>` : ''}
+  ${adm ? '' : `<p class="stnote">${esc(S.user.name)} · ${esc(S.user.email)}<br>${EMPRESA_SEC() ? 'Apoyo administrativo de ' + esc(S.user.companyName || 'la empresa') + '.' : 'Cuenta de equipo de ' + esc(S.user.ownerName || 'tu terapeuta') + '.'}</p>`}
+  ${adm ? '' : `<div class="sec" id="tpbox"><h3>Mis datos para el historial</h3><p class="stnote">Tu documento y tu firma aparecen en el historial de cada cambio que hagas a los datos de un consultante.</p>
   <div class="grid">${F('Documento de identidad', 'tpdoc', '')}</div><div class="fld"><span class="lbl">Tu firma</span><div id="tpsigprev"></div><div class="sigbox" id="tpsig"></div><button class="btn sm" id="tpclear" type="button">Borrar trazo</button></div>
-  <div class="row end"><button class="btn pri" id="tpsave" type="button">Guardar mis datos</button></div></div>
+  <div class="row end"><button class="btn pri" id="tpsave" type="button">Guardar mis datos</button></div></div>`}
   <details class="sec" id="pwbox" open><summary class="sum">Cambiar contraseña</summary><form id="pwform" class="sec" autocomplete="on" onsubmit="return false">
     <input type="email" autocomplete="username" value="${esc(S.user.email)}" hidden aria-hidden="true" tabindex="-1">
     <div class="grid"><div class="fld"><label for="pw_cur">Contraseña actual</label><input id="pw_cur" type="password" autocomplete="current-password"></div>
     <div class="fld"><label for="pw_new">Nueva contraseña</label><input id="pw_new" type="password" autocomplete="new-password" minlength="10"></div>
     <div class="fld"><label for="pw_new2">Repite la nueva contraseña</label><input id="pw_new2" type="password" autocomplete="new-password"></div></div>
     <div class="row end"><button class="btn" id="pwsave" type="button">Cambiar contraseña</button></div></form></details>
-  <details class="sec" id="tfbox"><summary class="sum">Verificación en dos pasos ${S.user.totp ? '<span class="chip ok" style="text-transform:none;letter-spacing:0">Activa</span>' : '<span class="chip warn" style="text-transform:none;letter-spacing:0">Inactiva</span>'}</summary><div id="tfbody"></div></details></div></div>`;
+  <details class="sec" id="tfbox"><summary class="sum">Verificación en dos pasos ${S.user.totp ? '<span class="chip ok" style="text-transform:none;letter-spacing:0">Activa</span>' : '<span class="chip warn" style="text-transform:none;letter-spacing:0">Inactiva</span>'}</summary><div id="tfbody"></div></details>${adm ? '</div>' : ''}</div></div>`;
   $('#pcl').onclick = () => { root.innerHTML = ''; };
   $('#tfbox').addEventListener('toggle', e => { if (e.target.open) draw2fa(); });
+  if (adm) { const showTab = k => { root.querySelectorAll('.ptab').forEach(x => { x.hidden = x.dataset.pp !== k; }); root.querySelectorAll('[data-pt]').forEach(x => { const on = x.dataset.pt === k; x.classList.toggle('on', on); x.setAttribute('aria-selected', on); }); };
+    root.querySelectorAll('[data-pt]').forEach(x => { x.onclick = () => showTab(x.dataset.pt); }); }
+  if (adm) { empPermisos(); empSecretarios(); } else {
   const tpad = makePad($('#tpsig'), 'teamSig'); let curSig = '';
   $('#tpclear').onclick = () => tpad.clear ? tpad.clear() : makePad($('#tpsig'), 'teamSig');
   api('/equipo/mi-perfil').then(d => { const f = $('#f_tpdoc'); if (f && !f.value) f.value = d.documento || ''; curSig = d.firma || ''; if (curSig) $('#tpsigprev').innerHTML = `<span class="lbl">Firma guardada</span><img class="sigimg" src="${curSig}" alt="Tu firma guardada"><p class="stnote">Dibuja abajo solo si quieres reemplazarla.</p>`; }).catch(() => {});
@@ -26,6 +35,7 @@ function accountModal() {
     try { await api('/equipo/mi-perfil', { method: 'PUT', body: { documento: $('#f_tpdoc').value.trim(), firma } }); S.user.tieneFirma = true; toast('Datos guardados.'); root.innerHTML = ''; render(); }
     catch (e) { toast(e.message); } finally { setBusy($('#tpsave'), false); }
   };
+  }
   $('#pwsave').onclick = async () => {
     const cur = $('#pw_cur').value, nw = $('#pw_new').value, nw2 = $('#pw_new2').value;
     if (!cur || !nw) { toast('Escribe la contraseña actual y la nueva.'); return; }

@@ -3,6 +3,7 @@ from datetime import datetime, timezone
 from sqlalchemy import false as sa_false
 from sqlalchemy import (Boolean, DateTime, ForeignKey, Integer, LargeBinary,
                         PrimaryKeyConstraint, String, Text, create_engine, false)
+from sqlalchemy import true as sa_true
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, sessionmaker
 
 from .config import DATABASE_URL
@@ -43,6 +44,50 @@ class User(Base):
     owner_id: Mapped[int | None] = mapped_column(Integer, nullable=True, index=True)
     # Datos de las personas del equipo para el historial de cambios (documento y firma), cifrados.
     profile: Mapped[bytes | None] = mapped_column(LargeBinary, nullable=True)
+    permisos: Mapped[str | None] = mapped_column(Text, nullable=True)  # JSON: permisos propios dados por el administrador de la empresa (citas, pagos); lo que falta sigue el general
+    # Empresa: el administrador (company_admin) gestiona la agenda y las finanzas de los terapeutas de su empresa.
+    company_id: Mapped[int | None] = mapped_column(Integer, nullable=True, index=True)
+    company_admin: Mapped[bool] = mapped_column(Boolean, default=False, server_default=sa_false())
+    company_secretary: Mapped[bool] = mapped_column(Boolean, default=False, server_default=sa_false())  # apoyo administrativo: tiene company_admin=True y solo ve lo que el administrador le deja (users.permisos)
+    company_archived: Mapped[bool] = mapped_column(Boolean, default=False, server_default=sa_false())  # terapeuta archivado por el administrador de su empresa
+
+
+class Company(Base):
+    __tablename__ = "companies"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    name: Mapped[str] = mapped_column(String(200))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+    permisos: Mapped[str | None] = mapped_column(Text, nullable=True)  # JSON: lo que pueden hacer los terapeutas (citas, pagos); vacío = todo
+    reserva_slug: Mapped[str | None] = mapped_column(String(64), nullable=True, index=True)  # enlace público /reservar?e=…: el consultante elige terapeuta
+    reserva_activa: Mapped[bool] = mapped_column(Boolean, default=False, server_default=sa_false())
+    logo: Mapped[str | None] = mapped_column(Text, nullable=True)  # data URL del logo de la empresa (sale en los documentos de sus terapeutas)
+    texto_correo: Mapped[str | None] = mapped_column(Text, nullable=True)  # texto que la empresa agrega a los correos de sus terapeutas
+    texto_reservas: Mapped[str | None] = mapped_column(Text, nullable=True)  # texto que la empresa muestra en su enlace de reservas
+    color_reservas: Mapped[str | None] = mapped_column(String(7), nullable=True)  # color de fondo del enlace de reservas (#rrggbb)
+    slogan: Mapped[str | None] = mapped_column(String(160), nullable=True)  # eslogan de la empresa (sale con el logo en las reservas y los correos)
+
+
+class Consultorio(Base):
+    """Consultorio de una empresa: el administrador lo crea y marca el horario en que se puede usar (semanal, JSON {"0":[["08:00","12:00"]]}, lunes = 0)."""
+    __tablename__ = "consultorios"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    company_id: Mapped[int] = mapped_column(Integer, index=True)
+    name: Mapped[str] = mapped_column(String(120))
+    activo: Mapped[bool] = mapped_column(Boolean, default=True, server_default=sa_true())
+    horario: Mapped[str | None] = mapped_column(Text, nullable=True)
+    direccion: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+
+
+class CompanyNote(Base):
+    """Nota privada del administrador de una empresa: general (`pro_id` vacío) o sobre un terapeuta. Título y texto van cifrados."""
+    __tablename__ = "company_notes"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    company_id: Mapped[int] = mapped_column(Integer, index=True)
+    pro_id: Mapped[int | None] = mapped_column(Integer, nullable=True, index=True)
+    datos: Mapped[bytes] = mapped_column(LargeBinary)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
 
 
 class Subscription(Base):

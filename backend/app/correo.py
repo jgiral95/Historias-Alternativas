@@ -25,6 +25,36 @@ def separar_enlace(texto: str) -> tuple[str, str, str]:
     return (antes + "." if antes and antes[-1] not in ".!?»" else antes), m.group(0).rstrip(".,;"), texto[m.end():].strip()
 
 
+def marca_empresa(c, base: str = "") -> dict | None:
+    """Logo y eslogan de una empresa para páginas y correos públicos (None si no tiene ninguno). `c` es la fila de la empresa."""
+    import hashlib
+    if not c or not (c.logo or c.slogan or c.texto_correo or c.texto_reservas or c.color_reservas):
+        return None
+    huella = hashlib.sha256((c.logo or "").encode()).hexdigest()[:10]
+    return {"nombre": c.name, "eslogan": c.slogan or "", "textoCorreo": c.texto_correo or "", "textoReservas": c.texto_reservas or "", "color": c.color_reservas or "", "logo": f"{base}/api/logo-empresa/{c.id}?v={huella}" if c.logo else ""}
+
+
+def marcar(html: str, marca: dict | None) -> str:
+    """Correo de un terapeuta de una empresa: arriba van el logo y el eslogan de la empresa, y Alter-Karute queda en un pie pequeño."""
+    if not marca:
+        return html
+    if marca.get("logo"):
+        cab = f'<img src="{e(marca["logo"], quote=True)}" alt="{e(marca["nombre"], quote=True)}" style="display:block;border:0;max-width:200px;max-height:64px;width:auto;height:auto">'
+    else:
+        cab = f'<div style="font-size:20px;font-weight:bold;color:{TINTA}">{e(marca["nombre"])}</div>'
+    if marca.get("eslogan"):
+        cab += f'<div style="margin-top:6px;font-size:13px;font-style:italic;color:{SUAVE}">{e(marca["eslogan"])}</div>'
+    sitio = e(PUBLIC_URL, quote=True) if PUBLIC_URL else ""
+    pie = (f'<tr><td style="padding:0 32px 22px;font-size:11px;line-height:1.5;color:#8B879A;border-top:1px solid {LINEA}"><div style="padding-top:12px">Enviado con '
+           + (f'<a href="{sitio}" style="color:#8B879A">Alter-Karute</a>' if sitio else "Alter-Karute") + ', seguimiento para terapeutas.</div></td></tr>')
+    karute = f'<a href="{sitio}"><img src="{sitio}/logo-email.png" width="28" height="28" alt="Alter-Karute" style="display:block;border:0;opacity:.85"></a>' if sitio else ""
+    html = re.sub(r"<!--KH-->.*?<!--/KH-->", lambda _m: f'<tr><td style="padding:32px 32px 8px"><table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td valign="top">{cab}</td><td valign="top" align="right" width="36">{karute}</td></tr></table></td></tr>', html, flags=re.S)
+    if marca.get("textoCorreo"):
+        txt = f'<tr><td style="padding:16px 32px 0;font-size:14px;line-height:1.6;white-space:pre-line">{e(marca["textoCorreo"])}</td></tr>'
+        html = html.replace("<!--KT-->", txt)
+    return re.sub(r"<!--KF-->.*?<!--/KF-->", lambda _m: pie, html, flags=re.S)
+
+
 def layout(titulo: str, intro=(), filas=(), cierre=(), boton: tuple[str, str] | None = None, notas=(), firma: tuple[str, str] = ("Atentamente,", "El equipo de Alter-Karute"),
            codigo: str = "", bloque: str = "", boton2: tuple[str, str] | None = None) -> str:
     """intro/cierre: párrafos; filas: [(etiqueta, valor)] en la tarjeta; notas: textos pequeños (o (texto, etiqueta, enlace));
@@ -55,11 +85,11 @@ def layout(titulo: str, intro=(), filas=(), cierre=(), boton: tuple[str, str] | 
     return f"""<!doctype html><html lang="es"><body style="margin:0;padding:0;background:{ARENA}">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:{ARENA};padding:32px 12px"><tr><td align="center">
 <table role="presentation" width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;background:#FFFFFF;border-radius:16px;border-top:6px solid {BOSQUE};font-family:Arial,Helvetica,sans-serif;color:{TINTA}">
-<tr><td style="padding:32px 32px 8px">{logo}</td></tr>
+<!--KH--><tr><td style="padding:32px 32px 8px">{logo}</td></tr><!--/KH-->
 <tr><td style="padding:8px 32px 0"><h1 style="margin:0;font-size:22px;line-height:1.3;color:{BOSQUE}">{e(titulo)}</h1></td></tr>
 {par(intro)}{cod}{tarjeta}{blq}{par(cierre)}{btn}{nts}
-<tr><td style="padding:24px 32px 24px;font-size:14px;line-height:1.6">{e(firma[0])}<br><b>{e(firma[1])}</b></td></tr>
-<tr><td style="padding:0 32px 28px"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-top:1px solid {LINEA}"><tr><td style="padding-top:18px;font-size:13px;line-height:1.6;color:{SUAVE}"><b style="color:{BOSQUE}">Alter-Karute</b>{e(ACERCA[len("Alter-Karute"):])}{sitio}</td></tr></table></td></tr>
+<!--KT--><tr><td style="padding:24px 32px 24px;font-size:14px;line-height:1.6">{e(firma[0])}<br><b>{e(firma[1])}</b></td></tr>
+<!--KF--><tr><td style="padding:0 32px 28px"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-top:1px solid {LINEA}"><tr><td style="padding-top:18px;font-size:13px;line-height:1.6;color:{SUAVE}"><b style="color:{BOSQUE}">Alter-Karute</b>{e(ACERCA[len("Alter-Karute"):])}{sitio}</td></tr></table></td></tr><!--/KF-->
 </table>
 <p style="font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#8B879A;margin:16px 0 0">Mensaje automático enviado con Alter-Karute.</p>
 </td></tr></table></body></html>"""

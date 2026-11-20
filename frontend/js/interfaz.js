@@ -12,8 +12,12 @@ const NAV_ICO = Object.fromEntries(Object.entries({
   patients: '<path d="M16 19v-1a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v1M10 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6M20 19v-1a3 3 0 0 0-2.5-3M15.5 5.2a3 3 0 0 1 0 5.6"/>',
   agenda: '<rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M8 3v4M16 3v4"/>',
   finanzas: '<rect x="3" y="6" width="18" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/><path d="M6.5 9.5v.01M17.5 14.5v.01"/>',
-  cuaderno: '<path d="M6 4h11a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1H6zM6 4v16M9.5 9h5M9.5 13h5"/>' }).map(([k, v]) => [k, `<svg class="navico" viewBox="0 0 24 24" aria-hidden="true">${v}</svg>`]));
+  cuaderno: '<path d="M6 4h11a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1H6zM6 4v16M9.5 9h5M9.5 13h5"/>',
+  consultorios: '<path d="M5 20V6a1 1 0 0 1 1-1h8a1 1 0 0 1 1 1v14M15 10h3a1 1 0 0 1 1 1v9M3 20h18M8.5 9h3M8.5 13h3"/>',
+  estadisticas: '<path d="M5 20V11M12 20V5M19 20v-6"/>',
+  mas: '<path d="M6 12v.01M12 12v.01M18 12v.01"/>' }).map(([k, v]) => [k, `<svg class="navico" viewBox="0 0 24 24" aria-hidden="true">${v}</svg>`]));
 const TEAM = () => !!(S.user && S.user.role === 'asistente');
+const PERMISO = k => !(S.user && S.user.permisos) || S.user.permisos[k] !== false;
 const initials = n => String(n || '').replace(/@.*/, '').split(/[\s._-]+/).filter(Boolean).slice(0, 2).map(w => w[0].toUpperCase()).join('') || 'P';
 ACT.menu = () => { const m = $('#acmenu'), b = $('[data-act="menu"]'); if (!m) return; const o = !m.classList.contains('open'); m.classList.toggle('open', o); b.setAttribute('aria-expanded', o ? 'true' : 'false'); if (o) { const f = m.querySelector('button'); if (f) f.focus(); } };
 const closeMenu = () => { const m = $('#acmenu'), b = $('[data-act="menu"]'); if (m) m.classList.remove('open'); if (b) b.setAttribute('aria-expanded', 'false'); };
@@ -87,7 +91,7 @@ function askDiscard(go) {
    así «Atrás» vuelve a la pantalla anterior dentro de la app en vez de salir de ella. */
 const Nav = { key: null, restoring: false };
 function navState() {
-  const v = S.view === 'agenda' || S.view === 'cuaderno' || S.view === 'finanzas' ? S.view : 'patients';
+  const v = S.view === 'agenda' || S.view === 'cuaderno' || (S.view === 'finanzas' && PERMISO('pagos')) || (S.view === 'empresa' && EMPRESA_ADMIN()) ? S.view : 'patients';
   return { hc: 1, v, pid: v === 'patients' && !S.draft ? S.pid || null : null, draft: v === 'patients' && !!S.draft, tab: v === 'patients' && S.pid ? S.tab : null,
     home: v === 'patients' && !S.pid ? !!S.homeOpen : null, ht: v === 'patients' && !S.pid ? S.homeTab || null : null, pn: v === 'cuaderno' ? S.pn.sel || null : null,
     form: v === 'patients' && S.pid ? (S.newNote ? 'note' : S.newReport ? 'report' : S.newScale ? 'scale' : S.reconsent ? 'consent' : S.newSol ? 'sol' : S.newIncorp ? 'incorp' : null) : null };
@@ -115,7 +119,7 @@ async function navRestore(st) {
   if (S.view === 'cuaderno') await pnLeave();
   closeMenu();
   const p = st.pid && S.patients.find(x => x.id === st.pid);
-  S.view = st.v === 'agenda' || st.v === 'cuaderno' || st.v === 'finanzas' ? st.v : 'patients';
+  S.view = st.v === 'agenda' || st.v === 'cuaderno' || (st.v === 'finanzas' && PERMISO('pagos')) || (st.v === 'empresa' && EMPRESA_ADMIN() && !S.actuar) ? st.v : 'patients';
   S.draft = false; S.draftObj = null; S.pid = p ? p.id : null; S.tab = p && st.tab ? st.tab : 'datos';
   S.newNote = false; S.newReport = false; S.newScale = null; S.reconsent = false; S.consentPreset = null; S.newSol = false; S.newIncorp = false; S.noteSeed = null;
   if (!p) { S.homeOpen = !!st.home; if (st.ht) S.homeTab = st.ht; }
@@ -129,21 +133,23 @@ window.addEventListener('popstate', e => { navRestore(e.state); });
 function render() { const tl = $('.tabs'), sx = tl ? tl.scrollLeft : 0; renderMain(); restoreBorradores(); const t2 = $('.tabs'); if (t2) { t2.scrollLeft = sx; const on = t2.querySelector('.tab.on'); if (on && (on.offsetLeft < t2.scrollLeft || on.offsetLeft + on.offsetWidth > t2.scrollLeft + t2.clientWidth)) t2.scrollLeft = Math.max(0, on.offsetLeft - 16); } navSync(); const sh = $('#app'); if (sh && !$('#aviso-alcance')) sh.insertAdjacentHTML('beforeend', '<div id="aviso-alcance" style="text-align:center;font-size:12px;color:var(--muted);padding:10px 0">Alter-Karute acompaña el bienestar y la salud con terapias alternativas.</div>'); }
 function renderMain() {
   S.dirty = false;
-  const p = curPatient(), pr = S.profile;
+  const p = curPatient(), pr = S.profile, prTop = S.view === 'empresa' && S.user ? { nombre: S.user.companyName || (EMP.data.pros && EMP.data.pros.name) || S.user.name } : pr;  // en la vista de empresa, arriba va el nombre de la empresa
   const incomplete = !pr.nombre || !pr.firma;
   $('#app').innerHTML = `
-  <header class="top"><button class="brand" data-act="home" title="Ir al resumen">${logoSVG(34)}<b>Alter-Karute</b></button>
-    <nav class="nav" aria-label="Secciones"><button class="${S.view === 'agenda' || S.view === 'cuaderno' || S.view === 'finanzas' ? '' : 'on'}" data-act="view" data-v="patients">${NAV_ICO.patients}<span>Consultantes</span></button><button class="${S.view === 'agenda' ? 'on' : ''}" data-act="view" data-v="agenda">${NAV_ICO.agenda}<span>Agenda</span></button>${S.mode === 'server' ? `<button class="${S.view === 'finanzas' ? 'on' : ''}" data-act="view" data-v="finanzas">${NAV_ICO.finanzas}<span>Finanzas</span></button>` : ''}${TEAM() ? '' : `<button class="${S.view === 'cuaderno' ? 'on' : ''}" data-act="view" data-v="cuaderno" title="Notas de proceso: ideas y consejos de colegas, fuera de la ficha">${NAV_ICO.cuaderno}<span>Notas<span class="lbl-long"> de proceso</span></span></button>`}</nav>
-    <div class="top-search"><input type="text" id="q" placeholder="Buscar consultante o texto en notas" value="${esc(S.q)}" aria-label="Buscar consultante"></div>
-    <div class="top-actions">${S.view === 'cuaderno' ? '<button class="btn pri" data-act="pnNew">+ <span class="lbl-long">Nueva nota</span></button>' : '<button class="btn pri" data-act="newPatient">+ <span class="lbl-long">Nuevo consultante</span></button>'}
-    ${themeBtnHTML()}<div class="avwrap"><button class="avatar" data-act="menu" aria-haspopup="true" aria-expanded="false" aria-label="Menú de cuenta"><i>${esc(initials(pr.nombre || (S.user && S.user.name) || (S.user && S.user.email) || 'P'))}</i><svg viewBox="0 0 12 12"><path d="M2 4l4 4 4-4"/></svg></button>
-    <div class="menu" id="acmenu" role="menu"><div class="who"><b>${esc(pr.nombre || (S.user && S.user.name) || 'Terapia')}</b><span>${esc(pr.nombre && pr.registro ? 'T.P. ' + pr.registro : (S.user && S.user.email) || '')}</span></div>
-    ${TEAM() ? '<button role="menuitem" data-act="profile">Mi cuenta</button>' : `<button role="menuitem" data-act="profile">Mi perfil</button><button role="menuitem" data-act="formats">Mis formatos</button>${S.mode === 'server' ? '<button role="menuitem" data-act="survey">Mi encuesta de satisfacción</button><button role="menuitem" data-act="team">Mi equipo</button><button role="menuitem" data-act="suscripcion">Mi suscripción</button>' : ''}`}${S.mode === 'server' && S.user && S.user.role === 'admin' ? '<button role="menuitem" data-act="users">Usuarios</button><button role="menuitem" data-act="fbAdmin">Comentarios de la beta</button>' : ''}${TEAM() || S.mode !== 'server' ? '' : '<button role="menuitem" data-act="accessLog">Bitácora de accesos</button>'}${TEAM() ? '' : '<button role="menuitem" data-act="stepsShow">Ayuda: primeros pasos</button>'}<button role="menuitem" data-act="privacy">Política de privacidad</button>${S.mode === 'server' ? '<hr><button role="menuitem" data-act="exportAll">Exportar todos mis datos</button><button role="menuitem" class="out" data-act="logout">Salir</button>' : ''}</div></div></div></header>
+  <header class="top${S.view === 'empresa' ? ' emp' : ''}"><button class="brand" data-act="home" title="Ir al resumen">${logoSVG(34)}<b>Alter-Karute</b></button>
+    <nav class="nav" aria-label="Secciones">${S.view === 'empresa' ? empNavHTML() : `<button class="${S.view === 'agenda' || S.view === 'cuaderno' || S.view === 'finanzas' ? '' : 'on'}" data-act="view" data-v="patients">${NAV_ICO.patients}<span>Consultantes</span></button><button class="${S.view === 'agenda' ? 'on' : ''}" data-act="view" data-v="agenda">${NAV_ICO.agenda}<span>Agenda</span></button>${S.mode === 'server' && PERMISO('pagos') ? `<button class="${S.view === 'finanzas' ? 'on' : ''}" data-act="view" data-v="finanzas">${NAV_ICO.finanzas}<span>Finanzas</span></button>` : ''}${TEAM() ? '' : `<button class="${S.view === 'cuaderno' ? 'on' : ''}" data-act="view" data-v="cuaderno" title="Notas de proceso: ideas y consejos de colegas, fuera de la ficha">${NAV_ICO.cuaderno}<span>Notas<span class="lbl-long"> de proceso</span></span></button>`}`}</nav>
+    ${S.view === 'empresa' ? '<div class="top-search"></div>' : `<div class="top-search"><input type="text" id="q" placeholder="Buscar consultante o texto en notas" value="${esc(S.q)}" aria-label="Buscar consultante"></div>`}
+    <div class="top-actions">${S.view === 'empresa' ? (SECP('pros') ? '<button class="btn pri" data-act="empNuevo">+ <span class="lbl-long">Nuevo terapeuta</span></button>' : '') : S.view === 'cuaderno' ? '<button class="btn pri" data-act="pnNew">+ <span class="lbl-long">Nueva nota</span></button>' : '<button class="btn pri" data-act="newPatient">+ <span class="lbl-long">Nuevo consultante</span></button>'}
+    ${themeBtnHTML()}<div class="avwrap"><button class="avatar" data-act="menu" aria-haspopup="true" aria-expanded="false" aria-label="Menú de cuenta"><i>${esc(initials(prTop.nombre || (S.user && S.user.name) || (S.user && S.user.email) || 'P'))}</i><svg viewBox="0 0 12 12"><path d="M2 4l4 4 4-4"/></svg></button>
+    <div class="menu" id="acmenu" role="menu"><div class="who"><b>${esc(prTop.nombre || (S.user && S.user.name) || 'Terapia')}</b><span>${esc(prTop.nombre && prTop.registro ? 'T.P. ' + prTop.registro : (S.user && S.user.email) || '')}</span></div>
+    ${S.actuar && S.view !== 'empresa' ? '' : TEAM() ? '<button role="menuitem" data-act="profile">Mi cuenta</button>' + (EMPRESA_ADMIN() && !EMPRESA_SEC() && S.mode === 'server' ? '<button role="menuitem" data-act="suscripcion">Mi suscripción</button>' : '') : `<button role="menuitem" data-act="profile">Mi perfil</button><button role="menuitem" data-act="formats">Mis formatos</button>${S.mode === 'server' ? '<button role="menuitem" data-act="survey">Mi encuesta de satisfacción</button><button role="menuitem" data-act="team">Mi equipo</button><button role="menuitem" data-act="suscripcion">Mi suscripción</button>' : ''}`}${S.mode === 'server' && S.user && S.user.role === 'admin' ? '<button role="menuitem" data-act="users">Usuarios</button><button role="menuitem" data-act="fbAdmin">Comentarios de la beta</button>' : ''}${TEAM() || S.mode !== 'server' ? '' : '<button role="menuitem" data-act="accessLog">Bitácora de accesos</button>'}${TEAM() ? '' : '<button role="menuitem" data-act="stepsShow">Ayuda: primeros pasos</button>'}<button role="menuitem" data-act="privacy">Política de privacidad</button>${S.mode === 'server' ? '<hr><button role="menuitem" data-act="exportAll">Exportar todos mis datos</button><button role="menuitem" class="out" data-act="logout">Salir</button>' : ''}</div></div></div></header>
+  ${S.actuar && S.view !== 'empresa' ? `<div class="banner" role="status">Trabajas en nombre de <b>${esc(S.actuar.name)}</b>: agenda, pagos y datos de sus consultantes, sin nada de las fichas. <button class="btn sm" data-act="empSalir" style="margin-left:6px">Volver a la vista de administrador</button></div>` : ''}
   ${S.mode === 'local' ? '<div class="banner">Modo local: los datos quedan solo en este navegador.</div>' : ''}
   ${S.mode === 'server' && hasLocal() ? '<div class="banner">Hay datos guardados en este navegador de antes de usar el servidor. <span class="row" style="display:inline-flex;margin-left:6px"><button class="btn sm" data-act="importLocal">Importar al servidor</button><button class="btn sm warn" data-act="dropLocal">Borrar copia local</button></span></div>' : ''}
   ${S.patients.some(x => x.demo) ? `<div class="banner demo">Está viendo <b>consultantes de ejemplo</b> (ficticios), marcados «Ejemplo». Prueba lo que quieras con ellos; nunca se les envía nada.${TEAM() ? '' : ' <button class="btn sm" data-act="demoDel">Borrar los datos de ejemplo</button>'}</div>` : ''}
   ${incomplete && !TEAM() ? '<div class="banner">Completa tu perfil y dibuja tu firma en «Mi perfil». Sin ella no podrás firmar consentimientos, notas ni informes.</div>' : ''}
-  ${S.view === 'agenda' ? agendaHTML() : S.view === 'finanzas' ? finanzasHTML() : S.view === 'cuaderno' && !TEAM() ? pnHTML() : `<div class="layout ${p || S.homeOpen ? 'in-file' : ''}"><div class="plist-wrap">${listHTML()}</div><div class="file-wrap">${p ? fileHTML(p) : homeHTML()}</div></div>`}`;
+  ${S.view === 'empresa' ? empresaHTML() : S.view === 'agenda' ? agendaHTML() : S.view === 'finanzas' ? finanzasHTML() : S.view === 'cuaderno' && !TEAM() ? pnHTML() : `<div class="layout ${p || S.homeOpen ? 'in-file' : ''}"><div class="plist-wrap">${listHTML()}</div><div class="file-wrap">${p ? fileHTML(p) : homeHTML()}</div></div>`}`;
+  if (S.view === 'empresa') { if (EMP.tab === 'notas') ntMount(); return; }
   if (S.view === 'agenda' || S.view === 'finanzas') return;
   if (S.view === 'cuaderno') { pnMount(); return; }
   if (p && !S.draft) { if (S.tab === 'consent' || S.tab === 'intake' || S.tab === 'evol' || S.tab === 'informes') mountPads(); }
@@ -459,8 +465,17 @@ const DUP_LBL = /instagram|facebook|tiktok|correo|mail|tel[eé]fono|celular|what
 const dupKeys = () => [['documento', 'documento'], ['correo', 'correo'], ['telefono', 'teléfono']].concat(datosSchema().flatMap(([t, fs]) => fs.filter(f => DUP_LBL.test(f[1] || '')).map(f => [f[0], f[1]])));
 const normDup = (k, v) => k === 'documento' ? normDoc(v) : String(v || '').trim().toLowerCase().replace(/^@/, '').replace(k === 'telefono' ? /\D/g : /\s/g, '');
 const dupOf = (o, id) => { for (const [k, l] of dupKeys()) { const v = normDup(k, o[k]); if (v.length < 3) continue; const d = S.patients.find(x => x.id !== id && normDup(k, x[k]) === v); if (d) return { d, l, v: o[k] }; } return null; };
+let dupSeq = 0;
+async function dupEmpresa(doc, slot, seq) {  // terapeutas de una empresa: avisa si alguien del equipo ya tiene ficha con ese documento
+  if (!(S.user && S.user.companyId) || TEAM() || normDoc(doc).length < 3) return;
+  let r; try { r = await api('/consultantes/documento-empresa', { method: 'POST', body: { documento: doc } }); } catch (e) { return; }
+  if (seq !== dupSeq || !r.profesional || !$('#dupslot')) return;
+  slot.insertAdjacentHTML('beforeend', `<div class="banner" role="alert"><b>Este documento ya tiene ficha en tu empresa</b>, con ${esc(r.profesional)}. Confirma con esa persona antes de crear otra.</div>`);
+  slot.scrollIntoView({ block: 'center' });
+}
 function dupWarn(o, id) {
   const r = dupOf(o, id), slot = $('#dupslot'); if (!slot) return;
+  const seq = ++dupSeq; dupEmpresa(o.documento, slot, seq);
   slot.innerHTML = r ? `<div class="banner" role="alert"><b>Ya existe la ficha de ${esc(fullName(r.d))}</b> con el mismo dato de ${esc(r.l)} (${esc(r.v)}). Debe haber una sola ficha por persona. <button class="btn sm" data-act="open" data-id="${r.d.id}">Abrir esa ficha</button></div>` : '';
   if (r) slot.scrollIntoView({ block: 'center' });
 }

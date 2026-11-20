@@ -37,15 +37,17 @@ const logoSVG = (px = 32) => `<img class="logo" src="/logo.png" width="${px}" he
 /* ===== Estado ===== */
 const S = { user: null, profile: null, patients: [], notes: [], reports: [], pnotes: [], pagos: [], cobros: [], pn: { q: '', pid: '', tipo: '', estado: 'abiertas', sel: null, draft: null, open: new Set() }, appts: [], files: [], scales: [], view: 'patients', newSol: false, newIncorp: false, newScale: null, week: null, noteSeed: null, pid: null, draft: false, tab: 'datos', q: '', mode: 'local', loading: true, newNote: false, newReport: false };
 
+/* Logo para los documentos: el de la empresa (si la terapeuta es de una) o el del perfil. */
+const DOCLOGO = () => (S.user && S.user.companyLogo) || (S.profile && S.profile.logo) || undefined;
 /* ===== Almacenamiento: privado por usuario en db; respaldo local si db no está disponible ===== */
 /* Llamadas a la API propia (modo servidor). */
 async function api(path, opt = {}) {
   const r = await fetch('/api' + path, {
     method: opt.method || 'GET', credentials: 'same-origin',
-    headers: Object.assign({ 'Content-Type': 'application/json', 'X-Requested-With': 'archivo-clinico' }, opt.headers || {}),
+    headers: Object.assign({ 'Content-Type': 'application/json', 'X-Requested-With': 'archivo-clinico' }, opt.pro ? { 'X-Empresa-Pro': String(opt.pro) } : S.actuar && !/^\/(auth|billing|empresa|equipo|admin)/.test(path) ? { 'X-Empresa-Pro': String(S.actuar.id) } : {}, opt.headers || {}),
     body: opt.body !== undefined ? JSON.stringify(opt.body) : undefined
   });
-  if (r.status === 401 && !opt.noRedirect && S.user) { S.user = null; S.patients = []; S.notes = []; S.reports = []; S.appts = []; S.pagos = []; S.cobros = []; S.files = []; S.scales = []; S.pid = null; hideIdleWarn(); renderLogin('Tu sesión terminó. Ingresa de nuevo.'); throw new Error('Sesión terminada'); }
+  if (r.status === 401 && !opt.noRedirect && S.user) { S.user = null; S.actuar = null; S.patients = []; S.notes = []; S.reports = []; S.appts = []; S.pagos = []; S.cobros = []; S.files = []; S.scales = []; S.pid = null; hideIdleWarn(); renderLogin('Tu sesión terminó. Ingresa de nuevo.'); throw new Error('Sesión terminada'); }
   if (!r.ok) {
     let m = 'Error ' + r.status;
     let det = null;

@@ -77,9 +77,31 @@ button:disabled{opacity:.6;cursor:wait}
 const $ = s => document.querySelector(s);
 const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const H = { 'Content-Type': 'application/json', 'X-Requested-With': 'archivo-clinico' };
-const slug = new URLSearchParams(location.search).get('c') || '';
-const logo = '<svg width="28" height="28" viewBox="0 0 120 120" aria-hidden="true"><rect x="6" y="6" width="108" height="108" rx="16" fill="#4E6B58"/><rect x="34" y="22" width="52" height="64" rx="6" fill="#FFFFFF"/><rect x="46" y="14" width="28" height="16" rx="4" fill="#FFFFFF" stroke="#4E6B58" stroke-width="4"/><rect x="42" y="46" width="36" height="6" rx="3" fill="#4E6B58"/><rect x="42" y="58" width="36" height="6" rx="3" fill="#4E6B58"/><rect x="42" y="70" width="22" height="6" rx="3" fill="#4E6B58"/></svg>';
-const card = h => { $('#m').innerHTML = `<div class="card">${h}</div>`; };
+const qs = new URLSearchParams(location.search), slug = qs.get('c') || '', emp = qs.get('e') || '';  // ?c= enlace de un terapeuta; ?e= enlace de una empresa (el consultante elige terapeuta)
+let pro = qs.get('p') || '', empresa = null;
+const apiBase = () => emp ? '/api/reservar-empresa/' + encodeURIComponent(emp) + '/' + encodeURIComponent(pro) : '/api/reservar/' + encodeURIComponent(slug);
+const otroBtn = () => { if (!emp) return; const c = document.querySelector('.card'); if (c) c.insertAdjacentHTML('beforeend', '<p class="muted"><button type="button" class="opt" id="otro">← Elegir otro terapeuta</button></p>'); if ($('#otro')) $('#otro').onclick = () => { pro = ''; day = ''; hour = ''; month = ''; elegir(); }; };
+const elegirPro = b => async () => { pro = b.dataset.pro; try { await load(); draw(); } catch (r) { pro = ''; card('<div class="res bad">No se pudo cargar el horario de ese terapeuta. Intenta con otro.</div>'); } };
+function elegir() {
+  if (!empresa.profesionales.length) return card(`<h1>${logo}Agendar cita</h1><p><b>${esc(empresa.empresa)}</b></p><div class="res bad">Por ahora no hay terapeutas con horario disponible. Intenta más adelante.</div>`);
+  const cupo = p => { if (!p.proximo) return ''; const f = p.proximo.fecha, hoy = new Date(), k = x => x.getFullYear() + '-' + String(x.getMonth() + 1).padStart(2, '0') + '-' + String(x.getDate()).padStart(2, '0'), man = new Date(hoy.getTime() + 864e5); const hr = new Date(f + 'T' + p.proximo.hora).toLocaleTimeString('es-CO', { hour: 'numeric', minute: '2-digit' }); return 'Próximo cupo: ' + (f === k(hoy) ? 'hoy' : f === k(man) ? 'mañana' : dayTxt(f)) + ', ' + hr; };
+  const ini = n => n.split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0].toUpperCase()).join('');
+  const chip = t => `<span style="font-size:12px;font-weight:600;padding:3px 9px;border-radius:99px;background:var(--surface2);border:1px solid var(--line);color:var(--muted)">${esc(t)}</span>`;
+  const tarjeta = p => `<button type="button" class="opt" data-pro="${p.id}" style="text-align:left;display:flex;gap:12px;align-items:center;padding:14px;border-radius:14px"><span aria-hidden="true" style="width:48px;height:48px;border-radius:50%;background:var(--accent-soft);color:var(--accent);display:flex;align-items:center;justify-content:center;font-weight:700;flex:none">${esc(ini(p.nombre))}</span><span style="flex:1;min-width:0"><b style="font-size:16px">${esc(p.nombre)}</b>${p.especialidad || p.consultorio ? '<br><span class="muted" style="font-size:13px">' + esc(p.especialidad || p.consultorio) + '</span>' : ''}<span style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">${(p.modalidades || []).map(chip).join('')}</span>${cupo(p) ? '<span style="display:block;margin-top:8px;font-size:13px;font-weight:600;color:#17653a">' + esc(cupo(p)) + '</span>' : ''}</span><span aria-hidden="true" style="color:var(--muted);font-size:22px">›</span></button>`;
+  const norm = t => String(t || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+  const pintar = q => { const L = empresa.profesionales.filter(p => !q || norm(p.nombre + ' ' + (p.especialidad || '')).includes(norm(q))); $('#plist').innerHTML = L.length ? L.map(tarjeta).join('') : '<p class="muted" style="margin:0">No encontramos a nadie con ese nombre.</p>'; document.querySelectorAll('[data-pro]').forEach(b => b.onclick = elegirPro(b)); };
+  card(`<h1>${logo}¿Con quién quieres agendar?</h1><p class="muted" style="margin:0">Elige un terapeuta y ve su primer horario libre.</p><input id="pbusca" type="search" style="width:100%;box-sizing:border-box" placeholder="Buscar por nombre o especialidad" aria-label="Buscar terapeuta" autocomplete="off"><div id="plist" style="display:grid;gap:10px"></div>`);
+  $('#pbusca').oninput = e => pintar(e.target.value); pintar('');
+}
+const logo0 = '<svg width="26" height="26" viewBox="0 0 120 120" aria-hidden="true"><rect x="6" y="6" width="108" height="108" rx="16" fill="#4E6B58"/><rect x="34" y="22" width="52" height="64" rx="6" fill="#FFFFFF"/><rect x="46" y="14" width="28" height="16" rx="4" fill="#FFFFFF" stroke="#4E6B58" stroke-width="4"/><rect x="42" y="46" width="36" height="6" rx="3" fill="#4E6B58"/><rect x="42" y="58" width="36" height="6" rx="3" fill="#4E6B58"/><rect x="42" y="70" width="22" height="6" rx="3" fill="#4E6B58"/></svg>';
+let logo = logo0.replace('width="26" height="26"', 'width="28" height="28"');
+/* Empresa con logo o eslogan: encabezan la página y Alter-Karute queda en un pie pequeño. */
+let marca = null, pieColor = '';
+/* Texto del pie sobre el fondo que eligió la empresa: el que dé más contraste, oscuro o blanco. */
+const contraste = hex => { const c = [1, 3, 5].map(i => parseInt(hex.slice(i, i + 2), 16) / 255).map(v => v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4)), L = 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]; return (L + 0.05) / 0.061 >= 1.05 / (L + 0.05) ? '#1d1b2a' : '#ffffff'; };
+const setMarca = m => { if (!m || marca) return; marca = m; logo = ''; if (/^#[0-9a-f]{6}$/i.test(m.color || '')) { document.body.style.background = m.color; pieColor = contraste(m.color); } };
+const marcaHTML = () => !marca ? '' : `${marca.logo ? `<div style="position:relative;margin:-20px -20px 2px;padding:22px 20px;background:var(--accent-soft);border-radius:12px 12px 0 0;text-align:center"><a href="https://alter.karute.systems" aria-label="Alter-Karute" style="position:absolute;top:8px;right:10px">${logo0}</a><img src="${esc(marca.logo)}" alt="${esc(marca.nombre)}" style="max-width:260px;max-height:110px;width:auto;height:auto"></div>` : `<a href="https://alter.karute.systems" aria-label="Alter-Karute" style="float:right;margin:-4px -4px 0 8px">${logo0}</a>`}<div style="margin:0 0 14px;text-align:center"><b style="font-size:20px">${esc(marca.nombre)}</b>${marca.eslogan ? `<div class="muted" style="font-style:italic;margin-top:4px">${esc(marca.eslogan)}</div>` : ''}${marca.textoReservas ? `<p style="margin:10px 0 0;white-space:pre-line;text-align:left">${esc(marca.textoReservas)}</p>` : ''}</div>`;
+const card = h => { $('#m').innerHTML = `<div class="card">${marcaHTML()}${h}</div>${marca ? `<p class="muted" style="text-align:center;font-size:12px;margin:10px 0 0${pieColor ? ';color:' + pieColor : ''}">Agenda con <a href="https://alter.karute.systems" style="color:inherit">Alter-Karute</a></p>` : ''}`; };
 const dayTxt = k => new Date(k + 'T12:00:00').toLocaleDateString('es-CO', { weekday: 'short', day: '2-digit', month: '2-digit', year: 'numeric' });
 let d, month = '', day = '', hour = '', nuevo = false, vals = {};
 /* Los horarios llegan en la zona del consultorio (d.zona). Aquí se pasan a la zona horaria del navegador de quien reserva. */
@@ -101,7 +123,7 @@ function tzNote() {
 }
 function draw(msg) {
   const days = Object.keys(d.dias).sort();
-  if (!days.length) return card(`<h1>${logo}Agendar cita</h1><p>Con <b>${esc(d.profesional)}</b>${d.consultorio ? ' · ' + esc(d.consultorio) : ''}</p><div class="res bad">No hay horarios disponibles por ahora. Intenta más adelante o comunícate con el consultorio.</div>`);
+  if (!days.length) { card(`<h1>${logo}Agendar cita</h1><p>Con <b>${esc(d.profesional)}</b>${d.consultorio ? ' · ' + esc(d.consultorio) : ''}</p><div class="res bad">No hay horarios disponibles por ahora. Intenta más adelante o comunícate con el consultorio.</div>`); return otroBtn(); }
   if (!month) month = (day || days[0]).slice(0, 7);
   const [Y, M] = month.split('-').map(Number);
   const f = (id, label, type = 'text', ac = '') => `<div class="fld"><label for="${id}">${label}</label><input id="${id}" type="${type}" autocomplete="${ac}" value="${esc(vals[id] || '')}"></div>`;
@@ -114,6 +136,7 @@ function draw(msg) {
     ${d.reunion ? '' : `<label class="chk"><input type="checkbox" id="nuevo" ${nuevo ? 'checked' : ''}> Soy consultante nuevo</label>`}
     ${f('nombres', 'Nombres', 'text', 'given-name')}${f('apellidos', 'Apellidos', 'text', 'family-name')}${f('correo', 'Correo electrónico', 'email', 'email')}
     ${d.reunion ? f('telefono', 'Teléfono de contacto', 'tel', 'tel') + f('profesion', '¿Qué tipo de terapia realizas?') + f('ciudad', 'Ciudad', 'text', 'address-level2') : nuevo ? f('telefono', 'Teléfono de contacto', 'tel', 'tel') : f('documento', 'Número de documento')}
+    ${d.comprobante && !d.reunion ? `<div class="fld"><label for="comp">Comprobante de pago</label><input id="comp" type="file" accept="image/*,application/pdf">${compFile ? `<p class="muted">Archivo elegido: ${esc(compFile.name)}</p>` : ''}<p class="muted">Para agendar debes subir el comprobante del pago de la cita (foto o PDF).</p></div>` : ''}
     ${msg || ''}<button id="go" type="button">${d.reunion ? 'Agendar reunión' : 'Agendar cita'}</button>
     <p class="muted">${d.reunion ? 'No se crea ninguna ficha: es una reunión para conocer Alter-Karute.' : nuevo ? 'Tu cita queda agendada; el terapeuta abrirá tu ficha más adelante.' : 'Debemos encontrar tu ficha con el documento y el correo registrados.'} Recibirá una confirmación por correo.</p>` : (msg || '')}`);
   document.querySelectorAll('[data-day]').forEach(b => b.onclick = () => { keep(); day = b.dataset.day; hour = ''; draw(); });
@@ -121,15 +144,34 @@ function draw(msg) {
   document.querySelectorAll('[data-hour]').forEach(b => b.onclick = () => { keep(); hour = b.dataset.hour; draw(); });
   if ($('#nuevo')) $('#nuevo').onchange = () => { keep(); nuevo = $('#nuevo').checked; draw(); };
   if ($('#go')) $('#go').onclick = send;
+  if ($('#comp')) $('#comp').onchange = e => { compFile = e.target.files[0] || null; keep(); draw(); };
+  otroBtn();
 }
 const modsOf = h => (d.modalidadDia || {})[(h || '').slice(0, 10)] || d.modalidades;  // tipos de consulta que el terapeuta marcó para ese día
 const pickMod = h => { const ms = modsOf(h); return ms.includes(vals.mod) ? vals.mod : ms[0]; };
 function keep() { document.querySelectorAll('input[type=text],input[type=email],input[type=tel],select').forEach(i => { vals[i.id] = i.value; }); }
+let compFile = null;
+/* Las fotos se reducen aquí (máximo 2400 px, JPEG) antes de subirlas; el servidor optimiza los PDF y guarda todo comprimido. */
+async function prepararComprobante(f) {
+  let blob = f, tipo = f.type;
+  if (/^image\/(jpeg|png|webp)$/.test(f.type)) {
+    try {
+      const bmp = await createImageBitmap(f, { imageOrientation: 'from-image' }), k = Math.min(1, 2400 / Math.max(bmp.width, bmp.height)), w = Math.round(bmp.width * k), h = Math.round(bmp.height * k);
+      const c = document.createElement('canvas'); c.width = w; c.height = h; const g = c.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, w, h); g.drawImage(bmp, 0, 0, w, h);
+      const r = await new Promise(res => c.toBlob(res, 'image/jpeg', 0.85)); if (r && r.size < f.size * 0.9) { blob = r; tipo = 'image/jpeg'; }
+    } catch (e) { /* se envía tal cual */ }
+  }
+  const b64 = await new Promise((res, rej) => { const fr = new FileReader(); fr.onload = () => res(String(fr.result).split(',')[1] || ''); fr.onerror = rej; fr.readAsDataURL(blob); });
+  return { comprobante: b64, comprobanteTipo: tipo };
+}
 async function send() {
-  keep(); $('#go').disabled = true;
+  keep();
+  if (d.comprobante && !d.reunion && !compFile) return draw('<div class="res bad">Sube el comprobante de pago para poder agendar.</div>');
+  $('#go').disabled = true;
   const body = { inicio: hour, modalidad: pickMod(hour), nuevo: nuevo || !!d.reunion, profesion: vals.profesion || '', ciudad: vals.ciudad || '', nombres: vals.nombres || '', apellidos: vals.apellidos || '', correo: vals.correo || '', documento: vals.documento || '', telefono: vals.telefono || '' };
   try {
-    const r = await fetch('/api/reservar/' + encodeURIComponent(slug), { method: 'POST', headers: H, body: JSON.stringify(body) });
+    if (d.comprobante && !d.reunion) Object.assign(body, await prepararComprobante(compFile));
+    const r = await fetch(apiBase(), { method: 'POST', headers: H, body: JSON.stringify(body) });
     const j = await r.json().catch(() => ({}));
     if (r.status === 409) { await load(); hour = ''; return draw('<div class="res bad">' + esc(j.detail) + '</div>'); }
     if (!r.ok) return draw('<div class="res bad">' + esc(j.detail || 'No se pudo agendar. Intenta de nuevo.') + '</div>');
@@ -137,10 +179,13 @@ async function send() {
     card(`<h1>${logo}${d.reunion ? 'Reunión confirmada' : 'Cita confirmada'}</h1><div class="res ok">Tu ${d.reunion ? 'reunión' : 'cita'} quedó agendada para el ${esc(cuando)} (${esc(j.modalidad).toLowerCase()}).</div><p class="muted">Te enviamos la confirmación a tu correo. Si no la ves, revisa la carpeta de spam.</p>`);
   } catch (e) { draw('<div class="res bad">No hay conexión. Intenta de nuevo.</div>'); }
 }
-async function load() { const r = await fetch('/api/reservar/' + encodeURIComponent(slug), { headers: H }); if (!r.ok) throw r; d = await r.json(); conv(); }
+async function load() { const r = await fetch(apiBase(), { headers: H }); if (!r.ok) throw r; d = await r.json(); setMarca(d.marca); conv(); }
 (async () => {
-  if (!slug) return card('<div class="res bad">El enlace está incompleto. Ábrelo de nuevo desde el mensaje que recibiste.</div>');
-  try { await load(); draw(); } catch (r) {
+  if (!slug && !emp) return card('<div class="res bad">El enlace está incompleto. Ábrelo de nuevo desde el mensaje que recibiste.</div>');
+  try {
+    if (emp) { const r = await fetch('/api/reservar-empresa/' + encodeURIComponent(emp), { headers: H }); if (!r.ok) throw r; empresa = await r.json(); setMarca(empresa.marca); if (!pro || !empresa.profesionales.some(p => String(p.id) === pro)) { pro = ''; return elegir(); } }
+    await load(); draw();
+  } catch (r) {
     const j = r.json ? await r.json().catch(() => ({})) : {};
     card('<div class="res bad">' + esc(r.status === 404 ? 'Este enlace no está disponible.' : j.detail || 'No se pudo cargar. Intenta en unos minutos.') + '</div>');
   }

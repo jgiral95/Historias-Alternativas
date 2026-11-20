@@ -225,8 +225,12 @@ def messages(prof: dict, start: datetime, dur: int, mod: str, who: str, patient_
     place = prof.get("consultorio") or prof.get("nombre") or "tu consulta"
     first = who.split(" ")[0]
     filas = [("Cuándo", cuando), ("Modalidad", f"{mod} · {dur} min"), ("Con", ter + (f" · {prof['consultorio']}" if prof.get("consultorio") and prof["consultorio"].strip().lower() != ter.strip().lower() else ""))]
-    meet = enlace_ok(REUNION_URL) if reunion else enlace_ok(enlace)
-    cal = gcal_link(start, dur, ter, mod, prof.get("consultorio") or "", meet, reunion)
+    presencial = mod == "Presencial" and not reunion
+    dir_ = (prof.get("direccion") or "").strip() if presencial else ""
+    if dir_:
+        filas.append(("Dirección", dir_))
+    meet = enlace_ok(REUNION_URL) if reunion else ("" if presencial else enlace_ok(enlace))  # el enlace de la videollamada no aplica a una cita presencial
+    cal = gcal_link(start, dur, ter, mod, dir_ or prof.get("consultorio") or "", meet, reunion)
     cita, ver = ("reunión", "Ver o cancelar mi reunión") if reunion else ("cita", "Ver o cancelar mi cita")
     cierre = f"¿Tuviste un imprevisto? Puedes ver o cancelar tu {cita} en cualquier momento con este botón." if url else "¡Te esperamos!"
     otro = (f"Si prefieres otra hora, cancela la {cita} y", "elige un nuevo horario", otra_hora) if url and otra_hora else None
@@ -252,6 +256,39 @@ def messages(prof: dict, start: datetime, dur: int, mod: str, who: str, patient_
     t_txt = f"Tienes {'una nueva reunión informativa agendada' if reunion else 'una nueva cita agendada'} por tu enlace.\n\n" + "\n".join(f"{k}: {v}" for k, v in t_filas) + f"\n\n{t_cierre}\n\nMensaje automático enviado con Alter-Karute.\n"
     t_html = correo.layout("Nueva reunión informativa agendada" if reunion else "Nueva cita agendada", [f"{first} acaba de agendar {'una reunión informativa' if reunion else 'una cita'} por tu enlace de reservas."], t_filas, [t_cierre], firma=("Que tengas un buen día,", "El equipo de Alter-Karute"))
     return [(patient_mail, f"¡Tu {cita} está confirmada! — {place}", txt, html), (therapist_mail, f"Nueva reunión informativa: {who}" if reunion else f"Nueva cita agendada: {who}", t_txt, t_html)]
+
+
+def notify_cancel(prof: dict, acc: dict, start: datetime, dur: int, mod: str, who: str, to: str, antes: datetime | None = None, por_admin: bool = False) -> None:
+    """Avisa al consultante que su cita fue cancelada (o, con `antes`, que cambió de fecha u hora) por el terapeuta o la administración. Un fallo no afecta el guardado."""
+    ter = prof.get("nombre") or "tu terapeuta"
+    first = (who or "").split(" ")[0]
+    if antes:
+        asunto, frase = "Tu cita cambió de fecha u hora", f"Te informamos que tu cita con {ter} fue reprogramada."
+        filas = [("Antes", reminders.when_text(antes)), ("Ahora", reminders.when_text(start)), ("Modalidad", f"{mod} · {dur} min"), ("Con", ter)]
+        cierre = "Si esta nueva hora no te sirve, comunícate con el consultorio."
+    else:
+        asunto, frase = "Tu cita fue cancelada", f"Te informamos que tu cita con {ter} fue cancelada."
+        filas = [("Cuándo", reminders.when_text(start)), ("Modalidad", f"{mod} · {dur} min"), ("Con", ter)]
+        cierre = "Si tienes dudas, comunícate con tu terapeuta." if por_admin else "Si quieres reagendar, comunícate con el consultorio. Lamentamos los inconvenientes."
+    txt = f"Hola{(', ' + first) if first else ''}. {frase}\n\n" + "\n".join(f"{k}: {v}" for k, v in filas) + f"\n\n{cierre}\n\nAtentamente,\n{ter}\n\nMensaje automático enviado con Alter-Karute.\n"
+    html = correo.layout(asunto, [f"Hola{(', ' + first) if first else ''}. {frase}"], filas, [cierre], None, [], ("Atentamente,", ter))
+    try:
+        send_mail(to, asunto, txt, prof, acc, html)
+    except Exception as e:  # noqa: BLE001
+        _aviso_falla("aviso de cancelación", e)
+
+
+def notify_cancel_pro(prof: dict, acc: dict, start: datetime, dur: int, mod: str, who: str, motivo: str, admin: str, to: str) -> None:
+    """Avisa al terapeuta que el administrador de su empresa canceló una de sus citas, con el motivo."""
+    first = (prof.get("nombre") or "").split(" ")[0]
+    frase = f"{admin or 'El administrador de tu empresa'} canceló una de tus citas."
+    filas = [("Consultante", who or "Consultante nuevo"), ("Cuándo", reminders.when_text(start)), ("Modalidad", f"{mod} · {dur} min"), ("Motivo", motivo or "—")]
+    txt = f"Hola{(', ' + first) if first else ''}. {frase}\n\n" + "\n".join(f"{k}: {v}" for k, v in filas) + "\n\nMensaje automático enviado con Alter-Karute.\n"
+    html = correo.layout("Se canceló una de tus citas", [f"Hola{(', ' + first) if first else ''}. {frase}"], filas, [], None, [])
+    try:
+        send_mail(to, "Se canceló una de tus citas", txt, prof, acc, html)
+    except Exception as e:  # noqa: BLE001
+        _aviso_falla("aviso de cancelación al terapeuta", e)
 
 
 def notify(prof: dict, acc: dict, start: datetime, dur: int, mod: str, who: str, patient_mail: str, therapist_mail: str, nuevo: dict | None, url: str = "", otra_hora: str = "", enlace: str = "", reunion: bool = False) -> None:

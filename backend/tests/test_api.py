@@ -378,7 +378,7 @@ def test_google_calendar_one_way_sync(monkeypatch):
     gcal._tokens.clear()
     make_user("gc@x.co"); make_user("otro2@x.co")
     c = client_for("gc@x.co")
-    assert c.get("/api/google/status").json() == {"enabled": True, "connected": False, "detail": "iniciales", "last_sync": None, "last_error": "", "calendar": "Alter-Karute"}
+    assert c.get("/api/google/status").json() == {"enabled": True, "connected": False, "detail": "iniciales", "last_sync": None, "last_error": "", "calendar": "Alter-Karute", "empresa": False}
     c.put("/api/records/p_1", json=patient("p_1", consents=consent()))
     appt = {"id": "a_1", "kind": "appt", "patientId": "p_1", "startAt": "2099-03-04T15:00:00.000Z", "duracion": 50, "modalidad": "Virtual", "estado": "Programada"}
     c.put("/api/records/a_1", json=appt)  # antes de conectar no pasa nada

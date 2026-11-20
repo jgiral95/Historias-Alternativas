@@ -30,6 +30,8 @@ def fresh_db():
     Base.metadata.create_all(engine)
     main._fails.clear()
     main._vhits.clear()
+    main._Limite._hits.clear()
+    main._shits.clear()
     yield
 
 

@@ -627,3 +627,110 @@ h1,h2,h3{font-family:var(--f-doc);font-weight:600;letter-spacing:.1px}
 .ap.prox{box-shadow:0 0 0 3px var(--accent-soft),0 4px 14px rgba(78,107,88,.18)}
 .aglegend{display:flex;flex-wrap:wrap;gap:6px 16px;padding:8px 16px 0;font-size:12px;color:var(--muted)}
 .aglegend span{display:inline-flex;align-items:center;gap:6px}.aglegend span::before{content:"";width:12px;height:12px;border-radius:4px;background:color-mix(in srgb,var(--mc) 25%,var(--surface));border-left:3px solid var(--mc)}
+
+/* Agenda general de la empresa: una columna por terapeuta en cada día */
+.agg{overflow:auto;max-height:68vh;border:1px solid var(--line);border-radius:8px;background:var(--surface);margin-top:8px}
+.agin{display:block}
+.aghead{position:sticky;top:0;z-index:3;display:flex;background:var(--surface);border-bottom:1px solid var(--line)}
+.agbody{display:flex}
+.aggut{flex:0 0 56px;position:sticky;left:0;z-index:2;background:var(--surface)}
+.aghora{box-sizing:border-box;font-size:11px;color:var(--muted);text-align:right;padding:0 6px;white-space:nowrap;transform:translateY(-7px)}
+.agbody{padding-top:8px}  /* deja ver la primera hora, que se dibuja centrada en su línea */
+.agbody .agcol{box-shadow:inset 0 1px 0 var(--line)}  /* línea de la primera hora (las demás se dibujan al final de cada hora) */
+.agbody .agcol[data-act]{cursor:pointer}
+.agdia{display:flex;flex-direction:column;border-left:1px solid var(--line);min-width:0}
+.agbody .agdia{flex-direction:column}
+.agdiah{text-align:center;font-size:12px;font-weight:600;padding:4px 0;border-bottom:1px solid var(--line);text-transform:capitalize}
+.agdiah.hoy{color:var(--accent-fg);background:var(--accent-soft)}
+.agcols{display:flex;flex:1}
+.agcol{position:relative;flex:1 1 0;min-width:0;border-left:1px solid var(--line);background:repeating-linear-gradient(to bottom,transparent 0,transparent 47px,var(--line) 47px,var(--line) 48px)}
+.agcol:first-child{border-left:0}
+.agcolh{display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 2px;font-size:12px;background:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.agav{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;color:#fff;font-size:11px;font-weight:700;flex:none}
+.agchip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:2px 10px 2px 3px;font:inherit;font-size:13px;cursor:pointer;opacity:.5}
+.agchip.on{opacity:1;border-color:var(--accent);background:var(--accent-soft)}
+.agev{--mc:var(--accent);position:absolute;left:2px;right:2px;box-sizing:border-box;border-radius:6px;padding:2px 5px;color:var(--ink);font-size:11px;line-height:1.25;overflow:hidden;cursor:default;background:color-mix(in srgb,var(--mc) 18%,var(--surface));border:1px solid color-mix(in srgb,var(--mc) 35%,var(--line));border-left:3px solid var(--mc)}
+.agev.mp{--mc:var(--accent)}.agev.mv{--mc:var(--ok)}.agev.mt{--mc:var(--warn)}
+.agev b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.agev.canc{opacity:.4;text-decoration:line-through}
+.agev.noas{opacity:.7;outline:1px dashed var(--muted);outline-offset:-3px}
+.agdisp{position:absolute;left:0;right:0;background:color-mix(in srgb,var(--accent) 9%,transparent);pointer-events:none}
+
+/* Empresa: Finanzas y Estadísticas */
+.empk{margin:4px 0 14px}
+.empk .stat{position:relative;padding-left:14px}
+.empk .stat::before{content:"";position:absolute;left:0;top:10px;bottom:10px;width:3px;border-radius:3px;background:var(--accent)}
+.empk .stat.ok::before{background:var(--ok)}.empk .stat.warn::before{background:var(--warn)}
+.empk .stat span{display:block;margin-bottom:2px}.empk .stat b{font-size:22px}
+.empk .stat em{display:block;font-style:normal;font-size:12px;color:var(--muted);margin-top:2px}
+.empcard{border:1px solid var(--line);border-radius:12px;background:var(--surface);padding:14px 16px;margin:12px 0}
+.empcard>h3{margin:0 0 10px;font-size:15px}
+.empgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:0 14px}
+.empbars{display:grid;gap:8px}
+.emplg{display:flex;flex-wrap:wrap;gap:12px;font-size:12px;color:var(--muted);margin-top:4px}.emplg i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px}
+.empper{margin:8px 0 0;gap:6px}
+.empfin .sttab tfoot th,.empstats .sttab tfoot th{font-weight:600}
+@media (max-width:640px){.empgrid{grid-template-columns:1fr}.empk .stat b{font-size:19px}}
+.empk button.stat{text-align:left;font:inherit;color:inherit;cursor:pointer;width:100%}
+.empk button.stat:hover,.empk button.stat:focus-visible{border-color:var(--accent);background:var(--accent-soft)}
+.empk button.stat b{font-family:var(--f-mono)}
+
+/* Agenda del día de la empresa: una tarjeta por terapeuta (cabecera con avatar y resumen, y la columna del día debajo) */
+.agg.un .agcols{gap:10px;padding:0 6px}
+.agg.un .agdia{border-left:0}
+.agg.un .agcol{border:0.5px solid var(--line);border-radius:12px}
+.agg.un .agcolh{flex-direction:row;justify-content:flex-start;align-items:center;gap:10px;padding:10px 12px;margin-top:8px;background:var(--surface)}
+.agg.un .agcolh .agav{width:32px;height:32px;font-size:12px}
+.agg.un .agnm{display:flex;flex-direction:column;align-items:flex-start;min-width:0;line-height:1.3}
+.agg.un .agnm b{font-size:14px;font-weight:600}.agg.un .agnm small{font-size:12px;color:var(--muted)}
+
+/* Casillas libres de la agenda de la empresa: «+» para agendar; con círculo donde hay consultorio libre para presencial */
+.agslot{position:absolute;left:0;right:0;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:300;line-height:1;color:color-mix(in srgb,var(--muted) 50%,transparent)}
+.agslot:hover{background:var(--accent-soft);color:var(--accent-fg)}
+.agslot.cons span{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;border:1.5px solid var(--accent);background:var(--accent-soft);color:var(--accent-fg);font-size:16px;font-weight:500}
+.agslot.cons:hover span{background:var(--accent);color:#fff}
+.agpista{display:flex;gap:16px;flex-wrap:wrap;align-items:center;padding:6px 16px 0;font-size:12px;color:var(--muted)}
+.agpista i{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;margin-right:4px;font-style:normal;font-size:13px;color:var(--muted)}
+.agpista i.c{border:1.5px solid var(--accent);border-radius:50%;background:var(--accent-soft);color:var(--accent-fg);font-weight:500}
+
+/* Semana de la empresa: cabeceras de día con número, líneas más suaves, hoy resaltado y citas más redondeadas */
+.agg{scrollbar-width:thin;scrollbar-color:var(--line) transparent}
+.agg.sem{border-radius:14px}
+.agg.sem .aghead{box-shadow:0 1px 0 var(--line);border-bottom:0}
+.agg.sem .agdiah{display:flex;flex-direction:column;align-items:center;gap:2px;padding:10px 0 4px;border-bottom:0;text-transform:none;font-size:11px;font-weight:500;color:var(--muted)}
+.agg.sem .agdiah b{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;font-size:15px;font-weight:600;color:var(--ink)}
+.agg.sem .agdiah.hoy{background:none;color:var(--accent-fg)}
+.agg.sem .agdiah.hoy b{background:var(--accent);color:#fff}
+.agg.sem .agcolh{padding:4px 2px 8px;gap:3px;font-size:11px;font-weight:500;color:var(--muted)}
+.agg.sem .agcolh .agav{width:22px;height:22px;font-size:10px}
+.agg.sem .agcol{border-left-color:color-mix(in srgb,var(--line) 45%,transparent)}
+.agg.sem .agbody .agcol{background-image:repeating-linear-gradient(to bottom,transparent 0,transparent 47px,color-mix(in srgb,var(--line) 60%,transparent) 47px,color-mix(in srgb,var(--line) 60%,transparent) 48px)}
+.agg.sem .agdia.hoyc .agbody .agcol,.agg.sem .agdia.hoyc .agcols .agcol:not(.agcolh){background-color:var(--accent-soft)}
+.agg.sem .agslot:not(.cons){color:color-mix(in srgb,var(--muted) 28%,transparent)}
+.agg.sem .agslot:hover{background:none;color:var(--accent-fg)}
+.agg .agev{border-radius:8px;padding:3px 7px}
+.agg .agev b{font-weight:600}
+
+/* Barra superior de la vista de empresa: 7 secciones no caben junto a la marca y los botones en ventanas medianas; la barra pasa a dos filas y las secciones se ajustan o se desplazan */
+.top.emp .top-search{display:none}.top.emp .top-actions{margin-left:auto}
+@media (min-width:641px) and (max-width:1180px){
+  .top.emp{flex-wrap:wrap}
+  .top.emp .nav{order:4;flex:1 1 100%;justify-content:center;overflow-x:auto;scrollbar-width:none}
+  .top.emp .nav::-webkit-scrollbar{display:none}
+  .top.emp .nav button{flex:1 0 auto;white-space:nowrap}
+}
+
+/* Vista de empresa: «Más» y su hoja solo existen en celular; en escritorio las 7 secciones van en línea */
+.nav .mas{display:none}.nav .massheet{display:contents}
+@media (max-width:640px){
+  .top.emp .nav{overflow:visible}
+  .top.emp .nav .mas{display:flex}
+  .top.emp .nav .massheet{display:none;position:absolute;left:0;right:0;bottom:100%;background:var(--surface);border-top:1px solid var(--line);border-radius:14px 14px 0 0;padding:10px 12px;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;box-shadow:0 -6px 18px rgba(30,25,60,.12)}
+  .top.emp .nav.abierto .massheet{display:grid}
+  .top.emp .nav .massheet button{flex-direction:row;justify-content:flex-start;gap:8px;padding:10px;font-size:13px;border:1px solid var(--line);border-radius:10px}
+  .top.emp .nav .massheet button.on{background:var(--accent-soft)!important;color:var(--accent-fg)}
+}
+/* Celular: las tablas anchas de la vista de empresa (estadísticas, consultantes) se desplazan de lado en vez de salirse de la pantalla */
+@media (max-width:640px){.empstats table.sttab,.sec table.sttab{display:block;max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}.empstats table.sttab td,.sec table.sttab td{white-space:nowrap}}
+/* Tablas de la vista de empresa: filas alternadas */
+.empstats table.sttab tbody tr:nth-child(even) td,.sec table.sttab tbody tr:nth-child(even) td{background:color-mix(in srgb,var(--accent-soft) 45%,transparent)}
