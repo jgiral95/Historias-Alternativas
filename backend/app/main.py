@@ -472,6 +472,12 @@ def logout(response: Response):
     response.delete_cookie(COOKIE, path="/")
 
 
+@app.get("/api/health")
+def health(db: Session = Depends(get_db)):
+    db.execute(select(1))
+    return {"ok": True}
+
+
 @app.get("/api/auth/me")
 def me(user: User = Depends(current_user), db: Session = Depends(get_db)):
     return {**user_out(user, db.get(User, user.owner_id) if user.owner_id else None), "idle_minutes": IDLE_MINUTES,
@@ -1038,6 +1044,89 @@ def _avisar_cita(db: Session, oid: int, ap: dict, bg: BackgroundTasks, who: str,
     bg.add_task(booking.notify, prof, acc, start, int(ap.get("duracion") or 50), ap.get("modalidad") or "", who, correo, "", nuevo, "", "", str(ap.get("enlace") or ""))
 
 
+MAX_INVITADOS = 10
+
+
+def _preparar_invitaciones(old: dict | None, ap: dict, db: Session, oid: int) -> list[tuple[str, list[str]]]:
+    """Eventos de la agenda con invitados (reuniones con un colega, supervisiones…): valida los correos y decide a quién se avisa al guardar.
+    Solo se envía si marcaste «Enviar invitación» (`avisarCorreo`, que no se guarda). Los ya invitados solo reciben aviso si cambia la hora, la duración, el título o el enlace
+    (o si se cancela); los nuevos reciben la invitación. `invitadosAvisados` lo lleva el servidor. Devuelve [(modo, correos)]."""
+    if not ap.get("evento"):
+        for k in ("invitados", "invitadosAvisados"):
+            ap.pop(k, None)
+        return []
+    enviar = bool(ap.pop("avisarCorreo", False))
+    crudo = ap.get("invitados") or []
+    if not isinstance(crudo, list) or len(crudo) > MAX_INVITADOS or not all(isinstance(c, str) for c in crudo):
+        raise HTTPException(400, f"Máximo {MAX_INVITADOS} invitados, con un correo cada uno")
+    inv: list[str] = []
+    for c in crudo:
+        c = c.strip().lower()
+        if not EMAIL_RE.match(c) or len(c) > 200:
+            raise HTTPException(400, f"El correo «{c[:60]}» no es válido")
+        if c not in inv:
+            inv.append(c)
+    enl = str(ap.get("enlace") or "").strip()
+    if enl and not re.match(r"^https?://\S{4,500}$", enl):
+        raise HTTPException(400, "El enlace de la reunión debe empezar por https://")
+    ap["invitados"] = inv
+    avisados = [c for c in ((old or {}).get("invitadosAvisados") or []) if isinstance(c, str)]
+    ap["invitadosAvisados"] = avisados
+    if not enviar or not inv and not avisados:
+        return []
+    if not survey.smtp_enabled(survey.account(db, oid)):
+        raise HTTPException(409, "Para enviar invitaciones configura tu correo de envío (Perfil → Correo).")
+    cancela = ap.get("estado") == "Cancelada"
+    cambio = bool(old) and (any(old.get(k) != ap.get(k) for k in ("startAt", "duracion", "evento", "enlace")) or old.get("estado") == "Cancelada" and not cancela)
+    out: list[tuple[str, list[str]]] = []
+    if cancela:
+        if old and old.get("estado") != "Cancelada" and avisados:
+            out.append(("cancelado", list(avisados)))
+        return out
+    nuevos = [c for c in inv if c not in avisados]
+    ya = [c for c in inv if c in avisados]
+    if nuevos:
+        out.append(("invitacion", nuevos))
+    if cambio and ya:
+        out.append(("cambio", ya))
+    ap["invitadosAvisados"] = avisados + nuevos
+    return out
+
+
+def _enviar_invitaciones(db: Session, oid: int, ap: dict, envios: list[tuple[str, list[str]]], bg: BackgroundTasks) -> None:
+    if not envios:
+        return
+    start = reminders.parse(ap.get("startAt"))
+    if not start:
+        return
+    acc = survey.account(db, oid)
+    prow = db.get(Record, (oid, "profile"))
+    prof = decrypt(prow.payload) if prow else {}
+    for modo, correos in envios:
+        bg.add_task(booking.notify_evento, prof, acc, start, int(ap.get("duracion") or 50), str(ap.get("evento") or "Reunión")[:200], correos, str(ap.get("enlace") or ""), modo, str(ap.get("id") or ""))
+
+
+def _check_cruce(db: Session, oid: int, rid: str, old: dict | None, payload: dict) -> None:
+    """Un terapeuta no puede tener dos citas a la vez (los eventos y las canceladas no cuentan). Solo se revisa al crear la cita, al cambiarle
+    fecha, hora o duración, o al reactivarla: marcar como atendida una cita ya existente no se bloquea."""
+    if payload.get("evento") or str(payload.get("estado") or "").startswith("Cancelada"):
+        return
+    if old and not str(old.get("estado") or "").startswith("Cancelada") and all(old.get(k) == payload.get(k) for k in ("startAt", "duracion")):
+        return
+    ini = reminders.parse(payload.get("startAt"))
+    if not ini:
+        return
+    fin = ini + timedelta(minutes=int(payload.get("duracion") or 50))
+    for a in _appts_of(db, oid):
+        o = reminders.parse(a.get("startAt"))
+        if a.get("id") == rid or a.get("evento") or str(a.get("estado") or "").startswith("Cancelada") or not o:
+            continue
+        fa = o + timedelta(minutes=int(a.get("duracion") or 50))
+        if o < fin and fa > ini:
+            h = lambda d: d.astimezone(booking.TZ).strftime("%H:%M")
+            raise HTTPException(409, f"Ya tienes otra cita en ese horario ({h(o)} a {h(fa)}). Elige otra hora.")
+
+
 def _avisar_cita_nueva(db: Session, oid: int, ap: dict, bg: BackgroundTasks) -> None:
     """Cita creada por el profesional: si marcó «Enviar la cita por correo» (consultante con ficha) o es un consultante nuevo con correo, se le confirma.
     En una serie semanal solo sale para la primera cita que se guarda."""
@@ -1162,6 +1251,10 @@ def put_record(rid: str, request: Request, bg: BackgroundTasks, payload: dict = 
     row = db.get(Record, (oid, rid))
     old = decrypt(row.payload) if row else None
     restoring = request.headers.get("x-import") == "1" and not team
+    envios: list[tuple[str, list[str]]] = []
+    if kind == "appt":
+        envios = _preparar_invitaciones(old, payload, db, oid)
+        _check_cruce(db, oid, rid, old, payload)
     if kind == "patient":
         payload.pop("consentAgenda", None)  # dato calculado para el equipo; no se guarda
         if team:  # el equipo nunca ve ni toca lo que se habla en sesión (ni la retención especial): se conserva lo que ya había
@@ -1216,6 +1309,7 @@ def put_record(rid: str, request: Request, bg: BackgroundTasks, payload: dict = 
     audit(db, user.id, "record.import" if restoring else "record.put", f"{kind}:{rid}", patient_id=patient_id)
     if kind == "appt":
         bg.add_task(gcal.sync, oid, [rid])
+        _enviar_invitaciones(db, oid, payload, envios, bg)
         if not old:
             _avisar_cita_nueva(db, oid, payload, bg)
     elif kind == "patient" and old and (old.get("nombres"), old.get("apellidos")) != (payload.get("nombres"), payload.get("apellidos")):
@@ -1245,6 +1339,8 @@ def delete_record(rid: str, bg: BackgroundTasks, user: User = Depends(current_us
         raise HTTPException(403, "Tu cuenta de equipo solo puede quitar citas")
     if row and row.kind in ("pago", "cobro"):
         raise HTTPException(409, "Un pago o un cobro no se elimina: se anula, con el motivo")
+    if row and row.kind == "profile":
+        raise HTTPException(409, "El perfil no se elimina (tiene tu firma, tus formatos y tus tarifas)")
     if row:
         old = decrypt(row.payload)
         if row.kind in ("note", "report", "scale") and old.get("signedAt"):

@@ -14,7 +14,7 @@ def setup(monkeypatch, smtp=True):
     c = client_for("ana@x.co")
     sent = []
     monkeypatch.setattr(survey, "account", lambda db, u: {"host": "h", "from": "ana@gmail.com", "base": "https://h.co", "propio": True} if smtp else None)
-    monkeypatch.setattr(booking, "send_mail", lambda to, subj, body, prof, acc, html=None: sent.append((to, subj, body)))
+    monkeypatch.setattr(booking, "send_mail", lambda to, subj, body, prof, acc, html=None, ics=None: sent.append((to, subj, body)))
     c.put("/api/records/profile", json={"id": "profile", "kind": "profile", "nombre": "Ana Ruiz", "consultorio": "Consultorio Ana", "correo": "ana@consulta.co"})
     slug = c.put("/api/reserva", json=CFG).json()["slug"]
     return c, slug, sent
@@ -182,9 +182,9 @@ def test_professional_appt_mails_existing_patient_with_calendar_button(monkeypat
     ap = {"id": "a_1", "kind": "appt", "patientId": "p_1", "startAt": "2030-05-06T15:00:00+00:00", "duracion": 50, "modalidad": "Virtual", "estado": "Programada", "enlace": "https://meet.google.com/abc-defg-hij"}
     c.put("/api/records/a_1", json=ap, headers=HEADERS)
     assert not sent  # sin la casilla no sale nada
-    c.put("/api/records/a_2", json={**ap, "id": "a_2", "avisarCorreo": True}, headers=HEADERS)
+    c.put("/api/records/a_2", json={**ap, "id": "a_2", "startAt": "2030-05-06T17:00:00+00:00", "avisarCorreo": True}, headers=HEADERS)
     assert len(sent) == 1 and sent[0][0] == "maria@pac.co" and "calendar.google.com/calendar/render" in sent[0][2] and "meet.google.com" in sent[0][2]
-    c.put("/api/records/a_2", json={**ap, "id": "a_2", "avisarCorreo": True, "duracion": 60}, headers=HEADERS)
+    c.put("/api/records/a_2", json={**ap, "id": "a_2", "startAt": "2030-05-06T17:00:00+00:00", "avisarCorreo": True, "duracion": 60}, headers=HEADERS)
     assert len(sent) == 1  # editar la cita no reenvía
 
 
@@ -211,3 +211,37 @@ def test_cuenta_admin_agenda_reunion_informativa(monkeypatch):
     pac = next(b for t, _, b in sent if t == "luis@mail.co")
     assert "reunión" in pac and "https://zoom.us/j/123456" in pac
     assert any("Nueva reunión informativa" in subj for _, subj, _ in sent)
+
+
+def test_event_invitations_to_guest_list(monkeypatch):
+    c, slug, _ = setup(monkeypatch)
+    sent = []
+    monkeypatch.setattr(booking, "send_mail", lambda to, subj, body, prof, acc, html=None, ics=None: sent.append((to, subj, body, ics)))
+    ev = lambda **k: {"id": "a_ev1", "kind": "appt", "evento": "Supervisión", "startAt": "2030-06-05T15:00:00Z", "duracion": 60, "modalidad": "", "estado": "Programada",
+                      "invitados": ["Psiq@x.co", "sup@x.co", "psiq@x.co"], "enlace": "https://meet.google.com/abc-defg-hij", **k}
+    assert c.put("/api/records/a_ev1", json=ev()).status_code in (200, 204) and sent == []  # sin «Enviar invitación» no sale nada
+    assert c.put("/api/records/a_ev1", json=ev(avisarCorreo=True)).status_code in (200, 204)
+    assert sorted(s[0] for s in sent) == ["psiq@x.co", "sup@x.co"]
+    assert all(s[1] == "Invitación: Supervisión" and "BEGIN:VCALENDAR" in s[3] for s in sent)
+    sent.clear()
+    assert c.put("/api/records/a_ev1", json=ev(avisarCorreo=True)).status_code in (200, 204) and sent == []  # ya invitados y nada cambió
+    assert c.put("/api/records/a_ev1", json=ev(avisarCorreo=True, startAt="2030-06-05T16:00:00Z")).status_code in (200, 204)
+    assert sorted(s[1] for s in sent) == ["Cambio: Supervisión"] * 2
+    sent.clear()
+    assert c.put("/api/records/a_ev1", json=ev(avisarCorreo=True, estado="Cancelada", startAt="2030-06-05T16:00:00Z")).status_code in (200, 204)
+    assert sorted(s[1] for s in sent) == ["Cancelada: Supervisión"] * 2 and all("STATUS:CANCELLED" in s[3] for s in sent)
+    assert c.put("/api/records/a_ev2", json=ev(id="a_ev2", invitados=["no-es-correo"])).status_code == 400
+    assert c.put("/api/records/a_ev2", json=ev(id="a_ev2", enlace="javascript:alert(1)")).status_code == 400
+
+
+def test_no_dos_citas_a_la_vez(monkeypatch):
+    c, slug, _ = setup(monkeypatch)
+    cita = lambda i, ini, **k: {"id": i, "kind": "appt", "nuevo": {"nombres": "Ana", "apellidos": "Ruiz"}, "startAt": f"2030-06-06T{ini}:00Z", "duracion": 60, "modalidad": "Virtual", "estado": "Programada", **k}
+    assert c.put("/api/records/a_x1", json=cita("a_x1", "15:00")).status_code in (200, 204)
+    r = c.put("/api/records/a_x2", json=cita("a_x2", "15:30"))
+    assert r.status_code == 409 and "otra cita" in r.json()["detail"]
+    assert c.put("/api/records/a_x3", json=cita("a_x3", "16:00")).status_code in (200, 204)  # justo después
+    assert c.put("/api/records/a_x1", json=cita("a_x1", "15:00", estado="Atendida")).status_code in (200, 204)  # marcar atendida no se bloquea
+    assert c.put("/api/records/a_x3", json=cita("a_x3", "15:30")).status_code == 409  # mover a un horario ocupado
+    assert c.put("/api/records/a_x2", json=cita("a_x2", "15:30", estado="Cancelada")).status_code in (200, 204)  # una cancelada no ocupa
+    assert c.put("/api/records/a_ev9", json={"id": "a_ev9", "kind": "appt", "evento": "Almuerzo", "startAt": "2030-06-06T15:00:00Z", "duracion": 60, "modalidad": "", "estado": "Programada"}).status_code in (200, 204)  # un evento no cuenta

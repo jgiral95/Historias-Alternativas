@@ -43,6 +43,12 @@ services:
       EPAYCO_TEST: ${EPAYCO_TEST:-1}
       EPAYCO_PLAN_MENSUAL: ${EPAYCO_PLAN_MENSUAL:-}
       EPAYCO_PLAN_ANUAL: ${EPAYCO_PLAN_ANUAL:-}
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request as u; u.urlopen('http://127.0.0.1:8000/api/health', timeout=4)"]
+      interval: 30s
+      timeout: 6s
+      retries: 3
+      start_period: 40s
     depends_on:
       db:
         condition: service_healthy

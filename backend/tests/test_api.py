@@ -412,7 +412,7 @@ def test_google_calendar_one_way_sync(monkeypatch):
     # permiso revocado en Google: se informa y no rompe el guardado
     gcal._tokens.clear(); g.fail_refresh = True
     assert c.put("/api/records/a_2", json={**appt, "id": "a_2"}).status_code in (200, 204)
-    assert "reconecte" in c.get("/api/google/status").json()["last_error"]
+    assert "reconecta" in c.get("/api/google/status").json()["last_error"]
     assert client_for("otro2@x.co").get("/api/google/status").json()["connected"] is False
     assert c.delete("/api/google").status_code == 204 and g.revoked == ["rt-secreto"]
     assert c.get("/api/google/status").json()["connected"] is False

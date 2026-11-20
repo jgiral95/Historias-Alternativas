@@ -80,7 +80,7 @@ const H = { 'Content-Type': 'application/json', 'X-Requested-With': 'archivo-cli
 const slug = new URLSearchParams(location.search).get('c') || '';
 const logo = '<svg width="28" height="28" viewBox="0 0 120 120" aria-hidden="true"><rect x="6" y="6" width="108" height="108" rx="16" fill="#4E6B58"/><rect x="34" y="22" width="52" height="64" rx="6" fill="#FFFFFF"/><rect x="46" y="14" width="28" height="16" rx="4" fill="#FFFFFF" stroke="#4E6B58" stroke-width="4"/><rect x="42" y="46" width="36" height="6" rx="3" fill="#4E6B58"/><rect x="42" y="58" width="36" height="6" rx="3" fill="#4E6B58"/><rect x="42" y="70" width="22" height="6" rx="3" fill="#4E6B58"/></svg>';
 const card = h => { $('#m').innerHTML = `<div class="card">${h}</div>`; };
-const dayTxt = k => new Date(k + 'T12:00:00').toLocaleDateString('es-CO', { weekday: 'short', day: 'numeric', month: 'short' });
+const dayTxt = k => new Date(k + 'T12:00:00').toLocaleDateString('es-CO', { weekday: 'short', day: '2-digit', month: '2-digit', year: 'numeric' });
 let d, month = '', day = '', hour = '', nuevo = false, vals = {};
 /* Los horarios llegan en la zona del consultorio (d.zona). Aquí se pasan a la zona horaria del navegador de quien reserva. */
 const pad = n => String(n).padStart(2, '0');
@@ -133,7 +133,7 @@ async function send() {
     const j = await r.json().catch(() => ({}));
     if (r.status === 409) { await load(); hour = ''; return draw('<div class="res bad">' + esc(j.detail) + '</div>'); }
     if (!r.ok) return draw('<div class="res bad">' + esc(j.detail || 'No se pudo agendar. Intenta de nuevo.') + '</div>');
-    const it = (d.dias[day] || []).find(x => x.i === hour), cuando = it ? new Date(it.ms).toLocaleString('es-CO', { weekday: 'long', day: 'numeric', month: 'long', hour: 'numeric', minute: '2-digit' }) + ' · zona horaria ' + tzLabel(it.ms) : j.cuando;
+    const it = (d.dias[day] || []).find(x => x.i === hour), cuando = it ? new Date(it.ms).toLocaleString('es-CO', { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric', hour: 'numeric', minute: '2-digit' }) + ' · zona horaria ' + tzLabel(it.ms) : j.cuando;
     card(`<h1>${logo}${d.reunion ? 'Reunión confirmada' : 'Cita confirmada'}</h1><div class="res ok">Tu ${d.reunion ? 'reunión' : 'cita'} quedó agendada para el ${esc(cuando)} (${esc(j.modalidad).toLowerCase()}).</div><p class="muted">Te enviamos la confirmación a tu correo. Si no la ves, revisa la carpeta de spam.</p>`);
   } catch (e) { draw('<div class="res bad">No hay conexión. Intenta de nuevo.</div>'); }
 }

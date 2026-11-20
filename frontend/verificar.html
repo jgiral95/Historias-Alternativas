@@ -65,7 +65,7 @@ dt{color:var(--muted)}dd{margin:0;overflow-wrap:anywhere}
 const $ = s => document.querySelector(s);
 const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const fmtRich = t => esc(t).split('\n').map(l => { const h = /^#\s+/.test(l) ? 'h' : /^[-•]\s+/.test(l) ? 'li' : ''; l = l.replace(/^#\s+/, '').replace(/^[-•]\s+/, '').replace(/\*\*(.+?)\*\*/g, '<b>$1</b>').replace(/__(.+?)__/g, '<u>$1</u>').replace(/(^|[^*])\*(?!\s)(.+?)\*(?!\*)/g, '$1<i>$2</i>'); return h === 'h' ? `<b style="font-size:1.12em">${l}</b>` : h === 'li' ? `•&nbsp; ${l}` : l; }).join('\n');
-const fmt = iso => iso ? new Date(iso).toLocaleString('es-CO', { day: 'numeric', month: 'long', year: 'numeric', hour: 'numeric', minute: '2-digit' }) : '';
+const fmt = iso => iso ? new Date(iso).toLocaleString('es-CO', { day: '2-digit', month: '2-digit', year: 'numeric', hour: 'numeric', minute: '2-digit' }) : '';
 async function check(code) {
   const out = $('#out');
   code = code.trim().toUpperCase().replace(/[^0-9A-Z]/g, '');

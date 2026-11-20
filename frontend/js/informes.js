@@ -130,7 +130,7 @@ const DIAS_TXT = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes
 function remText(a, p, url) {
   const d = new Date(a.startAt), h = d.toLocaleTimeString(I18N.locale(), { hour: 'numeric', minute: '2-digit' });
   const who = (S.profile && S.profile.nombre) || (S.user && S.user.ownerName) || 'tu terapeuta', nota = (S.rem && S.rem.nota) || '';
-  return `Hola ${(p.nombres || '').split(' ')[0]}, te recordamos tu cita con ${who} el ${DIAS_TXT[d.getDay()]} ${d.getDate()} de ${d.toLocaleDateString(I18N.locale(), { month: 'long' })} a las ${h} (${(a.modalidad || 'Presencial').toLowerCase()}). ${nota ? nota + ' ' : ''}Por favor confirma o avísanos si no puedes asistir: ${url}`;
+  return `Hola ${(p.nombres || '').split(' ')[0]}, te recordamos tu cita con ${who} el ${DIAS_TXT[d.getDay()]} ${d.toLocaleDateString(I18N.locale(), { day: '2-digit', month: '2-digit', year: 'numeric' })} a las ${h} (${(a.modalidad || 'Presencial').toLowerCase()}). ${nota ? nota + ' ' : ''}Por favor confirma o avísanos si no puedes asistir: ${url}`;
 }
 async function remSend(id) {
   const a = S.appts.find(x => x.id === id); if (!a) return;

@@ -44,11 +44,11 @@ function agendaHTML() {
   dispLoad();
   if (typeof finMemoReset === 'function') finMemoReset();
   const v = agView(), anchor = agAnchor(), today = dayKey(new Date());
-  const fmt = d => d.toLocaleDateString(I18N.locale(), { day: 'numeric', month: 'short' });
+  const fmt = d => d.toLocaleDateString(I18N.locale(), { day: '2-digit', month: '2-digit' });
   let title, body;
   if (v === 'dia') {
     const k = dayKey(anchor), list = apptsOn(k);
-    title = anchor.toLocaleDateString(I18N.locale(), { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+    title = anchor.toLocaleDateString(I18N.locale(), { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric' });
     const libres = dispSlots(k), hours = [...new Set([...Array(16)].map((_, i) => i + 6).concat(list.map(a => new Date(a.startAt).getHours()), libres.map(t => +t.slice(0, 2))))].sort((a, b) => a - b);
     body = `<div class="dayview">${hours.map(h => { const at = list.filter(a => new Date(a.startAt).getHours() === h); return `<div class="hrow"><span class="hlbl">${String(h).padStart(2, '0')}:00</span><div class="hcell">${at.map(apptBtn).join('')}${libres.filter(t => +t.slice(0, 2) === h).map(t => huecoBtn(k, t, true)).join('')}<button class="add" data-act="apptEdit" data-date="${k}" data-hour="${h}" aria-label="Nueva cita a las ${h}:00">+</button></div></div>`; }).join('')}</div>`;
   } else if (v === 'mes') {
@@ -115,10 +115,10 @@ ACT.apptEdit = b => {
   ${recTabs}
   <div id="ap_p1">
   ${a && a.nuevo ? `<div class="apnew"><div><b>Consultante nuevo${a.origen === 'enlace' ? ' · agendó por tu enlace' : ''}</b><br><span class="ts">${esc([a.nuevo.correo, a.nuevo.telefono].filter(Boolean).join(' · '))}${a.nuevo.correo || a.nuevo.telefono ? ' · ' : ''}Aún no tienes ficha.</span></div></div>` : ''}
-  ${a ? `<div class="apsum"><div class="row" style="justify-content:space-between"><b class="apwhen">${esc(start.toLocaleString(I18N.locale(), { weekday: 'short', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' }))}</b><span class="chip">${esc(a.estado || 'Programada')}</span></div><span class="ts">${esc(a.duracion || 50)} min · ${esc(a.modalidad || '')}</span></div>
+  ${a ? `<div class="apsum"><div class="row" style="justify-content:space-between"><b class="apwhen">${esc(start.toLocaleString(I18N.locale(), { weekday: 'short', day: '2-digit', month: '2-digit', year: 'numeric', hour: 'numeric', minute: '2-digit' }))}</b><span class="chip">${esc(a.estado || 'Programada')}</span></div><span class="ts">${esc(a.duracion || 50)} min · ${esc(a.modalidad || '')}</span></div>
   <div class="row">${TEAM() || a.evento ? '' : a.noteId ? `<button class="btn sm" data-ap="note">Ver sesión</button>` : `<button class="btn sm pri" data-ap="evol">Registrar sesión</button>`}${a.patientId ? '<button class="btn sm" data-ap="open">Abrir consultante</button>' : ''}${(a.estado === 'Programada' || !a.estado) && !a.evento ? `<button class="btn sm" data-ap="rem">Enviar recordatorio</button>` : ''}<button class="btn sm warn" data-ap="del">${a.evento ? 'Eliminar evento' : 'Eliminar cita'}</button></div>
   <p class="k2">Reprogramar o cambiar</p>` : ''}
-  <div class="grid">${a ? '' : '<div class="fld wide"><div class="seg" id="pnseg"><button type="button" data-pn="0" class="on">Consultante existente</button><button type="button" data-pn="1">Consultante nuevo</button><button type="button" data-pn="2">Evento</button></div></div>'}<div class="fld wide" id="pn_ev" ${a && a.evento ? '' : 'style="display:none"'}>${F('Título del evento (ej.: Almuerzo, Capacitación)', 'evTitulo', a && a.evento || '')}</div><div class="fld wide" id="pn_ex" ${a && (a.patientId || a.nuevo || a.evento) ? 'style="display:none"' : ''}><label for="f_patientId">Consultante</label><select id="f_patientId" data-f="patientId"><option value="">Elige un consultante…</option>${pats.map(p => `<option value="${p.id}" ${p.id === pre ? 'selected' : ''}>${esc(fullName(p))}</option>`).join('')}</select></div>
+  <div class="grid">${a ? '' : '<div class="fld wide"><div class="seg" id="pnseg"><button type="button" data-pn="0" class="on">Consultante existente</button><button type="button" data-pn="1">Consultante nuevo</button><button type="button" data-pn="2">Evento</button></div></div>'}<div class="fld wide" id="pn_ev" ${a && a.evento ? '' : 'style="display:none"'}>${F('Título del evento (ej.: Almuerzo, Capacitación)', 'evTitulo', a && a.evento || '')}${F('Enlace de la reunión (opcional)', 'evEnlace', a && a.evento && a.enlace || '', { ph: 'https://meet.google.com/…  o  https://zoom.us/j/…' })}${F('Invitados (correos separados por coma, máximo 10)', 'evInvitados', a && a.evento && (a.invitados || []).join(', ') || '', { ph: 'colega@correo.com, supervisor@correo.com' })}${S.mode === 'server' ? '<label class="check fld wide"><input type="checkbox" id="ev_mail"> <span>Enviar la invitación por correo a los invitados (con el enlace y botón para agregarla a su calendario). No pongas datos de consultantes en el título.</span></label>' : ''}</div><div class="fld wide" id="pn_ex" ${a && (a.patientId || a.nuevo || a.evento) ? 'style="display:none"' : ''}><label for="f_patientId">Consultante</label><select id="f_patientId" data-f="patientId"><option value="">Elige un consultante…</option>${pats.map(p => `<option value="${p.id}" ${p.id === pre ? 'selected' : ''}>${esc(fullName(p))}</option>`).join('')}</select></div>
   ${a ? '' : `<div id="pn_new" style="display:none">${F('Nombres', 'nnNombres', '')}${F('Apellidos', 'nnApellidos', '')}${F('Correo', 'nnCorreo', '', { type: 'email' })}${F('Teléfono', 'nnTelefono', '')}</div>`}
   ${F('Fecha', 'fecha', t.slice(0, 10), { type: 'date' })}<div class="fld"><label for="f_hora">Hora</label><input id="f_hora" data-f="hora" type="time" value="${t.slice(11, 16)}"></div>
   ${F('Duración (en minutos)', 'duracion', a ? a.duracion : 50, { ph: 'Minutos' })}
@@ -165,7 +165,12 @@ ACT.apptEdit = b => {
     const nn = pnew ? { nombres: (o.nnNombres || '').trim(), apellidos: (o.nnApellidos || '').trim(), correo: (o.nnCorreo || '').trim(), telefono: (o.nnTelefono || '').trim() } : null;
     const keepNuevo = !nn && a && a.nuevo && !a.patientId && !o.patientId;  // paciente nuevo: la cita se vincula sola cuando se crea su historia
     if (!evt && (nn ? !nn.nombres || !nn.apellidos : !o.patientId && !keepNuevo)) { toast(nn ? 'Escribe los nombres y apellidos del consultante nuevo.' : 'Elige el consultante.'); return; }
-    const enl = evt ? '' : (o.enlace || '').trim();
+    const enl = ((evt ? o.evEnlace : o.enlace) || '').trim();
+    const invs = evt ? [...new Set((o.evInvitados || '').split(/[\s,;]+/).map(c => c.trim().toLowerCase()).filter(Boolean))] : [];
+    if (invs.length > 10) { toast('Máximo 10 invitados.'); return; }
+    const malo = invs.find(c => !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(c)); if (malo) { toast('El correo «' + malo + '» no es válido.'); return; }
+    const mailEv = evt && $('#ev_mail') && $('#ev_mail').checked;
+    if (mailEv && !invs.length) { toast('Escribe al menos un correo para enviar la invitación.'); return; }
     if (enl && !/^https?:\/\/\S{4,500}$/.test(enl)) { toast('El enlace de la videollamada debe empezar por https://'); return; }
     if (!o.fecha || !o.hora) { toast('Indica fecha y hora.'); return; }
     const st = new Date(o.fecha + 'T' + o.hora), dur = Math.max(5, Math.min(600, +o.duracion || 50));
@@ -182,7 +187,8 @@ ACT.apptEdit = b => {
     for (let i = 0; i <= rep; i++) {
       const d = new Date(st); d.setDate(d.getDate() + 7 * i);
       const x = a ? a : { id: newId('a'), kind: 'appt', createdAt: nowISO() };
-      Object.assign(x, evt ? { evento: ev } : nn ? { nuevo: nn, ...(serie ? { nuevoSerie: serie } : {}) } : keepNuevo ? {} : { patientId: o.patientId, ...(i === 0 && !a && $('#ap_mail') && $('#ap_mail').checked ? { avisarCorreo: true } : {}) }, { startAt: d.toISOString(), duracion: dur, modalidad: evt ? '' : o.modalidad, ...(enl || x.enlace ? { enlace: enl } : {}), estado: a ? o.estado : 'Programada', updatedAt: nowISO() });
+      Object.assign(x, evt ? { evento: ev, ...(invs.length || x.invitados ? { invitados: invs } : {}), ...(mailEv && i === 0 ? { avisarCorreo: true } : {}) } : nn ? { nuevo: nn, ...(serie ? { nuevoSerie: serie } : {}) } : keepNuevo ? {} : { patientId: o.patientId, ...(i === 0 && !a && $('#ap_mail') && $('#ap_mail').checked ? { avisarCorreo: true } : {}) }, { startAt: d.toISOString(), duracion: dur, modalidad: evt ? '' : o.modalidad, ...(enl || x.enlace ? { enlace: enl } : {}), estado: a ? o.estado : 'Programada', updatedAt: nowISO() });
+      delete x.avisarCorreo;  // solo vale para este guardado
       if (recOn && !evt) { if (o.recActivo) x.rec = { activo: true, items: recSel }; else delete x.rec; }
       try { await Store.save(x, { strict: true }); } catch (err) { if (a) restore(a, snap); setBusy(k, false); saveError(err); if (made.length) { render(); toast(made.length + ' de ' + (rep + 1) + ' citas alcanzaron a guardarse.'); } return; }
       if (!a) S.appts.push(x);
@@ -269,7 +275,7 @@ ACT.reservas = async () => {
   };
   const diaHTML = () => {
     if (!st.sel) return '<p style="margin:0;font-size:13px;color:var(--muted)">Elige un día del calendario para marcar tu horario y el tipo de consulta.</p>';
-    const f = st.fechas[st.sel], tit = new Date(st.sel + 'T12:00:00').toLocaleDateString(I18N.locale(), { weekday: 'long', day: 'numeric', month: 'long' }), dia = tit.split(',')[0].split(' ')[0];
+    const f = st.fechas[st.sel], tit = new Date(st.sel + 'T12:00:00').toLocaleDateString(I18N.locale(), { weekday: 'long', day: '2-digit', month: '2-digit' }), dia = tit.split(',')[0].split(' ')[0];
     return `<div class="card" role="group" aria-label="${esc(tit)}"><div class="row" style="justify-content:space-between;align-items:center"><b>${esc(tit)}</b><label><input type="checkbox" id="rs_atiendo" ${f ? 'checked' : ''}> Atiendo este día</label></div>
     ${f ? `<div class="card" role="group" aria-labelledby="rs_tipos"><b id="rs_tipos">Tipos de consulta de este día</b><div class="row">${MODS_R.map(m => `<label><input type="checkbox" data-dm="${m}" ${f.modalidades.includes(m) ? 'checked' : ''}> ${m}</label>`).join('')}</div></div>
     ${f.franjas.map((x, j) => `<div class="row" style="align-items:center"><input type="time" data-t="${st.sel}|${j}|0" value="${esc(x[0])}" aria-label="Desde"><span>a</span><input type="time" data-t="${st.sel}|${j}|1" value="${esc(x[1])}" aria-label="Hasta"><button type="button" class="btn sm" data-r="del" data-j="${j}" aria-label="Quitar franja">×</button></div>`).join('')}

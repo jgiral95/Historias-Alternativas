@@ -14,7 +14,7 @@ def setup(c, activo=True):
                                          "recordatorios": {"activo": activo, "horas": 24}})
     c.put("/api/records/p_1", json=patient("p_1", correo="maria@pac.co", telefono="3001234567", consents=consent()))
     c.put("/api/records/p_2", json=patient("p_2", nombres="Sin", apellidos="Correo", telefono="3009999999", consents=consent()))
-    for aid, pid, h in (("a_1", "p_1", 5), ("a_2", "p_1", 72), ("a_3", "p_2", 5), ("a_4", "p_1", -2)):
+    for aid, pid, h in (("a_1", "p_1", 5), ("a_2", "p_1", 72), ("a_3", "p_2", 8), ("a_4", "p_1", -2)):
         c.put(f"/api/records/{aid}", json={"id": aid, "kind": "appt", "patientId": pid, "startAt": iso(h), "duracion": 50, "modalidad": "Virtual", "estado": "Programada"})
 
 

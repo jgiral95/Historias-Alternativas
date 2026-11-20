@@ -67,7 +67,7 @@ const H = { 'Content-Type': 'application/json', 'X-Requested-With': 'archivo-cli
 const token = new URLSearchParams(location.search).get('t') || '';
 const logo = '<svg width="28" height="28" viewBox="0 0 120 120" aria-hidden="true"><rect x="6" y="6" width="108" height="108" rx="16" fill="#4E6B58"/><rect x="34" y="22" width="52" height="64" rx="6" fill="#FFFFFF"/><rect x="46" y="14" width="28" height="16" rx="4" fill="#FFFFFF" stroke="#4E6B58" stroke-width="4"/><rect x="42" y="46" width="36" height="6" rx="3" fill="#4E6B58"/><rect x="42" y="58" width="36" height="6" rx="3" fill="#4E6B58"/><rect x="42" y="70" width="22" height="6" rx="3" fill="#4E6B58"/></svg>';
 const card = h => { $('#m').innerHTML = `<div class="card">${h}</div>`; };
-const fmt = iso => iso ? new Date(iso).toLocaleString('es-CO', { day: 'numeric', month: 'long', year: 'numeric', hour: 'numeric', minute: '2-digit' }) : '';
+const fmt = iso => iso ? new Date(iso).toLocaleString('es-CO', { day: '2-digit', month: '2-digit', year: 'numeric', hour: 'numeric', minute: '2-digit' }) : '';
 function rich(t) {
   return esc(t).split('\n').map(l => {
     const h = /^#\s+/.test(l) ? 'h' : /^[-•]\s+/.test(l) ? 'li' : '';

@@ -22,7 +22,6 @@ from .security import decrypt, encrypt
 TZ = ZoneInfo("America/Bogota")
 HOURS = (2, 12, 24, 48)
 DIAS = ["lunes", "martes", "miércoles", "jueves", "viernes", "sábado", "domingo"]
-MESES = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"]
 
 
 def utcnow() -> datetime:
@@ -44,7 +43,7 @@ def parse(ts) -> datetime | None:
 def when_text(start: datetime) -> str:
     d = start.astimezone(TZ)
     h = d.strftime("%I:%M").lstrip("0") + (" a. m." if d.hour < 12 else " p. m.")
-    return f"{DIAS[d.weekday()]} {d.day} de {MESES[d.month - 1]} a las {h}"
+    return f"{DIAS[d.weekday()]} {d.strftime('%d/%m/%Y')} a las {h}"
 
 
 def config(profile: dict) -> dict:
