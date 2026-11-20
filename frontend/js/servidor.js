@@ -192,7 +192,7 @@ function userCard(u, sub) {
     <input type="password" id="rp_${u.id}" placeholder="Nueva contraseña (mín. 10)" aria-label="Nueva contraseña de ${esc(u.name)}" style="max-width:220px;background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:5px 8px"><button class="btn sm" data-u="reset" data-id="${u.id}">Restablecer contraseña</button>${u.role === 'user' ? `<input type="number" id="gm_${u.id}" min="1" max="36" value="1" aria-label="Meses gratis para ${esc(u.name)}" style="width:64px;background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:5px 8px"><button class="btn sm" data-u="gift" data-id="${u.id}">Dar meses gratis</button>${u.suscripcion && u.suscripcion.activa ? `<button class="btn sm warn" data-u="ungift" data-id="${u.id}">Quitar meses</button>` : ''}` : ''}${u.totp ? `<button class="btn sm warn" data-u="no2fa" data-id="${u.id}">Quitar verificación en dos pasos</button>` : ''}</div></div>`;
 }
 ACT.users = async () => {
-  const root = $('#modal-root'); let list = [], q = '';
+  const root = $('#modal-root'); let list = [], q = '', empresas = [];
   const open = new Set(), closedG = new Set();
   const fold = t => String(t || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
   const drawList = () => {
@@ -206,25 +206,50 @@ ACT.users = async () => {
       return `<div class="ugroup">${userCard(p)}${t.length ? `<details class="uteam" data-owner="${p.id}" ${showOpen || (q && tm.length) ? 'open' : ''}><summary>Equipo de ${esc(p.name.split(' ')[0])} (${t.length})${q && tm.length !== t.length ? ` · ${tm.length} coincide${tm.length === 1 ? '' : 'n'}` : ''}</summary>${(q && !hit(p) ? tm : t).map(u => userCard(u, true)).join('')}</details>` : ''}</div>`;
     };
     const grupo = (id, titulo, arr) => arr.length ? `<details class="ugrp" data-g="${id}" ${closedG.has(id) && !q ? '' : 'open'}><summary><b>${titulo} (${arr.length})</b></summary>${arr.map(bloque).join('')}</details>` : '';
-    const html = grupo('con', 'Con suscripción', shown.filter(p => p.role === 'user' && p.suscripcion && p.suscripcion.activa))
-      + grupo('sin', 'Sin suscripción', shown.filter(p => p.role === 'user' && !(p.suscripcion && p.suscripcion.activa)))
-      + grupo('adm', 'Administradores', shown.filter(p => p.role !== 'user')) + (orphans.filter(hit).length ? `<div class="ugroup"><b class="ts">Cuentas de equipo sin terapeuta</b>${orphans.filter(hit).map(u => userCard(u, true)).join('')}</div>` : '');
+    const grupoEmp = c => grupo('emp' + c.id, 'Empresa: ' + esc(c.name), shown.filter(p => p.companyId === c.id).sort((a, b) => (b.companyAdmin ? 1 : 0) - (a.companyAdmin ? 1 : 0) || a.name.localeCompare(b.name, 'es')));
+    const sueltos = shown.filter(p => !p.companyId);
+    const html = empresas.map(grupoEmp).join('') + grupo('con', 'Con suscripción', sueltos.filter(p => p.role === 'user' && p.suscripcion && p.suscripcion.activa))
+      + grupo('sin', 'Sin suscripción', sueltos.filter(p => p.role === 'user' && !(p.suscripcion && p.suscripcion.activa)))
+      + grupo('adm', 'Administradores', sueltos.filter(p => p.role !== 'user')) + (orphans.filter(hit).length ? `<div class="ugroup"><b class="ts">Cuentas de equipo sin terapeuta</b>${orphans.filter(hit).map(u => userCard(u, true)).join('')}</div>` : '');
     $('#u_list').innerHTML = html || '<p class="stnote">Ningún usuario coincide con la búsqueda.</p>';
     $('#u_count').textContent = `${pros.length} terapeuta${pros.length === 1 ? '' : 'es'} · ${list.length - pros.length} cuenta${list.length - pros.length === 1 ? '' : 's'} de equipo`;
   };
-  const load = async () => { try { list = await api('/admin/users'); } catch (e) { toast(e.message); return false; } return true; };
+  const load = async () => { try { [list, empresas] = await Promise.all([api('/admin/users'), api('/admin/empresas').catch(() => [])]); } catch (e) { toast(e.message); return false; } return true; };
   if (!(await load())) return;
   let rs = null; try { rs = await api('/admin/resumen'); } catch (e) { /* sin cifras */ }
   const tile = (t, v, sb, cls) => `<div class="ustat"><span>${t}</span><b class="${cls || ''}">${v}</b>${sb ? `<small>${sb}</small>` : ''}</div>`;
   const pl = (n, a, b) => n === 1 ? a : b;
   const stats = !rs ? '' : `<div class="ustats">${tile('Terapeutas', rs.terapeutas, '+ ' + rs.equipo + ' de equipo')}${tile('Con suscripción', rs.conSuscripcion, rs.terapeutas ? Math.round(rs.conSuscripcion * 100 / rs.terapeutas) + ' % del total' : '', 'ok')}${tile('Sin suscripción', rs.sinSuscripcion, rs.vencidas + ' ' + pl(rs.vencidas, 'vencida', 'vencidas') + ' · ' + rs.nunca + ' nunca', rs.sinSuscripcion ? 'warn' : '')}${tile('Consultantes', rs.consultantes, rs.terapeutas ? 'prom. ' + (rs.consultantes / rs.terapeutas).toFixed(1).replace('.', ',') + ' por terapeuta' : '')}${tile('Activas / inactivas', rs.activas + ' / ' + rs.inactivas)}${tile('Con 2 pasos', rs.dosPasos)}${tile('Nuevos', rs.nuevos, 'últimos 30 días')}</div>`;
   root.innerHTML = `<div class="modal" role="dialog" aria-modal="true" aria-label="Usuarios"><div class="box" id="uform" style="max-width:820px"><div class="row" style="justify-content:space-between"><h3>Usuarios</h3><button class="btn sm" id="ucl">Cerrar</button></div>
+    <nav class="ptabs" role="tablist"><button type="button" role="tab" class="on" data-utab="app" aria-selected="true">Usuarios</button><button type="button" role="tab" data-utab="emp" aria-selected="false">Empresas</button></nav>
+    <div id="u_emp" hidden></div>
+    <div id="u_app">
     ${stats}
     <div class="row"><input type="search" id="u_q" placeholder="Buscar por nombre o correo (también en los equipos)" aria-label="Buscar usuarios" style="flex:1;min-width:220px"><span class="ts" id="u_count"></span></div>
     <div id="u_list" class="ulist"></div>
     <div class="card"><h3>Nuevo usuario</h3><div class="grid">${F('Nombre', 'uname', '')}${F('Correo', 'uemail', '', { type: 'email' })}${F('Contraseña inicial (mín. 10)', 'upass', '', { type: 'password' })}${F('Rol', 'urole', 'Terapeuta', { type: 'select', opts: ['Terapeuta', 'Administrador'] })}</div><div class="row end"><button class="btn pri" data-u="create">Crear usuario</button></div></div>
-    <p style="margin:0;font-size:13px;color:var(--muted)">Cada terapeuta ve únicamente sus propios consultantes. Las cuentas de equipo (asistentes, secretarias) las crea cada terapeuta y aparecen dentro de su usuario. Los usuarios no se eliminan: se desactivan, y sus registros se conservan.</p></div></div>`;
+    <p style="margin:0;font-size:13px;color:var(--muted)">Cada terapeuta ve únicamente sus propios consultantes. Las cuentas de equipo (asistentes, secretarias) las crea cada terapeuta y aparecen dentro de su usuario. Los usuarios no se eliminan: se desactivan, y sus registros se conservan.</p></div></div></div>`;
   $('#ucl').onclick = () => { root.innerHTML = ''; root.onclick = null; };
+  /* Empresas: solo un administrador de la aplicación las crea (con la cuenta de su administrador). */
+  const drawEmp = async () => {
+    const box = $('#u_emp'); let L = [];
+    try { L = await api('/admin/empresas'); } catch (e) { box.innerHTML = `<div class="banner">${esc(e.message)}</div>`; return; }
+    box.innerHTML = (L.length ? L.map(c => `<div class="card"><div class="row" style="justify-content:space-between"><span><b>${esc(c.name)}</b><br><span class="ts">Administra: ${c.admin ? esc(c.admin.name) + ' · ' + esc(c.admin.email) : 'sin administrador'}</span></span><span class="chip">${c.profesionales} terapeuta${c.profesionales === 1 ? '' : 's'}</span></div></div>`).join('') : '<p class="stnote">Aún no hay empresas.</p>')
+      + `<div class="card"><h3>Nueva empresa</h3><div class="grid">${F('Nombre de la empresa', 'ce_name', '')}${F('Nombre del administrador', 'ce_admin', '')}${F('Correo del administrador', 'ce_email', '', { type: 'email' })}${F('Contraseña inicial (mín. 10)', 'ce_pass', '', { type: 'password' })}</div>
+      <div class="row"><button class="btn pri" id="ce_go">Crear empresa</button></div>
+      <p style="margin:0;font-size:13px;color:var(--muted)">Crea la empresa y la cuenta de su administrador. Él crea después a sus terapeutas y ve su agenda y finanzas, no sus fichas.</p></div>`;
+    $('#ce_go').onclick = async () => {
+      const g = k => $('#f_' + k).value.trim(), body = { name: g('ce_name'), adminName: g('ce_admin'), email: g('ce_email'), password: $('#f_ce_pass').value };
+      if (!body.name || !body.adminName || !body.email) { toast('Completa el nombre de la empresa, el del administrador y su correo.'); return; }
+      try { await api('/admin/empresas', { method: 'POST', body }); toast('Empresa creada.'); if (await load()) drawList(); drawEmp(); } catch (e) { toast(e.message); }
+    };
+  };
+  root.querySelectorAll('[data-utab]').forEach(t => t.onclick = () => {
+    const tab = t.dataset.utab;
+    root.querySelectorAll('[data-utab]').forEach(x => { const on = x === t; x.classList.toggle('on', on); x.setAttribute('aria-selected', on ? 'true' : 'false'); });
+    $('#u_app').hidden = tab !== 'app'; $('#u_emp').hidden = tab !== 'emp';
+    if (tab === 'emp') drawEmp();
+  });
   $('#u_q').oninput = e => { q = e.target.value.trim(); drawList(); };
   $('#u_list').addEventListener('toggle', e => { const d = e.target; if (d.matches && d.matches('details.ugrp') && !q) { if (d.open) closedG.delete(d.dataset.g); else closedG.add(d.dataset.g); } if (d.matches && d.matches('details.uteam') && !q) { if (d.open) open.add(+d.dataset.owner); else open.delete(+d.dataset.owner); } }, true);
   root.onclick = async e => {
